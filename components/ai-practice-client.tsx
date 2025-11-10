@@ -9,13 +9,15 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MessageCircle, BookOpen, Globe, Send, Loader2 } from "lucide-react"
-import { translations, type UILanguage } from "@/lib/translations"
+import { translations } from "@/lib/translations"
 import { ScenarioGenerator } from "./scenario-generator"
 import { TranslationHelper } from "./translation-helper"
-import { AppHeader } from "./app-header"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarLayout } from "@/components/sidebar-layout"
+import { useUILanguage } from "@/lib/hooks/use-ui-language"
 
 export function AIPracticeClient() {
-  const [uiLanguage, setUiLanguage] = useState<UILanguage>("en")
+  const { uiLanguage } = useUILanguage()
   const [practiceLanguage, setPracticeLanguage] = useState("english")
   const [conversationType, setConversationType] = useState<"practice" | "scenario" | "translation_help">("practice")
   const [conversationId, setConversationId] = useState<string>()
@@ -65,9 +67,10 @@ export function AIPracticeClient() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader uiLanguage={uiLanguage} onLanguageChange={setUiLanguage} />
+      <AppSidebar />
 
-      <div className="mx-auto max-w-5xl px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <SidebarLayout>
+        <div className="mx-auto max-w-5xl px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="mb-4">
           <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2">
             {t.aiPractice || "AI Conversation Practice"}
@@ -181,7 +184,8 @@ export function AIPracticeClient() {
             </form>
           </Card>
         </div>
-      </div>
+        </div>
+      </SidebarLayout>
     </div>
   )
 }

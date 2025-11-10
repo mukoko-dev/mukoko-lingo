@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { TrendingUp, Target, Award, Flame } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
-import { translations, type UILanguage } from "@/lib/translations"
-import { AppHeader } from "@/components/app-header"
+import { translations } from "@/lib/translations"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarLayout } from "@/components/sidebar-layout"
+import { useUILanguage } from "@/lib/hooks/use-ui-language"
 
 interface ProgressClientProps {
   profile: any
@@ -19,7 +20,7 @@ interface ProgressClientProps {
 }
 
 export function ProgressClient({ profile, stats }: ProgressClientProps) {
-  const [uiLanguage, setUILanguage] = useState<UILanguage>("en")
+  const { uiLanguage } = useUILanguage()
   const t = translations[uiLanguage]
 
   const totalPhrases = stats.learning + stats.practiced + stats.mastered
@@ -27,9 +28,10 @@ export function ProgressClient({ profile, stats }: ProgressClientProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader uiLanguage={uiLanguage} onLanguageChange={setUILanguage} />
+      <AppSidebar />
 
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
+      <SidebarLayout>
+        <main className="container mx-auto px-4 py-12 max-w-6xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">{t.myProgress || "My Progress"}</h1>
           <p className="text-muted-foreground">{t.trackYourJourney || "Track your language learning journey"}</p>
@@ -139,11 +141,12 @@ export function ProgressClient({ profile, stats }: ProgressClientProps) {
           </CardHeader>
           <CardContent>
             <Button asChild>
-              <Link href="/profile">{t.updateGoal || "Update Goal"}</Link>
+              <Link href="/app/profile">{t.updateGoal || "Update Goal"}</Link>
             </Button>
           </CardContent>
         </Card>
-      </main>
+        </main>
+      </SidebarLayout>
     </div>
   )
 }

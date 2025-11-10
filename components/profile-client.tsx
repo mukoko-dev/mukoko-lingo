@@ -13,7 +13,8 @@ import { useRouter } from "next/navigation"
 import { Save, TrendingUp, BookOpen, Eye, Bookmark, Target, Award, Activity } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { Progress } from "@/components/ui/progress"
-import { AppHeader } from "@/components/app-header"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarLayout } from "@/components/sidebar-layout"
 
 interface Profile {
   user_id: string
@@ -142,9 +143,10 @@ export function ProfileClient({ user, profile, analytics }: ProfileClientProps) 
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader showLanguageSwitcher={false} />
+      <AppSidebar />
 
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
+      <SidebarLayout>
+        <main className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="mb-8">
           <h1 className="font-serif text-3xl font-bold mb-2">Profile Settings</h1>
           <p className="text-muted-foreground">Manage your account and track your learning progress</p>
@@ -242,7 +244,7 @@ export function ProfileClient({ user, profile, analytics }: ProfileClientProps) 
                   <div className="mt-4 pt-4 border-t">
                     <p className="text-sm text-muted-foreground">
                       Last studied:{" "}
-                      <span className="font-medium">{new Date(profile.last_study_date).toLocaleDateString()}</span>
+                      <span className="font-medium">{new Date(profile.last_study_date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
                     </p>
                   </div>
                 )}
@@ -348,7 +350,8 @@ export function ProfileClient({ user, profile, analytics }: ProfileClientProps) 
           <Save className="mr-2 h-4 w-4" />
           {isLoading ? "Saving..." : "Save Changes"}
         </Button>
-      </main>
+        </main>
+      </SidebarLayout>
     </div>
   )
 }

@@ -6,17 +6,19 @@ import { Bookmark } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import type { Phrase } from "@/lib/phrases-data"
-import { translations, type UILanguage } from "@/lib/translations"
+import { translations } from "@/lib/translations"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-import { AppHeader } from "@/components/app-header"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarLayout } from "@/components/sidebar-layout"
+import { useUILanguage } from "@/lib/hooks/use-ui-language"
 
 interface BookmarksClientProps {
   phrases: Phrase[]
 }
 
 export function BookmarksClient({ phrases: initialPhrases }: BookmarksClientProps) {
-  const [uiLanguage, setUILanguage] = useState<UILanguage>("en")
+  const { uiLanguage } = useUILanguage()
   const [phrases, setPhrases] = useState(initialPhrases)
   const router = useRouter()
   const supabase = createClient()
@@ -38,9 +40,10 @@ export function BookmarksClient({ phrases: initialPhrases }: BookmarksClientProp
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader uiLanguage={uiLanguage} onLanguageChange={setUILanguage} />
+      <AppSidebar />
 
-      <main className="container mx-auto px-4 py-12">
+      <SidebarLayout>
+        <main className="container mx-auto px-4 py-12 max-w-6xl">
         <div className="mb-8 flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
             <Bookmark className="w-6 h-6 text-primary-foreground" />
@@ -79,7 +82,8 @@ export function BookmarksClient({ phrases: initialPhrases }: BookmarksClientProp
             ))}
           </div>
         )}
-      </main>
+        </main>
+      </SidebarLayout>
     </div>
   )
 }

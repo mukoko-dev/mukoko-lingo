@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart3, TrendingUp, Calendar } from "lucide-react"
-import { translations, type UILanguage } from "@/lib/translations"
-import { AppHeader } from "@/components/app-header"
+import { translations } from "@/lib/translations"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarLayout } from "@/components/sidebar-layout"
+import { useUILanguage } from "@/lib/hooks/use-ui-language"
 
 interface AnalyticsClientProps {
   analytics: {
@@ -15,7 +16,7 @@ interface AnalyticsClientProps {
 }
 
 export function AnalyticsClient({ analytics }: AnalyticsClientProps) {
-  const [uiLanguage, setUILanguage] = useState<UILanguage>("en")
+  const { uiLanguage } = useUILanguage()
   const t = translations[uiLanguage]
 
   const totalStudyDays = analytics.studySessions.length
@@ -26,9 +27,10 @@ export function AnalyticsClient({ analytics }: AnalyticsClientProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader uiLanguage={uiLanguage} onLanguageChange={setUILanguage} />
+      <AppSidebar />
 
-      <main className="container mx-auto px-4 py-12 max-w-6xl">
+      <SidebarLayout>
+        <main className="container mx-auto px-4 py-12 max-w-6xl">
         <div className="mb-8 flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
             <BarChart3 className="w-6 h-6 text-primary-foreground" />
@@ -188,7 +190,7 @@ export function AnalyticsClient({ analytics }: AnalyticsClientProps) {
                       key={index}
                       className="flex-1 bg-primary/20 hover:bg-primary/40 rounded-t transition-colors"
                       style={{ height: `${height}%`, minHeight: session.phrases_studied > 0 ? "4px" : "0" }}
-                      title={`${new Date(session.session_date).toLocaleDateString()}: ${session.phrases_studied} phrases`}
+                      title={`${new Date(session.session_date).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}: ${session.phrases_studied} phrases`}
                     />
                   )
                 })}
@@ -196,7 +198,8 @@ export function AnalyticsClient({ analytics }: AnalyticsClientProps) {
             )}
           </CardContent>
         </Card>
-      </main>
+        </main>
+      </SidebarLayout>
     </div>
   )
 }
