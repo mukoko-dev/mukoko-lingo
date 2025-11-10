@@ -73,7 +73,7 @@ export const organizationSchema = {
   "@type": "Organization",
   name: "Nyuchi Tech",
   url: siteConfig.url,
-  logo: `${siteConfig.url}/favicon.png`,
+  logo: `${siteConfig.url}/Nyuchi_Lingo_light.png`,
   description: siteConfig.description,
   sameAs: [
     // Add social media links when available
@@ -141,19 +141,19 @@ export function createMetadata(overrides?: Partial<Metadata>): Metadata {
       siteName: siteConfig.name,
       images: [
         {
-          url: "/favicon.png",
-          width: 1200,
-          height: 630,
+          url: "/Nyuchi_Lingo_light.png",
+          width: 250,
+          height: 125,
           alt: `${siteConfig.name} - Multilingual Learning Platform`,
         },
       ],
     },
     twitter: {
-      card: "summary_large_image",
+      card: "summary",
       title: `${siteConfig.name} - Learn Zimbabwe's Languages`,
       description:
         "Master Shona, Ndebele & Chinese with AI tutoring. For tourists, expats, professionals, students, and anyone building language skills.",
-      images: ["/favicon.png"],
+      images: ["/Nyuchi_Lingo_light.png"],
     },
     robots: {
       index: true,
