@@ -206,27 +206,27 @@ export function ProfileClient({ user, profile, analytics }: ProfileClientProps) 
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <Award className="h-4 w-4 text-green-600" />
+                        <Award className="h-4 w-4 text-[#729b63]" />
                         <span className="text-sm font-medium">Mastered</span>
                       </div>
                       <span className="text-sm font-bold">
                         {analytics.masteredCount} ({masteryPercentage}%)
                       </span>
                     </div>
-                    <Progress value={masteryPercentage} className="h-2 bg-green-100" />
+                    <Progress value={masteryPercentage} variant="success" className="h-2" />
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <Target className="h-4 w-4 text-blue-600" />
+                        <Target className="h-4 w-4 text-[#5f5873]" />
                         <span className="text-sm font-medium">Practiced</span>
                       </div>
                       <span className="text-sm font-bold">
                         {analytics.practicedCount} ({practicePercentage}%)
                       </span>
                     </div>
-                    <Progress value={practicePercentage} className="h-2 bg-blue-100" />
+                    <Progress value={practicePercentage} className="h-2" />
                   </div>
 
                   <div>
