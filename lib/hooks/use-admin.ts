@@ -15,10 +15,8 @@ export function useAdmin() {
   async function checkAdmin() {
     try {
       const devMode = isDevMode()
-      console.log("[v0] useAdmin - Dev mode check:", devMode)
 
       if (devMode) {
-        console.log("[v0] useAdmin - Granting admin access via dev mode")
         setIsAdmin(true)
         setLoading(false)
         return
@@ -30,14 +28,12 @@ export function useAdmin() {
       } = await supabase.auth.getUser()
 
       if (!user) {
-        console.log("[v0] useAdmin - No user found")
         setIsAdmin(false)
         return
       }
 
       const { data } = await supabase.from("profiles").select("role").eq("user_id", user.id).single()
 
-      console.log("[v0] useAdmin - User role:", data?.role)
       setIsAdmin(data?.role === "admin")
     } catch (error) {
       console.error("Error checking admin status:", error)

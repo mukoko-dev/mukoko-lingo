@@ -5,7 +5,6 @@ export async function updateSession(request: NextRequest) {
   const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === "true"
 
   if (isDevMode) {
-    console.log("[v0] Dev mode enabled - bypassing authentication")
     return NextResponse.next({
       request,
     })

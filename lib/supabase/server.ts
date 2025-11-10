@@ -50,7 +50,6 @@ export async function createServerClient() {
 export async function getUser(): Promise<User | null> {
   // In dev mode, return mock user
   if (isDevMode()) {
-    console.log("[v0] Server getUser: Dev mode enabled, returning mock user")
     return DEV_USER as unknown as User
   }
 

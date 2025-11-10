@@ -12,10 +12,7 @@ export function useDevAuth() {
 
   useEffect(() => {
     const getUser = async () => {
-      console.log("[v0] useDevAuth: Checking authentication...")
-
       if (isDevMode()) {
-        console.log("[v0] useDevAuth: Dev mode enabled, using mock user")
         setUser(DEV_USER as unknown as User)
         setIsLoading(false)
         return
@@ -25,7 +22,6 @@ export function useDevAuth() {
         data: { user: realUser },
       } = await supabase.auth.getUser()
 
-      console.log("[v0] useDevAuth: Real user loaded:", realUser?.id)
       setUser(realUser)
       setIsLoading(false)
     }
@@ -36,7 +32,6 @@ export function useDevAuth() {
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
-        console.log("[v0] useDevAuth: Auth state changed")
         setUser(session?.user ?? null)
       })
 

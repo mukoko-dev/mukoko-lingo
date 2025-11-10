@@ -67,10 +67,6 @@ export function AppSidebar() {
   }, [])
 
   useEffect(() => {
-    console.log("[v0] AppSidebar - user:", user?.id, "isAdmin:", isAdmin, "loading:", loading)
-  }, [user, isAdmin, loading])
-
-  useEffect(() => {
     const fetchModerationCount = async () => {
       if (!isAdmin) return
 
