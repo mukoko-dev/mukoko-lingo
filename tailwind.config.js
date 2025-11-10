@@ -155,6 +155,152 @@ module.exports = {
           'sunset-gold': '#F6AD55',
           'wisdom-dark': '#1a1a1a',
         },
+
+        // ====================
+        // SECONDARY COLORS - Category & Label System
+        // Source: NYUCHI_LINGO_SECONDARY_COLORS.md v3.0
+        // All colors WCAG 2.1 AA compliant
+        // ====================
+
+        // 1. Terracotta (Culture & Heritage)
+        terracotta: {
+          50: '#fef7f3',
+          100: '#fde9dc',
+          200: '#fbd1b8',
+          300: '#f8b994',
+          400: '#f4986d',
+          500: '#ef7647',
+          600: '#d9623a',
+          700: '#b24e2e',
+          800: '#8b3d24',
+          900: '#6b2f1c',
+        },
+
+        // 2. Coral (Speaking & Pronunciation)
+        coral: {
+          50: '#fff5f5',
+          100: '#ffe3e3',
+          200: '#ffc9c9',
+          300: '#ffa8a8',
+          400: '#ff8787',
+          500: '#ff6b6b',
+          600: '#fa5252',
+          700: '#e03131',
+          800: '#c92a2a',
+          900: '#a61e1e',
+        },
+
+        // 3. Amber (Intermediate Level)
+        amber: {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+        },
+
+        // 4. Sage Green (Grammar & Structure)
+        sage: {
+          50: '#f3f9f3',
+          100: '#e3f2e3',
+          200: '#c8e6c8',
+          300: '#a8d5a8',
+          400: '#88c288',
+          500: '#6ba76b',
+          600: '#5a8f5a',
+          700: '#4a774a',
+          800: '#3b5f3b',
+          900: '#2e492e',
+        },
+
+        // 5. Sky Blue (Listening & Comprehension)
+        sky: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+        },
+
+        // 6. Lavender (Reading & Writing)
+        lavender: {
+          50: '#faf5ff',
+          100: '#f3e8ff',
+          200: '#e9d5ff',
+          300: '#d8b4fe',
+          400: '#c084fc',
+          500: '#a855f7',
+          600: '#9333ea',
+          700: '#7e22ce',
+          800: '#6b21a8',
+          900: '#581c87',
+        },
+
+        // 7. Teal (Vocabulary & Words)
+        teal: {
+          50: '#f0fdfa',
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#14b8a6',
+          600: '#0d9488',
+          700: '#0f766e',
+          800: '#115e59',
+          900: '#134e4a',
+        },
+
+        // 8. Marigold (Advanced Level)
+        marigold: {
+          50: '#fffaeb',
+          100: '#fef0c7',
+          200: '#fde68a',
+          300: '#faca15',
+          400: '#eab308',
+          500: '#ca8a04',
+          600: '#a16207',
+          700: '#854d0e',
+          800: '#713f12',
+          900: '#5a3310',
+        },
+
+        // 9. Rose (Community & Social)
+        rose: {
+          50: '#fff1f2',
+          100: '#ffe4e6',
+          200: '#fecdd3',
+          300: '#fda4af',
+          400: '#fb7185',
+          500: '#f43f5e',
+          600: '#e11d48',
+          700: '#be123c',
+          800: '#9f1239',
+          900: '#881337',
+        },
+
+        // 10. Indigo (Premium & Pro Features)
+        indigo: {
+          50: '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#6366f1',
+          600: '#4f46e5',
+          700: '#4338ca',
+          800: '#3730a3',
+          900: '#312e81',
+        },
       },
       
       // ====================

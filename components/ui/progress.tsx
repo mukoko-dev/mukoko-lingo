@@ -12,8 +12,8 @@ const progressVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary/20',
-        success: 'bg-[#729b63]/20',
-        gold: 'bg-[#f6ad55]/20',
+        success: 'bg-secondary-500/20',
+        gold: 'bg-accent-500/20',
       },
     },
     defaultVariants: {
@@ -28,8 +28,8 @@ const progressIndicatorVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary',
-        success: 'bg-[#729b63]',
-        gold: 'bg-[#f6ad55]',
+        success: 'bg-secondary-500',
+        gold: 'bg-accent-500',
       },
     },
     defaultVariants: {

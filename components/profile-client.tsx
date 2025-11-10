@@ -206,7 +206,7 @@ export function ProfileClient({ user, profile, analytics }: ProfileClientProps) 
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <Award className="h-4 w-4 text-[#729b63]" />
+                        <Award className="h-4 w-4 text-secondary-500" />
                         <span className="text-sm font-medium">Mastered</span>
                       </div>
                       <span className="text-sm font-bold">
@@ -219,7 +219,7 @@ export function ProfileClient({ user, profile, analytics }: ProfileClientProps) 
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <Target className="h-4 w-4 text-[#5f5873]" />
+                        <Target className="h-4 w-4 text-primary-700" />
                         <span className="text-sm font-medium">Practiced</span>
                       </div>
                       <span className="text-sm font-bold">
