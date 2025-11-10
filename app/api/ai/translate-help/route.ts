@@ -2,6 +2,7 @@ import { generateObject } from "ai"
 import { z } from "zod"
 import { createServerClient } from "@/lib/supabase/server"
 import { moderateContent } from "@/lib/ai/moderation"
+import { haiku } from "@/lib/ai/config"
 
 const translationHelpSchema = z.object({
   translations: z.object({
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
     }
 
     const { object } = await generateObject({
-      model: "anthropic/claude-haiku-4.5",
+      model: haiku,
       schema: translationHelpSchema,
       prompt: `You are an expert translator and language teacher specializing in English, Shona, Ndebele, and Chinese. Provide comprehensive translation help for this phrase.
 

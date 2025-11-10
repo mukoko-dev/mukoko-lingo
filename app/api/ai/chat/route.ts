@@ -1,6 +1,7 @@
 import { streamText } from "ai"
 import { createServerClient } from "@/lib/supabase/server"
 import { moderateContent } from "@/lib/ai/moderation"
+import { haiku } from "@/lib/ai/config"
 
 export const maxDuration = 30
 
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
     }
 
     const result = streamText({
-      model: "anthropic/claude-haiku-4.5",
+      model: haiku,
       system: systemPrompt,
       messages,
       maxOutputTokens: 1000,

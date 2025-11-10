@@ -1,6 +1,7 @@
 import { generateObject } from "ai"
 import { z } from "zod"
 import { createServerClient } from "@/lib/supabase/server"
+import { haiku } from "@/lib/ai/config"
 
 const recommendationSchema = z.object({
   recommendations: z.array(
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
 
     // Use AI to analyze and recommend
     const { object } = await generateObject({
-      model: "anthropic/claude-haiku-4.5",
+      model: haiku,
       schema: recommendationSchema,
       prompt: `You are a language learning recommendation system. Based on the user's learning history, suggest the next 5-10 phrases they should learn.
 

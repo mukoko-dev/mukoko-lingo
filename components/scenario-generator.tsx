@@ -41,6 +41,7 @@ export function ScenarioGenerator({ language, onStartScenario }: ScenarioGenerat
   const generateScenario = async (scenarioType: string) => {
     setLoading(true)
     setError("")
+    setScenario(null) // Clear any existing scenario first
     try {
       const response = await fetch("/api/ai/generate-scenario", {
         method: "POST",
@@ -126,21 +127,21 @@ export function ScenarioGenerator({ language, onStartScenario }: ScenarioGenerat
 
       {error && <p className="text-sm text-destructive mb-3">{error}</p>}
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {scenarioTypes.map((type) => (
           <Button
             key={type.id}
             onClick={() => generateScenario(type.id)}
             disabled={loading}
             variant="outline"
-            className="h-auto flex-col gap-1 py-3"
+            className="h-auto flex flex-col items-center justify-center gap-2 py-4 px-3 min-h-[5rem]"
           >
             {loading ? (
               <Loader2 className="h-6 w-6 animate-spin" />
             ) : (
               <>
-                <span className="text-2xl">{type.icon}</span>
-                <span className="text-xs">{type.label}</span>
+                <span className="text-3xl mb-1">{type.icon}</span>
+                <span className="text-xs font-medium text-center leading-tight whitespace-normal">{type.label}</span>
               </>
             )}
           </Button>

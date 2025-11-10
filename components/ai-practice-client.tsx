@@ -102,18 +102,18 @@ export function AIPracticeClient() {
               <div>
                 <label className="text-sm font-medium mb-2 block">{t.conversationType || "Conversation Type"}</label>
                 <Tabs value={conversationType} onValueChange={(v) => setConversationType(v as any)}>
-                  <TabsList className="grid grid-cols-3 w-full">
-                    <TabsTrigger value="practice" className="text-xs">
-                      <MessageCircle className="h-3 w-3 mr-1" />
-                      {t.practice || "Practice"}
+                  <TabsList className="grid grid-cols-3 w-full gap-1">
+                    <TabsTrigger value="practice" className="text-xs px-2 py-2">
+                      <MessageCircle className="h-3.5 w-3.5 sm:mr-1.5" />
+                      <span className="hidden sm:inline">{t.practice || "Practice"}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="scenario" className="text-xs">
-                      <BookOpen className="h-3 w-3 mr-1" />
-                      {t.scenario || "Scenario"}
+                    <TabsTrigger value="scenario" className="text-xs px-2 py-2">
+                      <BookOpen className="h-3.5 w-3.5 sm:mr-1.5" />
+                      <span className="hidden sm:inline">{t.scenario || "Scenario"}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="translation_help" className="text-xs">
-                      <Globe className="h-3 w-3 mr-1" />
-                      {t.help || "Help"}
+                    <TabsTrigger value="translation_help" className="text-xs px-2 py-2">
+                      <Globe className="h-3.5 w-3.5 sm:mr-1.5" />
+                      <span className="hidden sm:inline">{t.help || "Help"}</span>
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>

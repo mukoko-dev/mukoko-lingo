@@ -2,6 +2,7 @@ import { generateObject } from "ai"
 import { z } from "zod"
 import { createServerClient } from "@/lib/supabase/server"
 import { moderateContent } from "@/lib/ai/moderation"
+import { haiku } from "@/lib/ai/config"
 
 const translationSchema = z.object({
   english: z.string(),
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
 
     // Generate translation
     const { object } = await generateObject({
-      model: "anthropic/claude-haiku-4.5",
+      model: haiku,
       schema: translationSchema,
       prompt: `Translate the following ${sourceLanguage} phrase to English, Shona, Ndebele, and Chinese. Provide accurate pronunciations and context about when to use this phrase. Categorize it appropriately.
 

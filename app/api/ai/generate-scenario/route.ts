@@ -1,6 +1,7 @@
 import { generateObject } from "ai"
 import { z } from "zod"
 import { createServerClient } from "@/lib/supabase/server"
+import { haiku } from "@/lib/ai/config"
 
 const scenarioSchema = z.object({
   title: z.string(),
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
     }
 
     const { object } = await generateObject({
-      model: "anthropic/claude-haiku-4.5",
+      model: haiku,
       schema: scenarioSchema,
       prompt: `Generate a realistic conversation scenario for language learning in ${language}. 
 

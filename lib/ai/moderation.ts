@@ -1,6 +1,7 @@
 import { generateObject } from "ai"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
+import { haiku } from "@/lib/ai/config"
 
 const moderationSchema = z.object({
   flagged: z.boolean(),
@@ -23,7 +24,7 @@ export async function moderateContent(
 ) {
   try {
     const { object } = await generateObject({
-      model: "anthropic/claude-haiku-4.5",
+      model: haiku,
       schema: moderationSchema,
       prompt: `You are a content moderation system. Analyze the following text for inappropriate content including sexual content, hate speech, harassment, violence, self-harm, or abuse. Be strict but fair.
 
