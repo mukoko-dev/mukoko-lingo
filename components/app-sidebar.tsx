@@ -3,6 +3,8 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
+import Image from "next/image"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
@@ -56,7 +58,13 @@ export function AppSidebar() {
   const { user } = useDevAuth()
   const { isAdmin, loading } = useAdmin()
   const { uiLanguage, setUILanguage } = useUILanguage()
+  const { theme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     console.log("[v0] AppSidebar - user:", user?.id, "isAdmin:", isAdmin, "loading:", loading)
@@ -225,17 +233,29 @@ export function AppSidebar() {
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between px-4 py-4 border-b bg-background/50">
-            {!isCollapsed && (
-              <Link href="/" className="font-serif text-lg font-bold">
-                Nyuchi Lingo
-              </Link>
-            )}
-            {isCollapsed && (
-              <Link href="/" className="font-serif text-xl font-bold text-primary mx-auto">
-                N
-              </Link>
-            )}
+          <div className="flex items-center justify-center px-4 py-4 border-b bg-background/50">
+            <Link href="/" className="flex items-center justify-center">
+              {!isCollapsed && mounted && (
+                <Image
+                  src={resolvedTheme === "dark" ? "/Nyuchi_Lingo_dark.png" : "/Nyuchi_Lingo_light.png"}
+                  alt="Nyuchi Lingo"
+                  width={180}
+                  height={90}
+                  className="object-contain"
+                  priority
+                />
+              )}
+              {isCollapsed && (
+                <Image
+                  src="/bee-logo-mobile.png"
+                  alt="Nyuchi Lingo"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                  priority
+                />
+              )}
+            </Link>
           </div>
 
           <div className="flex-1 overflow-y-auto py-4">
@@ -286,8 +306,17 @@ export function AppSidebar() {
       >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between px-4 py-4 border-b bg-background/50">
-            <Link href="/" className="font-serif text-lg font-bold" onClick={() => setIsMobileOpen(false)}>
-              Nyuchi Lingo
+            <Link href="/" className="flex items-center" onClick={() => setIsMobileOpen(false)}>
+              {mounted && (
+                <Image
+                  src={resolvedTheme === "dark" ? "/Nyuchi_Lingo_dark.png" : "/Nyuchi_Lingo_light.png"}
+                  alt="Nyuchi Lingo"
+                  width={140}
+                  height={70}
+                  className="object-contain"
+                  priority
+                />
+              )}
             </Link>
             <UserMenu />
           </div>
