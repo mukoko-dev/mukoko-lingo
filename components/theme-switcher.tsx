@@ -17,7 +17,7 @@ export function ThemeSwitcher() {
 
   if (!mounted) {
     return (
-      <Button variant="outline" size="icon" className="w-9 h-9 bg-transparent">
+      <Button variant="outline" size="icon" className="bg-transparent">
         <Sun className="h-4 w-4" />
         <span className="sr-only">Toggle theme</span>
       </Button>
@@ -38,7 +38,7 @@ export function ThemeSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="w-9 h-9 bg-transparent">
+        <Button variant="outline" size="icon" className="bg-transparent">
           {getIcon()}
           <span className="sr-only">Toggle theme</span>
         </Button>

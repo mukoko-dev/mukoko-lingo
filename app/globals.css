@@ -3,62 +3,68 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Nyuchi Brand Colors v4.2 - Army Green, Warm Purple, Warm Brown */
+/* Nyuchi Brand Colors v3.0 - Warm Purple, Army Green, Sunset Gold */
 :root {
   /* Light Theme - Nyuchi Brand Colors */
+  /* Primary: Warm Purple (Nyuchi Africa) */
+  --purple-primary-light: #5f5873;
+  --purple-hover-light: #7c73e6;
+  --purple-active-light: #4a4560;
+  --purple-light: #8f86a8;
+  --purple-surface-light: #f0eef4;
+  --purple-subtle-light: #faf9fb;
+
+  /* Secondary: Army Green (Success & Milestones) */
   --green-primary-light: #729b63;
-  --green-hover-light: #84ac75;
-  --green-active-light: #628952;
-  --green-surface-light: #e8f2e4;
-  --green-subtle-light: #f4f9f2;
+  --green-hover-light: #8fb47f;
+  --green-active-light: #5d804f;
+  --green-surface-light: #e6f2e1;
+  --green-subtle-light: #f5f9f3;
 
-  --purple-primary-light: #8b80e8;
-  --purple-hover-light: #a199ee;
-  --purple-active-light: #7569d9;
-  --purple-surface-light: #ebe8fc;
-  --purple-subtle-light: #f6f5fe;
+  /* Accent: Sunset Gold */
+  --gold-primary-light: #f6ad55;
+  --gold-hover-light: #f99d4e;
+  --gold-active-light: #f47420;
+  --gold-surface-light: #feefd9;
+  --gold-subtle-light: #fef8f0;
 
-  --brown-primary-light: #a67557;
-  --brown-hover-light: #ba8668;
-  --brown-active-light: #925f47;
-  --brown-surface-light: #f5ede8;
-
-  --gray-900-light: #2b2b2b;
-  --gray-800-light: #4a4a4a;
-  --gray-700-light: #6b6b6b;
-  --gray-600-light: #8b8b8b;
-  --gray-500-light: #a8a8a8;
-  --gray-400-light: #c8c8c8;
+  /* Grays */
+  --gray-900-light: #1a1a1a;
+  --gray-800-light: #2a2a2a;
+  --gray-700-light: #4a4a4a;
+  --gray-600-light: #6b6b6b;
+  --gray-500-light: #8b8b8b;
+  --gray-400-light: #a8a8a8;
   --gray-300-light: #e0e0e0;
   --gray-200-light: #f0f0f0;
-  --gray-100-light: #f8f8f8;
+  --gray-100-light: #f7fafc;
 
   /* Base Theme Variables - Light */
-  --background: #ffffff;
-  --foreground: var(--gray-900-light);
-  --card: #ffffff;
-  --card-foreground: var(--gray-900-light);
-  --popover: #ffffff;
-  --popover-foreground: var(--gray-900-light);
-  --primary: var(--green-primary-light);
-  --primary-foreground: #ffffff;
-  --secondary: var(--purple-primary-light);
-  --secondary-foreground: #ffffff;
-  --muted: var(--gray-200-light);
-  --muted-foreground: var(--gray-700-light);
-  --accent: var(--brown-primary-light);
-  --accent-foreground: #ffffff;
-  --destructive: #d84e4e;
-  --destructive-foreground: #ffffff;
-  --border: var(--gray-300-light);
-  --input: var(--gray-300-light);
-  --ring: var(--green-primary-light);
-  --chart-1: var(--green-primary-light);
-  --chart-2: var(--purple-primary-light);
-  --chart-3: var(--brown-primary-light);
-  --chart-4: #5b9fe3;
-  --chart-5: #e8a040;
-  --radius: 0.75rem;
+  --background: 247 250 252;        /* #f7fafc */
+  --foreground: 26 26 26;           /* #1a1a1a */
+  --card: 250 250 250;              /* #fafafa */
+  --card-foreground: 26 26 26;      /* #1a1a1a */
+  --popover: 250 250 250;           /* #fafafa */
+  --popover-foreground: 26 26 26;   /* #1a1a1a */
+  --primary: 95 88 115;             /* #5f5873 - Warm Purple */
+  --primary-foreground: 255 255 255; /* #ffffff */
+  --secondary: 114 155 99;          /* #729B63 - Army Green */
+  --secondary-foreground: 255 255 255; /* #ffffff */
+  --muted: 229 231 235;             /* #e5e7eb */
+  --muted-foreground: 102 102 102;  /* #666666 */
+  --accent: 246 173 85;             /* #F6AD55 - Sunset Gold */
+  --accent-foreground: 26 26 26;    /* #1a1a1a */
+  --destructive: 239 68 68;         /* #ef4444 */
+  --destructive-foreground: 255 255 255; /* #ffffff */
+  --border: 224 224 224;            /* #e0e0e0 */
+  --input: 224 224 224;             /* #e0e0e0 */
+  --ring: 95 88 115;                /* #5f5873 - Warm Purple */
+  --chart-1: 114 155 99;            /* Army Green */
+  --chart-2: 95 88 115;             /* Warm Purple */
+  --chart-3: 246 173 85;            /* Sunset Gold */
+  --chart-4: 59 130 246;            /* Blue */
+  --chart-5: 249 115 22;            /* Orange */
+  --radius: 0.625rem;               /* 10px (Claude-style) */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -71,58 +77,64 @@
 
 /* Dark Theme - Nyuchi Brand Colors */
 .dark {
+  /* Primary: Warm Purple → Ubuntu Blue in dark mode */
+  --purple-primary-dark: #7c73e6;
+  --purple-hover-dark: #9489e6;
+  --purple-active-dark: #6b63d3;
+  --purple-light-dark: #a199ee;
+  --purple-surface-dark: #2d2840;
+  --purple-subtle-dark: #1f1a2e;
+
+  /* Secondary: Army Green (lighter in dark mode) */
   --green-primary-dark: #8fb47f;
   --green-hover-dark: #a3c393;
   --green-active-dark: #7ba56c;
   --green-surface-dark: #2a3d26;
   --green-subtle-dark: #1f2b1c;
 
-  --purple-primary-dark: #a89ef5;
-  --purple-hover-dark: #bdb5f9;
-  --purple-active-dark: #9489e6;
-  --purple-surface-dark: #2d2840;
-  --purple-subtle-dark: #1f1a2e;
+  /* Accent: Sunset Gold */
+  --gold-primary-dark: #f6ad55;
+  --gold-hover-dark: #fbc181;
+  --gold-active-dark: #f99d4e;
+  --gold-surface-dark: #3d2d1a;
+  --gold-subtle-dark: #2a1f12;
 
-  --brown-primary-dark: #c99574;
-  --brown-hover-dark: #d9a788;
-  --brown-active-dark: #b58363;
-  --brown-surface-dark: #3d2d25;
-
-  --gray-900-dark: #e8e8e8;
-  --gray-800-dark: #c8c8c8;
-  --gray-700-dark: #a8a8a8;
-  --gray-600-dark: #8b8b8b;
-  --gray-500-dark: #6b6b6b;
-  --gray-400-dark: #4a4a4a;
-  --gray-300-dark: #2e2e2e;
-  --gray-200-dark: #1f1f1f;
-  --gray-100-dark: #151515;
+  /* Grays */
+  --gray-900-dark: #fafafa;
+  --gray-800-dark: #e8e8e8;
+  --gray-700-dark: #c8c8c8;
+  --gray-600-dark: #a8a8a8;
+  --gray-500-dark: #8b8b8b;
+  --gray-400-dark: #6b6b6b;
+  --gray-300-dark: #4a4a4a;
+  --gray-200-dark: #2a2a2a;
+  --gray-100-dark: #1a1a1a;
 
   /* Base Theme Variables - Dark */
-  --background: var(--gray-100-dark);
-  --foreground: var(--gray-900-dark);
-  --card: var(--gray-200-dark);
-  --card-foreground: var(--gray-900-dark);
-  --popover: var(--gray-200-dark);
-  --popover-foreground: var(--gray-900-dark);
-  --primary: var(--green-primary-dark);
-  --primary-foreground: var(--gray-100-dark);
-  --secondary: var(--purple-primary-dark);
-  --secondary-foreground: var(--gray-100-dark);
-  --muted: var(--gray-300-dark);
-  --muted-foreground: var(--gray-700-dark);
-  --accent: var(--brown-primary-dark);
-  --accent-foreground: var(--gray-100-dark);
-  --destructive: #e86b6b;
-  --destructive-foreground: #ffffff;
-  --border: var(--gray-300-dark);
-  --input: var(--gray-300-dark);
-  --ring: var(--green-primary-dark);
-  --chart-1: var(--green-primary-dark);
-  --chart-2: var(--purple-primary-dark);
-  --chart-3: var(--brown-primary-dark);
-  --chart-4: #7ab3f0;
-  --chart-5: #f4b55e;
+  --background: 26 26 26;           /* #1a1a1a */
+  --foreground: 250 250 250;        /* #fafafa */
+  --card: 42 42 42;                 /* #2a2a2a */
+  --card-foreground: 250 250 250;   /* #fafafa */
+  --popover: 42 42 42;              /* #2a2a2a */
+  --popover-foreground: 250 250 250; /* #fafafa */
+  --primary: 124 115 230;           /* #7c73e6 - Ubuntu Blue */
+  --primary-foreground: 255 255 255; /* #ffffff */
+  --secondary: 143 180 127;         /* #8FB47F - Lighter Army Green */
+  --secondary-foreground: 26 26 26; /* #1a1a1a */
+  --muted: 74 69 96;                /* #4a4560 */
+  --muted-foreground: 203 197 216;  /* #cbc5d8 */
+  --accent: 246 173 85;             /* #F6AD55 - Sunset Gold */
+  --accent-foreground: 26 26 26;    /* #1a1a1a */
+  --destructive: 220 38 38;         /* #dc2626 */
+  --destructive-foreground: 255 255 255; /* #ffffff */
+  --border: 74 69 96;               /* #4a4560 */
+  --input: 74 69 96;                /* #4a4560 */
+  --ring: 124 115 230;              /* #7c73e6 - Ubuntu Blue */
+  --chart-1: 143 180 127;           /* Army Green */
+  --chart-2: 124 115 230;           /* Ubuntu Blue */
+  --chart-3: 246 173 85;            /* Sunset Gold */
+  --chart-4: 96 165 250;            /* Blue */
+  --chart-5: 251 146 60;            /* Orange */
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -344,6 +356,26 @@
 
   .slide-in-from-right-2 {
     animation-name: slide-in-from-right-2;
+  }
+
+  /* Nyuchi Brand Utilities */
+  .lift-hover {
+    @apply transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg;
+  }
+
+  .focus-glow {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  .gradient-purple {
+    background: linear-gradient(135deg, #f0eef4 0%, #faf9fb 100%);
+  }
+
+  .text-gradient-purple {
+    background: linear-gradient(90deg, #5f5873 0%, #7c73e6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
 

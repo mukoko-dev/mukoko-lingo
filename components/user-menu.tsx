@@ -92,7 +92,7 @@ export function UserMenu() {
         {userRole === "admin" && (
           <>
             <DropdownMenuItem asChild>
-              <a href="/admin">
+              <a href="/admin/overview">
                 <Shield className="mr-2 h-4 w-4" />
                 Admin Dashboard
               </a>
@@ -101,31 +101,7 @@ export function UserMenu() {
           </>
         )}
         <DropdownMenuItem asChild>
-          <a href="/ai-practice">
-            <MessageCircle className="mr-2 h-4 w-4" />
-            AI Practice
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href="/analytics">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Analytics
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href="/progress">
-            <TrendingUp className="mr-2 h-4 w-4" />
-            My Progress
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href="/bookmarks">
-            <Bookmark className="mr-2 h-4 w-4" />
-            My Bookmarks
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href="/profile">
+          <a href="/app/profile">
             <Settings className="mr-2 h-4 w-4" />
             Profile Settings
           </a>

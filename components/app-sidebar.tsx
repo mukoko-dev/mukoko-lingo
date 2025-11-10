@@ -26,10 +26,14 @@ import {
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { UserMenu } from "@/components/user-menu"
+import { ThemeSwitcher } from "@/components/theme-switcher"
+import { LanguageSwitcher } from "@/components/language-switcher"
 import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/lib/supabase/client"
 import { useAdmin } from "@/lib/hooks/use-admin"
 import { useDevAuth } from "@/lib/hooks/use-dev-auth"
+import { useSidebar } from "@/lib/contexts/sidebar-context"
+import { useUILanguage } from "@/lib/hooks/use-ui-language"
 
 interface NavItem {
   id: string
@@ -47,10 +51,11 @@ interface NavSection {
 export function AppSidebar() {
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const { isCollapsed, setIsCollapsed } = useSidebar()
   const [moderationCount, setModerationCount] = useState(0)
   const { user } = useDevAuth()
   const { isAdmin, loading } = useAdmin()
+  const { uiLanguage, setUILanguage } = useUILanguage()
   const supabase = createClient()
 
   useEffect(() => {
@@ -77,21 +82,20 @@ export function AppSidebar() {
       title: "Main",
       items: [
         { id: "home", label: "Home", href: "/", icon: Home },
-        { id: "phrases", label: "Browse Phrases", href: "/#phrases", icon: BookOpen },
-        { id: "ai-practice", label: "AI Tutor", href: "/ai-practice", icon: MessageSquare },
+        { id: "ai-practice", label: "AI Tutor", href: "/app/ai-practice", icon: MessageSquare },
       ],
     },
     {
       title: "Learning",
       items: [
-        { id: "progress", label: "My Progress", href: "/progress", icon: TrendingUp },
-        { id: "bookmarks", label: "My Bookmarks", href: "/bookmarks", icon: Bookmark },
-        { id: "analytics", label: "Analytics", href: "/analytics", icon: BarChart3 },
+        { id: "progress", label: "My Progress", href: "/app/progress", icon: TrendingUp },
+        { id: "bookmarks", label: "My Bookmarks", href: "/app/bookmarks", icon: Bookmark },
+        { id: "analytics", label: "Analytics", href: "/app/analytics", icon: BarChart3 },
       ],
     },
     {
       title: "Account",
-      items: [{ id: "profile", label: "Profile Settings", href: "/profile", icon: Settings }],
+      items: [{ id: "profile", label: "Profile Settings", href: "/app/profile", icon: Settings }],
     },
   ]
 
@@ -246,23 +250,29 @@ export function AppSidebar() {
           </div>
 
           <div className="border-t bg-background/50">
-            <div className={cn("flex items-center", isCollapsed ? "justify-center p-2" : "justify-between p-4")}>
-              {!isCollapsed && <UserMenu />}
+            {!isCollapsed && (
+              <div className="flex items-center justify-between gap-2 px-4 py-2 border-b">
+                <ThemeSwitcher />
+                <LanguageSwitcher currentLanguage={uiLanguage} onLanguageChange={setUILanguage} />
+              </div>
+            )}
+            {isCollapsed && (
+              <div className="flex flex-col items-center gap-2 py-2 border-b">
+                <ThemeSwitcher />
+                <LanguageSwitcher currentLanguage={uiLanguage} onLanguageChange={setUILanguage} />
+              </div>
+            )}
+            <div className={cn("flex items-center gap-2", isCollapsed ? "flex-col justify-center p-2" : "justify-between p-4")}>
+              <UserMenu />
               <Button
                 variant="ghost"
-                size="icon"
+                size="icon-sm"
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className={cn("h-8 w-8", isCollapsed && "mx-auto")}
                 aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
                 {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
               </Button>
             </div>
-            {isCollapsed && (
-              <div className="p-2 flex justify-center">
-                <UserMenu />
-              </div>
-            )}
           </div>
         </div>
       </aside>
@@ -293,8 +303,14 @@ export function AppSidebar() {
             )}
           </div>
 
-          <div className="border-t p-4 bg-background/50">
-            <p className="text-xs text-muted-foreground text-center">Nyuchi Lingo © 2025</p>
+          <div className="border-t bg-background/50">
+            <div className="flex items-center justify-center gap-4 px-4 py-3 border-b">
+              <ThemeSwitcher />
+              <LanguageSwitcher currentLanguage={uiLanguage} onLanguageChange={setUILanguage} />
+            </div>
+            <div className="p-4">
+              <p className="text-xs text-muted-foreground text-center">Nyuchi Lingo © 2025</p>
+            </div>
           </div>
         </div>
       </aside>

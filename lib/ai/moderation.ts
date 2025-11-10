@@ -23,7 +23,7 @@ export async function moderateContent(
 ) {
   try {
     const { object } = await generateObject({
-      model: "openai/gpt-5-mini",
+      model: "anthropic/claude-haiku-4.5",
       schema: moderationSchema,
       prompt: `You are a content moderation system. Analyze the following text for inappropriate content including sexual content, hate speech, harassment, violence, self-harm, or abuse. Be strict but fair.
 

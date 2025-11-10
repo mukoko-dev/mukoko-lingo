@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     }
 
     const { object } = await generateObject({
-      model: "openai/gpt-5",
+      model: "anthropic/claude-haiku-4.5",
       schema: translationHelpSchema,
       prompt: `You are an expert translator and language teacher specializing in English, Shona, Ndebele, and Chinese. Provide comprehensive translation help for this phrase.
 

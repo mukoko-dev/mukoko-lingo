@@ -1,5 +1,7 @@
 import { createServerClient as createServerClientBase } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { isDevMode, DEV_USER } from "@/lib/dev-mode"
+import type { User } from "@supabase/supabase-js"
 
 // This is correct behavior for server-side code
 export async function createClient() {
@@ -42,4 +44,21 @@ export async function createServerClient() {
       },
     },
   })
+}
+
+// Server-side helper to get user with dev mode support
+export async function getUser(): Promise<User | null> {
+  // In dev mode, return mock user
+  if (isDevMode()) {
+    console.log("[v0] Server getUser: Dev mode enabled, returning mock user")
+    return DEV_USER as unknown as User
+  }
+
+  // In production, get real user from Supabase
+  const supabase = await createServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  return user
 }

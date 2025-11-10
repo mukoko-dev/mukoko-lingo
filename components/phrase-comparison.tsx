@@ -108,7 +108,6 @@ export function PhraseComparison({
                 variant={progressStatus === "learning" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => handleStatusChange("learning")}
-                className="h-8 px-2"
                 title="Mark as Learning"
               >
                 <span className="text-xs">Learning</span>
@@ -117,7 +116,6 @@ export function PhraseComparison({
                 variant={progressStatus === "practiced" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => handleStatusChange("practiced")}
-                className="h-8 px-2"
                 title="Mark as Practiced"
               >
                 <span className="text-xs">Practiced</span>
@@ -126,7 +124,7 @@ export function PhraseComparison({
                 variant={progressStatus === "mastered" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => handleStatusChange("mastered")}
-                className="h-8 px-2 bg-green-500 hover:bg-green-600"
+                className="bg-green-500 hover:bg-green-600"
                 title="Mark as Mastered"
               >
                 <Check className="h-3 w-3" />
@@ -166,7 +164,7 @@ export function PhraseComparison({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 opacity-60 hover:opacity-100"
+                className="opacity-60 hover:opacity-100"
                 onClick={() => handleSpeak(card.text, card.speechLang)}
                 aria-label={`Play pronunciation for ${card.lang}`}
               >

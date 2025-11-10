@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     // Generate translation
     const { object } = await generateObject({
-      model: "openai/gpt-5",
+      model: "anthropic/claude-haiku-4.5",
       schema: translationSchema,
       prompt: `Translate the following ${sourceLanguage} phrase to English, Shona, Ndebele, and Chinese. Provide accurate pronunciations and context about when to use this phrase. Categorize it appropriately.
 

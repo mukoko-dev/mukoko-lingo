@@ -6,6 +6,7 @@ import Script from "next/script"
 import { ThemeProvider } from "@/components/theme-provider"
 import { createMetadata, organizationSchema, webApplicationSchema } from "@/lib/seo-config"
 import { DevModeBanner } from "@/components/dev-mode-banner"
+import { SidebarProvider } from "@/lib/contexts/sidebar-context"
 import "./globals.css"
 
 const inter = Inter({
@@ -38,7 +39,9 @@ export default function RootLayout({
         <div className="flag-strip" aria-hidden="true" />
         <DevModeBanner />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
+          <SidebarProvider>
+            {children}
+          </SidebarProvider>
         </ThemeProvider>
         <Analytics />
 

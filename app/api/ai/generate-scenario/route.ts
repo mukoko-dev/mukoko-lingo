@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     const { object } = await generateObject({
-      model: "openai/gpt-5",
+      model: "anthropic/claude-haiku-4.5",
       schema: scenarioSchema,
       prompt: `Generate a realistic conversation scenario for language learning in ${language}. 
 

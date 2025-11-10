@@ -38,6 +38,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Public routes - accessible without authentication
   const publicRoutes = [
     "/",
     "/about",
@@ -45,6 +46,10 @@ export async function updateSession(request: NextRequest) {
     "/terms",
     "/privacy",
     "/ai-policy",
+  ]
+
+  // Auth routes - accessible without authentication
+  const authRoutes = [
     "/auth/login",
     "/auth/sign-up",
     "/auth/sign-up-success",
@@ -52,11 +57,29 @@ export async function updateSession(request: NextRequest) {
     "/auth/forgot-password",
     "/auth/reset-password",
   ]
-  const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
 
-  if (!user && !isPublicRoute) {
+  // Protected routes - require authentication
+  const protectedPaths = ["/app", "/admin"]
+
+  const pathname = request.nextUrl.pathname
+
+  // Check if route is public or auth
+  const isPublicRoute = publicRoutes.some((route) => pathname === route || pathname.startsWith(route + "/"))
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route))
+  const isProtectedRoute = protectedPaths.some((path) => pathname.startsWith(path))
+
+  // Redirect unauthenticated users trying to access protected routes
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
+    url.searchParams.set("redirect", pathname)
+    return NextResponse.redirect(url)
+  }
+
+  // Redirect authenticated users away from auth pages to app
+  if (user && isAuthRoute && !pathname.includes("/auth/sign-up-success")) {
+    const url = request.nextUrl.clone()
+    url.pathname = "/app/ai-practice"
     return NextResponse.redirect(url)
   }
 

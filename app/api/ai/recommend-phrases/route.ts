@@ -63,7 +63,7 @@ export async function POST(req: Request) {
 
     // Use AI to analyze and recommend
     const { object } = await generateObject({
-      model: "openai/gpt-5-mini",
+      model: "anthropic/claude-haiku-4.5",
       schema: recommendationSchema,
       prompt: `You are a language learning recommendation system. Based on the user's learning history, suggest the next 5-10 phrases they should learn.
 

@@ -92,7 +92,7 @@ export async function POST(req: Request) {
     }
 
     const result = streamText({
-      model: "openai/gpt-5",
+      model: "anthropic/claude-haiku-4.5",
       system: systemPrompt,
       messages,
       maxOutputTokens: 1000,

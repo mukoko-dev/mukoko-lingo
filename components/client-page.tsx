@@ -15,19 +15,22 @@ import { createClient } from "@/lib/supabase/client"
 import { AppHeader } from "@/components/app-header"
 import { AppSidebar } from "@/components/app-sidebar"
 import { useDevAuth } from "@/lib/hooks/use-dev-auth"
+import { useSidebar } from "@/lib/contexts/sidebar-context"
 
 interface ClientPageProps {
   initialPhrases: Phrase[]
   initialBookmarks: string[]
+  children?: React.ReactNode
 }
 
-export function ClientPage({ initialPhrases, initialBookmarks }: ClientPageProps) {
+export function ClientPage({ initialPhrases, initialBookmarks, children }: ClientPageProps) {
   const [activeCategory, setActiveCategory] = useState("greetings")
   const [uiLanguage, setUILanguage] = useState<UILanguage>("en")
   const [bookmarkedPhrases, setBookmarkedPhrases] = useState<string[]>(initialBookmarks)
   const [searchQuery, setSearchQuery] = useState("")
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false)
   const { user } = useDevAuth()
+  const { isCollapsed } = useSidebar()
   const [progressMap, setProgressMap] = useState<Record<string, "learning" | "practiced" | "mastered">>({})
   const [showAuthModal, setShowAuthModal] = useState(false)
   const supabase = createClient()
@@ -262,16 +265,12 @@ export function ClientPage({ initialPhrases, initialBookmarks }: ClientPageProps
 
   return (
     <div className="min-h-screen bg-background">
-      {user && user.id !== "00000000-0000-0000-0000-000000000000" && <AppSidebar />}
+      {user && <AppSidebar />}
 
-      <div
-        className={
-          user && user.id !== "00000000-0000-0000-0000-000000000000" ? "lg:ml-64 transition-all duration-300" : ""
-        }
-      >
+      <div className={user ? (isCollapsed ? "lg:ml-16 transition-all duration-300" : "lg:ml-64 transition-all duration-300") : ""}>
         <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} uiLanguage={uiLanguage} />
 
-        <AppHeader uiLanguage={uiLanguage} onLanguageChange={setUILanguage} />
+        {!user && <AppHeader uiLanguage={uiLanguage} onLanguageChange={setUILanguage} />}
 
         <section className="bg-gradient-to-b from-primary/5 to-background py-6 sm:py-10">
           <div className="container mx-auto px-3 sm:px-6 text-center">
@@ -307,7 +306,7 @@ export function ClientPage({ initialPhrases, initialBookmarks }: ClientPageProps
               <SearchBar searchQuery={searchQuery} onSearchChange={setSearchQuery} uiLanguage={uiLanguage} />
             </div>
             {user && (
-              <Link href="/ai-practice">
+              <Link href="/app/ai-practice">
                 <Button variant="default" size="default" className="w-full sm:w-auto whitespace-nowrap">
                   <MessageSquare className="mr-2 h-4 w-4" />
                   {t.aiTutor || "AI Tutor"}
@@ -364,6 +363,12 @@ export function ClientPage({ initialPhrases, initialBookmarks }: ClientPageProps
             </div>
           )}
         </main>
+
+        {children && (
+          <div className="container mx-auto px-3 sm:px-6 py-4 mb-8">
+            {children}
+          </div>
+        )}
 
         <footer className="border-t mt-6 sm:mt-10 py-4 sm:py-6 bg-muted/30">
           <div className="container mx-auto px-3 sm:px-6">

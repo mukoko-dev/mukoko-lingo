@@ -484,7 +484,7 @@ export function AdminDashboard({
                             <td className="p-4 align-middle text-right">{user.total_bookmarks}</td>
                             <td className="p-4 align-middle text-right">{user.total_progress}</td>
                             <td className="p-4 align-middle">
-                              {user.last_active ? new Date(user.last_active).toLocaleDateString() : "Never"}
+                              {user.last_active ? new Date(user.last_active).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : "Never"}
                             </td>
                             <td className="p-4 align-middle text-right">
                               <Button

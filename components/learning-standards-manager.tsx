@@ -215,23 +215,23 @@ export function LearningStandardsManager({ standards }: LearningStandardsManager
                 <div>
                   <p className="font-medium text-sm text-muted-foreground mb-2">Conversation Types</p>
                   <div className="flex flex-wrap gap-1">
-                    {standard.conversation_types.map((type, idx) => (
+                    {standard.conversation_types?.map((type, idx) => (
                       <Badge key={idx} variant="outline" className="text-xs">
                         {type}
                       </Badge>
-                    ))}
+                    )) || <span className="text-sm text-muted-foreground">None defined</span>}
                   </div>
                 </div>
 
                 <div>
                   <p className="font-medium text-sm text-muted-foreground mb-2">Grammar Concepts</p>
                   <div className="flex flex-wrap gap-1">
-                    {standard.grammar_concepts.slice(0, 3).map((concept, idx) => (
+                    {standard.grammar_concepts?.slice(0, 3).map((concept, idx) => (
                       <Badge key={idx} variant="secondary" className="text-xs">
                         {concept}
                       </Badge>
-                    ))}
-                    {standard.grammar_concepts.length > 3 && (
+                    )) || <span className="text-sm text-muted-foreground">None defined</span>}
+                    {standard.grammar_concepts && standard.grammar_concepts.length > 3 && (
                       <Badge variant="secondary" className="text-xs">
                         +{standard.grammar_concepts.length - 3} more
                       </Badge>
@@ -242,11 +242,11 @@ export function LearningStandardsManager({ standards }: LearningStandardsManager
                 <div>
                   <p className="font-medium text-sm text-muted-foreground mb-2">Example Phrases</p>
                   <ul className="text-sm space-y-1">
-                    {standard.example_phrases.slice(0, 2).map((phrase, idx) => (
+                    {standard.example_phrases?.slice(0, 2).map((phrase, idx) => (
                       <li key={idx} className="text-muted-foreground">
                         • {phrase}
                       </li>
-                    ))}
+                    )) || <li className="text-muted-foreground">None defined</li>}
                   </ul>
                 </div>
 

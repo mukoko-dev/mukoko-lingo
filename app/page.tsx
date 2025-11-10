@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { getUser, createClient } from "@/lib/supabase/server"
 import { ClientPage } from "@/components/client-page"
 import { AIRecommendations } from "@/components/ai-recommendations"
 import { createCourseSchema } from "@/lib/seo-config"
@@ -6,7 +6,7 @@ import type { Phrase } from "@/lib/phrases-data"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Travel Phrases for Zimbabwe | Learn Shona, Ndebele & Chinese",
+  title: "Home",
   description:
     "Essential travel phrases for tourists visiting Zimbabwe and Southern Africa. Learn greetings, directions, shopping, and emergency phrases in Shona, Ndebele, and Chinese. AI-powered language learning with 200+ phrases.",
   keywords: [
@@ -60,15 +60,13 @@ async function getPhrases(): Promise<Phrase[]> {
 }
 
 async function getUserBookmarks(): Promise<string[]> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getUser()
 
   if (!user) {
     return []
   }
 
+  const supabase = await createClient()
   const { data, error } = await supabase.from("bookmarks").select("phrase_id").eq("user_id", user.id)
 
   if (error) {
@@ -79,16 +77,12 @@ async function getUserBookmarks(): Promise<string[]> {
   return (data || []).map((row) => row.phrase_id)
 }
 
-async function getUser() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user
+async function getCurrentUser() {
+  return await getUser()
 }
 
 export default async function Page() {
-  const [phrases, bookmarks, user] = await Promise.all([getPhrases(), getUserBookmarks(), getUser()])
+  const [phrases, bookmarks, user] = await Promise.all([getPhrases(), getUserBookmarks(), getCurrentUser()])
 
   const courseSchema = createCourseSchema("Travel & Tourism", phrases.length)
 
@@ -96,13 +90,9 @@ export default async function Page() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchema) }} />
 
-      <ClientPage initialPhrases={phrases} initialBookmarks={bookmarks} />
-
-      {user && (
-        <div className="mx-auto max-w-5xl px-3 sm:px-6 lg:px-8 py-4 mb-8">
-          <AIRecommendations />
-        </div>
-      )}
+      <ClientPage initialPhrases={phrases} initialBookmarks={bookmarks}>
+        {user && <AIRecommendations />}
+      </ClientPage>
     </>
   )
 }

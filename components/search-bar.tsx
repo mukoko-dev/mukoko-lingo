@@ -29,9 +29,9 @@ export function SearchBar({ searchQuery, onSearchChange, uiLanguage }: SearchBar
         {searchQuery && (
           <Button
             variant="ghost"
-            size="sm"
+            size="icon-sm"
             onClick={() => onSearchChange("")}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+            className="absolute right-1 top-1/2 -translate-y-1/2"
             aria-label="Clear search"
           >
             <X className="w-4 h-4" />

@@ -1,96 +1,107 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { checkIsAdmin, getAdminStats } from "@/lib/supabase/admin"
-import { AppSidebar } from "@/components/app-sidebar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Shield, BookOpen, Eye, Bookmark, TrendingUp } from "lucide-react"
+import { getUser } from "@/lib/supabase/server"
+import { checkIsAdmin, getAdminStats, getUserActivitySummary } from "@/lib/supabase/admin"
+import { AdminLayout } from "@/components/admin/admin-layout"
+import { AdminDashboardOverview } from "@/components/admin/admin-dashboard-overview"
+import { isDevMode } from "@/lib/dev-mode"
+
+export const metadata = {
+  title: "Admin Dashboard",
+}
+
+// Mock data for dev mode
+const DEV_STATS = {
+  total_users: 42,
+  total_admins: 3,
+  total_phrases: 247,
+  total_progress_records: 856,
+  total_bookmarks: 324,
+  total_views: 1543,
+}
+
+const DEV_ACTIVITY = [
+  {
+    user_id: "1",
+    email: "sarah@example.com",
+    display_name: "Sarah Johnson",
+    role: "user",
+    total_views: 89,
+    total_bookmarks: 23,
+    total_progress: 45,
+    last_active: new Date().toISOString(),
+  },
+  {
+    user_id: "2",
+    email: "michael@example.com",
+    display_name: "Michael Chen",
+    role: "admin",
+    total_views: 156,
+    total_bookmarks: 12,
+    total_progress: 78,
+    last_active: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    user_id: "3",
+    email: "emma@example.com",
+    display_name: "Emma Williams",
+    role: "user",
+    total_views: 67,
+    total_bookmarks: 34,
+    total_progress: 32,
+    last_active: new Date(Date.now() - 172800000).toISOString(),
+  },
+  {
+    user_id: "4",
+    email: "james@example.com",
+    display_name: "James Brown",
+    role: "user",
+    total_views: 112,
+    total_bookmarks: 28,
+    total_progress: 56,
+    last_active: new Date(Date.now() - 259200000).toISOString(),
+  },
+  {
+    user_id: "5",
+    email: "olivia@example.com",
+    display_name: "Olivia Davis",
+    role: "user",
+    total_views: 43,
+    total_bookmarks: 15,
+    total_progress: 21,
+    last_active: new Date(Date.now() - 432000000).toISOString(),
+  },
+]
 
 export default async function AdminOverviewPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getUser()
 
   if (!user) redirect("/auth")
 
-  const isAdmin = await checkIsAdmin(user.id)
+  const isAdmin = await checkIsAdmin()
   if (!isAdmin) redirect("/")
 
-  const stats = await getAdminStats()
+  // Use mock data in dev mode, real data in production
+  let stats = DEV_STATS
+  let recentActivity = DEV_ACTIVITY
+
+  if (!isDevMode()) {
+    try {
+      stats = await getAdminStats()
+      recentActivity = await getUserActivitySummary()
+    } catch (error) {
+      console.error("Error fetching admin data:", error)
+      // Fall back to dev data if there's an error
+    }
+  }
 
   return (
-    <div className="flex min-h-screen">
-      <AppSidebar />
-      <main className="flex-1 lg:ml-64 transition-all duration-300">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="font-serif text-3xl font-bold mb-2">Dashboard Overview</h1>
-            <p className="text-muted-foreground">Quick insights and platform statistics</p>
-          </div>
+    <AdminLayout>
+      <div className="mb-8">
+        <h1 className="font-serif text-3xl font-bold mb-2">Dashboard Overview</h1>
+        <p className="text-muted-foreground">Real-time insights and platform analytics</p>
+      </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total_users}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Administrators</CardTitle>
-                <Shield className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total_admins}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Phrases</CardTitle>
-                <BookOpen className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total_phrases}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-                <Eye className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total_views}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Bookmarks</CardTitle>
-                <Bookmark className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total_bookmarks}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Progress Records</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total_progress_records}</div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </main>
-    </div>
+      <AdminDashboardOverview stats={stats} recentActivity={recentActivity} />
+    </AdminLayout>
   )
 }
