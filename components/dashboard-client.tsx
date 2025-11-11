@@ -1,11 +1,13 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarLayout } from "@/components/sidebar-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
+import { OnboardingModal } from "@/components/onboarding-modal"
 import { useUILanguage } from "@/lib/hooks/use-ui-language"
 import {
   Sparkles,
@@ -52,6 +54,19 @@ export function DashboardClient({
 }: DashboardClientProps) {
   const { uiLanguage } = useUILanguage()
   const router = useRouter()
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  useEffect(() => {
+    // Check if user has completed onboarding
+    const onboardingCompleted = localStorage.getItem("onboarding_completed")
+    if (!onboardingCompleted) {
+      // Show onboarding modal after a short delay
+      const timer = setTimeout(() => {
+        setShowOnboarding(true)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [])
 
   const dailyGoal = profile?.daily_goal || 5
   const goalProgress = Math.min((todaySession.phrases_studied / dailyGoal) * 100, 100)
@@ -62,6 +77,12 @@ export function DashboardClient({
 
   return (
     <div className="min-h-screen bg-background">
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        userName={profile?.display_name}
+      />
+
       <AppSidebar />
 
       <SidebarLayout>

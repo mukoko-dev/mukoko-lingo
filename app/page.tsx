@@ -82,7 +82,18 @@ async function getCurrentUser() {
 }
 
 export default async function Page() {
-  const [phrases, bookmarks, user] = await Promise.all([getPhrases(), getUserBookmarks(), getCurrentUser()])
+  const user = await getCurrentUser()
+
+  // Redirect authenticated users to dashboard
+  if (user) {
+    return (
+      <script dangerouslySetInnerHTML={{
+        __html: `window.location.href = '/app/dashboard'`
+      }} />
+    )
+  }
+
+  const [phrases, bookmarks] = await Promise.all([getPhrases(), getUserBookmarks()])
 
   const courseSchema = createCourseSchema("Travel & Tourism", phrases.length)
 
@@ -91,7 +102,7 @@ export default async function Page() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchema) }} />
 
       <ClientPage initialPhrases={phrases} initialBookmarks={bookmarks}>
-        {user && <AIRecommendations />}
+        <AIRecommendations />
       </ClientPage>
     </>
   )

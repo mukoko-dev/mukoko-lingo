@@ -75,10 +75,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirect authenticated users away from auth pages to app
+  // Redirect authenticated users away from auth pages to dashboard
   if (user && isAuthRoute && !pathname.includes("/auth/sign-up-success")) {
     const url = request.nextUrl.clone()
-    url.pathname = "/app/ai-practice"
+    url.pathname = "/app/dashboard"
     return NextResponse.redirect(url)
   }
 
