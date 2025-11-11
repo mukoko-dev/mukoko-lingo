@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Volume2, Bookmark, Check, Heart } from "lucide-react"
+import { Volume2, Bookmark, Heart, BookOpen, Repeat, Trophy } from "lucide-react"
 import type { Phrase } from "@/lib/phrases-data"
 import { translations, type UILanguage } from "@/lib/translations"
 import { createClient } from "@/lib/supabase/client"
@@ -120,31 +120,45 @@ export function PhraseComparison({
         </div>
         <div className="flex items-center gap-2">
           {onProgressUpdate && !compact && (
-            <div className="flex items-center gap-1 mr-2">
+            <div className="flex items-center gap-1.5 mr-2">
               <Button
-                variant={progressStatus === "learning" ? "default" : "ghost"}
+                variant={progressStatus === "learning" ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleStatusChange("learning")}
                 title="Mark as Learning"
+                className={cn(
+                  "transition-all",
+                  progressStatus === "learning" && "shadow-button"
+                )}
               >
-                <span className="text-xs">Learning</span>
+                <BookOpen className="h-3.5 w-3.5 mr-1" />
+                <span className="text-xs font-medium">Learning</span>
               </Button>
               <Button
-                variant={progressStatus === "practiced" ? "default" : "ghost"}
+                variant={progressStatus === "practiced" ? "secondary" : "outline"}
                 size="sm"
                 onClick={() => handleStatusChange("practiced")}
                 title="Mark as Practiced"
+                className={cn(
+                  "transition-all",
+                  progressStatus === "practiced" && "shadow-button"
+                )}
               >
-                <span className="text-xs">Practiced</span>
+                <Repeat className="h-3.5 w-3.5 mr-1" />
+                <span className="text-xs font-medium">Practiced</span>
               </Button>
               <Button
-                variant={progressStatus === "mastered" ? "default" : "ghost"}
+                variant={progressStatus === "mastered" ? "success" : "outline"}
                 size="sm"
                 onClick={() => handleStatusChange("mastered")}
-                className="bg-green-500 hover:bg-green-600"
                 title="Mark as Mastered"
+                className={cn(
+                  "transition-all",
+                  progressStatus === "mastered" && "shadow-button"
+                )}
               >
-                <Check className="h-3 w-3" />
+                <Trophy className="h-3.5 w-3.5 mr-1" />
+                <span className="text-xs font-medium">Mastered</span>
               </Button>
             </div>
           )}

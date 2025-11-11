@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const admin = await isAdmin(user.id)
+    const admin = await isAdmin()
     if (!admin) {
       return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 })
     }

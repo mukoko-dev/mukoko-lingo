@@ -1,8 +1,14 @@
-import { updateUserRole } from "@/lib/supabase/admin"
+import { updateUserRole, isAdmin } from "@/lib/supabase/admin"
 import { NextResponse } from "next/server"
 
 export async function POST(request: Request) {
   try {
+    // Check if user is authenticated and has admin role
+    const adminCheck = await isAdmin()
+    if (!adminCheck) {
+      return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 })
+    }
+
     const { userId, role } = await request.json()
 
     if (!userId || !role) {
