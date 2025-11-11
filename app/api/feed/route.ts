@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getUser } from "@/lib/supabase/server"
+import { getUserLearningLevel, evaluatePhraseForLevel } from "@/lib/learning-standards"
 
 /**
  * Smart Feed API - Personalized Phrase Recommendations
@@ -62,7 +63,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Failed to fetch phrases" }, { status: 500 })
     }
 
-    // Build user context
+    // Build user context with learning standards
+    const userLevel = await getUserLearningLevel(user.id)
+
     const userContext = {
       progressMap: new Map(userProgress?.map((p) => [p.phrase_id, p]) || []),
       bookmarkSet: new Set(bookmarks?.map((b) => b.phrase_id) || []),
@@ -71,7 +74,7 @@ export async function GET(request: Request) {
       conversations: conversations || [],
       dailyGoal: profile?.daily_goal || 5,
       targetLanguage: profile?.target_language || "shona",
-      level: getUserLevel(userProgress || []),
+      level: userLevel,
     }
 
     // Calculate scores for each phrase based on filter
@@ -217,10 +220,17 @@ function calculatePersonalizedScores(phrases: any[], context: any): Recommendati
       reasons.push("matches_ai_practice")
     }
 
-    // 7. Level appropriateness
-    if (context.level === "beginner" && (phrase.category === "greetings" || phrase.category === "basics")) {
-      score += 10
+    // 7. Level appropriateness (using learning standards)
+    const levelScore = evaluatePhraseForLevel(
+      { category: phrase.category, english: phrase.english },
+      context.level
+    )
+    const levelBonus = Math.floor((levelScore - 50) / 5) // Convert 0-100 score to -10 to +10 bonus
+    score += levelBonus
+    if (levelBonus > 0) {
       reasons.push("level_appropriate")
+    } else if (levelBonus < 0) {
+      reasons.push("too_advanced")
     }
 
     return {
@@ -304,13 +314,17 @@ function calculateNewLearnerScores(phrases: any[], context: any): Recommendation
     let score = 50
     const reasons: string[] = ["new_learner"]
 
-    // Prioritize essential categories
-    if (phrase.category === "greetings") {
-      score += 30
-      reasons.push("essential_greetings")
-    } else if (phrase.category === "basics" || phrase.category === "common-phrases") {
-      score += 20
-      reasons.push("essential_basics")
+    // Use learning standards to evaluate beginner appropriateness
+    const levelScore = evaluatePhraseForLevel(
+      { category: phrase.category, english: phrase.english },
+      "beginner"
+    )
+
+    // Convert level score to bonus points (heavily weighted for beginners)
+    const levelBonus = Math.floor((levelScore - 50) / 3) // -16 to +16 bonus
+    score += levelBonus
+    if (levelBonus > 10) {
+      reasons.push("perfect_for_beginners")
     }
 
     // Already learned? Lower priority
@@ -343,11 +357,6 @@ function calculateNewLearnerScores(phrases: any[], context: any): Recommendation
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
-
-function getUserLevel(progress: any[]): "beginner" | "intermediate" | "advanced" {
-  const masteredCount = progress.filter((p) => p.status === "mastered").length
-
-  if (masteredCount < 20) return "beginner"
-  if (masteredCount < 50) return "intermediate"
-  return "advanced"
-}
+//
+// Note: getUserLevel() is now imported from @/lib/learning-standards
+// All level-based calculations use the learning standards system

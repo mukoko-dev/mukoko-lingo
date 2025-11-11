@@ -115,6 +115,7 @@ export function AppSidebar() {
       { id: "admin-users", label: "Users", href: "/admin/users", icon: Users },
       { id: "admin-phrases", label: "Phrases", href: "/admin/phrases", icon: BookOpen },
       { id: "admin-standards", label: "Standards", href: "/admin/standards", icon: GraduationCap },
+      { id: "admin-guardrails", label: "Guardrails", href: "/admin/guardrails", icon: Shield },
       {
         id: "admin-moderation",
         label: "Moderation",
@@ -221,27 +222,27 @@ export function AppSidebar() {
 
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-background/95 backdrop-blur-md z-40 lg:hidden"
+          className="fixed inset-0 bg-background z-40 lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen bg-background border-r transition-all duration-300",
+          "fixed top-0 left-0 z-40 h-screen bg-card border-r transition-all duration-300",
           "hidden lg:flex lg:flex-col",
           isCollapsed ? "w-16" : "w-64",
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-center px-4 py-4 border-b bg-background">
+          <div className="flex items-center justify-center px-4 py-4 border-b bg-card">
             <Link href="/" className="flex items-center justify-center">
               {!isCollapsed && mounted && (
                 <Image
                   src={resolvedTheme === "dark" ? "/Nyuchi_Lingo_dark.png" : "/Nyuchi_Lingo_light.png"}
                   alt="Nyuchi Lingo"
-                  width={180}
-                  height={90}
+                  width={120}
+                  height={60}
                   className="object-contain"
                   priority
                 />
@@ -300,13 +301,13 @@ export function AppSidebar() {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-screen w-64 bg-background border-r transition-transform duration-300 ease-in-out",
+          "fixed top-0 left-0 z-50 h-screen w-64 bg-card border-r transition-transform duration-300 ease-in-out",
           "lg:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between px-4 py-4 border-b bg-background">
+          <div className="flex items-center justify-between px-4 py-4 border-b bg-card">
             <Link href="/" className="flex items-center" onClick={() => setIsMobileOpen(false)}>
               {mounted && (
                 <Image

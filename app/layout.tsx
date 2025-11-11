@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Noto_Serif } from "next/font/google"
+import { Noto_Serif, Noto_Sans, Poppins } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import Script from "next/script"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -9,17 +9,28 @@ import { DevModeBanner } from "@/components/dev-mode-banner"
 import { SidebarProvider } from "@/lib/contexts/sidebar-context"
 import "./globals.css"
 
-const inter = Inter({
+// Display & Titles - Noto Serif
+const notoSerif = Noto_Serif({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+  weight: ["400", "600", "700", "900"],
+})
+
+// Headings (H1-H6) - Poppins
+const poppins = Poppins({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+})
+
+// Body Text & UI - Noto Sans
+const notoSans = Noto_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
-})
-
-const notoSerif = Noto_Serif({
-  subsets: ["latin"],
-  variable: "--font-serif",
-  display: "swap",
-  weight: ["400", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 })
 
 export const metadata: Metadata = createMetadata()
@@ -35,7 +46,7 @@ export default function RootLayout({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationSchema) }} />
       </head>
-      <body className={`${inter.variable} ${notoSerif.variable} font-sans antialiased`}>
+      <body className={`${notoSans.variable} ${poppins.variable} ${notoSerif.variable} font-sans antialiased`}>
         <div className="flag-strip" aria-hidden="true" />
         <DevModeBanner />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>

@@ -5,6 +5,11 @@
 
 /* Nyuchi Brand Colors v3.0 - Warm Purple, Army Green, Sunset Gold */
 :root {
+  /* Typography - Noto Serif + Poppins + Noto Sans */
+  --font-display: 'Noto Serif', serif;      /* Display & Titles (72px/900) */
+  --font-heading: 'Poppins', sans-serif;    /* Headings H1-H6 (48px-20px/700-600) */
+  --font-body: 'Noto Sans', sans-serif;     /* Body text & UI (16px/400) */
+
   /* Light Theme - Nyuchi Brand Colors */
   /* Primary: Warm Purple (Nyuchi Africa) */
   --purple-primary-light: #5f5873;
@@ -40,31 +45,32 @@
   --gray-100-light: #f7fafc;
 
   /* Base Theme Variables - Light */
-  --background: 247 250 252;        /* #f7fafc */
-  --foreground: 26 26 26;           /* #1a1a1a */
-  --card: 250 250 250;              /* #fafafa */
-  --card-foreground: 26 26 26;      /* #1a1a1a */
-  --popover: 250 250 250;           /* #fafafa */
-  --popover-foreground: 26 26 26;   /* #1a1a1a */
+  --background: 250 249 245;        /* #faf9f5 - Warm off-white, no glare */
+  --foreground: 42 42 42;           /* #2a2a2a - Softer black */
+  --card: 255 255 255;              /* #ffffff - Bright white for depth */
+  --card-foreground: 42 42 42;      /* #2a2a2a */
+  --popover: 255 255 255;           /* #ffffff */
+  --popover-foreground: 42 42 42;   /* #2a2a2a */
   --primary: 95 88 115;             /* #5f5873 - Warm Purple */
   --primary-foreground: 255 255 255; /* #ffffff */
   --secondary: 114 155 99;          /* #729B63 - Army Green */
   --secondary-foreground: 255 255 255; /* #ffffff */
-  --muted: 229 231 235;             /* #e5e7eb */
-  --muted-foreground: 102 102 102;  /* #666666 */
-  --accent: 246 173 85;             /* #F6AD55 - Sunset Gold */
-  --accent-foreground: 26 26 26;    /* #1a1a1a */
+  --muted: 237 238 241;             /* #edeef1 - Softer muted */
+  --muted-foreground: 115 115 115;  /* #737373 - Less harsh gray */
+  --accent: 212 99 74;              /* #d4634a - Sunset Deep */
+  --accent-foreground: 255 255 255; /* #ffffff */
   --destructive: 239 68 68;         /* #ef4444 */
   --destructive-foreground: 255 255 255; /* #ffffff */
-  --border: 224 224 224;            /* #e0e0e0 */
-  --input: 224 224 224;             /* #e0e0e0 */
+  --border: 232 232 232;            /* #e8e8e8 - Softer border */
+  --input: 232 232 232;             /* #e8e8e8 - Softer input */
   --ring: 95 88 115;                /* #5f5873 - Warm Purple */
   --chart-1: 114 155 99;            /* Army Green */
   --chart-2: 95 88 115;             /* Warm Purple */
   --chart-3: 246 173 85;            /* Sunset Gold */
   --chart-4: 59 130 246;            /* Blue */
   --chart-5: 249 115 22;            /* Orange */
-  --radius: 0.625rem;               /* 10px (Claude-style) */
+  --radius: 0.75rem;                /* 12px - Anthropic card radius */
+  --radius-button: 0.5rem;          /* 8px - Anthropic button radius */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -111,24 +117,24 @@
   --gray-100-dark: #1a1a1a;
 
   /* Base Theme Variables - Dark */
-  --background: 26 26 26;           /* #1a1a1a */
-  --foreground: 250 250 250;        /* #fafafa */
-  --card: 42 42 42;                 /* #2a2a2a */
-  --card-foreground: 250 250 250;   /* #fafafa */
-  --popover: 42 42 42;              /* #2a2a2a */
-  --popover-foreground: 250 250 250; /* #fafafa */
+  --background: 20 20 19;           /* #141413 - Anthropic dark, almost black */
+  --foreground: 250 249 245;        /* #faf9f5 - Warmer white */
+  --card: 26 26 26;                 /* #1a1a1a - Lighter than background for elevation */
+  --card-foreground: 240 240 240;   /* #f0f0f0 */
+  --popover: 26 26 26;              /* #1a1a1a */
+  --popover-foreground: 240 240 240; /* #f0f0f0 */
   --primary: 124 115 230;           /* #7c73e6 - Ubuntu Blue */
   --primary-foreground: 255 255 255; /* #ffffff */
   --secondary: 143 180 127;         /* #8FB47F - Lighter Army Green */
-  --secondary-foreground: 26 26 26; /* #1a1a1a */
-  --muted: 74 69 96;                /* #4a4560 */
-  --muted-foreground: 203 197 216;  /* #cbc5d8 */
-  --accent: 246 173 85;             /* #F6AD55 - Sunset Gold */
-  --accent-foreground: 26 26 26;    /* #1a1a1a */
+  --secondary-foreground: 16 16 16; /* #101010 - Match new background */
+  --muted: 52 52 52;                /* #343434 - Softer muted */
+  --muted-foreground: 180 180 180;  /* #b4b4b4 - Less harsh */
+  --accent: 212 99 74;              /* #d4634a - Sunset Deep */
+  --accent-foreground: 16 16 16;    /* #101010 */
   --destructive: 220 38 38;         /* #dc2626 */
   --destructive-foreground: 255 255 255; /* #ffffff */
-  --border: 74 69 96;               /* #4a4560 */
-  --input: 74 69 96;                /* #4a4560 */
+  --border: 52 52 52;               /* #343434 - Softer border */
+  --input: 52 52 52;                /* #343434 - Softer input */
   --ring: 124 115 230;              /* #7c73e6 - Ubuntu Blue */
   --chart-1: 143 180 127;           /* Army Green */
   --chart-2: 124 115 230;           /* Ubuntu Blue */
@@ -363,6 +369,15 @@
     @apply transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-lg;
   }
 
+  /* Anthropic Hover Effects */
+  .hover-lift-button {
+    @apply transition-all duration-200 ease-out hover:-translate-y-[3px];
+  }
+
+  .hover-lift-card {
+    @apply transition-all duration-300 ease-out hover:-translate-y-[8px];
+  }
+
   .focus-glow {
     @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
@@ -377,6 +392,77 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+
+  /* Solid backgrounds for overlays and interactive elements */
+  .solid-background {
+    background-color: rgb(var(--background));
+  }
+
+  .solid-card {
+    background-color: rgb(var(--card));
+  }
+
+  .solid-popover {
+    background-color: rgb(var(--popover));
+  }
+
+  /* Anthropic Design System Shadows */
+  .shadow-card {
+    box-shadow: 0 4px 20px rgba(20, 20, 19, 0.08);
+  }
+
+  .shadow-card-hover {
+    box-shadow: 0 8px 30px rgba(20, 20, 19, 0.15);
+  }
+
+  .shadow-button {
+    box-shadow: 0 2px 8px rgba(20, 20, 19, 0.08);
+  }
+
+  .shadow-button-hover {
+    box-shadow: 0 4px 16px rgba(20, 20, 19, 0.12);
+  }
+
+  /* Dark mode shadows (lighter) */
+  .dark .shadow-card {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .shadow-card-hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  .dark .shadow-button {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .shadow-button-hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Force solid backgrounds on all interactive overlays */
+[role="dialog"],
+[role="menu"],
+[role="listbox"],
+[role="tooltip"],
+.dropdown-content,
+.popover-content,
+.dialog-content,
+.sheet-content {
+  background-color: rgb(var(--card)) !important;
+  backdrop-filter: none !important;
+}
+
+/* Ensure sidebar has solid background */
+.sidebar {
+  background-color: rgb(var(--sidebar)) !important;
+  backdrop-filter: none !important;
+}
+
+/* Ensure cards are always solid */
+.card {
+  background-color: rgb(var(--card)) !important;
 }
 
 .flag-strip {

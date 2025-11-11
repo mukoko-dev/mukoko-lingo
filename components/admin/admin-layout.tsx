@@ -9,12 +9,12 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   return (
-    <div className="flex min-h-screen">
+    <div className="min-h-screen bg-background">
       <AppSidebar />
       <SidebarLayout>
-        <main className="container mx-auto px-4 py-12 max-w-6xl">
+        <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6 max-w-6xl">
           {children}
-        </main>
+        </div>
       </SidebarLayout>
     </div>
   )

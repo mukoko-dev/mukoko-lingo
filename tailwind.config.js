@@ -34,11 +34,11 @@ module.exports = {
       // ====================
       colors: {
         // Base semantic colors (shadcn/ui structure)
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        border: "rgb(var(--border))",
+        input: "rgb(var(--input))",
+        ring: "rgb(var(--ring))",
+        background: "rgb(var(--background))",
+        foreground: "rgb(var(--foreground))",
         
         // Primary - Warm Purple (Nyuchi Africa)
         primary: {
@@ -76,38 +76,54 @@ module.exports = {
           900: '#32442d',
         },
         
-        // Accent - Sunset Gold
+        // Accent - Sunset Deep
         accent: {
-          DEFAULT: "#F6AD55",
-          foreground: "#1a1a1a",
-          50: '#fef8f0',
-          100: '#feefd9',
-          200: '#fddbb2',
-          300: '#fbc181',
-          400: '#f99d4e',
-          500: '#F6AD55',
-          600: '#f47420',
-          700: '#d95d16',
-          800: '#b04a16',
-          900: '#8f3e17',
+          DEFAULT: "#d4634a",
+          foreground: "#ffffff",
+          50: '#fef5f3',
+          100: '#fde8e3',
+          200: '#fbd0c7',
+          300: '#f7aea0',
+          400: '#f18d79',
+          500: '#d4634a',
+          600: '#c54f37',
+          700: '#a4412e',
+          800: '#843428',
+          900: '#6b2b22',
         },
-        
+
+        // Warm Brown - Cultural Context
+        'warm-brown': {
+          DEFAULT: "#8B7355",
+          foreground: "#ffffff",
+          50: '#f9f7f5',
+          100: '#f0ebe6',
+          200: '#e0d6cc',
+          300: '#cdb9a8',
+          400: '#b69a81',
+          500: '#8B7355',
+          600: '#765f47',
+          700: '#604d3a',
+          800: '#4d3e2f',
+          900: '#3f3327',
+        },
+
         // Semantic colors
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "rgb(var(--destructive))",
+          foreground: "rgb(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "rgb(var(--muted))",
+          foreground: "rgb(var(--muted-foreground))",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "rgb(var(--popover))",
+          foreground: "rgb(var(--popover-foreground))",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "rgb(var(--card))",
+          foreground: "rgb(var(--card-foreground))",
         },
         
         // Status colors
@@ -152,7 +168,7 @@ module.exports = {
           'army-green': '#729B63',
           'army-green-dark': '#8FB47F',
           'warm-brown': '#8B7355',
-          'sunset-gold': '#F6AD55',
+          'sunset-deep': '#d4634a',
           'wisdom-dark': '#1a1a1a',
         },
 
@@ -304,10 +320,30 @@ module.exports = {
       },
       
       // ====================
-      // TYPOGRAPHY - Noto Serif + Inter
+      // TYPOGRAPHY - Noto Serif + Poppins + Noto Sans
       // ====================
       fontFamily: {
-        // Headings - Noto Serif (800+ languages)
+        // Display & Titles - Noto Serif (800+ languages)
+        display: [
+          'Noto Serif',
+          'Georgia',
+          'Cambria',
+          'Times New Roman',
+          'Times',
+          'serif',
+        ],
+        // Headings (H1-H6) - Poppins
+        heading: [
+          'Poppins',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'Helvetica Neue',
+          'Arial',
+          'sans-serif',
+        ],
+        // Legacy serif support
         serif: [
           'Noto Serif',
           'Georgia',
@@ -316,9 +352,9 @@ module.exports = {
           'Times',
           'serif',
         ],
-        // Body & UI - Inter
+        // Body Text & UI - Noto Sans
         sans: [
-          'Inter',
+          'Noto Sans',
           '-apple-system',
           'BlinkMacSystemFont',
           'Segoe UI',

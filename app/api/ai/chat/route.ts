@@ -2,6 +2,7 @@ import { streamText } from "ai"
 import { createServerClient } from "@/lib/supabase/server"
 import { moderateContent } from "@/lib/ai/moderation"
 import { haiku } from "@/lib/ai/config"
+import { buildAISystemPrompt } from "@/lib/learning-standards"
 
 export const maxDuration = 30
 
@@ -78,19 +79,8 @@ export async function POST(req: Request) {
       convId = newConv?.id
     }
 
-    // Build system prompt based on type
-    let systemPrompt = ""
-    switch (type) {
-      case "practice":
-        systemPrompt = `You are a friendly language tutor helping users practice ${language}. Respond in ${language} and provide translations when helpful. Be encouraging and correct mistakes gently.`
-        break
-      case "scenario":
-        systemPrompt = `You are simulating a real-world conversation scenario in ${language}. Stay in character and make it realistic. Use common African phrases and cultural context.`
-        break
-      case "translation_help":
-        systemPrompt = `You are a translation expert for English, Shona, Ndebele, and Chinese. Explain nuances, common mistakes, and cultural context. Be detailed and educational.`
-        break
-    }
+    // Build system prompt using learning standards
+    const systemPrompt = await buildAISystemPrompt(user.id, type, language)
 
     const result = streamText({
       model: haiku,

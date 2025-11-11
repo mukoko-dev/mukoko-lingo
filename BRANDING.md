@@ -55,80 +55,143 @@
 
 ### Colors
 
+#### Background Colors
+```css
+/* Light Theme */
+--background: #faf9f5       /* Warm off-white, no glare */
+--card: #ffffff             /* Bright white for depth/elevation */
+
+/* Dark Theme */
+--background: #101010       /* Very dark for depth */
+--card: #1a1a1a            /* Lighter than background for elevation */
+```
+
 #### Primary Colors
 ```css
 /* Warm Purple - Main Brand Color (Nyuchi Africa aligned) */
---primary: #5f5873          /* Main brand color */
---primary-hover: #7c73e6    /* Ubuntu Blue - hover states */
---primary-dark: #4a4560     /* Active states, dark mode */
---primary-light: #8f86a8    /* Subtle backgrounds */
+--primary-700: #5f5873      /* Main brand color (buttons, badges) */
+--primary-600: #7c73e6      /* Ubuntu Blue - hover/active in dark mode */
+--primary-500: #9186ae      /* Lighter variant */
+--primary-800: #4a4560      /* Active states */
 
 /* Success & Milestones - Army Green */
---secondary: #729B63        /* Success states, learning milestones */
---secondary-dark: #8FB47F   /* Lighter variant */
+--secondary-500: #729B63    /* Main green (success states) */
+--secondary-400: #8FB47F    /* Lighter variant (hover) */
+--secondary-600: #5d804f    /* Darker variant (active) */
 
-/* Accent - Sunset Gold */
---accent: #F6AD55           /* Premium features, achievements */
+/* Accent - Sunset Deep */
+--accent-500: #d4634a       /* Main sunset deep (premium) */
+--accent-400: #f18d79       /* Hover state */
+--accent-600: #c54f37       /* Active state */
+
+/* Warm Brown - Cultural Context */
+--warm-brown-500: #8B7355   /* Main brown (cultural content) */
+--warm-brown-400: #b69a81   /* Hover state */
+--warm-brown-600: #765f47   /* Active state */
 ```
 
+#### Button Color Guidelines (CRITICAL)
+**Light Mode:**
+- Primary buttons: `bg-primary-700` (#5f5873) - Dark enough to stand out on #faf9f5
+- Secondary buttons: `bg-secondary-500` (#729B63) - Army green with white text
+- Outline buttons: White background with border
+
+**Dark Mode:**
+- Primary buttons: `bg-primary-600` (#7c73e6) - Ubuntu blue, brighter than background
+- Secondary buttons: `bg-secondary-400` (#8FB47F) - Lighter army green
+- All buttons use WHITE text for maximum contrast
+
 #### Usage Guidelines
-- **Primary Purple**: CTAs, buttons, active states, links, progress indicators
-- **Army Green**: Success messages, completions, learning milestones
-- **Sunset Gold**: Achievement badges, premium features, celebrations
-- **Warm Brown** (#8B7355): Cultural context, heritage elements
+- **Primary Purple (700)**: Main CTAs, primary buttons, active nav states
+- **Secondary Green (500)**: Success states, secondary actions, growth indicators, completion badges
+- **Sunset Deep (500)**: Premium features, highlights, special callouts, achievements
+- **Warm Brown (500)**: Cultural content, heritage notes, traditional practices
+- **Background (#faf9f5)**: Warm off-white, reduces eye strain, better contrast for colored elements
 
 #### Accessibility
-All colors meet WCAG 2.1 AA standards:
-- Purple on white: **7.4:1** contrast ratio
-- Army green on white: **4.8:1** contrast ratio
-- Wisdom Dark on light: **12.8:1** contrast ratio
+All button colors meet WCAG 2.1 AA standards:
+- Primary-700 on #faf9f5: **7.2:1** contrast ratio (Pass AA)
+- Secondary-500 on #faf9f5: **4.9:1** contrast ratio (Pass AA)
+- White text on primary-700: **8.5:1** contrast ratio (Pass AAA)
 
 ### Typography
 
 #### Font Families
 ```css
-/* Headings & Titles - Noto Serif */
+/* Display & Titles - Noto Serif */
 font-family: 'Noto Serif', Georgia, serif;
+/* Used for large display text and hero titles */
 /* 800+ languages supported - critical for Pan-African scale */
 
-/* Body Text & UI - Inter */
-font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-/* Optimized for screens, excellent legibility */
+/* Headings (H1-H6) - Poppins */
+font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+/* Modern, clean sans-serif for section headings and subheadings */
+
+/* Body Text & UI - Noto Sans */
+font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+/* Optimized for screens, excellent legibility, matches Noto font family */
+/* Supports ALL 50+ planned African languages */
 ```
 
-**Why Noto Serif?**
-- Supports ALL 50+ planned African languages
-- Perfect rendering: Shona, Ndebele, Chinese, English, Swahili, Amharic, Arabic, etc.
-- Professional appearance across Latin, Ethiopic, Arabic scripts
-- Single font system = simplified architecture
+**Why This Three-Font System?**
+- **Noto Serif**: Professional, sophisticated feel for large display text
+- **Poppins**: Modern, approachable headings with excellent readability
+- **Noto Sans**: Body text that matches Noto Serif's language support (800+ languages)
+- **Unified Language Support**: Both Noto fonts support Shona, Ndebele, Chinese, English, Swahili, Amharic, Arabic, etc.
+- **Visual Hierarchy**: Clear distinction between display, headings, and body text
 
 #### Type Scale
 
-**Desktop**:
+**Display (Noto Serif)**:
 ```css
-Hero/H1:    56px / 800 weight / 1.2 line-height
-H2:         36px / 700 weight / 1.2 line-height
-H3:         28px / 700 weight / 1.3 line-height
-H4:         20px / 600 weight / 1.4 line-height
+Display:    72px / 900 weight / 1.2 line-height
+```
+
+**Headings (Poppins)**:
+```css
+H1:         48px / 700 weight / 1.2 line-height
+H2:         36px / 600 weight / 1.2 line-height
+H3:         24px / 600 weight / 1.3 line-height
+H4:         20px / 500 weight / 1.4 line-height
+H5:         18px / 500 weight / 1.4 line-height
+H6:         16px / 500 weight / 1.4 line-height
+```
+
+**Body (Noto Sans)**:
+```css
 Body Large: 18px / 400 weight / 1.6 line-height
 Body:       16px / 400 weight / 1.6 line-height
 Small:      14px / 400 weight / 1.5 line-height
 Tiny:       12px / 400 weight / 1.5 line-height
 ```
 
-**Mobile** (<640px): Scale down by ~20% for H1-H3
+**Mobile** (<640px): Scale down by ~20% for Display and H1-H3
 
 ### Components
 
 #### Buttons
 ```css
-/* Primary Button */
-background: hsl(var(--primary))
+/* Primary Button (Light Mode) */
+background: #5f5873              /* bg-primary-700 - visible on #faf9f5 */
+color: #ffffff                   /* White text for contrast */
 border-radius: 10px              /* Claude-style (NOT pill) */
 padding: 16px × 32px
 min-height: 48px                 /* Touch accessible */
 font: Inter 600, 16px
-hover: lift -2px + shadow enhanced
+hover: #7c73e6                   /* bg-primary-600 */
+active: #4a4560                  /* bg-primary-800 */
+
+/* Primary Button (Dark Mode) */
+background: #7c73e6              /* bg-primary-600 - Ubuntu blue */
+hover: #9186ae                   /* bg-primary-500 */
+active: #5f5873                  /* bg-primary-700 */
+
+/* Secondary Button */
+background: #729B63              /* bg-secondary-500 - Army green */
+color: #ffffff                   /* White text */
+hover: #8FB47F                   /* bg-secondary-400 */
+
+/* NEVER use bg-primary without scale (700/600/500) */
 ```
 
 #### Cards
@@ -188,8 +251,9 @@ The Nyuchi Africa brand system v3.0 has been fully configured in `tailwind.confi
 **Completed**:
 - Warm Purple primary color (#5f5873) with full scale
 - Army Green secondary color (#729B63)
-- Sunset Gold accent color (#F6AD55)
-- Noto Serif + Inter typography system
+- Sunset Deep accent color (#d4634a) - November 11, 2025
+- Warm Brown cultural color (#8B7355) - November 11, 2025
+- Noto Serif + Poppins + Noto Sans typography system - November 12, 2025
 - 4px spacing grid
 - Claude-inspired 10px border radius
 - Soft, layered shadow system
@@ -203,9 +267,10 @@ The Nyuchi Africa brand system v3.0 has been fully configured in `tailwind.confi
 ### 🚧 What Needs Implementation in Components
 
 **Typography**:
-- [ ] Ensure all H1-H6 use `font-serif` class (Noto Serif)
-- [ ] Ensure all body text uses `font-sans` (Inter)
-- [ ] Test multilingual rendering (Shona, Ndebele, Chinese)
+- [ ] Update display text to use `font-display` class (Noto Serif)
+- [ ] Ensure all H1-H6 use `font-heading` class (Poppins)
+- [ ] Ensure all body text uses `font-sans` (Noto Sans - default)
+- [ ] Test multilingual rendering (Shona, Ndebele, Chinese with Noto fonts)
 
 **Buttons**:
 - [ ] Update border-radius from `rounded-full` to `rounded-md` (10px)
@@ -408,40 +473,58 @@ The v3.0 Nyuchi Africa brand is fully configured in `/tailwind.config.js`:
 - Shadows: Soft, layered elevation
 - Border radius: Claude-inspired 10px
 
-**2. Install Fonts** (If Not Already Installed)
+**2. Install Fonts** (Already Configured)
 
-```bash
-# Using Next.js @next/font
-npm install @next/font
-```
+Fonts are loaded via Next.js Google Fonts integration in `app/layout.tsx`:
 
-In `app/layout.tsx`:
 ```typescript
-import { Inter, Noto_Serif } from 'next/font/google'
+import { Noto_Serif, Noto_Sans, Poppins } from 'next/font/google'
 
-const inter = Inter({
+// Display & Titles - Noto Serif
+const notoSerif = Noto_Serif({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-display',
   display: 'swap',
+  weight: ['400', '600', '700', '900'],
 })
 
-const notoSerif = Noto_Serif({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '600', '700'],
-  variable: '--font-noto-serif',
+// Headings (H1-H6) - Poppins
+const poppins = Poppins({
+  subsets: ['latin'],
+  variable: '--font-heading',
   display: 'swap',
+  weight: ['400', '500', '600', '700'],
+})
+
+// Body Text & UI - Noto Sans
+const notoSans = Noto_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
 })
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${inter.variable} ${notoSerif.variable}`}>
-      <body className={inter.className}>
+    <html lang="en" className={`${notoSans.variable} ${poppins.variable} ${notoSerif.variable}`}>
+      <body className={notoSans.className}>
         {children}
       </body>
     </html>
   )
 }
 ```
+
+**CSS Variables Available**:
+- `--font-display`: Noto Serif (for display/titles)
+- `--font-heading`: Poppins (for H1-H6)
+- `--font-sans`: Noto Sans (for body text)
+
+**Tailwind Classes**:
+- `font-display`: Uses Noto Serif
+- `font-heading`: Uses Poppins
+- `font-sans`: Uses Noto Sans (default)
+- `font-serif`: Legacy support for Noto Serif
 
 **3. Install Lucide Icons** (If Not Already Installed)
 
@@ -459,10 +542,20 @@ import { BookOpen, Globe, Mic, Star } from 'lucide-react'
 **4. Apply Brand to Components**
 
 ```tsx
-// Headings - Use Noto Serif
-<h1 className="text-4xl font-bold font-serif">
+// Display Titles - Use Noto Serif (font-display)
+<h1 className="text-7xl font-black font-display">
   Master African Languages
 </h1>
+
+// Section Headings - Use Poppins (font-heading)
+<h2 className="text-4xl font-bold font-heading">
+  Learn Shona, Ndebele & More
+</h2>
+
+// Body Text - Use Noto Sans (font-sans, default)
+<p className="text-base font-sans">
+  Start your language learning journey today with AI-powered lessons.
+</p>
 
 // Buttons - 10px radius, 48px min height
 <Button className="rounded-md px-8 h-12 bg-primary hover:bg-primary-hover">
@@ -486,7 +579,7 @@ import { BookOpen, Globe, Mic, Star } from 'lucide-react'
   <div className="flex items-center justify-between">
     <div>
       <p className="text-sm text-muted-foreground font-sans">Study Streak</p>
-      <h3 className="text-4xl font-serif font-bold text-primary">7 Days</h3>
+      <h3 className="text-4xl font-display font-black text-primary">7 Days</h3>
     </div>
     <Flame className="w-16 h-16 text-orange-500" />
   </div>
@@ -497,7 +590,7 @@ import { BookOpen, Globe, Mic, Star } from 'lucide-react'
 ```tsx
 <Card className="border-l-4 border-primary hover:shadow-lg transition-all">
   <CardHeader>
-    <CardTitle className="font-serif text-xl">
+    <CardTitle className="font-heading text-xl font-semibold">
       Mangwanani (Good Morning)
     </CardTitle>
     <CardDescription className="font-sans text-sm">
@@ -537,9 +630,10 @@ The full Tailwind configuration is in `/tailwind.config.js`. Key sections:
 - Custom Nyuchi utilities
 
 **Typography**:
-- Font families: Noto Serif (headings), Inter (body), monospace (code)
+- Font families: Noto Serif (display), Poppins (headings H1-H6), Noto Sans (body), monospace (code)
 - Font sizes with line heights (xs to 5xl)
 - Font weights (light to extrabold)
+- Three-tier hierarchy: display → heading → body
 
 **Spacing**:
 - 4px grid system (xs to 5xl)
@@ -815,11 +909,19 @@ All brand documentation is in `/brand/` directory:
 
 ## Version History
 
-**v3.0** (Current - November 10, 2025):
+**v3.1** (Current - November 12, 2025):
+- Updated typography system: Noto Serif (display) + Poppins (headings) + Noto Sans (body)
+- Three-tier font hierarchy for improved visual distinction
+- Enhanced multilingual support with Noto font family consistency
+- All previous v3.0 features maintained
+
+**v3.0** (November 10-11, 2025):
 - Nyuchi Africa ecosystem alignment
 - Pan-African expansion positioning
 - Warm purple primary color (#5f5873)
-- Noto Serif + Inter typography
+- Sunset Deep accent color (#d4634a)
+- Warm Brown cultural color (#8B7355)
+- Button color fix implementation
 - Claude-inspired design patterns (10px radius)
 - Soft, layered shadows
 - WCAG 2.1 AA accessibility

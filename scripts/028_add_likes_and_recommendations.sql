@@ -280,7 +280,7 @@ SELECT
   COUNT(DISTINCT b.id) as bookmark_count,
   COALESCE(SUM(pp.times_practiced), 0)::INTEGER as practice_count,
   COUNT(DISTINCT pp.id) FILTER (WHERE pp.status = 'mastered') as mastery_count,
-  GREATEST(MAX(b.created_at), MAX(pp.updated_at)) as last_engaged_at,
+  GREATEST(MAX(b.created_at), MAX(pp.created_at)) as last_engaged_at,
   NOW() as updated_at
 FROM bookmarks b
 FULL OUTER JOIN phrase_progress pp ON b.phrase_id = pp.phrase_id
