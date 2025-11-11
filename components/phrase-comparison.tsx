@@ -3,27 +3,36 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Volume2, Bookmark, Check } from "lucide-react"
+import { Volume2, Bookmark, Check, Heart } from "lucide-react"
 import type { Phrase } from "@/lib/phrases-data"
 import { translations, type UILanguage } from "@/lib/translations"
 import { createClient } from "@/lib/supabase/client"
+import { cn } from "@/lib/utils"
 
 interface PhraseComparisonProps {
   phrase: Phrase
   isBookmarked: boolean
+  isLiked?: boolean
   onToggleBookmark: () => void
+  onToggleLike?: () => void
   uiLanguage: UILanguage
   progressStatus?: "learning" | "practiced" | "mastered" | null
   onProgressUpdate?: (status: "learning" | "practiced" | "mastered") => void
+  likeCount?: number
+  compact?: boolean
 }
 
 export function PhraseComparison({
   phrase,
   isBookmarked,
+  isLiked = false,
   onToggleBookmark,
+  onToggleLike,
   uiLanguage,
   progressStatus,
   onProgressUpdate,
+  likeCount = 0,
+  compact = false,
 }: PhraseComparisonProps) {
   const t = translations[uiLanguage]
   const supabase = createClient()
@@ -96,13 +105,21 @@ export function PhraseComparison({
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <Badge variant="secondary" className="mb-1.5">
-            {t.categories[phrase.category as keyof typeof t.categories]}
-          </Badge>
-          <p className="text-sm text-muted-foreground">{phrase.context[uiLanguage]}</p>
+          <div className="flex items-center gap-2 mb-1.5">
+            <Badge variant="secondary">
+              {t.categories[phrase.category as keyof typeof t.categories]}
+            </Badge>
+            {likeCount > 0 && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Heart className="h-3 w-3 fill-rose-500 text-rose-500" />
+                <span className="text-xs">{likeCount}</span>
+              </Badge>
+            )}
+          </div>
+          {!compact && <p className="text-sm text-muted-foreground">{phrase.context[uiLanguage]}</p>}
         </div>
         <div className="flex items-center gap-2">
-          {onProgressUpdate && (
+          {onProgressUpdate && !compact && (
             <div className="flex items-center gap-1 mr-2">
               <Button
                 variant={progressStatus === "learning" ? "default" : "ghost"}
@@ -130,6 +147,17 @@ export function PhraseComparison({
                 <Check className="h-3 w-3" />
               </Button>
             </div>
+          )}
+          {onToggleLike && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleLike}
+              className={cn("transition-colors", isLiked && "text-rose-500")}
+              aria-label={isLiked ? "Unlike" : "Like"}
+            >
+              <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
+            </Button>
           )}
           <Button
             variant="ghost"

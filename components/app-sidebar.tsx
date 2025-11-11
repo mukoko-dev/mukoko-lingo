@@ -87,7 +87,7 @@ export function AppSidebar() {
       title: "Learn",
       items: [
         { id: "dashboard", label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
-        { id: "browse", label: "Browse Phrases", href: "/app/browse", icon: BookOpen },
+        { id: "learn", label: "Learn", href: "/app/learn", icon: BookOpen },
         { id: "ai-tutor", label: "AI Tutor", href: "/app/ai-practice", icon: Sparkles },
       ],
     },
@@ -221,20 +221,20 @@ export function AppSidebar() {
 
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-background/95 backdrop-blur-md z-40 lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen bg-accent/30 border-r transition-all duration-300",
+          "fixed top-0 left-0 z-40 h-screen bg-background border-r transition-all duration-300",
           "hidden lg:flex lg:flex-col",
           isCollapsed ? "w-16" : "w-64",
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-center px-4 py-4 border-b bg-background/50">
+          <div className="flex items-center justify-center px-4 py-4 border-b bg-background">
             <Link href="/" className="flex items-center justify-center">
               {!isCollapsed && mounted && (
                 <Image
@@ -300,13 +300,13 @@ export function AppSidebar() {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen w-64 bg-accent/30 border-r transition-transform duration-300 ease-in-out",
+          "fixed top-0 left-0 z-50 h-screen w-64 bg-background border-r transition-transform duration-300 ease-in-out",
           "lg:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between px-4 py-4 border-b bg-background/50">
+          <div className="flex items-center justify-between px-4 py-4 border-b bg-background">
             <Link href="/" className="flex items-center" onClick={() => setIsMobileOpen(false)}>
               {mounted && (
                 <Image

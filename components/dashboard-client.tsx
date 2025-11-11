@@ -137,7 +137,7 @@ export function DashboardClient({
 
           {/* Quick Actions */}
           <div className="grid sm:grid-cols-2 gap-4 mb-6">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer group" onClick={() => router.push("/app/browse")}>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group" onClick={() => router.push("/app/learn")}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between text-lg">
                   <span className="flex items-center gap-2">
@@ -146,7 +146,7 @@ export function DashboardClient({
                   </span>
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </CardTitle>
-                <CardDescription>Browse and learn phrases</CardDescription>
+                <CardDescription>Your personalized learning feed</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">

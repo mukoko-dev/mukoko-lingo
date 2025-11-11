@@ -1,11 +1,12 @@
 import { getUser, createClient } from "@/lib/supabase/server"
-import { BrowseClient } from "@/components/browse-client"
+import { LearnClient } from "@/components/learn-client"
 import type { Phrase } from "@/lib/phrases-data"
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
 
 export const metadata: Metadata = {
-  title: "Browse Phrases | Nyuchi Lingo",
-  description: "Browse and learn phrases in Shona, Ndebele, English, and Chinese",
+  title: "Learn | Nyuchi Lingo",
+  description: "Your personalized learning feed - phrases tailored to your goals and progress",
 }
 
 async function getPhrases(): Promise<Phrase[]> {
@@ -79,17 +80,41 @@ async function getUserProgress(): Promise<Record<string, "learning" | "practiced
   return map
 }
 
+async function getUserLikes(): Promise<string[]> {
+  const user = await getUser()
+
+  if (!user) {
+    return []
+  }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.from("phrase_likes").select("phrase_id").eq("user_id", user.id)
+
+  if (error) {
+    console.error("[v0] Error fetching likes:", error)
+    return []
+  }
+
+  return (data || []).map((row) => row.phrase_id)
+}
+
 async function getCurrentUser() {
   return await getUser()
 }
 
-export default async function BrowsePage() {
-  const [phrases, bookmarks, progressMap, user] = await Promise.all([
+export default async function LearnPage() {
+  const user = await getCurrentUser()
+
+  if (!user) {
+    redirect("/auth/login?redirect=/app/learn")
+  }
+
+  const [phrases, bookmarks, progressMap, likes] = await Promise.all([
     getPhrases(),
     getUserBookmarks(),
     getUserProgress(),
-    getCurrentUser(),
+    getUserLikes(),
   ])
 
-  return <BrowseClient initialPhrases={phrases} initialBookmarks={bookmarks} initialProgressMap={progressMap} user={user} />
+  return <LearnClient initialPhrases={phrases} initialBookmarks={bookmarks} initialProgressMap={progressMap} initialLikes={likes} user={user} />
 }
