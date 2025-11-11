@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Shield, CheckCircle, AlertTriangle, Brain, Users, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { MarketingLayout } from "@/components/marketing-layout"
 
 export const metadata = {
   title: "AI Policy - Nyuchi Lingo",
@@ -11,23 +12,8 @@ export const metadata = {
 
 export default function AIPolicyPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-              <Brain className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-serif font-bold text-foreground">AI Policy</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">Nyuchi Lingo</p>
-            </div>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/">Back to Home</Link>
-          </Button>
-        </div>
-      </header>
+    <MarketingLayout>
+      <div className="bg-gradient-to-br from-background via-background to-muted">
 
       <main className="container mx-auto px-3 sm:px-6 py-6 sm:py-10 max-w-5xl">
         <div className="text-center mb-6 sm:mb-10">
@@ -234,29 +220,7 @@ export default function AIPolicyPage() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t mt-8 sm:mt-16 py-5 sm:py-7 bg-muted/30">
-        <div className="container mx-auto px-3 sm:px-6 text-center text-xs sm:text-sm text-muted-foreground">
-          <p>© 2025 Nyuchi Learning. A Nyuchi Learning Initiative.</p>
-          <div className="flex gap-3 sm:gap-4 justify-center mt-3">
-            <Link href="/about" className="hover:text-foreground transition-colors">
-              About
-            </Link>
-            <Link href="/why" className="hover:text-foreground transition-colors">
-              Why
-            </Link>
-            <Link href="/ai-policy" className="hover:text-foreground transition-colors">
-              AI Policy
-            </Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">
-              Terms
-            </Link>
-            <Link href="/privacy" className="hover:text-foreground transition-colors">
-              Privacy
-            </Link>
-          </div>
-        </div>
-      </footer>
-    </div>
+      </div>
+    </MarketingLayout>
   )
 }

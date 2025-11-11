@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Languages, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { MarketingLayout } from "@/components/marketing-layout"
 
 export const metadata = {
   title: "Privacy Policy - Nyuchi Lingo",
@@ -9,23 +10,8 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-              <Languages className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Nyuchi Lingo</h1>
-              <p className="text-xs text-muted-foreground">Nyuchi Learning</p>
-            </div>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/">Back to Home</Link>
-          </Button>
-        </div>
-      </header>
+    <MarketingLayout>
+      <div className="bg-gradient-to-br from-background via-background to-muted">
 
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="text-center mb-12">
@@ -257,26 +243,7 @@ export default function PrivacyPage() {
           </div>
         </div>
       </main>
-
-      <footer className="border-t mt-20 py-8 bg-muted/30">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2025 Nyuchi Learning. A Nyuchi Learning Initiative.</p>
-          <div className="flex gap-4 justify-center mt-4">
-            <Link href="/about" className="hover:text-foreground transition-colors">
-              About
-            </Link>
-            <Link href="/why" className="hover:text-foreground transition-colors">
-              Why Nyuchi Lingo
-            </Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">
-              Terms
-            </Link>
-            <Link href="/privacy" className="hover:text-foreground transition-colors">
-              Privacy
-            </Link>
-          </div>
-        </div>
-      </footer>
-    </div>
+      </div>
+    </MarketingLayout>
   )
 }

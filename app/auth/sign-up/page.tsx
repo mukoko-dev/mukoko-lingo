@@ -104,6 +104,11 @@ export default function SignUpPage() {
                   Sign in
                 </Link>
               </div>
+              <div className="mt-2 text-center text-sm">
+                <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
+                  ← Go back to website
+                </Link>
+              </div>
             </form>
           </CardContent>
         </Card>

@@ -43,8 +43,8 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      console.log("[v0] Login successful, redirecting to homepage")
-      window.location.href = "/"
+      console.log("[v0] Login successful, redirecting to learn page")
+      window.location.href = "/app/learn"
     } catch (error: unknown) {
       console.error("[v0] Login error:", error)
       setError(error instanceof Error ? error.message : "An error occurred")
@@ -102,7 +102,12 @@ export default function LoginPage() {
               <div className="mt-4 text-center text-sm">
                 Don&apos;t have an account?{" "}
                 <Link href="/auth/sign-up" className="underline underline-offset-4 hover:text-primary">
-                  Sign up
+                  Create account
+                </Link>
+              </div>
+              <div className="mt-2 text-center text-sm">
+                <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
+                  ← Go back to website
                 </Link>
               </div>
             </form>
