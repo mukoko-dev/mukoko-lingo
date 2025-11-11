@@ -24,6 +24,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -83,24 +84,27 @@ export function AppSidebar() {
 
   const userSections: NavSection[] = [
     {
-      title: "Main",
+      title: "Learn",
       items: [
-        { id: "home", label: "Home", href: "/", icon: Home },
-        { id: "ai-practice", label: "AI Tutor", href: "/app/ai-practice", icon: MessageSquare },
-        { id: "ai-history", label: "Chat History", href: "/app/ai-history", icon: MessageSquare },
+        { id: "dashboard", label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
+        { id: "browse", label: "Browse Phrases", href: "/app/browse", icon: BookOpen },
+        { id: "ai-tutor", label: "AI Tutor", href: "/app/ai-practice", icon: Sparkles },
       ],
     },
     {
-      title: "Learning",
+      title: "Your Progress",
       items: [
         { id: "progress", label: "My Progress", href: "/app/progress", icon: TrendingUp },
-        { id: "bookmarks", label: "My Bookmarks", href: "/app/bookmarks", icon: Bookmark },
-        { id: "analytics", label: "Analytics", href: "/app/analytics", icon: BarChart3 },
+        { id: "bookmarks", label: "Saved Phrases", href: "/app/bookmarks", icon: Bookmark },
+        { id: "history", label: "Chat History", href: "/app/ai-history", icon: MessageSquare },
       ],
     },
     {
       title: "Account",
-      items: [{ id: "profile", label: "Profile Settings", href: "/app/profile", icon: Settings }],
+      items: [
+        { id: "analytics", label: "Analytics", href: "/app/analytics", icon: BarChart3 },
+        { id: "profile", label: "Settings", href: "/app/profile", icon: Settings },
+      ],
     },
   ]
 
