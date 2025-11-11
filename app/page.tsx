@@ -84,11 +84,11 @@ async function getCurrentUser() {
 export default async function Page() {
   const user = await getCurrentUser()
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to learn page
   if (user) {
     return (
       <script dangerouslySetInnerHTML={{
-        __html: `window.location.href = '/app/dashboard'`
+        __html: `window.location.href = '/app/learn'`
       }} />
     )
   }

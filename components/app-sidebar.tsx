@@ -86,9 +86,9 @@ export function AppSidebar() {
     {
       title: "Learn",
       items: [
-        { id: "dashboard", label: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
         { id: "learn", label: "Learn", href: "/app/learn", icon: BookOpen },
         { id: "ai-tutor", label: "AI Tutor", href: "/app/ai-practice", icon: Sparkles },
+        { id: "dashboard", label: "Portfolio", href: "/app/dashboard", icon: LayoutDashboard },
       ],
     },
     {
