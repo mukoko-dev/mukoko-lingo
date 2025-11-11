@@ -87,6 +87,7 @@ export function AppSidebar() {
       items: [
         { id: "home", label: "Home", href: "/", icon: Home },
         { id: "ai-practice", label: "AI Tutor", href: "/app/ai-practice", icon: MessageSquare },
+        { id: "ai-history", label: "Chat History", href: "/app/ai-history", icon: MessageSquare },
       ],
     },
     {

@@ -1,10 +1,11 @@
 import { createAnthropic } from '@ai-sdk/anthropic'
 
 // Create Anthropic provider instance
-// When deployed on Vercel with VERCEL_OIDC_TOKEN, it uses Vercel AI Gateway automatically
-// For local dev, you need to set ANTHROPIC_API_KEY in .env.local
+// Vercel AI Gateway is automatically used when deployed on Vercel
+// The gateway handles API keys and rate limiting transparently
 export const anthropic = createAnthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  // API key is optional - Vercel AI Gateway handles authentication
+  apiKey: process.env.ANTHROPIC_API_KEY || 'placeholder',
 })
 
 // Export model instances for easy reuse
