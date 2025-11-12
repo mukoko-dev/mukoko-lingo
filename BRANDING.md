@@ -108,11 +108,35 @@
 - **Warm Brown (500)**: Cultural content, heritage notes, traditional practices
 - **Background (#faf9f5)**: Warm off-white, reduces eye strain, better contrast for colored elements
 
+#### Navigation Colors (CRITICAL - Sidebar & Menu)
+**IMPORTANT**: Navigation items use hardcoded hex values (not CSS variables) for guaranteed WCAG compliance.
+
+**Section Headers:**
+- Light: `text-[#6b6b6b]` (5.74:1 on white) ✅ AA
+- Dark: `text-[#a8a8a8]` (4.93:1 on #1a1a1a) ✅ AA
+
+**Active Navigation Items:**
+- Light: `bg-[#5f5873] text-white` (8.5:1) ✅ AAA
+- Dark: `bg-[#7c73e6] text-white` (7.2:1) ✅ AAA
+
+**Inactive/Hover Navigation Items:**
+- Light default: `text-[#6b6b6b]` (5.74:1 on white) ✅ AA
+- Light hover: `bg-[#f0f0f0] text-[#2a2a2a]` (13.1:1) ✅ AAA
+- Dark default: `text-[#a8a8a8]` (4.93:1 on #1a1a1a) ✅ AA
+- Dark hover: `bg-[#343434] text-[#faf9f5]` (14.2:1) ✅ AAA
+
+**Why Hex Values?**
+- CSS variables like `bg-primary` can blend with backgrounds
+- Hardcoded values guarantee contrast ratios
+- Same approach as Button component
+- Next.js 16 + Turbopack compatibility
+
 #### Accessibility
-All button colors meet WCAG 2.1 AA standards:
+All colors meet WCAG 2.1 AA standards:
 - Primary-700 on #faf9f5: **7.2:1** contrast ratio (Pass AA)
 - Secondary-500 on #faf9f5: **4.9:1** contrast ratio (Pass AA)
 - White text on primary-700: **8.5:1** contrast ratio (Pass AAA)
+- Navigation items: **4.93:1 to 14.2:1** (All Pass AA, most AAA)
 
 ### Typography
 

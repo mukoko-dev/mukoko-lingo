@@ -147,7 +147,7 @@ export function AIPracticeClient() {
                   <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                     <div
                       className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                        message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+                        message.role === "user" ? "bg-[#5f5873] text-white dark:bg-[#7c73e6]" : "bg-muted text-foreground"
                       }`}
                     >
                       {typeof message.content === "string" ? (
