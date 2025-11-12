@@ -130,7 +130,7 @@ export function AppSidebar() {
   const renderDesktopNav = (section: NavSection) => (
     <div key={section.title} className="mb-6">
       {!isCollapsed && (
-        <h3 className="px-4 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        <h3 className="px-4 mb-2 text-xs font-semibold uppercase tracking-wider text-[#6b6b6b] dark:text-[#a8a8a8]">
           {section.title}
         </h3>
       )}
@@ -147,12 +147,12 @@ export function AppSidebar() {
                 "flex items-center gap-3 rounded-lg transition-colors relative",
                 isCollapsed ? "justify-center h-10 w-10 mx-auto" : "px-4 py-2.5 mx-2",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  ? "bg-[#5f5873] text-white shadow-sm dark:bg-[#7c73e6]"
+                  : "text-[#6b6b6b] hover:bg-[#f0f0f0] hover:text-[#2a2a2a] dark:text-[#a8a8a8] dark:hover:bg-[#343434] dark:hover:text-[#faf9f5]",
               )}
               title={isCollapsed ? item.label : undefined}
             >
-              <Icon className="h-5 w-5 flex-shrink-0" />
+              <Icon className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span className="flex-1 text-sm font-medium">{item.label}</span>}
               {item.badge !== undefined && item.badge > 0 && (
                 <Badge
@@ -174,7 +174,7 @@ export function AppSidebar() {
 
   const renderMobileNav = (section: NavSection) => (
     <div key={section.title} className="mb-6">
-      <h3 className="px-4 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+      <h3 className="px-4 mb-2 text-xs font-semibold uppercase tracking-wider text-[#6b6b6b] dark:text-[#a8a8a8]">
         {section.title}
       </h3>
       <nav className="space-y-1">
@@ -190,11 +190,11 @@ export function AppSidebar() {
               className={cn(
                 "flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors mx-2",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  ? "bg-[#5f5873] text-white shadow-sm dark:bg-[#7c73e6]"
+                  : "text-[#6b6b6b] hover:bg-[#f0f0f0] hover:text-[#2a2a2a] dark:text-[#a8a8a8] dark:hover:bg-[#343434] dark:hover:text-[#faf9f5]",
               )}
             >
-              <Icon className="h-5 w-5 flex-shrink-0" />
+              <Icon className="h-5 w-5 shrink-0" />
               <span className="flex-1">{item.label}</span>
               {item.badge !== undefined && item.badge > 0 && (
                 <Badge variant="destructive" className="ml-auto">

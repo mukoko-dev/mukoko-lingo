@@ -31,12 +31,13 @@ export function AIPracticeClient() {
       language: practiceLanguage,
     },
     onFinish: (message) => {
-      console.log("[v0] Chat finished, message:", message)
+      console.log("[AI Chat] Chat finished, message:", message)
     },
     onResponse: (response) => {
+      console.log("[AI Chat] Response received:", response.status)
       const convId = response.headers.get("X-Conversation-Id")
       if (convId && !conversationId) {
-        console.log("[v0] Setting conversation ID:", convId)
+        console.log("[AI Chat] Setting conversation ID:", convId)
         setConversationId(convId)
       }
     },
