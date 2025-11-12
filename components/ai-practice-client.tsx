@@ -45,14 +45,27 @@ export function AIPracticeClient() {
 
   const t = translations[uiLanguage]
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("[v0] Send button clicked, input:", input)
-    if (input && input.trim()) {
-      console.log("[v0] Submitting message:", input)
-      handleSubmit(e)
-    } else {
-      console.log("[v0] Input is empty or undefined")
+    console.log("[AI Practice] Send button clicked")
+    console.log("[AI Practice] Input value:", input)
+    console.log("[AI Practice] Input length:", input?.length)
+    console.log("[AI Practice] Is loading:", isLoading)
+    console.log("[AI Practice] Conversation ID:", conversationId)
+    console.log("[AI Practice] Practice language:", practiceLanguage)
+    console.log("[AI Practice] Conversation type:", conversationType)
+
+    if (!input || !input.trim()) {
+      console.warn("[AI Practice] Input is empty, not submitting")
+      return
+    }
+
+    try {
+      console.log("[AI Practice] Calling handleSubmit...")
+      await handleSubmit(e)
+      console.log("[AI Practice] handleSubmit completed")
+    } catch (error) {
+      console.error("[AI Practice] Error in handleSubmit:", error)
     }
   }
 
@@ -103,24 +116,34 @@ export function AIPracticeClient() {
               <div>
                 <label className="text-sm font-medium mb-2 block">{t.conversationType || "Conversation Type"}</label>
                 <Tabs value={conversationType} onValueChange={(v) => setConversationType(v as any)}>
-                  <TabsList className="grid grid-cols-3 w-full gap-1">
-                    <TabsTrigger value="practice" className="text-xs px-2 py-2">
-                      <MessageCircle className="h-3.5 w-3.5 sm:mr-1.5" />
+                  <TabsList className="grid grid-cols-3 w-full">
+                    <TabsTrigger value="practice" className="text-xs px-3 py-2 flex items-center justify-center gap-1">
+                      <MessageCircle className="h-4 w-4" />
                       <span className="hidden sm:inline">{t.practice || "Practice"}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="scenario" className="text-xs px-2 py-2">
-                      <BookOpen className="h-3.5 w-3.5 sm:mr-1.5" />
+                    <TabsTrigger value="scenario" className="text-xs px-3 py-2 flex items-center justify-center gap-1">
+                      <BookOpen className="h-4 w-4" />
                       <span className="hidden sm:inline">{t.scenario || "Scenario"}</span>
                     </TabsTrigger>
-                    <TabsTrigger value="translation_help" className="text-xs px-2 py-2">
-                      <Globe className="h-3.5 w-3.5 sm:mr-1.5" />
+                    <TabsTrigger value="translation_help" className="text-xs px-3 py-2 flex items-center justify-center gap-1">
+                      <Globe className="h-4 w-4" />
                       <span className="hidden sm:inline">{t.help || "Help"}</span>
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
 
-              <Button onClick={startNewConversation} variant="outline" size="sm" className="w-full bg-transparent">
+              <Button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  console.log("[AI Practice] New Conversation button clicked")
+                  startNewConversation()
+                }}
+                variant="outline"
+                size="sm"
+                className="w-full"
+              >
                 {t.newConversation || "New Conversation"}
               </Button>
             </div>
