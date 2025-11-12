@@ -91,39 +91,65 @@ export async function POST(req: Request) {
       abortSignal: req.signal,
     })
 
-    return result.toUIMessageStreamResponse({
-      async onFinish({ text }) {
-        // Store messages in database
-        if (convId) {
-          const userMsg =
-            typeof lastUserMessage?.content === "string"
-              ? lastUserMessage.content
-              : lastUserMessage?.content?.text || ""
+    // Get the full text for storage before streaming
+    const fullText = await result.text
 
-          if (userMsg) {
-            await supabase.from("ai_messages").insert({
-              conversation_id: convId,
-              role: "user",
-              content: userMsg,
-            })
-          }
-
-          await supabase.from("ai_messages").insert({
-            conversation_id: convId,
-            role: "assistant",
-            content: text,
-          })
-
-          // Update conversation timestamp
-          await supabase.from("ai_conversations").update({ updated_at: new Date().toISOString() }).eq("id", convId)
-        }
-      },
+    const response = result.toUIMessageStreamResponse({
       headers: {
         "X-Conversation-Id": convId || "",
       },
     })
+
+    // Store messages in database after streaming completes
+    // This runs asynchronously and doesn't block the response
+    if (convId) {
+      const userMsg =
+        typeof lastUserMessage?.content === "string"
+          ? lastUserMessage.content
+          : lastUserMessage?.content?.text || ""
+
+      if (userMsg) {
+        supabase.from("ai_messages").insert({
+          conversation_id: convId,
+          role: "user",
+          content: userMsg,
+        }).then(() => {
+          // User message stored
+        })
+      }
+
+      supabase.from("ai_messages").insert({
+        conversation_id: convId,
+        role: "assistant",
+        content: fullText,
+      }).then(() => {
+        // Assistant message stored
+        // Update conversation timestamp
+        supabase.from("ai_conversations")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", convId)
+      })
+    }
+
+    return response
   } catch (error) {
-    console.error("[v0] AI chat error:", error)
-    return Response.json({ error: "Failed to process chat" }, { status: 500 })
+    console.error("[AI Chat Error]:", error)
+
+    // Provide more detailed error information
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    console.error("[AI Chat Error Details]:", errorMessage)
+
+    // Check if it's an API key issue
+    if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
+      console.error("⚠️ API Authentication Error: Check that ANTHROPIC_API_KEY is set correctly")
+      return Response.json({
+        error: "API authentication failed. Please check server configuration."
+      }, { status: 500 })
+    }
+
+    return Response.json({
+      error: "Failed to process chat",
+      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+    }, { status: 500 })
   }
 }
