@@ -1,213 +1,199 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { useChat } from "@ai-sdk/react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { MessageCircle, BookOpen, Globe, Send, Loader2 } from "lucide-react"
-import { translations } from "@/lib/translations"
-import { ScenarioGenerator } from "./scenario-generator"
-import { TranslationHelper } from "./translation-helper"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { MessageCircle, Send, Loader2, Sparkles } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarLayout } from "@/components/sidebar-layout"
-import { useUILanguage } from "@/lib/hooks/use-ui-language"
+
+type ConversationType = "practice" | "scenario" | "translation_help"
+type Language = "english" | "shona" | "ndebele" | "chinese"
 
 export function AIPracticeClient() {
-  const { uiLanguage } = useUILanguage()
-  const [practiceLanguage, setPracticeLanguage] = useState("english")
-  const [conversationType, setConversationType] = useState<"practice" | "scenario" | "translation_help">("practice")
+  const [language, setLanguage] = useState<Language>("english")
+  const [conversationType, setConversationType] = useState<ConversationType>("practice")
   const [conversationId, setConversationId] = useState<string>()
-  const [scenario, setScenario] = useState<any>(null)
 
-  const { messages, append, isLoading, input, handleInputChange, handleSubmit } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: "/api/ai/chat",
     body: {
       conversationId,
       type: conversationType,
-      language: practiceLanguage,
-    },
-    onFinish: (message) => {
-      console.log("[AI Chat] Chat finished, message:", message)
+      language,
     },
     onResponse: (response) => {
-      console.log("[AI Chat] Response received:", response.status)
       const convId = response.headers.get("X-Conversation-Id")
       if (convId && !conversationId) {
-        console.log("[AI Chat] Setting conversation ID:", convId)
         setConversationId(convId)
       }
     },
   })
 
-  const t = translations[uiLanguage]
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("[AI Practice] Send button clicked")
-    console.log("[AI Practice] Input value:", input)
-    console.log("[AI Practice] Input length:", input?.length)
-    console.log("[AI Practice] Is loading:", isLoading)
-    console.log("[AI Practice] Conversation ID:", conversationId)
-    console.log("[AI Practice] Practice language:", practiceLanguage)
-    console.log("[AI Practice] Conversation type:", conversationType)
-
-    if (!input || !input.trim()) {
-      console.warn("[AI Practice] Input is empty, not submitting")
-      return
-    }
-
-    try {
-      console.log("[AI Practice] Calling handleSubmit...")
-      await handleSubmit(e)
-      console.log("[AI Practice] handleSubmit completed")
-    } catch (error) {
-      console.error("[AI Practice] Error in handleSubmit:", error)
-    }
-  }
-
-  const startNewConversation = () => {
+  const handleNewConversation = () => {
     setConversationId(undefined)
-    setScenario(null)
   }
 
-  const handleStartScenario = (newScenario: any) => {
-    setScenario(newScenario)
-    append({ role: "user", content: newScenario.starterMessage })
+  const getTypeLabel = () => {
+    switch (conversationType) {
+      case "practice":
+        return "Conversation Practice"
+      case "scenario":
+        return "Scenario-Based Learning"
+      case "translation_help":
+        return "Translation Help"
+    }
+  }
+
+  const getTypeDescription = () => {
+    switch (conversationType) {
+      case "practice":
+        return "Have a natural conversation to practice your language skills."
+      case "scenario":
+        return "Practice specific situations like ordering food or asking for directions."
+      case "translation_help":
+        return "Get help translating phrases and understanding grammar."
+    }
   }
 
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar />
-
       <SidebarLayout>
-        <div className="mx-auto max-w-5xl px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="mb-4">
-          <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2">
-            {t.aiPractice || "AI Conversation Practice"}
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            {t.aiPracticeSubtitle || "Practice real conversations with AI tutors in your target language"}
-          </p>
-        </div>
+        <div className="container mx-auto px-4 py-8 max-w-6xl">
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">AI Conversation Practice</h1>
+            <p className="text-muted-foreground">
+              Practice real conversations with AI in your target language
+            </p>
+          </div>
 
-        <div className="grid lg:grid-cols-[300px_1fr] gap-4">
-          <Card className="p-4 h-fit space-y-4">
-            <h3 className="font-serif font-semibold">{t.settings || "Settings"}</h3>
-
+          <div className="grid lg:grid-cols-[340px_1fr] gap-6">
+            {/* Settings Panel */}
             <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">{t.practiceLanguage || "Practice Language"}</label>
-                <select
-                  value={practiceLanguage}
-                  onChange={(e) => setPracticeLanguage(e.target.value)}
-                  className="w-full p-2 border rounded-md bg-background text-sm"
-                >
-                  <option value="english">English</option>
-                  <option value="shona">Shona</option>
-                  <option value="ndebele">Ndebele</option>
-                  <option value="chinese">Chinese</option>
-                </select>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Language Selection */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Practice Language</label>
+                    <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="english">English</SelectItem>
+                        <SelectItem value="shona">Shona</SelectItem>
+                        <SelectItem value="ndebele">Ndebele</SelectItem>
+                        <SelectItem value="chinese">Chinese</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">{t.conversationType || "Conversation Type"}</label>
-                <Tabs value={conversationType} onValueChange={(v) => setConversationType(v as any)}>
-                  <TabsList className="grid grid-cols-3 w-full">
-                    <TabsTrigger value="practice" className="text-xs px-3 py-2 flex items-center justify-center gap-1">
-                      <MessageCircle className="h-4 w-4" />
-                      <span className="hidden sm:inline">{t.practice || "Practice"}</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="scenario" className="text-xs px-3 py-2 flex items-center justify-center gap-1">
-                      <BookOpen className="h-4 w-4" />
-                      <span className="hidden sm:inline">{t.scenario || "Scenario"}</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="translation_help" className="text-xs px-3 py-2 flex items-center justify-center gap-1">
-                      <Globe className="h-4 w-4" />
-                      <span className="hidden sm:inline">{t.help || "Help"}</span>
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
+                  {/* Conversation Type */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Conversation Type</label>
+                    <Select value={conversationType} onValueChange={(v) => setConversationType(v as ConversationType)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="practice">Practice</SelectItem>
+                        <SelectItem value="scenario">Scenario</SelectItem>
+                        <SelectItem value="translation_help">Translation Help</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <Button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  console.log("[AI Practice] New Conversation button clicked")
-                  startNewConversation()
-                }}
-                variant="outline"
-                size="sm"
-                className="w-full"
-              >
-                {t.newConversation || "New Conversation"}
-              </Button>
+                  {/* New Conversation Button */}
+                  <Button
+                    type="button"
+                    onClick={handleNewConversation}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    New Conversation
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Info Card */}
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-sm text-muted-foreground space-y-2">
+                    <p className="font-medium text-foreground">{getTypeLabel()}</p>
+                    <p>{getTypeDescription()}</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {conversationType === "scenario" && !scenario && (
-              <ScenarioGenerator language={practiceLanguage} onStartScenario={handleStartScenario} />
-            )}
-
-            {conversationType === "translation_help" && <TranslationHelper />}
-          </Card>
-
-          <Card className="flex flex-col h-[calc(100vh-16rem)]">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-                  <MessageCircle className="h-12 w-12 mb-3 opacity-50" />
-                  <p className="text-lg font-medium mb-1">{t.startChatting || "Start chatting with your AI tutor"}</p>
-                  <p className="text-sm">
-                    {t.chatHint || "Ask questions, practice phrases, or simulate real conversations"}
-                  </p>
-                </div>
-              ) : (
-                messages.map((message) => (
-                  <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+            {/* Chat Panel */}
+            <Card className="flex flex-col h-[calc(100vh-200px)]">
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+                    <MessageCircle className="h-12 w-12 mb-4 opacity-50" />
+                    <p className="text-lg font-medium mb-2">Start a conversation</p>
+                    <p className="text-sm">Type a message below to begin practicing</p>
+                  </div>
+                ) : (
+                  messages.map((message) => (
                     <div
-                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                        message.role === "user" ? "bg-[#5f5873] text-white dark:bg-[#7c73e6]" : "bg-muted text-foreground"
-                      }`}
+                      key={message.id}
+                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                     >
-                      {typeof message.content === "string" ? (
+                      <div
+                        className={`max-w-[80%] rounded-lg px-4 py-3 ${
+                          message.role === "user"
+                            ? "bg-[#5f5873] text-white dark:bg-[#7c73e6]"
+                            : "bg-muted"
+                        }`}
+                      >
                         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                      ) : (
-                        message.content
-                      )}
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-muted rounded-lg px-4 py-3">
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     </div>
                   </div>
-                ))
-              )}
-
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg px-4 py-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <form onSubmit={handleSendMessage} className="p-4 border-t">
-              <div className="flex gap-2">
-                <Input
-                  value={input}
-                  onChange={handleInputChange}
-                  placeholder={t.typeMessage || "Type your message..."}
-                  disabled={isLoading}
-                  className="flex-1"
-                />
-                <Button type="submit" disabled={!input || !input.trim() || isLoading} size="icon">
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
+                )}
               </div>
-            </form>
-          </Card>
-        </div>
+
+              {/* Input Area */}
+              <div className="border-t p-4">
+                <form onSubmit={handleSubmit} className="flex gap-2">
+                  <Input
+                    value={input}
+                    onChange={handleInputChange}
+                    placeholder="Type your message..."
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Button type="submit" disabled={!input.trim() || isLoading} size="icon">
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </form>
+              </div>
+            </Card>
+          </div>
         </div>
       </SidebarLayout>
     </div>
