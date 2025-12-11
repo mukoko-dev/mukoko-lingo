@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 // Base URL configuration
 export const siteConfig = {
   name: "Nyuchi Lingo",
-  url: "https://nyuchilingo.com",
+  url: "https://learning.nyuchi.com",
   description:
     "Learn essential phrases in English, Shona, Ndebele & Chinese. Perfect for tourists, expats, locals, business travelers, immigrants, and students. Master Zimbabwe's languages with AI-powered learning.",
   keywords: [

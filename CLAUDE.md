@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Nyuchi Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) built with Next.js 16, Supabase, Vercel, Cloudflare AI Gateway, and Anthropic's Claude AI.
+**Nyuchi Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) built with Next.js 16, Supabase, Vercel, and AI Gateway with DeepSeek/Qwen models.
 
 ### Core Philosophy
 
@@ -15,11 +15,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Categories** → Organized by skill level
 - **Phrases** → Mapped to specific skill proficiencies
 - **Assessments** → Measure skill mastery and unlock progression
-- **AI Tutor** → Adapts teaching based on demonstrated proficiency
+- **Shamwari AI** → Adapts teaching based on demonstrated proficiency
+
+### Shamwari - The AI Mascot
+
+**Shamwari** (meaning "friend" in Shona) is the friendly AI language tutor mascot of Nyuchi Lingo. Shamwari is:
+- **Who users interact with**: All AI conversations are with Shamwari
+- **Personality**: Warm, patient, encouraging, playful but professional
+- **Voice**: Friendly but knowledgeable, like a supportive teacher
+- **Mascot file**: `/public/Shamwari_logo_Mascot.svg`
+
+When implementing AI features, the AI should:
+- Introduce itself as "Shamwari"
+- Use occasional bee/friend references naturally
+- Be warm and personable while maintaining educational quality
 
 ### Key Features
 1. **Native Phrase Learning** - Core learning experience focused on practical phrases
-2. **AI-Powered Tutoring** - Claude AI adapts to learner's proficiency level
+2. **Shamwari AI Tutoring** - AI adapts to learner's proficiency level
 3. **Skills-Based Assessments** - Track progress through proficiency evaluations
 4. **Progressive Learning Path** - Skills naturally unlock as proficiency grows
 5. **Admin Content Management** - Manage phrases, categories, and skill mappings
