@@ -1,8 +1,8 @@
-import { streamText } from "ai"
+import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { createServerClient } from "@/lib/supabase/server"
 import { moderateContent } from "@/lib/ai/moderation"
 import { haiku } from "@/lib/ai/config"
-import { buildAISystemPrompt } from "@/lib/learning-standards"
+import { buildSkillsAwarePrompt } from "@/lib/ai/skills-aware-prompts"
 
 export const maxDuration = 30
 
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       type,
       language,
     }: {
-      messages: any[]
+      messages: UIMessage[]
       conversationId?: string
       type: "practice" | "scenario" | "translation_help"
       language: string
@@ -79,26 +79,27 @@ export async function POST(req: Request) {
       convId = newConv?.id
     }
 
-    // Build system prompt using learning standards
-    const systemPrompt = await buildAISystemPrompt(user.id, type, language)
+    // Build skills-aware system prompt
+    // CRITICAL: This reads user's actual proficiency from assessments
+    const systemPrompt = await buildSkillsAwarePrompt(user.id, type, language)
 
     const result = streamText({
       model: haiku,
       system: systemPrompt,
-      messages,
-      maxOutputTokens: 1000,
+      messages: convertToModelMessages(messages),
+      maxTokens: 1000,
       temperature: 0.8,
       abortSignal: req.signal,
     })
-
-    // Get the full text for storage before streaming
-    const fullText = await result.text
 
     const response = result.toUIMessageStreamResponse({
       headers: {
         "X-Conversation-Id": convId || "",
       },
     })
+
+    // Store messages in database asynchronously (don't block response)
+    const fullText = await result.text
 
     // Store messages in database after streaming completes
     // This runs asynchronously and doesn't block the response

@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Target,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -94,6 +95,7 @@ export function AppSidebar() {
     {
       title: "Your Progress",
       items: [
+        { id: "skills", label: "Skills Dashboard", href: "/app/skills", icon: Target },
         { id: "progress", label: "My Progress", href: "/app/progress", icon: TrendingUp },
         { id: "bookmarks", label: "Saved Phrases", href: "/app/bookmarks", icon: Bookmark },
         { id: "history", label: "Chat History", href: "/app/ai-history", icon: MessageSquare },
@@ -213,7 +215,7 @@ export function AppSidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 lg:hidden"
+        className="fixed top-2 left-2 z-50 lg:hidden"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
         aria-label="Toggle menu"
       >
@@ -229,13 +231,13 @@ export function AppSidebar() {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen bg-card border-r transition-all duration-300",
+          "fixed top-0 left-0 z-40 h-screen bg-white dark:bg-[#1a1a1a] border-r transition-all duration-300",
           "hidden lg:flex lg:flex-col",
           isCollapsed ? "w-16" : "w-64",
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-center px-4 py-4 border-b bg-card">
+          <div className="flex items-center justify-center px-4 py-4 border-b bg-white dark:bg-[#1a1a1a]">
             <Link href="/" className="flex items-center justify-center">
               {!isCollapsed && mounted && (
                 <Image
@@ -271,7 +273,7 @@ export function AppSidebar() {
             )}
           </div>
 
-          <div className="border-t bg-background/50">
+          <div className="border-t bg-white dark:bg-[#1a1a1a]">
             {!isCollapsed && (
               <div className="flex items-center justify-between gap-2 px-4 py-2 border-b">
                 <ThemeSwitcher />
@@ -301,13 +303,13 @@ export function AppSidebar() {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-screen w-64 bg-card border-r transition-transform duration-300 ease-in-out",
+          "fixed top-0 left-0 z-50 h-screen w-64 bg-white dark:bg-[#1a1a1a] border-r transition-transform duration-300 ease-in-out",
           "lg:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between px-4 py-4 border-b bg-card">
+          <div className="flex items-center justify-between px-4 py-4 border-b bg-white dark:bg-[#1a1a1a]">
             <Link href="/" className="flex items-center" onClick={() => setIsMobileOpen(false)}>
               {mounted && (
                 <Image
@@ -334,7 +336,7 @@ export function AppSidebar() {
             )}
           </div>
 
-          <div className="border-t bg-background/50">
+          <div className="border-t bg-white dark:bg-[#1a1a1a]">
             <div className="flex items-center justify-center gap-4 px-4 py-3 border-b">
               <ThemeSwitcher />
               <LanguageSwitcher currentLanguage={uiLanguage} onLanguageChange={setUILanguage} />
