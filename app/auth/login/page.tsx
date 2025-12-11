@@ -24,29 +24,17 @@ export default function LoginPage() {
     setIsLoading(true)
     setError(null)
 
-    console.log("[v0] Login attempt started", { email, hasPassword: !!password })
-    console.log("[v0] Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
-
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      console.log("[v0] Login response:", {
-        hasData: !!data,
-        hasUser: !!data?.user,
-        userId: data?.user?.id,
-        hasSession: !!data?.session,
-        error: error?.message,
-      })
-
       if (error) throw error
 
-      console.log("[v0] Login successful, redirecting to learn page")
       window.location.href = "/app/learn"
     } catch (error: unknown) {
-      console.error("[v0] Login error:", error)
+      console.error("Login error:", error)
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {
       setIsLoading(false)

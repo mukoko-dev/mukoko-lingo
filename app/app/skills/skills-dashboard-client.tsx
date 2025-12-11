@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarLayout } from "@/components/sidebar-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -109,6 +110,7 @@ export function SkillsDashboardClient() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<DashboardData | null>(null)
   const [needsDiagnostic, setNeedsDiagnostic] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     loadDashboardData()
@@ -116,6 +118,7 @@ export function SkillsDashboardClient() {
 
   const loadDashboardData = async () => {
     setLoading(true)
+    setError(null)
     const supabase = createClient()
 
     const {
@@ -139,7 +142,16 @@ export function SkillsDashboardClient() {
       `)
       .eq("user_id", user.id)
 
-    if (skillsError || !userSkills || userSkills.length === 0) {
+    // Handle database error separately from "no data" case
+    if (skillsError) {
+      console.error("[skills-dashboard] Error fetching user skills:", skillsError)
+      setError("Failed to load skills data. Please try again.")
+      setLoading(false)
+      return
+    }
+
+    // No skills data means user needs to take diagnostic
+    if (!userSkills || userSkills.length === 0) {
       setNeedsDiagnostic(true)
       setLoading(false)
       return
@@ -247,6 +259,38 @@ export function SkillsDashboardClient() {
     )
   }
 
+  // Error state - separate from "needs diagnostic"
+  if (!loading && error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AppSidebar />
+        <SidebarLayout>
+          <main className="container mx-auto px-4 py-12 max-w-2xl">
+            <Card className="border-2 border-red-200 dark:border-red-800">
+              <CardContent className="pt-8 pb-8 text-center">
+                <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+                  <Target className="h-8 w-8 text-red-600 dark:text-red-400" />
+                </div>
+                <h1 className="text-2xl font-bold mb-2">Something Went Wrong</h1>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  {error}
+                </p>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={loadDashboardData}
+                >
+                  <RefreshCw className="mr-2 h-5 w-5" />
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          </main>
+        </SidebarLayout>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <AppSidebar />
@@ -341,53 +385,58 @@ export function SkillsDashboardClient() {
                     : ((skill.current_score % (nextThreshold - (nextThreshold - 15))) / 15) * 100
 
                   return (
-                    <Card
+                    <Link
                       key={skill.skill_name}
-                      className={cn("border-2 transition-all hover:shadow-md", colors.border)}
+                      href={`/app/skills/${skill.skill_name}`}
+                      className="block"
                     >
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={cn(
-                              "w-10 h-10 rounded-full flex items-center justify-center",
-                              colors.bg, colors.text
-                            )}>
-                              {skillIcons[skill.skill_name]}
-                            </div>
-                            <div>
-                              <CardTitle className="text-lg">
-                                {skillDisplayNames[skill.skill_name]}
-                              </CardTitle>
-                              <CardDescription>
-                                {skillDescriptions[skill.skill_name]}
-                              </CardDescription>
+                      <Card
+                        className={cn("border-2 transition-all hover:shadow-md cursor-pointer", colors.border)}
+                      >
+                        <CardHeader className="pb-2">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={cn(
+                                "w-10 h-10 rounded-full flex items-center justify-center",
+                                colors.bg, colors.text
+                              )}>
+                                {skillIcons[skill.skill_name]}
+                              </div>
+                              <div>
+                                <CardTitle className="text-lg">
+                                  {skillDisplayNames[skill.skill_name]}
+                                </CardTitle>
+                                <CardDescription>
+                                  {skillDescriptions[skill.skill_name]}
+                                </CardDescription>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className={cn("text-sm font-medium", colors.text)}>
-                            {levelDisplayNames[skill.current_level]}
-                          </span>
-                          <span className="text-sm font-bold">{skill.current_score}%</span>
-                        </div>
-                        <Progress value={skill.current_score} className="h-2 mb-3" />
-
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>
-                            {skill.current_score < 90
-                              ? `${nextThreshold - skill.current_score}% to next level`
-                              : "Max level reached!"}
-                          </span>
-                          {skill.last_practiced_at && (
-                            <span>
-                              Last: {new Date(skill.last_practiced_at).toLocaleDateString()}
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={cn("text-sm font-medium", colors.text)}>
+                              {levelDisplayNames[skill.current_level]}
                             </span>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
+                            <span className="text-sm font-bold">{skill.current_score}%</span>
+                          </div>
+                          <Progress value={skill.current_score} className="h-2 mb-3" />
+
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>
+                              {skill.current_score < 90
+                                ? `${nextThreshold - skill.current_score}% to next level`
+                                : "Max level reached!"}
+                            </span>
+                            {skill.last_practiced_at && (
+                              <span>
+                                Last: {new Date(skill.last_practiced_at).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   )
                 })}
               </div>

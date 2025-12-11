@@ -38,11 +38,7 @@ export async function GET() {
 
   // Try to actually get a response from the AI
   try {
-    console.log("[AI Test] Starting hardcoded AI test...")
-
     const hardcodedQuestion = "Hello! Can you tell me what 2+2 equals? Keep your answer brief."
-
-    console.log("[AI Test] Sending question:", hardcodedQuestion)
 
     const result = await generateText({
       model: haiku,
@@ -50,8 +46,6 @@ export async function GET() {
       maxTokens: 100,
       temperature: 0.7,
     })
-
-    console.log("[AI Test] Received response:", result.text)
 
     return Response.json({
       ...configCheck,
@@ -64,10 +58,7 @@ export async function GET() {
       }
     })
   } catch (error) {
-    console.error("[AI Test Error]:", error)
-
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
-    console.error("[AI Test Error Details]:", errorMessage)
 
     return Response.json({
       ...configCheck,
