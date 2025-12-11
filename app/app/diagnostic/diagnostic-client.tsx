@@ -53,7 +53,7 @@ export function DiagnosticClient() {
   }
 
   const handleStartLearning = () => {
-    router.push("/app/home")
+    router.push("/app/learn")
   }
 
   const handleViewSkills = () => {
