@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createClient as supabaseCreateClient, SupabaseClient } from '@supabase/supabase-js'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SecureStore from 'expo-secure-store'
 import { Platform } from 'react-native'
@@ -47,7 +47,7 @@ export function getSupabase(): SupabaseClient | null {
       console.warn('Supabase not configured - running in offline mode')
       return null
     }
-    _supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    _supabase = supabaseCreateClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         storage: ExpoSecureStoreAdapter,
         autoRefreshToken: true,
@@ -112,4 +112,14 @@ export async function getSession() {
   }
   const { data: { session }, error } = await client.auth.getSession()
   return { session, error }
+}
+
+// Alias for backwards compatibility with web codebase
+// Returns the singleton Supabase client
+export function createClient(): SupabaseClient {
+  const client = getSupabase()
+  if (!client) {
+    throw new Error('Supabase not configured. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY')
+  }
+  return client
 }

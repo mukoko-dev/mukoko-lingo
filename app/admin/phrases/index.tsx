@@ -80,11 +80,11 @@ export default function AdminPhrasesScreen() {
       setFilteredPhrases(data || [])
 
       // Extract unique categories from data
-      const uniqueCategories = ['All', ...new Set((data || []).map(p => p.category).filter(Boolean).sort())]
+      const uniqueCategories: string[] = ['All', ...new Set((data || []).map((p: Phrase) => p.category).filter((c): c is string => Boolean(c)).sort())]
       setCategories(uniqueCategories)
 
       // Extract unique difficulties from data
-      const uniqueDifficulties = ['All', ...new Set((data || []).map(p => p.difficulty).filter(Boolean).sort())]
+      const uniqueDifficulties: string[] = ['All', ...new Set((data || []).map((p: Phrase) => p.difficulty).filter((d): d is string => Boolean(d)).sort())]
       setDifficulties(uniqueDifficulties)
     } catch (err) {
       console.error('Error fetching phrases:', err)
