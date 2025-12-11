@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
+import Image from "next/image"
 // @ts-ignore - useChat types from ai package
 import { useChat } from "@ai-sdk/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Loader2, Sparkles, AlertCircle } from "lucide-react"
+import { Send, Loader2, AlertCircle } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarLayout } from "@/components/sidebar-layout"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -59,14 +60,24 @@ export function AIPracticeClient() {
 
         <div className="flex flex-col h-[calc(100vh-56px)] lg:h-screen">
           {messages.length === 0 ? (
-            /* Empty state - centered input */
+            /* Empty state - centered input with Shamwari mascot */
             <div className="flex-1 flex flex-col items-center justify-center px-4 pb-32">
               <div className="w-full max-w-2xl space-y-8">
                 <div className="text-center space-y-4">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary-700/20 to-primary-600/10 mb-4">
-                    <Sparkles className="w-8 h-8 text-primary-700 dark:text-primary-600" />
+                  <div className="relative w-24 h-24 mx-auto mb-4">
+                    <Image
+                      src="/Shamwari_logo_Mascot.svg"
+                      alt="Shamwari - Your AI Language Tutor"
+                      width={96}
+                      height={96}
+                      className="w-full h-full object-contain drop-shadow-lg"
+                      priority
+                    />
                   </div>
-                  <h1 className="text-4xl font-bold">AI Language Tutor</h1>
+                  <h1 className="text-4xl font-bold">Meet Shamwari</h1>
+                  <p className="text-lg text-muted-foreground max-w-md mx-auto">
+                    Your friendly AI language tutor. &quot;Shamwari&quot; means &quot;friend&quot; in Shona!
+                  </p>
                   <div className="flex items-center justify-center gap-2 text-lg text-muted-foreground">
                     <span>Start a conversation to practice</span>
                     <Select value={language} onValueChange={(value) => setLanguage(value as Language)}>
@@ -119,10 +130,22 @@ export function AIPracticeClient() {
                 {messages.map((message: any) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} gap-3`}
                   >
+                    {/* Shamwari avatar for AI messages */}
+                    {message.role === "assistant" && (
+                      <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-gradient-to-br from-primary-700/20 to-primary-600/10">
+                        <Image
+                          src="/Shamwari_logo_Mascot.svg"
+                          alt="Shamwari"
+                          width={32}
+                          height={32}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
                     <div
-                      className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
+                      className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-3 ${
                         message.role === "user"
                           ? "bg-[#5f5873] text-white dark:bg-[#7c73e6]"
                           : "bg-muted"
@@ -134,7 +157,16 @@ export function AIPracticeClient() {
                 ))}
 
                 {isLoading && (
-                  <div className="flex justify-start">
+                  <div className="flex justify-start gap-3">
+                    <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-gradient-to-br from-primary-700/20 to-primary-600/10">
+                      <Image
+                        src="/Shamwari_logo_Mascot.svg"
+                        alt="Shamwari"
+                        width={32}
+                        height={32}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                     <div className="bg-muted rounded-2xl px-4 py-3">
                       <Loader2 className="h-4 w-4 animate-spin" />
                     </div>
