@@ -114,6 +114,39 @@ export async function getSession() {
   return { session, error }
 }
 
+// Password reset - sends reset email
+export async function resetPasswordForEmail(email: string) {
+  const client = getSupabase()
+  if (!client) {
+    return { data: null, error: new Error('Supabase not configured') }
+  }
+  const { data, error } = await client.auth.resetPasswordForEmail(email, {
+    redirectTo: 'nyuchilingo://reset-password',
+  })
+  return { data, error }
+}
+
+// Update password - called after user clicks reset link
+export async function updatePassword(newPassword: string) {
+  const client = getSupabase()
+  if (!client) {
+    return { data: null, error: new Error('Supabase not configured') }
+  }
+  const { data, error } = await client.auth.updateUser({
+    password: newPassword,
+  })
+  return { data, error }
+}
+
+// Auth state change listener
+export function onAuthStateChange(callback: (event: string, session: any) => void) {
+  const client = getSupabase()
+  if (!client) {
+    return { data: { subscription: { unsubscribe: () => {} } } }
+  }
+  return client.auth.onAuthStateChange(callback)
+}
+
 // Alias for backwards compatibility with web codebase
 // Returns the singleton Supabase client
 export function createClient(): SupabaseClient {
