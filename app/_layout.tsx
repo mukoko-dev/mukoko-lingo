@@ -3,13 +3,31 @@ import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } fro
 import { useFonts } from 'expo-font'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, createContext, useContext } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import 'react-native-reanimated'
 
 import { ThemeProvider, useTheme } from '@/lib/hooks/useTheme'
 import { initDatabase } from '@/lib/storage/database'
 import { lightTheme, darkTheme } from '@/constants/Colors'
+import { onAuthStateChange, getSession } from '@/lib/supabase/client'
+
+// Auth context for global auth state
+type AuthContextType = {
+  isAuthenticated: boolean
+  isLoading: boolean
+  session: any | null
+}
+
+const AuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
+  isLoading: true,
+  session: null,
+})
+
+export function useAuth() {
+  return useContext(AuthContext)
+}
 
 export {
   ErrorBoundary,
@@ -53,6 +71,11 @@ export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false)
   const [onboardingChecked, setOnboardingChecked] = useState(false)
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false)
+  const [authState, setAuthState] = useState<AuthContextType>({
+    isAuthenticated: false,
+    isLoading: true,
+    session: null,
+  })
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
@@ -80,25 +103,55 @@ export default function RootLayout() {
     checkOnboarding()
   }, [])
 
+  // Initialize auth state and listen for changes
+  useEffect(() => {
+    // Check initial session
+    const initAuth = async () => {
+      const { session } = await getSession()
+      setAuthState({
+        isAuthenticated: !!session,
+        isLoading: false,
+        session,
+      })
+    }
+    initAuth()
+
+    // Listen for auth changes
+    const { data: { subscription } } = onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event)
+      setAuthState({
+        isAuthenticated: !!session,
+        isLoading: false,
+        session,
+      })
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error
   }, [error])
 
   useEffect(() => {
-    if (loaded && dbReady && onboardingChecked) {
+    if (loaded && dbReady && onboardingChecked && !authState.isLoading) {
       SplashScreen.hideAsync()
     }
-  }, [loaded, dbReady, onboardingChecked])
+  }, [loaded, dbReady, onboardingChecked, authState.isLoading])
 
-  if (!loaded || !dbReady || !onboardingChecked) {
+  if (!loaded || !dbReady || !onboardingChecked || authState.isLoading) {
     return null
   }
 
   return (
-    <ThemeProvider>
-      <RootLayoutNav hasCompletedOnboarding={hasCompletedOnboarding} />
-    </ThemeProvider>
+    <AuthContext.Provider value={authState}>
+      <ThemeProvider>
+        <RootLayoutNav hasCompletedOnboarding={hasCompletedOnboarding} />
+      </ThemeProvider>
+    </AuthContext.Provider>
   )
 }
 
@@ -127,6 +180,20 @@ function RootLayoutNav({ hasCompletedOnboarding }: { hasCompletedOnboarding: boo
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         <Stack.Screen
           name="auth/index"
+          options={{
+            headerShown: false,
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="auth/forgot-password"
+          options={{
+            headerShown: false,
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="auth/reset-password"
           options={{
             headerShown: false,
             presentation: 'modal',
