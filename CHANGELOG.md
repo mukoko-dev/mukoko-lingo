@@ -19,6 +19,92 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.0.0] - 2025-12-11
+
+### Major Release - AI-First Skills-Based Architecture
+
+This release transforms Nyuchi Lingo into an AI-first, skills-based learning platform where the AI tutor reads user proficiency from the database for every interaction.
+
+### Added
+
+#### Phase 2: Skills-Aware AI System
+- **Skills-Aware AI Prompts** (`lib/ai/skills-aware-prompts.ts`) - AI reads user proficiency for every interaction
+- **buildSkillsAwarePrompt()** function adapts teaching based on actual assessment scores
+- **Adaptive Teaching Levels**:
+  - Beginner (0-49): Simple vocabulary, present tense, maximum support
+  - Elementary (50-64): Common vocabulary, basic tenses, high support
+  - Intermediate (65-79): Varied vocabulary, all tenses, moderate support
+  - Advanced (80-89): Sophisticated vocabulary, complex grammar, light support
+  - Fluent (90-100): Native-level language, peer conversation
+- **User Skills Utilities** (`lib/utils/user-skills.ts`) - 15+ helper functions for skills management
+
+#### Phase 3: Diagnostic Assessment System
+- **50-Question Diagnostic Assessment** (`lib/data/diagnostic-assessment.ts`)
+  - 10 questions per skill covering beginner to fluent concepts
+  - Shona language focus with cultural expressions
+- **Assessment UI Component** (`components/diagnostic-assessment.tsx`)
+  - Multi-step wizard interface
+  - Skill-by-skill navigation
+  - Progress tracking and skip functionality
+- **Assessment Results View** (`components/diagnostic-results.tsx`)
+  - Overall proficiency display
+  - Individual skill breakdown with strongest/weakest badges
+  - AI tutor personalization preview
+- **Assessment Submission API** (`app/api/assessments/submit-diagnostic/route.ts`)
+  - Auto-scoring and level calculation
+  - Updates user_skills table for AI adaptation
+- **Skills Dashboard** (`app/app/skills/page.tsx`)
+  - Visual progress tracking across all skills
+  - Overall statistics (practice time, phrases mastered, streak)
+  - Action buttons for AI Tutor and Phrases
+
+#### Database Migrations
+- **Skills Taxonomy** (028): 5 core skills, 25 skill levels
+- **Assessment System** (029): assessments, user_assessments tables with auto-update triggers
+- **Phrases Integration** (030): Skills mapping for phrases
+- **Complete Database Rebuild** (000_v2): Single comprehensive migration script
+
+#### New Components
+- `components/ui/radio-group.tsx` - Radix radio group for assessments
+- `components/ui/skeleton.tsx` - Loading skeleton component
+
+#### Navigation Updates
+- Skills Dashboard added to sidebar navigation
+- Target icon for skills route
+
+### Changed
+
+#### AI Integration
+- AI chat API now uses `buildSkillsAwarePrompt()` instead of legacy `buildAISystemPrompt()`
+- AI adapts vocabulary, grammar, scaffolding, and error correction based on user_skills table
+
+#### Middleware
+- Added onboarding check - new users redirected to diagnostic assessment
+- Excludes diagnostic page and API routes from redirect
+
+#### Documentation
+- Updated CLAUDE.md with AI-first architecture documentation
+- Added skills system, adaptive teaching levels, and utility functions
+
+### Technical Details
+
+- **Database Schema**: 14 tables with 40+ RLS policies
+- **Skills System**: user_skills table read by AI for every interaction
+- **Auto-Updates**: Triggers automatically update proficiency from assessments
+- **Type Safety**: Comprehensive TypeScript types in `lib/types/skills.ts`
+
+### Migration Notes
+
+**Database**: Apply `000_complete_database_rebuild_v2.sql` via Supabase Dashboard SQL Editor
+
+**New User Flow**:
+1. Sign up → Login → Redirected to `/app/diagnostic`
+2. Complete 50-question assessment (~15 minutes)
+3. View results with skill breakdown
+4. Start learning with personalized AI tutor
+
+---
+
 ## [2.0.0] - 2025-11-10
 
 ### Major Release - Layout Standardization & Navigation Unification

@@ -83,5 +83,23 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Check if authenticated user needs to complete onboarding (diagnostic assessment)
+  // Skip check for the diagnostic page itself and API routes
+  if (user && isProtectedRoute && !pathname.startsWith("/app/diagnostic") && !pathname.startsWith("/api")) {
+    // Check if user has completed onboarding
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", user.id)
+      .single()
+
+    // Redirect to diagnostic if onboarding not completed
+    if (profile && profile.onboarding_completed === false) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/app/diagnostic"
+      return NextResponse.redirect(url)
+    }
+  }
+
   return supabaseResponse
 }
