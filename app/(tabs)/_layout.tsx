@@ -1,72 +1,90 @@
 import React from 'react'
-import { Tabs } from 'expo-router'
+import { View, StyleSheet } from 'react-native'
+import { Tabs, useRouter } from 'expo-router'
 import { BookOpen, MessageCircle, Target, User } from 'lucide-react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { lightTheme, darkTheme } from '@/constants/Colors'
-import { useColorScheme } from '@/components/useColorScheme'
+import { useTheme } from '@/lib/hooks/useTheme'
+import { AppHeader } from '@/components/AppHeader'
+
+const ONBOARDING_KEY = '@nyuchi_onboarding_complete'
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme()
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme
+  const { isDark } = useTheme()
+  const theme = isDark ? darkTheme : lightTheme
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    // Clear onboarding status so user sees welcome on next visit
+    try {
+      await AsyncStorage.removeItem(ONBOARDING_KEY)
+    } catch (error) {
+      console.error('Error clearing onboarding status:', error)
+    }
+    router.replace('/welcome')
+  }
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.textMuted,
-        tabBarStyle: {
-          backgroundColor: theme.card,
-          borderTopColor: theme.border,
-        },
-        headerStyle: {
-          backgroundColor: theme.card,
-        },
-        headerTintColor: theme.text,
-        headerTitleStyle: {
-          fontWeight: '600',
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Learn',
-          headerTitle: 'Nyuchi Lingo',
-          tabBarIcon: ({ color, size }) => (
-            <BookOpen size={size} color={color} />
-          ),
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Shared header - NOT sticky for authenticated users */}
+      <AppHeader isAuthenticated={true} onLogout={handleLogout} />
+
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: theme.primary,
+          tabBarInactiveTintColor: theme.textMuted,
+          tabBarStyle: {
+            backgroundColor: theme.card,
+            borderTopColor: theme.border,
+          },
+          // Hide the default header since we use AppHeader
+          headerShown: false,
         }}
-      />
-      <Tabs.Screen
-        name="ai-practice"
-        options={{
-          title: 'Shamwari',
-          headerTitle: 'AI Practice',
-          tabBarIcon: ({ color, size }) => (
-            <MessageCircle size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="skills"
-        options={{
-          title: 'Skills',
-          headerTitle: 'My Skills',
-          tabBarIcon: ({ color, size }) => (
-            <Target size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          headerTitle: 'My Profile',
-          tabBarIcon: ({ color, size }) => (
-            <User size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Learn',
+            tabBarIcon: ({ color, size }) => (
+              <BookOpen size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="ai-practice"
+          options={{
+            title: 'Shamwari',
+            tabBarIcon: ({ color, size }) => (
+              <MessageCircle size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="skills"
+          options={{
+            title: 'Skills',
+            tabBarIcon: ({ color, size }) => (
+              <Target size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color, size }) => (
+              <User size={size} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+})

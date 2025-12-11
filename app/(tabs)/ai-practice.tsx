@@ -10,8 +10,9 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from 'react-native'
-import { Send, Bot, Sparkles } from 'lucide-react-native'
+import { Send, Sparkles } from 'lucide-react-native'
 
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
@@ -148,7 +149,11 @@ export default function AIPracticeScreen() {
         ListHeaderComponent={
           <View style={styles.welcomeCard}>
             <View style={styles.mascotContainer}>
-              <Bot size={32} color={Colors.primary[600]} />
+              <Image
+                source={require('@/assets/images/mascot-icon.png')}
+                style={styles.mascotImage}
+                resizeMode="contain"
+              />
             </View>
             <Text style={styles.welcomeTitle}>Meet Shamwari</Text>
             <Text style={styles.welcomeText}>
@@ -218,7 +223,11 @@ function MessageBubble({ message, theme }: MessageBubbleProps) {
     <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.assistantBubble]}>
       {!isUser && (
         <View style={styles.avatarContainer}>
-          <Bot size={16} color={Colors.primary[600]} />
+          <Image
+            source={require('@/assets/images/mascot-icon.png')}
+            style={styles.avatarImage}
+            resizeMode="contain"
+          />
         </View>
       )}
       <View style={[styles.bubbleContent, isUser ? styles.userContent : styles.assistantContent]}>
@@ -237,33 +246,37 @@ const createStyles = (theme: typeof lightTheme) =>
       backgroundColor: theme.background,
     },
     languageBar: {
-      maxHeight: 48,
+      minHeight: 56,
+      maxHeight: 64,
       backgroundColor: theme.card,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
     },
     languageContent: {
       paddingHorizontal: 16,
-      paddingVertical: 8,
+      paddingVertical: 12,
       gap: 8,
       flexDirection: 'row',
+      alignItems: 'center',
     },
     languagePill: {
       paddingHorizontal: 16,
-      paddingVertical: 6,
-      borderRadius: 16,
+      paddingVertical: 10,
+      borderRadius: 18,
       backgroundColor: theme.background,
       borderWidth: 1,
       borderColor: theme.border,
+      minHeight: 36,
     },
     languagePillActive: {
       backgroundColor: Colors.primary[600],
       borderColor: Colors.primary[600],
     },
     languageText: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: '500',
       color: theme.text,
+      lineHeight: 18,
     },
     languageTextActive: {
       color: '#ffffff',
@@ -282,13 +295,18 @@ const createStyles = (theme: typeof lightTheme) =>
       borderColor: theme.border,
     },
     mascotContainer: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      backgroundColor: Colors.primary[600] + '20',
+      width: 88,
+      height: 88,
+      borderRadius: 44,
+      backgroundColor: Colors.accent[500] + '15',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 12,
+      overflow: 'hidden',
+    },
+    mascotImage: {
+      width: 80,
+      height: 80,
     },
     welcomeTitle: {
       fontSize: 18,
@@ -338,13 +356,18 @@ const createStyles = (theme: typeof lightTheme) =>
       justifyContent: 'flex-start',
     },
     avatarContainer: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      backgroundColor: Colors.primary[600] + '20',
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: Colors.accent[500] + '15',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 8,
+      overflow: 'hidden',
+    },
+    avatarImage: {
+      width: 32,
+      height: 32,
     },
     bubbleContent: {
       maxWidth: '75%',

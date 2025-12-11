@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Nyuchi Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) built with Next.js 16, Supabase, Vercel, and AI Gateway with DeepSeek/Qwen models.
+**Nyuchi Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) with both web (Next.js 16) and mobile (Expo/React Native) applications, powered by Supabase, Vercel, and AI Gateway with DeepSeek/Qwen models.
 
 ### Core Philosophy
 
@@ -425,13 +425,32 @@ export function PageClient() {
 - Client-side: `useAdmin()` hook checks role in profiles table
 - Database-level: RLS policies + `is_admin()` function
 
-**Admin Routes**:
+**Web Admin Routes** (`/admin/`):
 - `/admin/overview` - Statistics dashboard
 - `/admin/users` - User management (role updates, suspend/activate)
 - `/admin/phrases` - Content CRUD
 - `/admin/standards` - Learning standards editor
 - `/admin/moderation` - Content moderation queue
 - `/admin/activity` - Activity logs and monitoring
+
+**Mobile Admin Routes** (`app/admin/`):
+
+The mobile app includes a full admin dashboard with the following screens:
+
+- `app/admin/overview/` - Dashboard with stats (users, phrases, views, bookmarks)
+- `app/admin/users/` - User management with role toggling
+- `app/admin/phrases/` - Phrase CRUD with dynamic category/difficulty filters
+- `app/admin/standards/` - Learning standards management
+- `app/admin/guardrails/` - Content moderation rules (6 core guardrails)
+- `app/admin/moderation/` - Review flagged content queue
+
+**Mobile Admin Features**:
+
+- Admin access check in `app/admin/_layout.tsx`
+- Admin link in AppHeader (visible only to admin users)
+- All data fetched from Supabase (no hardcoded data)
+- Pull-to-refresh on all admin screens
+- Confirmation dialogs for destructive actions
 
 **Admin API Routes**:
 - `/api/admin/learning-standards` - CRUD for proficiency standards
@@ -825,12 +844,14 @@ echo "Implementation complete" > NEW_FEATURE_COMPLETE.md  # ❌ Wrong location
 ### Related Documentation
 
 ### Core Documentation (Root)
+
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide for Vercel and Supabase
 - **[SECURITY.md](SECURITY.md)** - Security architecture, RLS policies, authentication
 - **[CHANGELOG.md](CHANGELOG.md)** - Complete version history and release notes
 - **[RELEASES.md](RELEASES.md)** - Release management and versioning guidelines
 - **[DEV_MODE.md](DEV_MODE.md)** - Development mode setup and security warnings
 - **[BRANDING.md](BRANDING.md)** - Brand guidelines, colors, typography, UI patterns
+- **[LICENSE](LICENSE)** - MIT License
 
 ### Technical Documentation (/docs)
 - **[docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)** - Component library and design patterns

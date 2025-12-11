@@ -1,53 +1,72 @@
 /**
  * Nyuchi Lingo Brand Colors
- * Official colors from https://assets.nyuchi.com/api/v5/platform/lingo
+ * Official Brand System from Nyuchi Brand Guidelines
  *
  * Brand: Nyuchi Lingo
  * Tagline: "Learn Shona. Connect with Africa."
  * Voice: Encouraging, educational, culturally respectful
+ *
+ * BRAND SYSTEM:
+ * - PRIMARY: Sunset Deep #D4634A (distinctive, energetic)
+ * - ACCENT: Purple #7C73E6 (innovation, creativity)
+ * - SECONDARY: Navy Blue #1E3A8A (education, trust)
  */
 
 export const Colors = {
-  // Primary - Warm Purple (Nyuchi Africa)
+  // Primary - Sunset Deep (Nyuchi Lingo Brand Color)
   primary: {
+    50: '#fef7f6',
+    100: '#fdecea',
+    200: '#fbd5d0',
+    300: '#f7b5ac',
+    400: '#f08879',
+    500: '#e46b5a',
+    600: '#D4634A', // Main brand color - Sunset Deep
+    700: '#b8513c',
+    800: '#994435',
+    900: '#7f3b30',
+  },
+
+  // Secondary - Navy Blue (Education/Trust)
+  secondary: {
+    50: '#eff6ff',
+    100: '#dbeafe',
+    200: '#bfdbfe',
+    300: '#93c5fd',
+    400: '#60a5fa',
+    500: '#3b82f6',
+    600: '#2563eb',
+    700: '#1d4ed8',
+    800: '#1E3A8A', // Main secondary - Navy Blue
+    900: '#1e3a5f',
+  },
+
+  // Accent - Purple (Innovation/Creativity)
+  accent: {
     50: '#f5f3ff',
     100: '#ede9fe',
     200: '#ddd6fe',
     300: '#c4b5fd',
     400: '#a78bfa',
-    500: '#9186ae',
-    600: '#7c73e6', // Ubuntu blue (dark mode)
-    700: '#5f5873', // Main brand color
-    800: '#4a4560',
-    900: '#3d3a4d',
+    500: '#8b7cf5',
+    600: '#7C73E6', // Main accent - Purple
+    700: '#6d5dd3',
+    800: '#5b4cb8',
+    900: '#4c3d9b',
   },
 
-  // Secondary - Army Green (Success)
-  secondary: {
+  // Success - Army Green (kept for success states)
+  success: {
     50: '#f0fdf4',
     100: '#dcfce7',
     200: '#bbf7d0',
     300: '#86efac',
     400: '#8FB47F',
-    500: '#729B63', // Main green
+    500: '#729B63',
     600: '#5d804f',
     700: '#4d6b42',
     800: '#3f5836',
     900: '#34472d',
-  },
-
-  // Accent - Sunset Gold
-  accent: {
-    50: '#fffbeb',
-    100: '#fef3c7',
-    200: '#fde68a',
-    300: '#fcd34d',
-    400: '#fbbf24',
-    500: '#F6AD55', // Main accent
-    600: '#d97706',
-    700: '#b45309',
-    800: '#92400e',
-    900: '#78350f',
   },
 
   // Neutrals
@@ -65,16 +84,16 @@ export const Colors = {
   },
 
   // Semantic colors
-  success: '#729B63',
-  warning: '#F6AD55',
-  error: '#ef4444',
-  info: '#3b82f6',
+  semanticSuccess: '#729B63',
+  semanticWarning: '#F6AD55',
+  semanticError: '#ef4444',
+  semanticInfo: '#3b82f6',
 
-  // Background colors (from official brand)
+  // Background colors
   background: {
-    light: '#faf9fb', // Official subtle background
+    light: '#faf9fb',
     dark: '#101010',
-    surface: '#f0eef4', // Official surface color
+    surface: '#f0eef4',
     card: {
       light: '#ffffff',
       dark: '#1a1a1a',
@@ -105,13 +124,14 @@ export const lightTheme = {
   text: Colors.text.primary.light,
   textSecondary: Colors.text.secondary.light,
   textMuted: Colors.text.muted.light,
-  primary: Colors.primary[700],
-  secondary: Colors.secondary[500],
-  accent: Colors.accent[500],
+  primary: Colors.primary[600], // Sunset Deep
+  secondary: Colors.secondary[800], // Navy Blue
+  accent: Colors.accent[600], // Purple
+  success: Colors.success[500],
   border: Colors.neutral[200],
-  tint: Colors.primary[700],
+  tint: Colors.primary[600],
   tabIconDefault: Colors.neutral[400],
-  tabIconSelected: Colors.primary[700],
+  tabIconSelected: Colors.primary[600],
 }
 
 export const darkTheme = {
@@ -120,13 +140,14 @@ export const darkTheme = {
   text: Colors.text.primary.dark,
   textSecondary: Colors.text.secondary.dark,
   textMuted: Colors.text.muted.dark,
-  primary: Colors.primary[600], // Ubuntu blue in dark mode
-  secondary: Colors.secondary[400],
-  accent: Colors.accent[500],
+  primary: Colors.primary[500], // Lighter Sunset for dark mode
+  secondary: Colors.secondary[600], // Lighter Navy for dark mode
+  accent: Colors.accent[500], // Lighter Purple for dark mode
+  success: Colors.success[400],
   border: Colors.neutral[700],
-  tint: Colors.primary[600],
+  tint: Colors.primary[500],
   tabIconDefault: Colors.neutral[500],
-  tabIconSelected: Colors.primary[600],
+  tabIconSelected: Colors.primary[500],
 }
 
 export type Theme = typeof lightTheme
