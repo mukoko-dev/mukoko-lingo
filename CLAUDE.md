@@ -4,7 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Nyuchi Lingo is a multilingual language learning platform (English, Shona, Ndebele, Chinese) built with Next.js 16, Supabase, and OpenAI. The app provides phrase learning, AI conversation practice, and admin content management.
+**Nyuchi Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) built with Next.js 16, Supabase, Vercel, Cloudflare AI Gateway, and Anthropic's Claude AI.
+
+### Core Philosophy
+
+**Phrase Learning is Primary**: The app's main purpose is to enable learners to become multilingual through native language phrase learning. AI serves as an intelligent tutor that supports and enhances the learning process, not replaces it.
+
+**Skills-Based Progression**: Learning is organized around proficiency skills that naturally progress through assessments:
+- **Skills** → Drive the learning structure
+- **Categories** → Organized by skill level
+- **Phrases** → Mapped to specific skill proficiencies
+- **Assessments** → Measure skill mastery and unlock progression
+- **AI Tutor** → Adapts teaching based on demonstrated proficiency
+
+### Key Features
+1. **Native Phrase Learning** - Core learning experience focused on practical phrases
+2. **AI-Powered Tutoring** - Claude AI adapts to learner's proficiency level
+3. **Skills-Based Assessments** - Track progress through proficiency evaluations
+4. **Progressive Learning Path** - Skills naturally unlock as proficiency grows
+5. **Admin Content Management** - Manage phrases, categories, and skill mappings
 
 ## Development Commands
 
@@ -20,21 +38,35 @@ npm run start            # Start production server
 npm run lint             # Run ESLint
 ```
 
-### Running with Dev Mode
+## Environment Setup
 
-For local development without Supabase auth:
+**Required Environment Variables**:
 
 ```bash
-# Set environment variable
-export NEXT_PUBLIC_DEV_MODE=true
-npm run dev
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 
-# Alternative: Use browser console
-# localStorage.setItem('DEV_MODE', 'true')
-# Then refresh page
+# Cloudflare AI Gateway Configuration (Required for AI tutor features)
+AI_GATEWAY_API_KEY=your_api_key_here
+
+# Get your gateway API key from Cloudflare AI Gateway dashboard
+# Note: Currently using Vercel AI SDK with Cloudflare gateway integration
 ```
 
-**Important**: Dev mode bypasses ALL authentication and grants admin access. See [DEV_MODE.md](DEV_MODE.md) for details.
+**Note**: See `.env.example` for complete configuration template.
+
+### Local Development
+
+For local development, you must configure proper Supabase authentication:
+
+1. Copy `.env.example` to `.env.local`
+2. Fill in your Supabase credentials from the Supabase dashboard
+3. Add your `AI_GATEWAY_API_KEY` from Vercel
+4. Run `npm run dev`
+
+**Dev Mode Removed**: As of recent security updates, development mode (which bypassed authentication) has been removed. All environments now require proper Supabase authentication. See [DEV_MODE.md](DEV_MODE.md) for historical context and security rationale.
 
 ## Design System & Colors
 
@@ -179,38 +211,113 @@ bg-gradient-to-br from-primary-700/10 via-secondary-500/5 to-accent-500/5
 
 ### Authentication System
 
-**Dual-Mode Architecture:**
-- **Production**: Supabase Auth with server/client separation
+**Architecture:**
+- **Supabase Auth** with server/client separation (all environments)
   - Server: `lib/supabase/server.ts` (async cookies)
   - Client: `lib/supabase/client.ts` (singleton)
-  - Middleware: `middleware.ts` refreshes sessions
-- **Development**: Dev mode (`lib/dev-mode.ts`) provides mock admin user (dev@nyuchi.com)
+  - Middleware: `middleware.ts` refreshes sessions and protects routes
+- **Previous Dev Mode**: Removed for security (see `.env.example` and [DEV_MODE.md](DEV_MODE.md))
 
-**Flow**: Middleware checks dev mode first → validates Supabase session → redirects unauthenticated users to `/auth/login`
+**Flow**: Middleware validates Supabase session → refreshes if needed → redirects unauthenticated users to `/auth/login`
 
 **Key Files**:
-- [middleware.ts](middleware.ts) - Route protection
+- [middleware.ts](middleware.ts) - Route protection and session refresh
 - [lib/supabase/admin.ts](lib/supabase/admin.ts) - `isAdmin()` server-side check
 - [lib/hooks/use-admin.ts](lib/hooks/use-admin.ts) - `useAdmin()` client-side hook
+- [lib/dev-mode.ts](lib/dev-mode.ts) - Legacy file (no longer used)
 
-### Database Schema
+### Database Schema (Skills-Based Architecture)
 
-**Core Tables**:
-- `profiles` - User profiles with role (user/admin), study tracking, preferences
-- `phrases` - 200+ phrases in 4 languages with category-based organization
+**Skills & Learning Tables** (Core):
+- `skills` - 5 core skills (pronunciation, vocabulary, grammar, comprehension, conversation)
+- `skill_levels` - 25 proficiency levels (5 per skill: beginner → fluent)
+- `user_skills` - ⚡ **READ BY AI TUTOR FOR EVERY INTERACTION** - Current user proficiency
+- `assessments` - Assessment templates for measuring skill proficiency
+- `user_assessments` - User test results (auto-updates user_skills via trigger)
+- `learning_standards` - AI tutor configuration by proficiency level (legacy, deprecated)
+
+**Phrase Learning Tables**:
+- `phrases` - 200+ phrases in 4 languages mapped to skills and proficiency levels
+- `categories` - Organized by skill level (beginner phrases, intermediate, etc.)
 - `phrase_progress` - Learning status tracking (learning/practiced/mastered)
+- `bookmarks` - User-saved phrases for review
+
+**User & Progress Tables**:
+- `profiles` - User profiles with role (user/admin), current proficiency level, preferences
 - `study_sessions` - Daily study session analytics
-- `bookmarks` - User-saved phrases
-- `ai_conversations` & `ai_messages` - Chat history with moderation flags
-- `moderation_alerts` - Flagged content from AI moderation
-- `learning_standards` - Proficiency level definitions (beginner → fluent)
+- `phrase_progress` - Individual phrase mastery tracking
+
+**AI Tutor Tables**:
+- `ai_conversations` - Chat history with conversation type and language
+- `ai_messages` - Individual messages with moderation flags
+- `moderation_alerts` - Flagged content from AI moderation for admin review
 
 **Key Functions**:
-- `is_admin()` / `check_is_admin()` - Role checking (handles dev mode UUID)
+- `is_admin()` / `check_is_admin()` - Role checking for admin access
 - `update_study_streak()` - Trigger maintains daily streaks
 - `get_user_activity_summary()` - Admin dashboard analytics
+- `update_user_skill_from_assessment()` - Auto-updates user_skills when assessment completes
+- `get_user_overall_proficiency(user_id)` - Calculate overall proficiency level
 
 **Row Level Security**: All tables have RLS policies. Users access only their own data; admins have elevated access via role checks.
+
+**Architecture Note**: The app is transitioning to a full skills-based model where:
+1. Skills define learning objectives
+2. Categories map to skill proficiency levels
+3. Phrases are tagged with required skill proficiency
+4. Assessments measure skill mastery
+5. AI adapts based on demonstrated proficiency
+
+### Skills-Based Learning System
+
+**Core Principle**: Learning progression is driven by demonstrated proficiency in specific skills, not just time or phrase count.
+
+**Learning Flow**:
+1. **Initial Assessment** → Determine baseline proficiency in each skill
+2. **Phrase Learning** → Practice phrases appropriate to current skill level
+3. **AI Tutoring** → Get contextual help from AI tutor adapted to proficiency
+4. **Skill Assessment** → Periodically test skill mastery
+5. **Progressive Unlock** → Access higher-level content as skills improve
+
+**Proficiency Levels** (from `learning_standards` table):
+- **Beginner** - Basic phrases, simple grammar, high AI support
+- **Elementary** - Common expressions, guided practice
+- **Intermediate** - Conversational fluency, reduced scaffolding
+- **Advanced** - Complex phrases, nuanced language
+- **Fluent** - Native-like proficiency, minimal AI intervention
+
+**Skills Taxonomy** (Future Implementation):
+- **Pronunciation** - Sound production, tone, rhythm
+- **Grammar** - Sentence structure, verb forms, particles
+- **Vocabulary** - Word knowledge, context usage
+- **Comprehension** - Listening and reading understanding
+- **Conversation** - Real-time dialogue, cultural context
+
+**Assessment Types**:
+- **Diagnostic** - Initial skill level determination
+- **Formative** - Ongoing progress checks during learning
+- **Summative** - Skill mastery verification before unlock
+- **Adaptive** - AI-generated questions based on performance
+
+**Progression Logic**:
+```
+User starts → Diagnostic assessment → Assigned skill levels
+↓
+Learn phrases at current level → AI provides appropriate scaffolding
+↓
+Complete formative assessments → Demonstrate improving proficiency
+↓
+Pass summative assessment → Unlock next skill level
+↓
+Repeat cycle with higher-level content
+```
+
+**AI Tutor Role in Skills**:
+- Reads user's proficiency from database
+- Adjusts vocabulary complexity to skill level
+- Provides appropriate hints/explanations
+- Suggests skill-appropriate practice scenarios
+- Identifies when user is ready for assessment
 
 ### Component Architecture
 
@@ -321,23 +428,86 @@ export function PageClient() {
 
 All admin API routes use `requireAdmin()` check.
 
-### AI Integration
+### AI Integration (AI-First Architecture) ⚡
 
-**Endpoints** (`app/api/ai/`):
-- `chat/route.ts` - Streaming chat with Claude Haiku 4.5 (practice/scenario/translation_help)
-- `generate-scenario/route.ts` - Generate practice scenarios
-- `recommend-phrases/route.ts` - AI-powered phrase recommendations
+**Philosophy**: Nyuchi Lingo is an AI-first application. The AI tutor is the CORE of the learning experience, reading user proficiency from the database for EVERY interaction to provide adaptive, personalized teaching.
 
-**AI Features**:
-- Vercel AI SDK with Vercel AI Gateway
-- Model: `anthropic/claude-haiku-4.5` for all AI operations
-- Content moderation via `lib/ai/moderation.ts` using Claude Haiku 4.5
-- Moderation checks: sexual, hate, harassment, violence, self-harm, abuse
-- Flagged content creates `moderation_alerts` for admin review
-- Learning standards guide AI teaching approach based on proficiency
-- **Note**: No API keys needed - managed through Vercel AI Gateway
+**Configuration** (`lib/ai/config.ts`):
+- **API Key**: `AI_GATEWAY_API_KEY` environment variable (required)
+- **Gateway**: Vercel AI Gateway
+- **Model**: `anthropic/claude-haiku-4.5` (all AI operations)
 
-**Flow**: User message → moderation check → Claude Haiku chat → stream response → store in database
+**Core AI System** (`lib/ai/skills-aware-prompts.ts`):
+- ⚡ **`buildSkillsAwarePrompt(userId, conversationType, language)`** - Called for EVERY AI interaction
+- Reads `user_skills` table to get actual proficiency levels (0-100 score per skill)
+- Builds adaptive system prompt with:
+  - User proficiency profile (overall + individual skills)
+  - Vocabulary complexity guidance (simple → native-level)
+  - Grammar complexity guidance (present simple → full grammatical range)
+  - Scaffolding level (maximum support → peer conversation)
+  - Error correction approach (correct everything → no corrections)
+  - Recent assessment performance context
+  - Conversation type specific guidance
+
+**Adaptive Teaching Levels**:
+1. **Beginner (0-49)**: Simple vocabulary, present tense only, maximum support, correct every error
+2. **Elementary (50-64)**: Common vocabulary, basic tenses, high support, correct major errors
+3. **Intermediate (65-79)**: Varied vocabulary, all basic tenses, moderate support, correct significant errors
+4. **Advanced (80-89)**: Sophisticated vocabulary, complex grammar, light support, minimal corrections
+5. **Fluent (90-100)**: Native-level language, full grammatical range, peer conversation, no corrections
+
+**API Endpoints**:
+- `app/api/ai/chat/route.ts` - ⚡ Streaming chat with skills-aware adaptive teaching
+- `app/api/ai/generate-scenario/route.ts` - Generate skill-appropriate practice scenarios
+- `app/api/ai/recommend-phrases/route.ts` - AI-powered phrase recommendations based on proficiency
+- `app/api/ai/test/route.ts` - Test endpoint to verify AI configuration
+
+**AI Tutor Features**:
+- ⚡ **Real Proficiency Reading**: AI reads actual assessment scores from database (not guesses)
+- **Adaptive Vocabulary**: Adjusts word complexity from 1-2 syllables (beginner) to technical terms/slang (fluent)
+- **Adaptive Grammar**: Adjusts from present simple only (beginner) to full grammatical range (fluent)
+- **Adaptive Support**: From "explain word-by-word" (beginner) to "treat as peer" (fluent)
+- **Adaptive Corrections**: From "correct everything gently" (beginner) to "no corrections" (fluent)
+- **Performance Context**: AI sees last 5 assessment results to reinforce weak areas
+- **Content Moderation**: Real-time moderation via `lib/ai/moderation.ts` using Claude Haiku 4.5
+- **Conversation History**: All interactions stored in `ai_conversations` and `ai_messages` tables
+
+**Skills-Aware Flow**:
+1. User sends message → moderation check → reject if flagged
+2. `buildSkillsAwarePrompt()` reads user_skills table for current proficiency
+3. Builds adaptive system prompt (vocabulary, grammar, scaffolding, corrections)
+4. Includes recent assessment performance for context
+5. Stream Claude Haiku 4.5 response via Vercel AI Gateway
+6. Store user + assistant messages asynchronously (doesn't block response)
+
+**User Skills Utilities** (`lib/utils/user-skills.ts`):
+- `getUserSkillsWithDetails(userId)` - Get all skills with full details
+- `getUserSkillLevel(userId, skillName)` - Get proficiency for specific skill
+- `getUserOverallProficiency(userId)` - Calculate average proficiency across all skills
+- `getUserWeakestSkill(userId)` - Find skill needing most improvement
+- `getUserStrongestSkill(userId)` - Find best performing skill
+- `calculateProgressToNextLevel(userId, skillName)` - Progress percentage to next level
+- `getRecommendedPhrases(userId, limit)` - Filter phrases by proficiency
+- `getSkillsDashboardSummary(userId)` - Complete progress overview
+- `shouldTakeDiagnosticAssessment(userId)` - Check if user needs initial assessment
+- `initializeUserSkills(userId)` - Create user_skills entries for new users
+
+**Example AI Adaptation**:
+```typescript
+// User with mixed proficiency:
+// - Vocabulary: 68/100 (intermediate)
+// - Grammar: 52/100 (elementary)
+// - Conversation: 38/100 (beginner)
+
+// AI adapts to WEAKEST skill (conversation):
+// - Uses simple vocabulary (not overwhelming)
+// - Uses basic grammar structures
+// - Provides HIGH support with frequent checks
+// - Gently corrects major errors
+// - Encourages conversation practice
+```
+
+**Important**: The `AI_GATEWAY_API_KEY` must be set in environment variables. The AI SDK routes requests through Vercel AI Gateway for model access.
 
 ## Data Fetching Patterns
 
@@ -417,11 +587,13 @@ Bookmarks and progress use optimistic UI updates: update local state immediately
 
 **Core Libraries**:
 - `lib/supabase/` - Database client configurations
-- `lib/dev-mode.ts` - Dev mode utilities and mock data
-- `lib/ai/moderation.ts` - Content moderation with Claude Haiku 4.5
+- `lib/ai/config.ts` - AI model configuration and Vercel AI Gateway setup
+- `lib/ai/moderation.ts` - Content moderation with Claude Haiku
+- `lib/learning-standards.ts` - Build AI system prompts based on user proficiency
 - `lib/phrases-data.ts` - Phrase type definitions (59KB)
 - `lib/translations.ts` - UI translations for 4 languages (16KB)
 - `lib/seo-config.ts` - Metadata and structured data
+- `lib/dev-mode.ts` - Legacy file (dev mode removed)
 
 **React Hooks**:
 - `lib/hooks/use-admin.ts` - Admin role checking (client-side)
@@ -430,8 +602,8 @@ Bookmarks and progress use optimistic UI updates: update local state immediately
 
 ## Special Considerations
 
-### Dev Mode Security
-**Never enable `NEXT_PUBLIC_DEV_MODE=true` in production.** This completely bypasses authentication and grants admin access to everyone. The mock dev user (UUID: 00000000-0000-0000-0000-000000000000) automatically passes admin checks.
+### Authentication Security
+**Dev mode has been removed** as of recent updates. All environments now require proper Supabase authentication. The previous dev mode (which used `NEXT_PUBLIC_DEV_MODE` and a mock UUID) has been deprecated for security reasons. See [DEV_MODE.md](DEV_MODE.md) and `.env.example` for details.
 
 ### Build Configuration
 - Image optimization disabled (`unoptimized: true`)
@@ -440,6 +612,7 @@ Bookmarks and progress use optimistic UI updates: update local state immediately
 
 ### Technical Debt
 - Large monolithic components (especially `admin-dashboard.tsx`)
+- Duplicate API routes: Both `/api/ai/chat` and `/api/chat` have identical implementations
 - No automated testing visible in codebase
 - Limited error boundaries
 - Some build warnings ignored
@@ -451,6 +624,46 @@ Bookmarks and progress use optimistic UI updates: update local state immediately
 - Client-side filtering for categories/search
 
 ## Common Workflows
+
+### Implementing Skills-Based Features
+
+When adding new skills-based functionality, follow this pattern:
+
+1. **Database Schema** - Add/update tables for skills tracking:
+   ```sql
+   -- Example: Add skills table
+   CREATE TABLE skills (
+     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+     name TEXT NOT NULL,
+     description TEXT,
+     proficiency_levels TEXT[] -- ['beginner', 'intermediate', 'advanced']
+   );
+
+   -- Link phrases to skills
+   ALTER TABLE phrases ADD COLUMN skill_id UUID REFERENCES skills(id);
+   ALTER TABLE phrases ADD COLUMN required_proficiency TEXT;
+   ```
+
+2. **Update AI System Prompts** - Modify `lib/learning-standards.ts`:
+   - Add skill-specific context to `buildAISystemPrompt()`
+   - Include user's proficiency in each skill
+   - Adjust AI behavior based on skill mastery
+
+3. **Create Assessment Flow** - Build assessment components:
+   - Diagnostic assessment (initial)
+   - Formative assessment (ongoing)
+   - Summative assessment (skill unlock)
+   - Store results in `assessments` and `user_skills` tables
+
+4. **Update Phrase Filtering** - Filter phrases by skill/proficiency:
+   - Query phrases based on user's skill levels
+   - Show only appropriate-level content
+   - Progressive unlock as proficiency improves
+
+5. **AI Tutor Integration** - Ensure AI adapts to skills:
+   - AI reads user's skill proficiency
+   - Adjusts response complexity
+   - Suggests skill-appropriate exercises
 
 ### Adding a New App Page (Authenticated)
 1. Create page in `app/app/[feature]/page.tsx` (Server Component)
@@ -520,15 +733,21 @@ Bookmarks and progress use optimistic UI updates: update local state immediately
 
 ## Testing Locally
 
-1. Enable dev mode (see Dev Mode section above)
-2. Access admin at `http://localhost:3000/admin`
-3. Test AI features at `/app/ai-practice`
-4. Check moderation queue at `/admin/moderation`
-5. Test sidebar collapse/expand functionality
-6. Test theme switching (light/dark/system)
-7. Test language switching (4 languages)
+1. Configure environment variables (see Environment Setup above)
+2. Start dev server: `npm run dev`
+3. Sign up for a test account via `/auth/login`
+4. To test admin features, manually update your user role in Supabase:
+   ```sql
+   UPDATE profiles SET role = 'admin' WHERE email = 'your-test-email@example.com';
+   ```
+5. Access admin dashboard at `http://localhost:3000/admin/overview`
+6. Test AI features at `/app/ai-practice`
+7. Check moderation queue at `/admin/moderation`
+8. Test sidebar collapse/expand functionality
+9. Test theme switching (light/dark/system)
+10. Test language switching (4 languages)
 
-Mock admin user (dev@nyuchi.com) has full access to all features.
+**Note**: Admin access requires the `role` column in the `profiles` table to be set to `'admin'`.
 
 ---
 
@@ -619,10 +838,24 @@ echo "Implementation complete" > NEW_FEATURE_COMPLETE.md  # ❌ Wrong location
 
 ## Project Status
 
-**Current Version**: 2.0.0 (November 10, 2025)
-**Framework**: Next.js 16, React 19, Supabase, Vercel
+**Current Version**: 2.0.0 (November 19, 2025)
+**Framework**: Next.js 16, React 19, Supabase, Vercel, Cloudflare AI Gateway
 **Status**: Production-ready with continuous deployment
-**Development Mode**: Active (localhost:3000)
+**Architecture**: Transitioning to full skills-based learning system
+
+**Strategic Direction**:
+- **Primary Goal**: Native phrase learning for multilingual proficiency
+- **AI Role**: Intelligent tutor that adapts to learner's skill level
+- **Learning Model**: Skills-based progression with proficiency assessments
+- **Content Organization**: Phrases mapped to skills and proficiency levels
+- **Unlock System**: Progressive content access based on demonstrated mastery
+
+**Next Phase** (Skills Implementation):
+1. Create `skills`, `assessments`, and `user_skills` tables
+2. Build diagnostic assessment flow
+3. Implement skills-based phrase filtering
+4. Add proficiency tracking dashboard
+5. Enhance AI tutor with granular skill awareness
 
 ## Brand Colors (November 11, 2025 Update)
 
