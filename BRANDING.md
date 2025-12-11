@@ -138,6 +138,71 @@ All colors meet WCAG 2.1 AA standards:
 - White text on primary-700: **8.5:1** contrast ratio (Pass AAA)
 - Navigation items: **4.93:1 to 14.2:1** (All Pass AA, most AAA)
 
+#### Mobile App Colors (Expo/React Native)
+
+The mobile app uses a slightly different color system optimized for mobile UI patterns. See `constants/Colors.ts` for the full implementation.
+
+**Primary - Sunset Deep** (Brand distinctive color):
+
+```typescript
+primary: {
+  600: '#D4634A',  // Main brand color - Sunset Deep
+  500: '#e46b5a',  // Lighter variant
+  700: '#b8513c',  // Darker variant
+}
+```
+
+**Secondary - Navy Blue** (Education/Trust):
+
+```typescript
+secondary: {
+  800: '#1E3A8A',  // Main secondary - Navy Blue
+  600: '#2563eb',  // Lighter variant
+}
+```
+
+**Accent - Purple** (Innovation/Creativity):
+
+```typescript
+accent: {
+  600: '#7C73E6',  // Main accent - Purple (matches Ubuntu blue)
+  500: '#8b7cf5',  // Lighter variant
+}
+```
+
+**Theme Configuration**:
+
+```typescript
+// Light Theme
+lightTheme = {
+  background: '#faf9fb',
+  card: '#ffffff',
+  primary: Colors.primary[600],    // Sunset Deep
+  secondary: Colors.secondary[800], // Navy Blue
+  accent: Colors.accent[600],       // Purple
+}
+
+// Dark Theme
+darkTheme = {
+  background: '#101010',
+  card: '#1a1a1a',
+  primary: Colors.primary[500],    // Lighter Sunset
+  secondary: Colors.secondary[600], // Lighter Navy
+  accent: Colors.accent[500],       // Lighter Purple
+}
+```
+
+**Mobile vs Web Color Mapping**:
+
+| Purpose | Web (Tailwind) | Mobile (Colors.ts) |
+|---------|----------------|-------------------|
+| Primary CTA | `bg-primary-700` (#5f5873) | `Colors.primary[600]` (#D4634A) |
+| Secondary | `bg-secondary-500` (#729B63) | `Colors.secondary[800]` (#1E3A8A) |
+| Accent | `bg-accent-500` (#d4634a) | `Colors.accent[600]` (#7C73E6) |
+| Success | `bg-secondary-500` (#729B63) | `Colors.success[500]` (#729B63) |
+
+**Note**: The mobile app prioritizes the Sunset Deep (#D4634A) as the primary brand color for a more distinctive, energetic feel on mobile devices. The web version uses the Warm Purple for a more professional appearance.
+
 ### Typography
 
 #### Font Families
