@@ -10,18 +10,20 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
+  useWindowDimensions,
 } from 'react-native'
 import { useRouter, Stack } from 'expo-router'
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react-native'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Cloud, Bot, BarChart3 } from 'lucide-react-native'
 
-import { useColorScheme } from '@/components/useColorScheme'
+import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { signInWithEmail, signUpWithEmail } from '@/lib/supabase/client'
 
 export default function AuthScreen() {
   const router = useRouter()
-  const colorScheme = useColorScheme()
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme
+  const { isDark } = useTheme()
+  const theme = isDark ? darkTheme : lightTheme
 
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
@@ -29,8 +31,12 @@ export default function AuthScreen() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const { width } = useWindowDimensions()
 
-  const styles = createStyles(theme)
+  // Responsive breakpoints
+  const isTablet = width >= 768
+
+  const styles = createStyles(theme, isTablet)
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -66,6 +72,10 @@ export default function AuthScreen() {
     router.replace('/(tabs)')
   }
 
+  const handleBack = () => {
+    router.back()
+  }
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -77,122 +87,139 @@ export default function AuthScreen() {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.logo}>🐝</Text>
-            <Text style={styles.title}>Nyuchi Lingo</Text>
-            <Text style={styles.subtitle}>
-              Learn African Languages with AI
-            </Text>
-          </View>
+          {/* Back Button */}
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <ArrowLeft size={24} color={theme.text} />
+          </TouchableOpacity>
 
-          {/* Auth Card */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>
-              {isLogin ? 'Welcome Back' : 'Create Account'}
-            </Text>
-
-            {/* Email Input */}
-            <View style={styles.inputContainer}>
-              <Mail size={20} color={theme.textMuted} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Email address"
-                placeholderTextColor={theme.textMuted}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
+          <View style={styles.contentWrapper}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Image
+                source={require('@/assets/images/nyuchi-icon.png')}
+                style={styles.logo}
+                resizeMode="contain"
               />
+              <Text style={styles.title}>Nyuchi Lingo</Text>
+              <Text style={styles.subtitle}>
+                Learn African Languages with AI
+              </Text>
             </View>
 
-            {/* Password Input */}
-            <View style={styles.inputContainer}>
-              <Lock size={20} color={theme.textMuted} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Password"
-                placeholderTextColor={theme.textMuted}
-                secureTextEntry={!showPassword}
-                autoComplete="password"
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                {showPassword ? (
-                  <EyeOff size={20} color={theme.textMuted} />
-                ) : (
-                  <Eye size={20} color={theme.textMuted} />
-                )}
-              </TouchableOpacity>
-            </View>
+            {/* Auth Card */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>
+                {isLogin ? 'Welcome Back' : 'Create Account'}
+              </Text>
 
-            {/* Confirm Password (Sign Up only) */}
-            {!isLogin && (
+              {/* Email Input */}
+              <View style={styles.inputContainer}>
+                <Mail size={20} color={theme.textMuted} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Email address"
+                  placeholderTextColor={theme.textMuted}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                />
+              </View>
+
+              {/* Password Input */}
               <View style={styles.inputContainer}>
                 <Lock size={20} color={theme.textMuted} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="Confirm password"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Password"
                   placeholderTextColor={theme.textMuted}
                   secureTextEntry={!showPassword}
+                  autoComplete="password"
                 />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  {showPassword ? (
+                    <EyeOff size={20} color={theme.textMuted} />
+                  ) : (
+                    <Eye size={20} color={theme.textMuted} />
+                  )}
+                </TouchableOpacity>
               </View>
-            )}
 
-            {/* Submit Button */}
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleAuth}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <>
-                  <Text style={styles.submitButtonText}>
-                    {isLogin ? 'Sign In' : 'Create Account'}
-                  </Text>
-                  <ArrowRight size={20} color="#ffffff" />
-                </>
+              {/* Confirm Password (Sign Up only) */}
+              {!isLogin && (
+                <View style={styles.inputContainer}>
+                  <Lock size={20} color={theme.textMuted} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholder="Confirm password"
+                    placeholderTextColor={theme.textMuted}
+                    secureTextEntry={!showPassword}
+                  />
+                </View>
               )}
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleAuth}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <>
+                    <Text style={styles.submitButtonText}>
+                      {isLogin ? 'Sign In' : 'Create Account'}
+                    </Text>
+                    <ArrowRight size={20} color="#ffffff" />
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {/* Toggle Auth Mode */}
+              <TouchableOpacity
+                style={styles.toggleButton}
+                onPress={() => setIsLogin(!isLogin)}
+              >
+                <Text style={styles.toggleText}>
+                  {isLogin
+                    ? "Don't have an account? Sign up"
+                    : 'Already have an account? Sign in'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Skip Button */}
+            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+              <Text style={styles.skipText}>Continue without account</Text>
             </TouchableOpacity>
 
-            {/* Toggle Auth Mode */}
-            <TouchableOpacity
-              style={styles.toggleButton}
-              onPress={() => setIsLogin(!isLogin)}
-            >
-              <Text style={styles.toggleText}>
-                {isLogin
-                  ? "Don't have an account? Sign up"
-                  : 'Already have an account? Sign in'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Skip Button */}
-          <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-            <Text style={styles.skipText}>Continue without account</Text>
-          </TouchableOpacity>
-
-          {/* Features */}
-          <View style={styles.features}>
-            <Text style={styles.featuresTitle}>Why create an account?</Text>
-            <View style={styles.featureItem}>
-              <Text style={styles.featureIcon}>☁️</Text>
-              <Text style={styles.featureText}>Sync progress across devices</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Text style={styles.featureIcon}>🤖</Text>
-              <Text style={styles.featureText}>Personalized AI tutoring</Text>
-            </View>
-            <View style={styles.featureItem}>
-              <Text style={styles.featureIcon}>📊</Text>
-              <Text style={styles.featureText}>Track your learning journey</Text>
+            {/* Features */}
+            <View style={styles.features}>
+              <Text style={styles.featuresTitle}>Why create an account?</Text>
+              <View style={styles.featureItem}>
+                <View style={[styles.featureIconContainer, { backgroundColor: Colors.accent[600] + '20' }]}>
+                  <Cloud size={18} color={Colors.accent[600]} />
+                </View>
+                <Text style={styles.featureText}>Sync progress across devices</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <View style={[styles.featureIconContainer, { backgroundColor: Colors.primary[600] + '20' }]}>
+                  <Bot size={18} color={Colors.primary[600]} />
+                </View>
+                <Text style={styles.featureText}>Personalized AI tutoring</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <View style={[styles.featureIconContainer, { backgroundColor: Colors.secondary[800] + '20' }]}>
+                  <BarChart3 size={18} color={Colors.secondary[800]} />
+                </View>
+                <Text style={styles.featureText}>Track your learning journey</Text>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -201,7 +228,7 @@ export default function AuthScreen() {
   )
 }
 
-const createStyles = (theme: typeof lightTheme) =>
+const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -210,24 +237,42 @@ const createStyles = (theme: typeof lightTheme) =>
     content: {
       flexGrow: 1,
       padding: 24,
+      paddingTop: 60,
+    },
+    contentWrapper: {
+      maxWidth: isTablet ? 450 : '100%',
+      alignSelf: 'center',
+      width: '100%',
+    },
+    backButton: {
+      position: 'absolute',
+      top: 60,
+      left: 24,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: 'center',
       justifyContent: 'center',
+      zIndex: 10,
     },
     header: {
       alignItems: 'center',
       marginBottom: 32,
+      marginTop: isTablet ? 40 : 20,
     },
     logo: {
-      fontSize: 48,
-      marginBottom: 8,
+      width: isTablet ? 80 : 64,
+      height: isTablet ? 80 : 64,
+      marginBottom: 12,
     },
     title: {
-      fontSize: 28,
+      fontSize: isTablet ? 32 : 28,
       fontWeight: '700',
       color: theme.text,
       marginBottom: 4,
     },
     subtitle: {
-      fontSize: 16,
+      fontSize: isTablet ? 18 : 16,
       color: theme.textSecondary,
     },
     card: {
@@ -235,9 +280,11 @@ const createStyles = (theme: typeof lightTheme) =>
       borderRadius: 20,
       padding: 24,
       marginBottom: 24,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     cardTitle: {
-      fontSize: 22,
+      fontSize: isTablet ? 24 : 22,
       fontWeight: '700',
       color: theme.text,
       textAlign: 'center',
@@ -298,6 +345,8 @@ const createStyles = (theme: typeof lightTheme) =>
       backgroundColor: theme.card,
       borderRadius: 16,
       padding: 20,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     featuresTitle: {
       fontSize: 16,
@@ -311,11 +360,16 @@ const createStyles = (theme: typeof lightTheme) =>
       marginBottom: 12,
       gap: 12,
     },
-    featureIcon: {
-      fontSize: 20,
+    featureIconContainer: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     featureText: {
       fontSize: 14,
       color: theme.textSecondary,
+      flex: 1,
     },
   })
