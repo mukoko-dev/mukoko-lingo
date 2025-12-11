@@ -69,7 +69,7 @@ export async function getUserSkillLevel(userId: string, skillName: SkillName): P
 
 /**
  * Get user's overall proficiency level
- * Uses database function that averages all skill scores
+ * Calculates average of all skill scores
  */
 export async function getUserOverallProficiency(userId: string): Promise<{
   level: ProficiencyLevel
@@ -77,19 +77,28 @@ export async function getUserOverallProficiency(userId: string): Promise<{
 }> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.rpc("get_user_overall_proficiency", {
-    user_id: userId,
-  })
+  // Get all user skills and calculate average
+  const { data: userSkills, error } = await supabase
+    .from("user_skills")
+    .select("current_score, current_level")
+    .eq("user_id", userId)
 
-  if (error || !data) {
-    console.error("[user-skills] Error getting overall proficiency:", error)
+  if (error || !userSkills || userSkills.length === 0) {
     return { level: "beginner", score: 0 }
   }
 
-  return {
-    level: data.level as ProficiencyLevel,
-    score: data.score,
-  }
+  // Calculate average score
+  const totalScore = userSkills.reduce((sum, skill) => sum + (skill.current_score || 0), 0)
+  const avgScore = Math.round(totalScore / userSkills.length)
+
+  // Determine level based on average score
+  let level: ProficiencyLevel = "beginner"
+  if (avgScore >= 90) level = "fluent"
+  else if (avgScore >= 80) level = "advanced"
+  else if (avgScore >= 65) level = "intermediate"
+  else if (avgScore >= 50) level = "elementary"
+
+  return { level, score: avgScore }
 }
 
 /**

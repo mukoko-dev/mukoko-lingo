@@ -63,14 +63,28 @@ export async function POST(req: Request) {
 
     if (assessmentError || !assessment) {
       // Create diagnostic assessment if it doesn't exist
+      // Diagnostic assessments test all skills - we use the first skill as reference
+      // but create separate user_assessments for each skill
+      const firstSkillId = Object.values(skillMap)[0]
+
+      if (!firstSkillId) {
+        console.error("[submit-diagnostic] No skills found in database")
+        return NextResponse.json(
+          { error: "No skills configured in database" },
+          { status: 500 }
+        )
+      }
+
       const { data: newAssessment, error: createError } = await supabase
         .from("assessments")
         .insert({
+          skill_id: firstSkillId, // Required FK - diagnostic covers all skills
           type: "diagnostic",
-          title: { en: "Diagnostic Assessment", shona: "Bvunzo Yekutanga" },
-          description: { en: "Initial proficiency assessment" },
-          questions: [], // Questions stored in code
-          passing_score: 0, // Diagnostic always passes
+          target_level: "beginner", // Diagnostic determines actual level
+          title: { en: "Diagnostic Assessment", shona: "Bvunzo Yekutanga", ndebele: "Ukuhlola Kokuqala", zh: "诊断评估" },
+          description: { en: "Initial proficiency assessment to determine your skill levels" },
+          questions: [], // Questions stored in code (lib/data/diagnostic-assessment.ts)
+          passing_score: 0, // Diagnostic always passes - it's for measurement not pass/fail
           is_active: true,
         })
         .select("id")
