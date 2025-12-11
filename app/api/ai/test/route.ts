@@ -1,4 +1,9 @@
-// API endpoint to test AI configuration
+import { generateText } from "ai"
+import { haiku } from "@/lib/ai/config"
+
+export const maxDuration = 30
+
+// API endpoint to test AI configuration and actual AI response
 export async function GET() {
   const hasGatewayKey = !!process.env.AI_GATEWAY_API_KEY
   const hasLegacyKey = !!process.env.ANTHROPIC_API_KEY
@@ -6,7 +11,7 @@ export async function GET() {
   const apiKeyPrefix = apiKey?.substring(0, 10) || 'not set'
   const hasOIDC = !!process.env.VERCEL_OIDC_TOKEN
 
-  return Response.json({
+  const configCheck = {
     configured: hasGatewayKey || hasLegacyKey,
     usingGatewayKey: hasGatewayKey,
     usingLegacyKey: hasLegacyKey && !hasGatewayKey,
@@ -18,5 +23,59 @@ export async function GET() {
       : hasLegacyKey
       ? '⚠️ Using legacy ANTHROPIC_API_KEY. Please migrate to AI_GATEWAY_API_KEY'
       : '❌ AI_GATEWAY_API_KEY is not set. Add your Vercel AI Gateway key to environment variables.'
-  })
+  }
+
+  // If not configured, return early
+  if (!configCheck.configured) {
+    return Response.json({
+      ...configCheck,
+      aiTest: {
+        attempted: false,
+        reason: "No API key configured"
+      }
+    })
+  }
+
+  // Try to actually get a response from the AI
+  try {
+    console.log("[AI Test] Starting hardcoded AI test...")
+
+    const hardcodedQuestion = "Hello! Can you tell me what 2+2 equals? Keep your answer brief."
+
+    console.log("[AI Test] Sending question:", hardcodedQuestion)
+
+    const result = await generateText({
+      model: haiku,
+      prompt: hardcodedQuestion,
+      maxTokens: 100,
+      temperature: 0.7,
+    })
+
+    console.log("[AI Test] Received response:", result.text)
+
+    return Response.json({
+      ...configCheck,
+      aiTest: {
+        success: true,
+        question: hardcodedQuestion,
+        answer: result.text,
+        model: "claude-haiku-4.5",
+        timestamp: new Date().toISOString(),
+      }
+    })
+  } catch (error) {
+    console.error("[AI Test Error]:", error)
+
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    console.error("[AI Test Error Details]:", errorMessage)
+
+    return Response.json({
+      ...configCheck,
+      aiTest: {
+        success: false,
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+      }
+    }, { status: 500 })
+  }
 }

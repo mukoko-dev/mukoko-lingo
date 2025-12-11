@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next"
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://nyuchilingo.com"
+  const baseUrl = "https://learning.nyuchi.com"
   const currentDate = new Date()
 
   // Static routes
