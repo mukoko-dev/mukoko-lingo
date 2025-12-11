@@ -209,32 +209,32 @@ export async function POST(req: Request) {
   }
 }
 
-// Helper to generate skill-specific feedback
+// Helper to generate skill-specific feedback (language-agnostic)
 function getSkillFeedback(skill: SkillName, level: ProficiencyLevel): string {
   const feedback: Record<SkillName, Record<ProficiencyLevel, string>> = {
     pronunciation: {
-      beginner: "You're just starting with Shona sounds. Focus on basic vowel sounds and common greetings.",
-      elementary: "You recognize some Shona sounds. Practice with audio to improve your ear.",
-      intermediate: "Good pronunciation awareness! Work on the unique whistling fricatives like 'sv' and 'zv'.",
+      beginner: "You're just starting with the sounds. Focus on basic vowel sounds and common greetings.",
+      elementary: "You recognize some sounds. Practice with audio to improve your ear.",
+      intermediate: "Good pronunciation awareness! Work on unique sounds and tonal patterns.",
       advanced: "Strong pronunciation skills! Fine-tune your tones for native-like speech.",
-      fluent: "Excellent pronunciation! You understand the nuances of Shona phonology.",
+      fluent: "Excellent pronunciation! You understand the nuances of the language's phonology.",
     },
     vocabulary: {
-      beginner: "Let's build your basic Shona vocabulary. Start with greetings and common words.",
+      beginner: "Let's build your basic vocabulary. Start with greetings and common words.",
       elementary: "You know some everyday words. Expand with family, food, and number terms.",
       intermediate: "Good vocabulary base! Add more verbs and descriptive words.",
       advanced: "Strong vocabulary! Explore idioms and cultural expressions.",
       fluent: "Impressive vocabulary! You understand idiomatic and proverbial language.",
     },
     grammar: {
-      beginner: "Shona grammar is different from English. Let's start with basic sentence structure.",
-      elementary: "You understand basic patterns. Focus on subject prefixes and verb forms.",
-      intermediate: "Good grasp of grammar! Work on tense markers and noun classes.",
+      beginner: "The grammar may be different from what you know. Let's start with basic sentence structure.",
+      elementary: "You understand basic patterns. Focus on verb forms and sentence construction.",
+      intermediate: "Good grasp of grammar! Work on tense markers and more complex structures.",
       advanced: "Strong grammar skills! Refine complex constructions and agreement patterns.",
-      fluent: "Excellent grammar! You understand the full complexity of Shona structure.",
+      fluent: "Excellent grammar! You understand the full complexity of the language structure.",
     },
     comprehension: {
-      beginner: "Understanding Shona takes practice. Start with simple greetings and responses.",
+      beginner: "Understanding takes practice. Start with simple greetings and responses.",
       elementary: "You can follow basic conversations. Practice with short dialogues.",
       intermediate: "Good comprehension! Challenge yourself with longer texts and conversations.",
       advanced: "Strong comprehension! Try native media and complex discussions.",
@@ -252,33 +252,33 @@ function getSkillFeedback(skill: SkillName, level: ProficiencyLevel): string {
   return feedback[skill][level]
 }
 
-// Helper to generate next steps
+// Helper to generate next steps (language-agnostic)
 function getNextSteps(skill: SkillName, level: ProficiencyLevel): string[] {
   const steps: Record<ProficiencyLevel, string[]> = {
     beginner: [
       "Practice basic phrases daily",
-      "Listen to Shona audio content",
+      "Listen to audio content in your target language",
       "Learn 5 new words each day",
     ],
     elementary: [
       "Have short conversations",
-      "Read simple Shona texts",
+      "Read simple texts in your target language",
       "Focus on common verb forms",
     ],
     intermediate: [
-      "Watch Shona videos with subtitles",
+      "Watch videos with subtitles",
       "Practice with AI tutor regularly",
       "Learn cultural expressions",
     ],
     advanced: [
       "Engage in complex discussions",
-      "Read Shona literature",
+      "Read literature in your target language",
       "Practice formal and informal registers",
     ],
     fluent: [
       "Maintain skills through regular practice",
-      "Help others learn Shona",
-      "Explore regional dialects",
+      "Help others learn the language",
+      "Explore regional dialects and variations",
     ],
   }
 
