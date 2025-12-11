@@ -202,7 +202,7 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             await signOut()
-            router.replace('/auth/')
+            router.replace('/auth' as const)
           },
         },
       ]
@@ -365,7 +365,7 @@ export default function ProfileScreen() {
 
       {/* Sign Out */}
       <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-        <LogOut size={20} color={Colors.error} />
+        <LogOut size={20} color={Colors.semanticError} />
         <Text style={styles.signOutText}>Sign Out</Text>
       </TouchableOpacity>
 
@@ -653,7 +653,7 @@ const createStyles = (theme: typeof lightTheme) =>
     signOutText: {
       fontSize: 16,
       fontWeight: '600',
-      color: Colors.error,
+      color: Colors.semanticError,
     },
     version: {
       textAlign: 'center',

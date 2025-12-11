@@ -104,13 +104,21 @@ For releases with database changes:
 
 ### 5. Deployment
 
-**Automatic Deployment (Vercel)**:
-- Merging to `main` triggers automatic production deployment
-- Preview deployments for all PRs
+**Web Deployment (Expo Web)**:
+
+- Build with `npx expo export --platform web`
+- Deploy to Vercel, Netlify, or any static hosting
+- CI/CD workflow handles automatic builds on PRs
+
+**Mobile Deployment (EAS)**:
+
+- Preview builds: `npx eas build --profile preview --platform all`
+- Production builds: `npx eas build --profile production --platform all`
+- OTA updates: `npx eas update --branch production`
 
 **Manual Steps**:
 1. Merge release PR to `main`
-2. Monitor Vercel deployment
+2. Run EAS build for mobile platforms
 3. Verify production functionality
 4. Tag release in GitHub
 

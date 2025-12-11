@@ -217,7 +217,7 @@ export default function PhraseDetailScreen() {
         {/* Practice with AI */}
         <TouchableOpacity
           style={styles.aiButton}
-          onPress={() => router.push('/chat')}
+          onPress={() => router.push('/(tabs)/ai-practice' as const)}
         >
           <MessageCircle size={20} color={Colors.primary[600]} />
           <Text style={styles.aiButtonText}>Practice with Shamwari</Text>
