@@ -13,6 +13,21 @@ if (!apiKey) {
 // Format: 'provider/model-name'
 // The AI SDK automatically uses these with the gateway when AI_GATEWAY_API_KEY is set
 // Just pass these strings directly to streamText() or generateText()
-export const haiku = 'anthropic/claude-3-5-haiku-20241022'
-export const sonnet = 'anthropic/claude-3-5-sonnet-20250219'
-export const deepseek = 'deepseek/deepseek-v3.2-exp-thinking'
+
+// Primary models - DeepSeek (cost-effective, high quality)
+export const deepseek = 'deepseek/deepseek-v3.2'
+export const deepseekThinking = 'deepseek/deepseek-v3.2-thinking'
+export const deepseekR1 = 'deepseek/deepseek-r1'
+
+// Qwen models - Alibaba's models via Vercel AI Gateway
+export const qwen = 'alibaba/qwen3-max'
+export const qwenCoder = 'alibaba/qwen3-coder'
+export const qwenThinking = 'alibaba/qwen3-235b-a22b-thinking'
+
+// Default model for all AI operations (tutoring, chat, assessments)
+// Using DeepSeek v3.2 as primary - excellent multilingual support, cost-effective
+export const defaultModel = deepseek
+
+// Legacy exports for backward compatibility (mapped to new models)
+export const haiku = deepseek
+export const sonnet = deepseekThinking
