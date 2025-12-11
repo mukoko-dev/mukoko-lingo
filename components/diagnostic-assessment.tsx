@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -154,9 +155,20 @@ export function DiagnosticAssessment({ onComplete, language = "en" }: Diagnostic
       <div className="max-w-2xl mx-auto">
         <Card className="border-2">
           <CardHeader className="text-center pb-2">
+            {/* Shamwari mascot */}
+            <div className="relative w-20 h-20 mx-auto mb-4">
+              <Image
+                src="/Shamwari_logo_Mascot.svg"
+                alt="Shamwari - Your AI Language Tutor"
+                width={80}
+                height={80}
+                className="w-full h-full object-contain drop-shadow-lg"
+                priority
+              />
+            </div>
             <CardTitle className="text-2xl">{diagnosticAssessment.title[language] || diagnosticAssessment.title.en}</CardTitle>
             <CardDescription className="text-base mt-2">
-              {diagnosticAssessment.description[language] || diagnosticAssessment.description.en}
+              Hi! I&apos;m Shamwari, your friendly learning companion. Let&apos;s discover your current level together!
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -194,8 +206,8 @@ export function DiagnosticAssessment({ onComplete, language = "en" }: Diagnostic
 
             <div className="bg-secondary-500/10 border border-secondary-500/20 rounded-lg p-4">
               <p className="text-sm text-secondary-700 dark:text-secondary-400">
-                <strong>Tip:</strong> Answer honestly! This assessment helps us personalize your learning experience.
-                There&apos;s no penalty for wrong answers - we&apos;re just finding your starting point.
+                <strong>Shamwari&apos;s Tip:</strong> Answer honestly, friend! This helps me personalize your learning journey.
+                There&apos;s no penalty for wrong answers - we&apos;re just finding your starting point together.
               </p>
             </div>
 
