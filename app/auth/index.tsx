@@ -163,6 +163,16 @@ export default function AuthScreen() {
                 </View>
               )}
 
+              {/* Forgot Password (Sign In only) */}
+              {isLogin && (
+                <TouchableOpacity
+                  style={styles.forgotPasswordButton}
+                  onPress={() => router.push('/auth/forgot-password' as any)}
+                >
+                  <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+                </TouchableOpacity>
+              )}
+
               {/* Submit Button */}
               <TouchableOpacity
                 style={styles.submitButton}
@@ -323,6 +333,15 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       color: '#ffffff',
       fontSize: 17,
       fontWeight: '600',
+    },
+    forgotPasswordButton: {
+      alignSelf: 'flex-end',
+      marginTop: -8,
+      marginBottom: 8,
+    },
+    forgotPasswordText: {
+      color: Colors.primary[600],
+      fontSize: 14,
     },
     toggleButton: {
       alignItems: 'center',
