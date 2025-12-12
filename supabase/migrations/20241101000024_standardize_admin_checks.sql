@@ -4,7 +4,7 @@
 -- First ensure check_is_admin exists
 CREATE OR REPLACE FUNCTION public.check_is_admin(check_user_id UUID)
 RETURNS BOOLEAN AS $$
-  SELECT COALESCE((SELECT role = 'admin' FROM profiles WHERE user_id = check_user_id LIMIT 1), false);
+  SELECT COALESCE((SELECT role = 'admin' FROM profiles WHERE id = check_user_id LIMIT 1), false);
 $$ LANGUAGE SQL SECURITY DEFINER STABLE;
 
 -- Ensure is_admin wrapper exists (calls check_is_admin)
@@ -100,8 +100,8 @@ BEGIN
 
   RETURN QUERY
   SELECT
-    COUNT(DISTINCT p.user_id)::BIGINT as total_users,
-    COUNT(DISTINCT CASE WHEN p.last_study_date >= CURRENT_DATE - INTERVAL '7 days' THEN p.user_id END)::BIGINT as active_users,
+    COUNT(DISTINCT p.id)::BIGINT as total_users,
+    COUNT(DISTINCT CASE WHEN p.last_study_date >= CURRENT_DATE - INTERVAL '7 days' THEN p.id END)::BIGINT as active_users,
     COALESCE(SUM(pv.view_count), 0)::BIGINT as total_phrases_viewed,
     COALESCE(AVG(p.daily_goal), 0)::NUMERIC as avg_daily_goal,
     MAX(GREATEST(p.updated_at, COALESCE(pv.last_viewed_at, p.created_at))) as last_active
@@ -110,7 +110,7 @@ BEGIN
     SELECT user_id, COUNT(*) as view_count, MAX(viewed_at) as last_viewed_at
     FROM phrase_views
     GROUP BY user_id
-  ) pv ON p.user_id = pv.user_id;
+  ) pv ON p.id = pv.user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
