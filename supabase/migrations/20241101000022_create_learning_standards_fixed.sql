@@ -2,7 +2,7 @@
 -- Create a SECURITY DEFINER function to check admin status without RLS recursion
 CREATE OR REPLACE FUNCTION public.check_is_admin(check_user_id UUID)
 RETURNS BOOLEAN AS $$
-  SELECT COALESCE((SELECT role = 'admin' FROM profiles WHERE user_id = check_user_id LIMIT 1), false);
+  SELECT COALESCE((SELECT role = 'admin' FROM profiles WHERE id = check_user_id LIMIT 1), false);
 $$ LANGUAGE SQL SECURITY DEFINER STABLE;
 
 -- Now create learning standards table

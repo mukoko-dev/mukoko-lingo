@@ -135,7 +135,7 @@ ON phrase_stats_cache(bookmark_count DESC);
 -- Create materialized view for user activity summary
 CREATE MATERIALIZED VIEW IF NOT EXISTS user_activity_summary AS
 SELECT
-    p.user_id,
+    p.id AS user_id,
     p.email,
     p.display_name,
     p.role,
@@ -146,11 +146,11 @@ SELECT
     COALESCE(COUNT(DISTINCT b.id), 0) AS total_bookmarks,
     COALESCE(COUNT(DISTINCT up.id), 0) AS total_progress
 FROM profiles p
-LEFT JOIN phrase_views pv ON p.user_id = pv.user_id
-LEFT JOIN bookmarks b ON p.user_id = b.user_id
-LEFT JOIN user_progress up ON p.user_id = up.user_id
+LEFT JOIN phrase_views pv ON p.id = pv.user_id
+LEFT JOIN bookmarks b ON p.id = b.user_id
+LEFT JOIN user_progress up ON p.id = up.user_id
 WHERE p.deleted_at IS NULL
-GROUP BY p.user_id, p.email, p.display_name, p.role, p.status, p.created_at, p.last_active;
+GROUP BY p.id, p.email, p.display_name, p.role, p.status, p.created_at, p.last_active;
 
 -- Indexes on materialized view
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_activity_summary_user_id

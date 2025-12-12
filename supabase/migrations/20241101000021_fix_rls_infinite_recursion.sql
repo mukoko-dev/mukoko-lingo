@@ -10,24 +10,24 @@ DROP POLICY IF EXISTS "Admins can update any profile" ON profiles;
 -- Create a SECURITY DEFINER function to check admin status without RLS
 CREATE OR REPLACE FUNCTION public.check_is_admin(check_user_id UUID)
 RETURNS BOOLEAN AS $$
-  SELECT COALESCE((SELECT role = 'admin' FROM profiles WHERE user_id = check_user_id LIMIT 1), false);
+  SELECT COALESCE((SELECT role = 'admin' FROM profiles WHERE id = check_user_id LIMIT 1), false);
 $$ LANGUAGE SQL SECURITY DEFINER STABLE;
 
 -- Recreate policies without recursion using direct checks
 CREATE POLICY "Users can view their own profile or admins can view all"
   ON profiles FOR SELECT
   USING (
-    auth.uid() = user_id OR 
+    auth.uid() = id OR
     public.check_is_admin(auth.uid())
   );
 
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
-  USING (auth.uid() = user_id)
+  USING (auth.uid() = id)
   WITH CHECK (
-    auth.uid() = user_id AND 
+    auth.uid() = id AND
     -- Prevent users from changing their own role
-    (role = (SELECT role FROM profiles WHERE user_id = auth.uid()))
+    (role = (SELECT role FROM profiles WHERE id = auth.uid()))
   );
 
 CREATE POLICY "Admins can update any profile"
