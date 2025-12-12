@@ -2,6 +2,22 @@
 -- The issue: policies were querying profiles table while evaluating policies on profiles itself
 -- Solution: Use a separate function that uses SECURITY DEFINER to bypass RLS
 
+-- First, fix the profiles table column name if it was previously renamed
+-- Some databases may have 'user_id' instead of 'id' from old migration 016
+DO $$
+BEGIN
+  -- Check if user_id column exists and id doesn't
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'user_id')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'id')
+  THEN
+    -- Rename user_id back to id
+    ALTER TABLE profiles RENAME COLUMN user_id TO id;
+    RAISE NOTICE 'Renamed profiles.user_id to profiles.id';
+  END IF;
+END $$;
+
 -- Drop existing policies that cause recursion
 DROP POLICY IF EXISTS "Users can view their own profile or admins can view all" ON profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
