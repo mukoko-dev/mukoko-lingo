@@ -13,7 +13,7 @@ BEGIN;
 -- ============================================================================
 -- The issue: Migration 020 added user_id column to profiles, but it should
 -- have been used consistently. Instead, we have a mix of references to
--- profiles(id) and profiles(user_id). The correct column is profiles(id)
+-- profiles(id) and profiles(id). The correct column is profiles(id)
 -- which references auth.users(id).
 
 -- Drop broken foreign keys in AI tables
@@ -33,7 +33,7 @@ ALTER TABLE IF EXISTS daily_user_stats
 -- Recreate with correct references to profiles(id) which references auth.users(id)
 -- But first, we need to understand the data model:
 -- profiles.id = UUID (references auth.users.id)
--- profiles.user_id = UUID (added later, duplicates id - should be removed)
+-- profiles.id = UUID (added later, duplicates id - should be removed)
 
 -- For now, update AI tables to reference auth.users(id) directly
 ALTER TABLE IF EXISTS ai_generated_phrases

@@ -23,7 +23,7 @@ CREATE TABLE learning_standards (
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_by UUID REFERENCES profiles(user_id),
+  created_by UUID REFERENCES profiles(id),
   UNIQUE(level)
 );
 

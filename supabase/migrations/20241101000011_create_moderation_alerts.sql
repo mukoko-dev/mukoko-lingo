@@ -1,14 +1,14 @@
 -- Create moderation alerts table for flagged content
 CREATE TABLE IF NOT EXISTS moderation_alerts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES profiles(user_id) ON DELETE CASCADE,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   content_type TEXT NOT NULL, -- 'message', 'phrase', 'translation'
   content_id UUID, -- Reference to the specific content
   content_text TEXT NOT NULL,
   flagged_reason TEXT,
   categories JSONB NOT NULL DEFAULT '{}', -- Store which categories were flagged
   status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'reviewed', 'approved', 'removed'
-  reviewed_by UUID REFERENCES profiles(user_id),
+  reviewed_by UUID REFERENCES profiles(id),
   reviewed_at TIMESTAMPTZ,
   admin_notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -24,7 +24,7 @@ CREATE POLICY "Admins can view all moderation alerts"
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE profiles.user_id = auth.uid()
+      WHERE profiles.id = auth.uid()
       AND profiles.role = 'admin'
     )
   );
@@ -36,14 +36,14 @@ CREATE POLICY "Admins can update moderation alerts"
   USING (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE profiles.user_id = auth.uid()
+      WHERE profiles.id = auth.uid()
       AND profiles.role = 'admin'
     )
   )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM profiles
-      WHERE profiles.user_id = auth.uid()
+      WHERE profiles.id = auth.uid()
       AND profiles.role = 'admin'
     )
   );
