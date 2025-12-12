@@ -1,7 +1,7 @@
 -- AI-generated phrases and conversations
 CREATE TABLE IF NOT EXISTS ai_generated_phrases (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id uuid REFERENCES profiles(user_id) ON DELETE CASCADE,
+  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
   english text NOT NULL,
   shona text NOT NULL,
   ndebele text NOT NULL,
@@ -17,13 +17,13 @@ CREATE TABLE IF NOT EXISTS ai_generated_phrases (
   moderation_reason text,
   created_at timestamp with time zone DEFAULT now(),
   approved_at timestamp with time zone,
-  approved_by uuid REFERENCES profiles(user_id)
+  approved_by uuid REFERENCES profiles(id)
 );
 
 -- AI chat conversations
 CREATE TABLE IF NOT EXISTS ai_conversations (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id uuid REFERENCES profiles(user_id) ON DELETE CASCADE,
+  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
   type text NOT NULL, -- 'practice', 'scenario', 'translation_help'
   language text NOT NULL, -- which language user is practicing
   title text,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS ai_messages (
 -- Phrase recommendations tracking
 CREATE TABLE IF NOT EXISTS ai_recommendations (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id uuid REFERENCES profiles(user_id) ON DELETE CASCADE,
+  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
   phrase_id uuid REFERENCES phrases(id) ON DELETE CASCADE,
   reason text,
   score decimal,
@@ -93,12 +93,12 @@ CREATE POLICY "Users can view own recommendations" ON ai_recommendations
 -- Admins can view all AI content
 CREATE POLICY "Admins can view all AI phrases" ON ai_generated_phrases
   FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.user_id = auth.uid() AND profiles.role = 'admin')
+    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
   );
 
 CREATE POLICY "Admins can view all conversations" ON ai_conversations
   FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE profiles.user_id = auth.uid() AND profiles.role = 'admin')
+    EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
   );
 
 -- Indexes for performance

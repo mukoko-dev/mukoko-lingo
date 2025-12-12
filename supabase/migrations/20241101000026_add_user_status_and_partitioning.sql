@@ -74,7 +74,7 @@ BEGIN
         SELECT 1 FROM information_schema.columns
         WHERE table_name = 'moderation_alerts' AND column_name = 'resolved_by'
     ) THEN
-        ALTER TABLE moderation_alerts ADD COLUMN resolved_by UUID REFERENCES profiles(user_id);
+        ALTER TABLE moderation_alerts ADD COLUMN resolved_by UUID REFERENCES profiles(id);
     END IF;
 END $$;
 
@@ -85,7 +85,7 @@ END $$;
 -- Create daily user statistics table for fast analytics
 CREATE TABLE IF NOT EXISTS daily_user_stats (
     id BIGSERIAL PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES profiles(user_id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     total_views INTEGER DEFAULT 0,
     total_bookmarks INTEGER DEFAULT 0,
