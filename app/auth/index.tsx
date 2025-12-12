@@ -18,7 +18,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Cloud, Bot, BarChart3 }
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { signInWithEmail, signUpWithEmail } from '@/lib/supabase/client'
+import { signInWithEmail, signUpWithEmail, signOut } from '@/lib/supabase/client'
 
 export default function AuthScreen() {
   const router = useRouter()
@@ -61,6 +61,13 @@ export default function AuthScreen() {
         // Verify we actually got a session
         if (!data?.session) {
           throw new Error('Sign in failed. Please check your credentials and try again.')
+        }
+
+        // Check if email has been verified
+        if (data.user && !data.user.email_confirmed_at) {
+          // Sign out to clear the unverified session
+          await signOut()
+          throw new Error('Please verify your email before signing in. Check your inbox for the verification link.')
         }
 
         setStatusMessage('Success! Redirecting...')
