@@ -7,6 +7,11 @@ import { Platform } from 'react-native'
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
+// Password reset redirect URL - configurable via environment variable
+const passwordResetRedirectUrl = process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL ||
+  process.env.NEXT_PUBLIC_PASSWORD_RESET_REDIRECT_URL ||
+  'nyuchilingo://reset-password'
+
 // Check if we're running in a browser/client environment
 const isClient = typeof window !== 'undefined'
 
@@ -53,6 +58,9 @@ export function getSupabase(): SupabaseClient | null {
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
+        // Flow lifetime for auth flows (password reset, magic link, etc.)
+        // Default is 300 seconds (5 minutes)
+        flowType: 'pkce', // Use PKCE for enhanced security on mobile
       },
     })
   }
@@ -121,7 +129,7 @@ export async function resetPasswordForEmail(email: string) {
     return { data: null, error: new Error('Supabase not configured') }
   }
   const { data, error } = await client.auth.resetPasswordForEmail(email, {
-    redirectTo: 'nyuchilingo://reset-password',
+    redirectTo: passwordResetRedirectUrl,
   })
   return { data, error }
 }
