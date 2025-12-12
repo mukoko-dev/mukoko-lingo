@@ -1,3 +1,16 @@
+-- First, ensure profiles table uses 'id' column (fix for old migration 016)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'user_id')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'id')
+  THEN
+    ALTER TABLE profiles RENAME COLUMN user_id TO id;
+    RAISE NOTICE 'Renamed profiles.user_id to profiles.id';
+  END IF;
+END $$;
+
 -- Ensure check_is_admin function exists first
 -- Create a SECURITY DEFINER function to check admin status without RLS recursion
 CREATE OR REPLACE FUNCTION public.check_is_admin(check_user_id UUID)
