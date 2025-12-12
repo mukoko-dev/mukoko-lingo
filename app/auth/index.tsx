@@ -31,6 +31,7 @@ export default function AuthScreen() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [statusMessage, setStatusMessage] = useState('')
   const { width } = useWindowDimensions()
 
   // Responsive breakpoints
@@ -50,21 +51,55 @@ export default function AuthScreen() {
     }
 
     setLoading(true)
+    setStatusMessage(isLogin ? 'Signing in...' : 'Creating account...')
 
     try {
       if (isLogin) {
-        const { error } = await signInWithEmail(email, password)
+        const { data, error } = await signInWithEmail(email, password)
         if (error) throw error
+
+        // Verify we actually got a session
+        if (!data?.session) {
+          throw new Error('Sign in failed. Please check your credentials and try again.')
+        }
+
+        setStatusMessage('Success! Redirecting...')
+
+        // Small delay to show success message and let auth state propagate
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        router.replace('/(tabs)')
       } else {
-        const { error } = await signUpWithEmail(email, password)
+        const { data, error } = await signUpWithEmail(email, password)
         if (error) throw error
-        Alert.alert('Success', 'Check your email to verify your account')
+
+        setLoading(false)
+        setStatusMessage('')
+
+        // Check if email confirmation is required
+        if (data?.user && !data?.session) {
+          Alert.alert(
+            'Check Your Email',
+            'We sent you a verification link. Please check your email and click the link to activate your account.',
+            [{ text: 'OK', onPress: () => setIsLogin(true) }]
+          )
+        } else if (data?.session) {
+          // Auto-confirmed (e.g., in dev mode) - redirect
+          setStatusMessage('Account created! Redirecting...')
+          await new Promise(resolve => setTimeout(resolve, 500))
+          router.replace('/(tabs)')
+        } else {
+          throw new Error('Account creation failed. Please try again.')
+        }
       }
-      router.replace('/(tabs)')
     } catch (error: any) {
+      setStatusMessage('')
       Alert.alert('Error', error.message || 'Authentication failed')
     } finally {
-      setLoading(false)
+      if (loading) {
+        setLoading(false)
+        setStatusMessage('')
+      }
     }
   }
 
@@ -175,12 +210,17 @@ export default function AuthScreen() {
 
               {/* Submit Button */}
               <TouchableOpacity
-                style={styles.submitButton}
+                style={[styles.submitButton, loading && styles.submitButtonDisabled]}
                 onPress={handleAuth}
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color="#ffffff" />
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator color="#ffffff" size="small" />
+                    {statusMessage ? (
+                      <Text style={styles.statusText}>{statusMessage}</Text>
+                    ) : null}
+                  </View>
                 ) : (
                   <>
                     <Text style={styles.submitButtonText}>
@@ -333,6 +373,19 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       color: '#ffffff',
       fontSize: 17,
       fontWeight: '600',
+    },
+    submitButtonDisabled: {
+      opacity: 0.8,
+    },
+    loadingContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    statusText: {
+      color: '#ffffff',
+      fontSize: 15,
+      fontWeight: '500',
     },
     forgotPasswordButton: {
       alignSelf: 'flex-end',
