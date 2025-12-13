@@ -18,7 +18,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Cloud, Bot, BarChart3 }
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { signInWithEmail, signUpWithEmail } from '@/lib/supabase/client'
+import { signInWithEmail, signUpWithEmail, signOut } from '@/lib/supabase/client'
 
 export default function AuthScreen() {
   const router = useRouter()
@@ -31,6 +31,7 @@ export default function AuthScreen() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [statusMessage, setStatusMessage] = useState('')
   const { width } = useWindowDimensions()
 
   // Responsive breakpoints
@@ -38,33 +39,106 @@ export default function AuthScreen() {
 
   const styles = createStyles(theme, isTablet)
 
+  // Email validation
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  // Password validation for sign up
+  const validatePassword = (password: string): string | null => {
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters'
+    }
+    if (!/[A-Z]/.test(password)) {
+      return 'Password must contain at least one uppercase letter'
+    }
+    if (!/[a-z]/.test(password)) {
+      return 'Password must contain at least one lowercase letter'
+    }
+    if (!/[0-9]/.test(password)) {
+      return 'Password must contain at least one number'
+    }
+    return null
+  }
+
   const handleAuth = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields')
       return
     }
 
-    if (!isLogin && password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match')
+    if (!validateEmail(email)) {
+      Alert.alert('Error', 'Please enter a valid email address')
       return
     }
 
+    if (!isLogin) {
+      const passwordError = validatePassword(password)
+      if (passwordError) {
+        Alert.alert('Invalid Password', passwordError)
+        return
+      }
+
+      if (password !== confirmPassword) {
+        Alert.alert('Error', 'Passwords do not match')
+        return
+      }
+    }
+
     setLoading(true)
+    setStatusMessage(isLogin ? 'Signing in...' : 'Creating account...')
 
     try {
       if (isLogin) {
-        const { error } = await signInWithEmail(email, password)
+        const { data, error } = await signInWithEmail(email, password)
         if (error) throw error
+
+        // Verify we actually got a session
+        if (!data?.session) {
+          throw new Error('Sign in failed. Please check your credentials and try again.')
+        }
+
+        // Check if email has been verified
+        if (data.user && !data.user.email_confirmed_at) {
+          // Sign out to clear the unverified session
+          await signOut()
+          throw new Error('Please verify your email before signing in. Check your inbox for the verification link.')
+        }
+
+        setStatusMessage('Success! Redirecting...')
+
+        // Small delay to show success message and let auth state propagate
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        router.replace('/(tabs)')
       } else {
-        const { error } = await signUpWithEmail(email, password)
+        const { data, error } = await signUpWithEmail(email, password)
         if (error) throw error
-        Alert.alert('Success', 'Check your email to verify your account')
+
+        setLoading(false)
+        setStatusMessage('')
+
+        // Check if email confirmation is required
+        if (data?.user && !data?.session) {
+          Alert.alert(
+            'Check Your Email',
+            'We sent you a verification link. Please check your email and click the link to activate your account.',
+            [{ text: 'OK', onPress: () => setIsLogin(true) }]
+          )
+        } else if (data?.session) {
+          // Auto-confirmed - redirect
+          setStatusMessage('Account created! Redirecting...')
+          await new Promise(resolve => setTimeout(resolve, 500))
+          router.replace('/(tabs)')
+        } else {
+          throw new Error('Account creation failed. Please try again.')
+        }
       }
-      router.replace('/(tabs)')
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Authentication failed')
-    } finally {
       setLoading(false)
+      setStatusMessage('')
+      Alert.alert('Error', error.message || 'Authentication failed')
     }
   }
 
