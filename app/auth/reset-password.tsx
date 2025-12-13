@@ -14,24 +14,49 @@ import {
   useWindowDimensions,
 } from 'react-native'
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router'
-import { Lock, Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react-native'
+import { Lock, Eye, EyeOff, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { updatePassword } from '@/lib/supabase/client'
+import { updatePassword, getSession } from '@/lib/supabase/client'
+import { useAuth } from '../_layout'
 
 export default function ResetPasswordScreen() {
   const router = useRouter()
   const { isDark } = useTheme()
   const theme = isDark ? darkTheme : lightTheme
   const params = useLocalSearchParams()
+  const { isAuthenticated, session } = useAuth()
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [verifyingSession, setVerifyingSession] = useState(true)
+  const [sessionValid, setSessionValid] = useState(false)
   const { width } = useWindowDimensions()
+
+  // Verify we have a valid session for password reset
+  useEffect(() => {
+    const verifySession = async () => {
+      try {
+        const { session } = await getSession()
+        // User must be authenticated (recovery session or regular session)
+        if (session) {
+          setSessionValid(true)
+        } else {
+          setSessionValid(false)
+        }
+      } catch (error) {
+        console.error('Error verifying session:', error)
+        setSessionValid(false)
+      } finally {
+        setVerifyingSession(false)
+      }
+    }
+    verifySession()
+  }, [isAuthenticated])
 
   const isTablet = width >= 768
   const styles = createStyles(theme, isTablet)
@@ -83,6 +108,52 @@ export default function ResetPasswordScreen() {
 
   const handleGoToApp = () => {
     router.replace('/(tabs)')
+  }
+
+  // Show loading while verifying session
+  if (verifyingSession) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={[styles.container, styles.centerContent]}>
+          <ActivityIndicator size="large" color={Colors.primary[600]} />
+          <Text style={styles.loadingText}>Verifying your session...</Text>
+        </View>
+      </>
+    )
+  }
+
+  // Show error if no valid session
+  if (!sessionValid) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.container}>
+          <View style={styles.successContent}>
+            <View style={[styles.successIconContainer, { backgroundColor: Colors.accent[500] + '20' }]}>
+              <AlertCircle size={64} color={Colors.accent[500]} />
+            </View>
+            <Text style={styles.successTitle}>Session Expired</Text>
+            <Text style={styles.successText}>
+              Your password reset link has expired or is invalid.{'\n'}
+              Please request a new reset link.
+            </Text>
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={() => router.replace('/auth/forgot-password')}
+            >
+              <Text style={styles.submitButtonText}>Request New Link</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.resendButton}
+              onPress={handleBack}
+            >
+              <Text style={styles.resendText}>Back to Sign In</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </>
+    )
   }
 
   if (success) {
@@ -277,6 +348,15 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       flex: 1,
       backgroundColor: theme.background,
     },
+    centerContent: {
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: theme.textSecondary,
+    },
     content: {
       flexGrow: 1,
       padding: 24,
@@ -401,5 +481,13 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       textAlign: 'center',
       marginBottom: 32,
       lineHeight: 24,
+    },
+    resendButton: {
+      marginTop: 16,
+    },
+    resendText: {
+      color: Colors.primary[600],
+      fontSize: 15,
+      textDecorationLine: 'underline',
     },
   })
