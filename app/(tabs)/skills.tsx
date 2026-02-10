@@ -130,7 +130,10 @@ export default function SkillsScreen() {
           <Text style={styles.progressDescription}>
             Keep practicing to improve your overall language proficiency!
           </Text>
-          <TouchableOpacity style={styles.assessButton}>
+          <TouchableOpacity
+            style={styles.assessButton}
+            onPress={() => router.push('/assessment/diagnostic')}
+          >
             <Text style={styles.assessButtonText}>Take Assessment</Text>
           </TouchableOpacity>
         </View>
@@ -147,9 +150,7 @@ export default function SkillsScreen() {
           <TouchableOpacity
             key={skill.id}
             style={styles.skillCard}
-            onPress={() => {
-              // TODO: Navigate to skill detail
-            }}
+            onPress={() => router.push(`/assessment/${skill.id}`)}
             activeOpacity={0.7}
           >
             <View style={[styles.skillIcon, { backgroundColor: skill.color + '20' }]}>

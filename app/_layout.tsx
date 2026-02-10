@@ -180,6 +180,12 @@ function RootLayoutNav({ hasCompletedOnboarding }: { hasCompletedOnboarding: boo
             headerTitle: 'Phrase Details',
           }}
         />
+        <Stack.Screen
+          name="assessment/[skill]"
+          options={{
+            headerTitle: 'Skills Assessment',
+          }}
+        />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         <Stack.Screen
           name="auth/index"
