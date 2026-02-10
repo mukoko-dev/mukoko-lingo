@@ -30,12 +30,14 @@ import {
   Heart,
   X,
   Check,
+  BookOpen,
 } from 'lucide-react-native'
 
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { getCurrentUser, signOut } from '@/lib/supabase/client'
 import { getStudyStreak, getStudySessions } from '@/lib/storage/database'
+import { useLearningLanguage, LEARNING_LANGUAGES, LearningLanguage } from '@/lib/hooks/useLearningLanguage'
 
 type UILanguage = 'en' | 'sn' | 'nd' | 'sw' | 'zh'
 type ThemePreference = 'light' | 'dark' | 'system'
@@ -82,8 +84,11 @@ export default function ProfileScreen() {
   const [notifications, setNotifications] = useState(true)
   const [offlineMode, setOfflineMode] = useState(false)
 
+  const { learningLanguage, setLearningLanguage, learningLanguageOption } = useLearningLanguage()
+
   // Modal states
   const [languageModalVisible, setLanguageModalVisible] = useState(false)
+  const [learningLanguageModalVisible, setLearningLanguageModalVisible] = useState(false)
   const [themeModalVisible, setThemeModalVisible] = useState(false)
   const [aboutModalVisible, setAboutModalVisible] = useState(false)
 
@@ -270,6 +275,19 @@ export default function ProfileScreen() {
           <ChevronRight size={20} color={theme.textMuted} />
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.settingItem} onPress={() => setLearningLanguageModalVisible(true)}>
+          <View style={styles.settingIcon}>
+            <BookOpen size={20} color={Colors.primary[600]} />
+          </View>
+          <View style={styles.settingContent}>
+            <Text style={styles.settingLabel}>Learning Language</Text>
+            <Text style={styles.settingValue}>
+              {learningLanguageOption.flag} {learningLanguageOption.name} ({learningLanguageOption.nativeName})
+            </Text>
+          </View>
+          <ChevronRight size={20} color={theme.textMuted} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.settingItem} onPress={openThemeSelector}>
           <View style={styles.settingIcon}>
             {colorScheme === 'dark' ? (
@@ -402,6 +420,47 @@ export default function ProfileScreen() {
                   <Text style={styles.modalOptionSubtext}>{lang.nativeName}</Text>
                 </View>
                 {uiLanguage === lang.code && (
+                  <Check size={20} color={Colors.primary[600]} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Learning Language Selection Modal */}
+      <Modal
+        visible={learningLanguageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLearningLanguageModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setLearningLanguageModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Learning Language</Text>
+              <TouchableOpacity onPress={() => setLearningLanguageModalVisible(false)}>
+                <X size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+            {LEARNING_LANGUAGES.map((lang) => (
+              <TouchableOpacity
+                key={lang.key}
+                style={styles.modalOption}
+                onPress={() => {
+                  setLearningLanguage(lang.key)
+                  setLearningLanguageModalVisible(false)
+                }}
+              >
+                <View style={styles.modalOptionContent}>
+                  <Text style={styles.modalOptionText}>{lang.flag} {lang.name}</Text>
+                  <Text style={styles.modalOptionSubtext}>{lang.nativeName}</Text>
+                </View>
+                {learningLanguage === lang.key && (
                   <Check size={20} color={Colors.primary[600]} />
                 )}
               </TouchableOpacity>

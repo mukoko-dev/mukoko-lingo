@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import 'react-native-reanimated'
 
 import { ThemeProvider, useTheme } from '@/lib/hooks/useTheme'
+import { LearningLanguageProvider } from '@/lib/hooks/useLearningLanguage'
 import { initDatabase } from '@/lib/storage/database'
 import { lightTheme, darkTheme } from '@/constants/Colors'
 import { onAuthStateChange, getSession } from '@/lib/supabase/client'
@@ -149,7 +150,9 @@ export default function RootLayout() {
   return (
     <AuthContext.Provider value={authState}>
       <ThemeProvider>
-        <RootLayoutNav hasCompletedOnboarding={hasCompletedOnboarding} />
+        <LearningLanguageProvider>
+          <RootLayoutNav hasCompletedOnboarding={hasCompletedOnboarding} />
+        </LearningLanguageProvider>
       </ThemeProvider>
     </AuthContext.Provider>
   )
