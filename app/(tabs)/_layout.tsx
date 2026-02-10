@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Tabs, useRouter } from 'expo-router'
-import { BookOpen, MessageCircle, Target, User } from 'lucide-react-native'
+import { BookOpen, MessageCircle, Target, User, BarChart3 } from 'lucide-react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { lightTheme, darkTheme } from '@/constants/Colors'
@@ -57,6 +57,15 @@ export default function TabLayout() {
             title: 'Shamwari',
             tabBarIcon: ({ color, size }) => (
               <MessageCircle size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="insights"
+          options={{
+            title: 'Insights',
+            tabBarIcon: ({ color, size }) => (
+              <BarChart3 size={size} color={color} />
             ),
           }}
         />

@@ -17,6 +17,7 @@ import { Send, Sparkles } from 'lucide-react-native'
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { sendMessage as sendAIMessage, getConversationStarters } from '@/lib/ai/chat-service'
+import { useLearningLanguage, LEARNING_LANGUAGES } from '@/lib/hooks/useLearningLanguage'
 
 interface Message {
   id: string
@@ -40,7 +41,10 @@ export default function AIPracticeScreen() {
   ])
   const [inputText, setInputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedLanguage, setSelectedLanguage] = useState('Shona')
+  const { learningLanguage, setLearningLanguage, learningLanguageOption } = useLearningLanguage()
+
+  // Map internal key to display name for AI service compatibility
+  const selectedLanguage = learningLanguageOption.name
 
   const styles = createStyles(theme)
   const starters = getConversationStarters(selectedLanguage)
@@ -101,8 +105,6 @@ export default function AIPracticeScreen() {
     }
   }, [messages])
 
-  const languages = ['Shona', 'Ndebele', 'Swahili', 'Chinese']
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -116,22 +118,23 @@ export default function AIPracticeScreen() {
         style={styles.languageBar}
         contentContainerStyle={styles.languageContent}
       >
-        {languages.map(lang => (
+        {LEARNING_LANGUAGES.map(lang => (
           <TouchableOpacity
-            key={lang}
+            key={lang.key}
             style={[
               styles.languagePill,
-              selectedLanguage === lang && styles.languagePillActive,
+              learningLanguage === lang.key && styles.languagePillActive,
             ]}
-            onPress={() => setSelectedLanguage(lang)}
+            onPress={() => setLearningLanguage(lang.key)}
           >
+            <Text style={styles.languageFlag}>{lang.flag}</Text>
             <Text
               style={[
                 styles.languageText,
-                selectedLanguage === lang && styles.languageTextActive,
+                learningLanguage === lang.key && styles.languageTextActive,
               ]}
             >
-              {lang}
+              {lang.name}
             </Text>
           </TouchableOpacity>
         ))}
@@ -260,13 +263,19 @@ const createStyles = (theme: typeof lightTheme) =>
       alignItems: 'center',
     },
     languagePill: {
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 14,
+      paddingVertical: 8,
       borderRadius: 18,
       backgroundColor: theme.background,
       borderWidth: 1,
       borderColor: theme.border,
       minHeight: 36,
+      gap: 6,
+    },
+    languageFlag: {
+      fontSize: 16,
     },
     languagePillActive: {
       backgroundColor: Colors.primary[600],
