@@ -25,6 +25,7 @@ import {
   removeBookmark,
   updateProgress,
 } from '@/lib/storage/database'
+import { useLearningLanguage } from '@/lib/hooks/useLearningLanguage'
 
 type Language = 'english' | 'shona' | 'ndebele' | 'swahili' | 'chinese'
 
@@ -42,9 +43,10 @@ export default function PhraseDetailScreen() {
   const colorScheme = useColorScheme()
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme
 
+  const { learningLanguage } = useLearningLanguage()
   const [phrase, setPhrase] = useState<Phrase | null>(null)
   const [isBookmarked, setIsBookmarked] = useState(false)
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>('shona')
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(learningLanguage)
 
   useEffect(() => {
     if (id) {
