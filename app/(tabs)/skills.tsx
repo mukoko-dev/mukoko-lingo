@@ -21,7 +21,7 @@ import {
 
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { getUserSkills, getStudyStreak } from '@/lib/storage/database'
+import { getUserSkills, getStudyStreak, getProgress } from '@/lib/storage/database'
 
 const SKILLS = [
   {
@@ -68,18 +68,21 @@ export default function SkillsScreen() {
 
   const [skills, setSkills] = useState<Record<string, { score: number; lastAssessed: string }>>({})
   const [streak, setStreak] = useState(0)
+  const [masteredCount, setMasteredCount] = useState(0)
 
   useEffect(() => {
     loadData()
   }, [])
 
   const loadData = async () => {
-    const [userSkills, studyStreak] = await Promise.all([
+    const [userSkills, studyStreak, progress] = await Promise.all([
       getUserSkills(),
       getStudyStreak(),
+      getProgress(),
     ])
     setSkills(userSkills)
     setStreak(studyStreak)
+    setMasteredCount(Object.values(progress).filter(p => p.status === 'mastered').length)
   }
 
   const getOverallProgress = () => {
@@ -117,6 +120,13 @@ export default function SkillsScreen() {
           <Text style={styles.statValue}>{overallProgress}%</Text>
           <Text style={styles.statLabel}>Overall</Text>
         </View>
+        <View style={styles.statCard}>
+          <View style={[styles.statIcon, { backgroundColor: Colors.primary[600] + '20' }]}>
+            <Trophy size={24} color={Colors.primary[600]} />
+          </View>
+          <Text style={styles.statValue}>{masteredCount}</Text>
+          <Text style={styles.statLabel}>Mastered</Text>
+        </View>
       </View>
 
       {/* Progress Ring */}
@@ -130,7 +140,10 @@ export default function SkillsScreen() {
           <Text style={styles.progressDescription}>
             Keep practicing to improve your overall language proficiency!
           </Text>
-          <TouchableOpacity style={styles.assessButton}>
+          <TouchableOpacity
+            style={styles.assessButton}
+            onPress={() => router.push('/assessment/diagnostic')}
+          >
             <Text style={styles.assessButtonText}>Take Assessment</Text>
           </TouchableOpacity>
         </View>
@@ -147,9 +160,7 @@ export default function SkillsScreen() {
           <TouchableOpacity
             key={skill.id}
             style={styles.skillCard}
-            onPress={() => {
-              // TODO: Navigate to skill detail
-            }}
+            onPress={() => router.push(`/assessment/${skill.id}`)}
             activeOpacity={0.7}
           >
             <View style={[styles.skillIcon, { backgroundColor: skill.color + '20' }]}>

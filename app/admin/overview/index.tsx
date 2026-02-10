@@ -22,6 +22,7 @@ import {
   ChevronRight,
   GraduationCap,
   Shield,
+  Target,
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
@@ -73,6 +74,13 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: Shield,
     color: Colors.secondary[600],
     description: 'Manage moderation rules',
+  },
+  {
+    label: 'Skills & Assessments',
+    route: '/admin/skills',
+    icon: Target,
+    color: '#8b5cf6',
+    description: 'Manage skills and assessments',
   },
   {
     label: 'Content Moderation',

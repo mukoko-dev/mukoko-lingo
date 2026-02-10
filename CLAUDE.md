@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Nyuchi Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) with both web (Next.js 16) and mobile (Expo/React Native) applications, powered by Supabase, Vercel, and AI Gateway with DeepSeek/Qwen models.
+**Nyuchi Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Swahili, Chinese) with both web (Next.js 16) and mobile (Expo/React Native) applications, powered by Supabase, Vercel, Anthropic Claude, and AI Gateway.
 
 ### Core Philosophy
 
@@ -31,24 +31,33 @@ When implementing AI features, the AI should:
 - Be warm and personable while maintaining educational quality
 
 ### Key Features
-1. **Native Phrase Learning** - Core learning experience focused on practical phrases
-2. **Shamwari AI Tutoring** - AI adapts to learner's proficiency level
-3. **Skills-Based Assessments** - Track progress through proficiency evaluations
-4. **Progressive Learning Path** - Skills naturally unlock as proficiency grows
-5. **Admin Content Management** - Manage phrases, categories, and skill mappings
+1. **Native Phrase Learning** - Core learning experience focused on practical phrases with global language selector
+2. **Shamwari AI Tutoring** - AI powered by Anthropic Claude, adapts to learner's proficiency level
+3. **Skills-Based Assessments** - Assessment engine with question bank, diagnostic and skill-specific tests
+4. **User Insights Dashboard** - Bookmarks, phrase mastery tracking, skill proficiency, study analytics
+5. **Progressive Learning Path** - Skills naturally unlock as proficiency grows
+6. **Content Moderation** - Local guardrails + AI-based moderation for safe learning
+7. **Admin Content Management** - Manage phrases, categories, skills, and moderation
 
 ## Development Commands
 
 ```bash
 # Development
 npm run dev              # Start Next.js dev server (localhost:3000)
+npx expo start           # Start Expo dev server (mobile)
 
 # Build & Deploy
 npm run build            # Production build
 npm run start            # Start production server
 
+# Testing
+npm test                 # Run all tests (Jest + jest-expo)
+npm run test:watch       # Run tests in watch mode
+npm run test:coverage    # Run tests with coverage report
+
 # Code Quality
 npm run lint             # Run ESLint
+npx tsc --noEmit         # TypeScript type checking
 ```
 
 ## Environment Setup
@@ -401,11 +410,18 @@ export function PageClient() {
 - Overlay sidebar (mobile): Hamburger menu
 - Fixed position, full height, blur effect background
 
-**Navigation Sections**:
+**Navigation Sections** (Web):
 1. **Main**: Home, Browse Phrases, AI Tutor
 2. **Learning**: My Progress, My Bookmarks, Analytics
 3. **Account**: Profile Settings
-4. **Administration** (admin only): Overview, Users, Phrases, Standards, Moderation, Activity
+4. **Administration** (admin only): Overview, Users, Phrases, Standards, Skills, Moderation, Activity
+
+**Mobile Tab Navigation** (`app/(tabs)/`):
+1. **Learn** - Phrase browsing with language selector, search, inline progress indicators
+2. **Shamwari** - AI chat tutor powered by Anthropic Claude
+3. **Insights** - Bookmarks, phrase mastery, skill proficiency, study analytics
+4. **Skills** - Skills breakdown with progress bars and assessment entry points
+5. **Profile** - User settings, preferences, stats summary
 
 **Theme & Language Controls**:
 - Located in sidebar footer above user menu
@@ -443,6 +459,7 @@ The mobile app includes a full admin dashboard with the following screens:
 - `app/admin/standards/` - Learning standards management
 - `app/admin/guardrails/` - Content moderation rules (6 core guardrails)
 - `app/admin/moderation/` - Review flagged content queue
+- `app/admin/skills/` - Skills & assessment management (toggle skills, view levels)
 
 **Mobile Admin Features**:
 
@@ -620,14 +637,23 @@ Bookmarks and progress use optimistic UI updates: update local state immediately
 **Core Libraries**:
 - `lib/supabase/` - Database client configurations
 - `lib/ai/config.ts` - AI model configuration and Vercel AI Gateway setup
-- `lib/ai/moderation.ts` - Content moderation with Claude Haiku
-- `lib/learning-standards.ts` - Build AI system prompts based on user proficiency
-- `lib/phrases-data.ts` - Phrase type definitions (59KB)
-- `lib/translations.ts` - UI translations for 4 languages (16KB)
-- `lib/seo-config.ts` - Metadata and structured data
-- `lib/dev-mode.ts` - Legacy file (dev mode removed)
+- `lib/ai/chat-service.ts` - Anthropic Claude API integration for Shamwari chatbot
+- `lib/ai/moderation.ts` - Content moderation (local guardrails + AI-based via Claude Haiku)
+- `lib/ai/skills-aware-prompts.ts` - Build adaptive AI prompts based on user proficiency
+- `lib/data/phrases-data.ts` - 200+ phrases in 4 languages
+- `lib/data/assessment-questions.ts` - Assessment question bank (20+ questions across 5 skills)
+- `lib/data/translations.ts` - UI translations for 4 languages
+- `lib/storage/database.d.ts` - Platform-agnostic storage interface
+- `lib/storage/database.web.ts` - AsyncStorage implementation (web)
+- `lib/storage/database.native.ts` - SQLite implementation (iOS/Android)
+- `lib/types/skills.ts` - Skills system type definitions
 
-**React Hooks**:
+**React Hooks** (Mobile):
+- `lib/hooks/useLearningLanguage.tsx` - Global learning language state with AsyncStorage persistence
+- `lib/hooks/useTheme.tsx` - Theme management (light/dark/system)
+- `lib/hooks/useAdmin.ts` - Admin role checking (client-side)
+
+**React Hooks** (Web):
 - `lib/hooks/use-admin.ts` - Admin role checking (client-side)
 - `lib/hooks/use-ui-language.ts` - UI language state management with localStorage
 - `lib/contexts/sidebar-context.tsx` - Sidebar collapse state management with localStorage
@@ -642,10 +668,20 @@ Bookmarks and progress use optimistic UI updates: update local state immediately
 - TypeScript/ESLint errors ignored during builds for rapid iteration
 - This is intentional for fast prototyping but should be addressed for production
 
+### Testing Infrastructure
+- **Framework**: Jest with jest-expo preset, React Testing Library
+- **Test count**: 87+ tests across 8 test suites
+- **CI pipeline**: GitHub Actions runs tests on push (`npm test -- --ci`)
+- **Coverage areas**:
+  - `lib/data/__tests__/` - Phrase data integrity, translations, assessment questions
+  - `lib/ai/__tests__/` - Chat service (simulated mode), content moderation
+  - `lib/storage/__tests__/` - Database operations (bookmarks, progress, skills, sessions, streaks)
+  - `lib/hooks/__tests__/` - Custom hooks (useLearningLanguage)
+  - `components/__tests__/` - Component rendering
+
 ### Technical Debt
 - Large monolithic components (especially `admin-dashboard.tsx`)
 - Duplicate API routes: Both `/api/ai/chat` and `/api/chat` have identical implementations
-- No automated testing visible in codebase
 - Limited error boundaries
 - Some build warnings ignored
 
