@@ -36,7 +36,7 @@ import {
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { getCurrentUser, signOut } from '@/lib/supabase/client'
-import { getStudyStreak, getStudySessions } from '@/lib/storage/database'
+import { getStudyStreak, getStudySessions, getBookmarks, getProgress } from '@/lib/storage/database'
 import { useLearningLanguage, LEARNING_LANGUAGES, LearningLanguage } from '@/lib/hooks/useLearningLanguage'
 
 type UILanguage = 'en' | 'sn' | 'nd' | 'sw' | 'zh'
@@ -79,6 +79,8 @@ export default function ProfileScreen() {
   const [user, setUser] = useState<any>(null)
   const [streak, setStreak] = useState(0)
   const [sessionsCount, setSessions] = useState(0)
+  const [bookmarksCount, setBookmarksCount] = useState(0)
+  const [masteredCount, setMasteredCount] = useState(0)
   const [uiLanguage, setUILanguage] = useState<UILanguage>('en')
   const [themePreference, setThemePreference] = useState<ThemePreference>('system')
   const [notifications, setNotifications] = useState(true)
@@ -98,14 +100,18 @@ export default function ProfileScreen() {
   }, [])
 
   const loadData = async () => {
-    const [currentUser, studyStreak, sessions] = await Promise.all([
+    const [currentUser, studyStreak, sessions, bookmarks, progress] = await Promise.all([
       getCurrentUser(),
       getStudyStreak(),
       getStudySessions(),
+      getBookmarks(),
+      getProgress(),
     ])
     setUser(currentUser)
     setStreak(studyStreak)
     setSessions(sessions.length)
+    setBookmarksCount(bookmarks.length)
+    setMasteredCount(Object.values(progress).filter(p => p.status === 'mastered').length)
   }
 
   const loadPreferences = async () => {
@@ -253,8 +259,13 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>5</Text>
-          <Text style={styles.statLabel}>Languages</Text>
+          <Text style={styles.statValue}>{masteredCount}</Text>
+          <Text style={styles.statLabel}>Mastered</Text>
+        </View>
+        <View style={styles.statDivider} />
+        <View style={styles.statItem}>
+          <Text style={styles.statValue}>{bookmarksCount}</Text>
+          <Text style={styles.statLabel}>Saved</Text>
         </View>
       </View>
 
