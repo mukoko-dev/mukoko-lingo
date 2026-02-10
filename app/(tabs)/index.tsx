@@ -10,12 +10,12 @@ import {
   TextInput,
 } from 'react-native'
 import { useRouter } from 'expo-router'
-import { BookOpen, ChevronRight, Bookmark, Search, X } from 'lucide-react-native'
+import { BookOpen, ChevronRight, Bookmark, Search, X, CheckCircle2, Circle, Target } from 'lucide-react-native'
 
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { phrases, categories, Phrase } from '@/lib/data/phrases-data'
-import { getBookmarks, isBookmarked, addBookmark, removeBookmark } from '@/lib/storage/database'
+import { getBookmarks, isBookmarked, addBookmark, removeBookmark, getProgress } from '@/lib/storage/database'
 import { useLearningLanguage, LEARNING_LANGUAGES, LearningLanguage } from '@/lib/hooks/useLearningLanguage'
 
 export default function LearnScreen() {
@@ -26,24 +26,29 @@ export default function LearnScreen() {
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([])
+  const [progress, setProgress] = useState<Record<string, { status: string; lastPracticed: string }>>({})
   const [refreshing, setRefreshing] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
 
-  const loadBookmarks = useCallback(async () => {
-    const bookmarks = await getBookmarks()
+  const loadData = useCallback(async () => {
+    const [bookmarks, progressData] = await Promise.all([
+      getBookmarks(),
+      getProgress(),
+    ])
     setBookmarkedIds(bookmarks)
+    setProgress(progressData)
   }, [])
 
   useEffect(() => {
-    loadBookmarks()
-  }, [loadBookmarks])
+    loadData()
+  }, [loadData])
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
-    await loadBookmarks()
+    await loadData()
     setRefreshing(false)
-  }, [loadBookmarks])
+  }, [loadData])
 
   const toggleBookmark = async (phraseId: string) => {
     if (bookmarkedIds.includes(phraseId)) {
@@ -195,6 +200,7 @@ export default function LearnScreen() {
             theme={theme}
             learningLanguage={learningLanguage}
             isBookmarked={bookmarkedIds.includes(item.id)}
+            progressStatus={progress[item.id]?.status as 'learning' | 'practiced' | 'mastered' | undefined}
             onToggleBookmark={() => toggleBookmark(item.id)}
             onPress={() => router.push(`/phrase/${item.id}`)}
           />
@@ -222,8 +228,18 @@ interface PhraseCardProps {
   theme: typeof lightTheme
   learningLanguage: LearningLanguage
   isBookmarked: boolean
+  progressStatus?: 'learning' | 'practiced' | 'mastered'
   onToggleBookmark: () => void
   onPress: () => void
+}
+
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'mastered': return Colors.success[500]
+    case 'practiced': return Colors.secondary[500]
+    case 'learning': return Colors.accent[500]
+    default: return Colors.neutral[400]
+  }
 }
 
 function PhraseCard({
@@ -231,11 +247,17 @@ function PhraseCard({
   theme,
   learningLanguage,
   isBookmarked,
+  progressStatus,
   onToggleBookmark,
   onPress,
 }: PhraseCardProps) {
   const styles = createStyles(theme)
   const langOption = LEARNING_LANGUAGES.find(l => l.key === learningLanguage)
+
+  const StatusIcon = progressStatus === 'mastered' ? CheckCircle2
+    : progressStatus === 'practiced' ? Target
+    : progressStatus === 'learning' ? Circle
+    : null
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
@@ -259,10 +281,20 @@ function PhraseCard({
         </TouchableOpacity>
       </View>
       <View style={styles.cardFooter}>
-        <View style={styles.categoryBadge}>
-          <Text style={styles.categoryBadgeText}>
-            {categories.find(c => c.id === phrase.category)?.name || phrase.category}
-          </Text>
+        <View style={styles.cardFooterLeft}>
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryBadgeText}>
+              {categories.find(c => c.id === phrase.category)?.name || phrase.category}
+            </Text>
+          </View>
+          {progressStatus && StatusIcon && (
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(progressStatus) + '20' }]}>
+              <StatusIcon size={12} color={getStatusColor(progressStatus)} />
+              <Text style={[styles.statusBadgeText, { color: getStatusColor(progressStatus) }]}>
+                {progressStatus.charAt(0).toUpperCase() + progressStatus.slice(1)}
+              </Text>
+            </View>
+          )}
         </View>
         <ChevronRight size={16} color={theme.textMuted} />
       </View>
@@ -455,6 +487,24 @@ const createStyles = (theme: typeof lightTheme) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+    },
+    cardFooterLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      flex: 1,
+    },
+    statusBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 12,
+      gap: 4,
+    },
+    statusBadgeText: {
+      fontSize: 11,
+      fontWeight: '600',
     },
     categoryBadge: {
       backgroundColor: Colors.secondary[500] + '20',
