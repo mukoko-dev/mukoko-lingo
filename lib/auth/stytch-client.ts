@@ -6,6 +6,7 @@
  * - Email/Password authentication
  * - OTP (One-Time Password) via email
  * - Magic links via email
+ * - WhatsApp OTP authentication
  * - Session management with secure token storage
  */
 
@@ -69,6 +70,7 @@ const USER_KEY = '@mukoko_stytch_user'
 export interface StytchUser {
   user_id: string
   email: string
+  phone_number?: string
   name?: {
     first_name?: string
     last_name?: string
@@ -207,6 +209,39 @@ export async function signInWithOtp(email: string): Promise<AuthResult> {
 export async function verifyOtp(email: string, token: string): Promise<AuthResult> {
   try {
     const data = await apiCall('/otp/verify', { email, code: token })
+    const session: StytchSession = {
+      session_token: data.session_token,
+      session_jwt: data.session_jwt,
+      user: data.user,
+      expires_at: data.expires_at,
+    }
+    await persistSession(session)
+    notifyAuthStateChange('SIGNED_IN', session)
+    return { data: { user: data.user, session }, error: null }
+  } catch (error: any) {
+    return { data: null, error }
+  }
+}
+
+/**
+ * Send WhatsApp OTP to phone number (works for both sign-in and sign-up)
+ * Phone number must be in E.164 format (e.g. +263771234567)
+ */
+export async function signInWithWhatsApp(phoneNumber: string): Promise<AuthResult> {
+  try {
+    await apiCall('/whatsapp/send', { phone_number: phoneNumber })
+    return { data: { user: null, session: null }, error: null }
+  } catch (error: any) {
+    return { data: null, error }
+  }
+}
+
+/**
+ * Verify WhatsApp OTP code
+ */
+export async function verifyWhatsAppOtp(phoneNumber: string, code: string): Promise<AuthResult> {
+  try {
+    const data = await apiCall('/whatsapp/verify', { phone_number: phoneNumber, code })
     const session: StytchSession = {
       session_token: data.session_token,
       session_jwt: data.session_jwt,

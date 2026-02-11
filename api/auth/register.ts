@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { stytchClient } from '../_lib/auth-middleware'
 import prisma from '../_lib/prisma'
+import { SESSION_DURATION_MINUTES } from '../../lib/stytch/config'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -16,7 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const response = await stytchClient.passwords.create({
       email,
       password,
-      session_duration_minutes: 60 * 24 * 7,
+      session_duration_minutes: SESSION_DURATION_MINUTES,
     })
 
     const stytchUserId = response.user.user_id
