@@ -48,7 +48,7 @@
 - **Phase 6 (2028)**: Central Africa - Lingala, Kikongo, Kinyarwanda (22+ total)
 - **Future (2030)**: 50+ African languages
 
-**See**: `/brand/NYUCHI_LINGO_PAN_AFRICAN_VISION.md` for complete strategic framework
+**See**: `/brand/MUKOKO_LINGO_PAN_AFRICAN_VISION.md` for complete strategic framework
 
 ---
 
@@ -383,7 +383,7 @@ The Nyuchi Africa brand system v3.0 has been fully configured in `tailwind.confi
 - [ ] Verify all interactive elements have 48px touch targets
 - [ ] Run WCAG 2.1 AA compliance audit
 
-**See**: `/brand/NYUCHI_LINGO_MIGRATION_GUIDE.md` for step-by-step implementation
+**See**: `/brand/MUKOKO_LINGO_MIGRATION_GUIDE.md` for step-by-step implementation
 
 ---
 
@@ -392,21 +392,21 @@ The Nyuchi Africa brand system v3.0 has been fully configured in `tailwind.confi
 ### Logo Files
 
 **Desktop Logos**:
-- Light mode: `Mukoko_Lingo_purple.svg` (purple text #5f5873 + bee icon)
-- Dark mode: `Mukoko_Lingo_dark.svg` (light text + light bee icon)
+- Light mode: `Mukoko_Lingo_purple.svg` (purple text #5f5873 + hive icon)
+- Dark mode: `Mukoko_Lingo_dark.svg` (light text + light hive icon)
 - Minimum width: 180px
 
 **Mobile Logo**:
-- `bee-logo-mobile.svg` (icon only, no wordmark)
+- `mukoko-logo-mobile.svg` (icon only, no wordmark)
 - Size: 40px × 40px
 
 **Favicon**:
-- `bee-favicon.svg`
+- `mukoko-favicon.svg`
 - Sizes: 16px, 32px, 48px
 
 **Location**: Logos should be placed in `/public/images/logos/`
 
-**Clear Space**: Minimum clear space = height of bee icon on all sides
+**Clear Space**: Minimum clear space = height of hive icon on all sides
 
 ### Logo Usage
 
@@ -421,45 +421,45 @@ The Nyuchi Africa brand system v3.0 has been fully configured in `tailwind.confi
 - Distort, stretch, or rotate
 - Change colors or add effects
 - Place on busy backgrounds without contrast
-- Recreate or modify the bee icon
+- Recreate or modify the hive icon
 - Use low-resolution versions
 
 ### Brand Documentation Files
 
 All brand documentation is located in `/brand/` directory:
 
-1. **NYUCHI_LINGO_BRAND_GUIDELINES_v3.md** (29KB)
+1. **MUKOKO_LINGO_BRAND_GUIDELINES_v3.md** (29KB)
    - Complete brand bible
    - Color palette, typography, components
    - Logo system, multilingual support
    - Voice and tone, accessibility requirements
 
-2. **NYUCHI_LINGO_QUICK_REFERENCE.md** (8KB)
+2. **MUKOKO_LINGO_QUICK_REFERENCE.md** (8KB)
    - Developer cheat sheet
    - Quick color/typography lookup
    - Common patterns and CSS snippets
 
-3. **NYUCHI_LINGO_MIGRATION_GUIDE.md** (18KB)
+3. **MUKOKO_LINGO_MIGRATION_GUIDE.md** (18KB)
    - Step-by-step implementation guide
    - 7 phases (4-6 hours total)
    - Code examples, troubleshooting
 
-4. **NYUCHI_LINGO_BRAND_EVOLUTION.md** (16KB)
+4. **MUKOKO_LINGO_BRAND_EVOLUTION.md** (16KB)
    - Visual before/after comparison
    - Side-by-side improvements
    - Why changes were made
 
-5. **NYUCHI_LINGO_PAN_AFRICAN_VISION.md** (16KB)
+5. **MUKOKO_LINGO_PAN_AFRICAN_VISION.md** (16KB)
    - Strategic expansion framework
    - Language roadmap (50+ languages)
    - Market opportunity, business model
 
-6. **NYUCHI_LINGO_IMPLEMENTATION_ROADMAP.md** (15KB)
+6. **MUKOKO_LINGO_IMPLEMENTATION_ROADMAP.md** (15KB)
    - 4-week implementation timeline
    - Team roles and responsibilities
    - Success metrics
 
-7. **NYUCHI_LINGO_COMPLETE_PACKAGE_SUMMARY.md** (12KB)
+7. **MUKOKO_LINGO_COMPLETE_PACKAGE_SUMMARY.md** (12KB)
    - Overview of all documents
    - Quick start guide by role
    - Key changes summary
@@ -470,7 +470,7 @@ All brand documentation is located in `/brand/` directory:
 
 ### For Complete Brand Specifications
 
-**Main Reference**: `/brand/NYUCHI_LINGO_BRAND_GUIDELINES_v3.md`
+**Main Reference**: `/brand/MUKOKO_LINGO_BRAND_GUIDELINES_v3.md`
 
 Includes:
 - Complete color palette with hex/HSL values
@@ -489,7 +489,7 @@ Includes:
 
 ### For Daily Development Work
 
-**Quick Reference**: `/brand/NYUCHI_LINGO_QUICK_REFERENCE.md`
+**Quick Reference**: `/brand/MUKOKO_LINGO_QUICK_REFERENCE.md`
 
 Includes:
 - Color codes (hex, HSL)
@@ -505,7 +505,7 @@ Includes:
 
 ### For Implementation
 
-**Migration Guide**: `/brand/NYUCHI_LINGO_MIGRATION_GUIDE.md`
+**Migration Guide**: `/brand/MUKOKO_LINGO_MIGRATION_GUIDE.md`
 
 Includes:
 - 7 implementation phases
@@ -520,7 +520,7 @@ Includes:
 
 ### For Understanding Changes
 
-**Brand Evolution**: `/brand/NYUCHI_LINGO_BRAND_EVOLUTION.md`
+**Brand Evolution**: `/brand/MUKOKO_LINGO_BRAND_EVOLUTION.md`
 
 Includes:
 - Side-by-side visual comparisons (v2.0 → v3.0)
@@ -535,7 +535,7 @@ Includes:
 
 ### For Strategic Context
 
-**Pan-African Vision**: `/brand/NYUCHI_LINGO_PAN_AFRICAN_VISION.md`
+**Pan-African Vision**: `/brand/MUKOKO_LINGO_PAN_AFRICAN_VISION.md`
 
 Includes:
 - 6-phase expansion roadmap (2025-2030)
@@ -783,7 +783,7 @@ Mukoko Lingo is part of the **Nyuchi Africa ecosystem**, sharing core design pri
 - Community-first approach
 
 **Unique to Mukoko Lingo**:
-- Bee branding and symbolism
+- Hive branding and symbolism
 - Language learning focus
 - Educational gamification
 - Progress tracking and analytics
@@ -1033,4 +1033,4 @@ All brand documentation is in `/brand/` directory:
 
 ---
 
-*This document is the central brand reference for developers. For complete specifications, see `/brand/NYUCHI_LINGO_BRAND_GUIDELINES_v3.md`. For daily development work, see `/brand/NYUCHI_LINGO_QUICK_REFERENCE.md`.*
+*This document is the central brand reference for developers. For complete specifications, see `/brand/MUKOKO_LINGO_BRAND_GUIDELINES_v3.md`. For daily development work, see `/brand/MUKOKO_LINGO_QUICK_REFERENCE.md`.*

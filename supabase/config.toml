@@ -39,7 +39,7 @@ file_size_limit = "50MiB"
 enabled = true
 site_url = "http://127.0.0.1:3000"
 # Add deep link scheme for Expo app password reset
-additional_redirect_urls = ["https://127.0.0.1:3000", "nyuchilingo://reset-password", "com.nyuchi.lingo://reset-password"]
+additional_redirect_urls = ["https://127.0.0.1:3000", "mukokolingo://reset-password", "com.mukoko.lingo://reset-password"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
