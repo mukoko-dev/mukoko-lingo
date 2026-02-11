@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Icons: SVG to PNG conversion** - Generated PNG app icons from `/public/favicon.svg`: `icon.png` (1024x1024), `favicon.png` (256x256), `adaptive-icon.png` (1024x1024), `splash-icon.png` (1024x1024). White M logo on Cobalt `#0047AB` background.
+- **app.json: Brand colors** - Updated splash and adaptive icon background from `#5f5873` to Cobalt `#0047AB`
+
+### Fixed
+- **Auth: All login methods failing** - Removed hardcoded Stytch custom template IDs (`mukoko_lingo_otp`, `mukoko_lingo_login`, etc.) that caused OTP, magic link, and password reset to fail when templates don't exist in the Stytch dashboard. Template IDs are now optional and only sent when configured via environment variables.
+- **Auth: Improved error messages** - User-friendly error messages for common auth failures (wrong password, no password set, duplicate email, rate limits, network errors, missing API URL)
+- **Auth: Network error handling** - Client-side `apiCall` now catches network errors separately, handles non-JSON responses, and detects missing `EXPO_PUBLIC_API_BASE_URL` configuration
+- **TypeScript: Stytch API route types** - Fixed type assertions in magic-link, OTP, and password-reset API routes
+
 ### Planned
 - Offline mode support for phrase browsing
 - Push notifications for study reminders

@@ -29,6 +29,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       method_id: response.phone_id,
     })
   } catch (error: any) {
-    return res.status(400).json({ error: error.error_message || 'Failed to send WhatsApp OTP' })
+    const errorType = error.error_type || ''
+    let message: string
+    if (errorType.includes('too_many_requests') || error.status_code === 429) {
+      message = 'Too many attempts. Please wait a moment and try again.'
+    } else if (errorType.includes('invalid_phone_number')) {
+      message = 'Invalid phone number. Please use international format (e.g. +263771234567).'
+    } else {
+      message = error.error_message || 'Failed to send WhatsApp code. Please try again.'
+    }
+    return res.status(error.status_code || 400).json({ error: message })
   }
 }

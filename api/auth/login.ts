@@ -53,7 +53,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       expires_at: response.session?.expires_at,
     })
   } catch (error: any) {
-    const message = error.error_message || error.message || 'Login failed'
+    const errorType = error.error_type || ''
+    let message: string
+    if (errorType === 'unauthorized_credentials') {
+      message = 'Incorrect email or password. Please try again.'
+    } else if (errorType === 'user_not_found' || errorType.includes('not_found')) {
+      message = 'No account found with this email. Please sign up first.'
+    } else if (errorType === 'no_password_set') {
+      message = 'This account uses passwordless login. Try signing in with email code or magic link instead.'
+    } else {
+      message = error.error_message || error.message || 'Login failed. Please try again.'
+    }
     return res.status(401).json({ error: message })
   }
 }

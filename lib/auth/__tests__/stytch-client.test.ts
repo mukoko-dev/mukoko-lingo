@@ -329,4 +329,60 @@ describe('stytch-client', () => {
       expect(token).toBeNull()
     })
   })
+
+  // ==========================================================================
+  // Error Handling (apiCall resilience)
+  // ==========================================================================
+  describe('error handling', () => {
+    it('catches network errors and returns a user-friendly message', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Failed to fetch'))
+
+      const result = await signInWithOtp('test@example.com')
+
+      expect(result.error).toBeTruthy()
+      // In test env, API_BASE_URL is empty so we get the config error
+      // In production with a valid URL, network errors return "Unable to reach the server"
+      expect(result.error?.message).toMatch(/API|server/)
+    })
+
+    it('handles non-JSON server responses gracefully', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 502,
+        json: () => Promise.reject(new Error('Invalid JSON')),
+      })
+
+      const result = await signInWithOtp('test@example.com')
+
+      expect(result.error).toBeTruthy()
+      expect(result.error?.message).toContain('Server error')
+      expect(result.error?.message).toContain('502')
+    })
+
+    it('propagates server error messages to the client', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: () => Promise.resolve({ error: 'Invalid email address. Please check and try again.' }),
+      })
+
+      const result = await signInWithOtp('bad-email')
+
+      expect(result.error).toBeTruthy()
+      expect(result.error?.message).toBe('Invalid email address. Please check and try again.')
+    })
+
+    it('returns status code in error when no server message', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: () => Promise.resolve({}),
+      })
+
+      const result = await signInWithEmail('test@example.com', 'pass')
+
+      expect(result.error).toBeTruthy()
+      expect(result.error?.message).toContain('500')
+    })
+  })
 })

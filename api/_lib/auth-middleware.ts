@@ -7,9 +7,16 @@ import * as stytch from 'stytch'
 import prisma from './prisma'
 import type { VercelRequest } from '@vercel/node'
 
+const STYTCH_PROJECT_ID = process.env.STYTCH_PROJECT_ID || process.env.EXPO_PUBLIC_STYTCH_PROJECT_ID || ''
+const STYTCH_SECRET = process.env.STYTCH_SECRET || ''
+
+if (!STYTCH_PROJECT_ID || !STYTCH_SECRET) {
+  console.error('[auth] Missing Stytch credentials: STYTCH_PROJECT_ID and STYTCH_SECRET must be set in environment variables')
+}
+
 const stytchClient = new stytch.Client({
-  project_id: process.env.STYTCH_PROJECT_ID || process.env.EXPO_PUBLIC_STYTCH_PROJECT_ID || '',
-  secret: process.env.STYTCH_SECRET || '',
+  project_id: STYTCH_PROJECT_ID,
+  secret: STYTCH_SECRET,
 })
 
 export interface AuthenticatedUser {
