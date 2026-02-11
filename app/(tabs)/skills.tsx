@@ -23,7 +23,7 @@ import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { getUserSkills, getStudyStreak, getProgress } from '@/lib/storage/database'
 
-const SKILLS = [
+const getSkills = (theme: typeof lightTheme) => [
   {
     id: 'pronunciation',
     name: 'Pronunciation',
@@ -151,7 +151,7 @@ export default function SkillsScreen() {
 
       {/* Skills List */}
       <Text style={styles.sectionTitle}>Skills Breakdown</Text>
-      {SKILLS.map(skill => {
+      {getSkills(theme).map(skill => {
         const userSkill = skills[skill.id]
         const score = userSkill?.score || 0
         const Icon = skill.icon

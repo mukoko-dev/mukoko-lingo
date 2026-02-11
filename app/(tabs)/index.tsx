@@ -233,7 +233,7 @@ interface PhraseCardProps {
   onPress: () => void
 }
 
-function getStatusColor(status: string) {
+function getStatusColor(status: string, theme: typeof lightTheme) {
   switch (status) {
     case 'mastered': return Colors.success[500]
     case 'practiced': return theme.secondary
@@ -288,9 +288,9 @@ function PhraseCard({
             </Text>
           </View>
           {progressStatus && StatusIcon && (
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(progressStatus) + '20' }]}>
-              <StatusIcon size={12} color={getStatusColor(progressStatus)} />
-              <Text style={[styles.statusBadgeText, { color: getStatusColor(progressStatus) }]}>
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(progressStatus, theme) + '20' }]}>
+              <StatusIcon size={12} color={getStatusColor(progressStatus, theme)} />
+              <Text style={[styles.statusBadgeText, { color: getStatusColor(progressStatus, theme) }]}>
                 {progressStatus.charAt(0).toUpperCase() + progressStatus.slice(1)}
               </Text>
             </View>
