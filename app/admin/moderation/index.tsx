@@ -26,7 +26,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { moderationApi } from '@/lib/services/api-client'
 import { getCurrentUser } from '@/lib/auth/stytch-client'
 
@@ -173,7 +173,7 @@ export default function AdminModerationScreen() {
       <>
         <Stack.Screen options={{ title: 'Content Moderation' }} />
         <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-          <ActivityIndicator size="large" color={Colors.primary[600]} />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
             Loading alerts...
           </Text>
@@ -210,7 +210,7 @@ export default function AdminModerationScreen() {
                   styles.filterTab,
                   {
                     backgroundColor:
-                      filterStatus === status ? Colors.primary[600] : theme.card,
+                      filterStatus === status ? theme.primary : theme.card,
                   },
                 ]}
                 onPress={() => setFilterStatus(status)}
@@ -361,7 +361,7 @@ export default function AdminModerationScreen() {
                       {alert.status === 'pending' && (
                         <View style={styles.actionsRow}>
                           {updating === alert.id ? (
-                            <ActivityIndicator size="small" color={Colors.primary[600]} />
+                            <ActivityIndicator size="small" color={theme.primary} />
                           ) : (
                             <>
                               <TouchableOpacity

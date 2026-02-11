@@ -33,7 +33,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import {
   signInWithEmail,
   signUpWithEmail,
@@ -74,7 +74,7 @@ export default function AuthScreen() {
   // Responsive breakpoints
   const isTablet = width >= 768
 
-  const styles = createStyles(theme, isTablet)
+  const styles = createStyles(theme, isTablet, isDark)
 
   // Show error message inline (Alert.alert is unreliable on Expo Web)
   const showError = (message: string) => {
@@ -463,9 +463,9 @@ export default function AuthScreen() {
       >
         <Text style={styles.methodToggleText}>More sign-in options</Text>
         {showMoreOptions ? (
-          <ChevronUp size={16} color={Colors.primary[600]} />
+          <ChevronUp size={16} color={theme.primary} />
         ) : (
-          <ChevronDown size={16} color={Colors.primary[600]} />
+          <ChevronDown size={16} color={theme.primary} />
         )}
       </TouchableOpacity>
 
@@ -476,8 +476,8 @@ export default function AuthScreen() {
               style={styles.methodOption}
               onPress={() => handleMethodSelect('otp')}
             >
-              <View style={[styles.methodIconContainer, { backgroundColor: Colors.accent[600] + '20' }]}>
-                <KeyRound size={18} color={Colors.accent[600]} />
+              <View style={[styles.methodIconContainer, { backgroundColor: theme.accent + '20' }]}>
+                <KeyRound size={18} color={theme.accent} />
               </View>
               <View style={styles.methodOptionTextContainer}>
                 <Text style={styles.methodOptionTitle}>Email code</Text>
@@ -493,8 +493,8 @@ export default function AuthScreen() {
               style={styles.methodOption}
               onPress={() => handleMethodSelect('magic-link')}
             >
-              <View style={[styles.methodIconContainer, { backgroundColor: Colors.secondary[800] + '20' }]}>
-                <Link2 size={18} color={Colors.secondary[800]} />
+              <View style={[styles.methodIconContainer, { backgroundColor: theme.secondary + '20' }]}>
+                <Link2 size={18} color={theme.secondary} />
               </View>
               <View style={styles.methodOptionTextContainer}>
                 <Text style={styles.methodOptionTitle}>Magic link</Text>
@@ -527,8 +527,8 @@ export default function AuthScreen() {
               style={styles.methodOption}
               onPress={() => handleMethodSelect('password')}
             >
-              <View style={[styles.methodIconContainer, { backgroundColor: Colors.primary[600] + '20' }]}>
-                <Lock size={18} color={Colors.primary[600]} />
+              <View style={[styles.methodIconContainer, { backgroundColor: theme.primary + '20' }]}>
+                <Lock size={18} color={theme.primary} />
               </View>
               <View style={styles.methodOptionTextContainer}>
                 <Text style={styles.methodOptionTitle}>Password</Text>
@@ -604,7 +604,7 @@ export default function AuthScreen() {
   const renderMagicLinkSentStep = () => (
     <>
       <View style={styles.sentIconContainer}>
-        <Mail size={48} color={Colors.primary[600]} />
+        <Mail size={48} color={theme.primary} />
       </View>
       <Text style={styles.cardTitle}>Check your email</Text>
       <Text style={styles.cardSubtitle}>
@@ -620,7 +620,7 @@ export default function AuthScreen() {
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color={Colors.primary[600]} />
+          <ActivityIndicator color={theme.primary} />
         ) : (
           <Text style={styles.secondaryButtonText}>Resend magic link</Text>
         )}
@@ -902,7 +902,7 @@ export default function AuthScreen() {
             {/* Status Message */}
             {statusMessage ? (
               <View style={styles.statusContainer}>
-                <ActivityIndicator size="small" color={Colors.primary[600]} />
+                <ActivityIndicator size="small" color={theme.primary} />
                 <Text style={styles.statusText}>{statusMessage}</Text>
               </View>
             ) : null}
@@ -926,20 +926,20 @@ export default function AuthScreen() {
             <View style={styles.features}>
               <Text style={styles.featuresTitle}>Why create an account?</Text>
               <View style={styles.featureItem}>
-                <View style={[styles.featureIconContainer, { backgroundColor: Colors.accent[600] + '20' }]}>
-                  <Cloud size={18} color={Colors.accent[600]} />
+                <View style={[styles.featureIconContainer, { backgroundColor: theme.accent + '20' }]}>
+                  <Cloud size={18} color={theme.accent} />
                 </View>
                 <Text style={styles.featureText}>Sync progress across devices</Text>
               </View>
               <View style={styles.featureItem}>
-                <View style={[styles.featureIconContainer, { backgroundColor: Colors.primary[600] + '20' }]}>
-                  <Bot size={18} color={Colors.primary[600]} />
+                <View style={[styles.featureIconContainer, { backgroundColor: theme.primary + '20' }]}>
+                  <Bot size={18} color={theme.primary} />
                 </View>
                 <Text style={styles.featureText}>Personalized AI tutoring</Text>
               </View>
               <View style={styles.featureItem}>
-                <View style={[styles.featureIconContainer, { backgroundColor: Colors.secondary[800] + '20' }]}>
-                  <BarChart3 size={18} color={Colors.secondary[800]} />
+                <View style={[styles.featureIconContainer, { backgroundColor: theme.secondary + '20' }]}>
+                  <BarChart3 size={18} color={theme.secondary} />
                 </View>
                 <Text style={styles.featureText}>Track your learning journey</Text>
               </View>
@@ -951,7 +951,7 @@ export default function AuthScreen() {
   )
 }
 
-const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
+const createStyles = (theme: typeof lightTheme, isTablet: boolean, isDark: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -999,22 +999,22 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       color: theme.textSecondary,
     },
     errorContainer: {
-      backgroundColor: '#fef2f2',
+      backgroundColor: isDark ? '#450a0a' : '#fef2f2',
       borderWidth: 1,
-      borderColor: '#fecaca',
+      borderColor: isDark ? '#7f1d1d' : '#fecaca',
       borderRadius: 12,
       padding: 14,
       marginBottom: 16,
     },
     errorText: {
       fontSize: 14,
-      color: '#dc2626',
+      color: isDark ? '#fca5a5' : '#dc2626',
       fontWeight: '500',
       textAlign: 'center',
     },
     errorDismiss: {
       fontSize: 12,
-      color: '#9ca3af',
+      color: theme.textMuted,
       textAlign: 'center',
       marginTop: 4,
     },
@@ -1027,7 +1027,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
     },
     statusText: {
       fontSize: 14,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '500',
     },
     card: {
@@ -1079,7 +1079,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingVertical: 16,
       borderRadius: 12,
       marginTop: 8,
@@ -1102,10 +1102,10 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       borderRadius: 12,
       marginTop: 8,
       borderWidth: 1.5,
-      borderColor: Colors.primary[600],
+      borderColor: theme.primary,
     },
     secondaryButtonText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 16,
       fontWeight: '600',
     },
@@ -1117,7 +1117,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       gap: 4,
     },
     methodToggleText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 14,
       fontWeight: '500',
     },
@@ -1174,8 +1174,8 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       textAlign: 'center',
     },
     otpInputFilled: {
-      borderColor: Colors.primary[600],
-      backgroundColor: Colors.primary[600] + '08',
+      borderColor: theme.primary,
+      backgroundColor: theme.primary + '08',
     },
     resendButton: {
       alignItems: 'center',
@@ -1183,7 +1183,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       paddingVertical: 8,
     },
     resendText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 14,
     },
     sentIconContainer: {
@@ -1206,7 +1206,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       marginBottom: 8,
     },
     forgotPasswordText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 14,
     },
     toggleButton: {
@@ -1214,7 +1214,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       marginTop: 16,
     },
     toggleText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 15,
     },
     skipButton: {

@@ -15,7 +15,7 @@ import {
 import { Send, Sparkles } from 'lucide-react-native'
 
 import { useColorScheme } from '@/components/useColorScheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { sendMessage as sendAIMessage, getConversationStarters } from '@/lib/ai/chat-service'
 import { useLearningLanguage, LEARNING_LANGUAGES } from '@/lib/hooks/useLearningLanguage'
 
@@ -170,7 +170,7 @@ export default function AIPracticeScreen() {
                   style={styles.starterButton}
                   onPress={() => handleStarterPress(starter)}
                 >
-                  <Sparkles size={14} color={Colors.primary[600]} />
+                  <Sparkles size={14} color={theme.primary} />
                   <Text style={styles.starterText}>{starter}</Text>
                 </TouchableOpacity>
               ))}
@@ -182,7 +182,7 @@ export default function AIPracticeScreen() {
       {/* Loading Indicator */}
       {isLoading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={Colors.primary[600]} />
+          <ActivityIndicator size="small" color={theme.primary} />
           <Text style={styles.loadingText}>Shamwari is thinking...</Text>
         </View>
       )}
@@ -278,8 +278,8 @@ const createStyles = (theme: typeof lightTheme) =>
       fontSize: 16,
     },
     languagePillActive: {
-      backgroundColor: Colors.primary[600],
-      borderColor: Colors.primary[600],
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
     },
     languageText: {
       fontSize: 14,
@@ -307,7 +307,7 @@ const createStyles = (theme: typeof lightTheme) =>
       width: 88,
       height: 88,
       borderRadius: 44,
-      backgroundColor: Colors.accent[500] + '15',
+      backgroundColor: theme.accent + '15',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 12,
@@ -368,7 +368,7 @@ const createStyles = (theme: typeof lightTheme) =>
       width: 36,
       height: 36,
       borderRadius: 18,
-      backgroundColor: Colors.accent[500] + '15',
+      backgroundColor: theme.accent + '15',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 8,
@@ -384,7 +384,7 @@ const createStyles = (theme: typeof lightTheme) =>
       padding: 12,
     },
     userContent: {
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       borderBottomRightRadius: 4,
     },
     assistantContent: {
@@ -439,7 +439,7 @@ const createStyles = (theme: typeof lightTheme) =>
       width: 36,
       height: 36,
       borderRadius: 18,
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',
       marginLeft: 8,

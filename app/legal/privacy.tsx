@@ -10,7 +10,7 @@ import { useRouter, Stack } from 'expo-router'
 import { ArrowLeft, ExternalLink, Shield, Mail } from 'lucide-react-native'
 
 import { useColorScheme } from '@/components/useColorScheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 
 const SECTIONS = [
   {
@@ -119,7 +119,7 @@ export default function PrivacyPolicyScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerIcon}>
-            <Shield size={32} color={Colors.primary[600]} />
+            <Shield size={32} color={theme.primary} />
           </View>
           <Text style={styles.headerTitle}>Privacy Policy</Text>
           <Text style={styles.headerSubtitle}>
@@ -148,7 +148,7 @@ export default function PrivacyPolicyScreen() {
             If you have any questions about this Privacy Policy, please contact us:
           </Text>
           <TouchableOpacity style={styles.contactButton} onPress={openEmail}>
-            <Mail size={20} color={Colors.primary[600]} />
+            <Mail size={20} color={theme.primary} />
             <Text style={styles.contactButtonText}>{CONTACT_EMAIL}</Text>
           </TouchableOpacity>
         </View>
@@ -156,7 +156,7 @@ export default function PrivacyPolicyScreen() {
         {/* Full Policy Link */}
         <TouchableOpacity style={styles.fullPolicyButton} onPress={openFullPolicy}>
           <Text style={styles.fullPolicyText}>View Full Privacy Policy</Text>
-          <ExternalLink size={16} color={Colors.primary[600]} />
+          <ExternalLink size={16} color={theme.primary} />
         </TouchableOpacity>
 
         {/* Footer */}
@@ -189,7 +189,7 @@ const createStyles = (theme: typeof lightTheme) =>
       width: 64,
       height: 64,
       borderRadius: 16,
-      backgroundColor: Colors.primary[600] + '15',
+      backgroundColor: theme.primary + '15',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 16,
@@ -229,7 +229,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     bullet: {
       fontSize: 15,
-      color: Colors.primary[600],
+      color: theme.primary,
       marginRight: 8,
       marginTop: 2,
     },
@@ -267,7 +267,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     contactButtonText: {
       fontSize: 15,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '500',
     },
     fullPolicyButton: {
@@ -281,11 +281,11 @@ const createStyles = (theme: typeof lightTheme) =>
       backgroundColor: theme.card,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: Colors.primary[600],
+      borderColor: theme.primary,
     },
     fullPolicyText: {
       fontSize: 16,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '600',
     },
     footer: {

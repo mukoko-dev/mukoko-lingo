@@ -103,8 +103,8 @@ export default function PhraseDetailScreen() {
             <TouchableOpacity onPress={toggleBookmark}>
               <Bookmark
                 size={24}
-                color={isBookmarked ? Colors.accent[500] : theme.textMuted}
-                fill={isBookmarked ? Colors.accent[500] : 'transparent'}
+                color={isBookmarked ? theme.accent : theme.textMuted}
+                fill={isBookmarked ? theme.accent : 'transparent'}
               />
             </TouchableOpacity>
           ),
@@ -221,7 +221,7 @@ export default function PhraseDetailScreen() {
           style={styles.aiButton}
           onPress={() => router.push('/(tabs)/ai-practice' as const)}
         >
-          <MessageCircle size={20} color={Colors.primary[600]} />
+          <MessageCircle size={20} color={theme.primary} />
           <Text style={styles.aiButtonText}>Practice with Shamwari</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -285,14 +285,14 @@ const createStyles = (theme: typeof lightTheme) =>
     translationPhrase: {
       fontSize: 22,
       fontWeight: '600',
-      color: Colors.primary[600],
+      color: theme.primary,
       textAlign: 'center',
       marginBottom: 16,
     },
     playButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingHorizontal: 20,
       paddingVertical: 10,
       borderRadius: 24,
@@ -327,8 +327,8 @@ const createStyles = (theme: typeof lightTheme) =>
       gap: 6,
     },
     languagePillActive: {
-      backgroundColor: Colors.primary[600],
-      borderColor: Colors.primary[600],
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
     },
     languageFlag: {
       fontSize: 16,
@@ -408,10 +408,10 @@ const createStyles = (theme: typeof lightTheme) =>
       gap: 8,
     },
     practiceButton: {
-      backgroundColor: Colors.secondary[500],
+      backgroundColor: theme.secondary,
     },
     masterButton: {
-      backgroundColor: Colors.accent[500],
+      backgroundColor: theme.accent,
     },
     actionButtonText: {
       color: '#ffffff',
@@ -426,12 +426,12 @@ const createStyles = (theme: typeof lightTheme) =>
       paddingVertical: 14,
       borderRadius: 12,
       borderWidth: 2,
-      borderColor: Colors.primary[600],
+      borderColor: theme.primary,
       gap: 8,
       marginBottom: 32,
     },
     aiButtonText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 15,
       fontWeight: '600',
     },

@@ -236,8 +236,8 @@ interface PhraseCardProps {
 function getStatusColor(status: string) {
   switch (status) {
     case 'mastered': return Colors.success[500]
-    case 'practiced': return Colors.secondary[500]
-    case 'learning': return Colors.accent[500]
+    case 'practiced': return theme.secondary
+    case 'learning': return theme.accent
     default: return Colors.neutral[400]
   }
 }
@@ -275,8 +275,8 @@ function PhraseCard({
         >
           <Bookmark
             size={20}
-            color={isBookmarked ? Colors.accent[500] : theme.textMuted}
-            fill={isBookmarked ? Colors.accent[500] : 'transparent'}
+            color={isBookmarked ? theme.accent : theme.textMuted}
+            fill={isBookmarked ? theme.accent : 'transparent'}
           />
         </TouchableOpacity>
       </View>
@@ -342,8 +342,8 @@ const createStyles = (theme: typeof lightTheme) =>
       gap: 6,
     },
     languagePillActive: {
-      backgroundColor: Colors.primary[600],
-      borderColor: Colors.primary[600],
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
     },
     languageFlag: {
       fontSize: 16,
@@ -372,7 +372,7 @@ const createStyles = (theme: typeof lightTheme) =>
       paddingVertical: 8,
       gap: 8,
       borderWidth: 1,
-      borderColor: Colors.primary[600],
+      borderColor: theme.primary,
     },
     searchInput: {
       flex: 1,
@@ -422,8 +422,8 @@ const createStyles = (theme: typeof lightTheme) =>
       minHeight: 40,
     },
     categoryPillActive: {
-      backgroundColor: Colors.primary[700],
-      borderColor: Colors.primary[700],
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
     },
     categoryIcon: {
       fontSize: 16,
@@ -479,7 +479,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     cardTranslation: {
       fontSize: 15,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontStyle: 'italic',
       flex: 1,
     },
@@ -507,7 +507,7 @@ const createStyles = (theme: typeof lightTheme) =>
       fontWeight: '600',
     },
     categoryBadge: {
-      backgroundColor: Colors.secondary[500] + '20',
+      backgroundColor: theme.secondary + '20',
       paddingHorizontal: 10,
       paddingVertical: 4,
       borderRadius: 12,
@@ -530,7 +530,7 @@ const createStyles = (theme: typeof lightTheme) =>
     emptyAction: {
       marginTop: 8,
       fontSize: 14,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '600',
     },
   })

@@ -30,36 +30,6 @@ import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { AppHeader } from '@/components/AppHeader'
 
-const AUDIENCES = [
-  { icon: Plane, title: 'Tourists', description: 'Exploring Zimbabwe', color: Colors.accent[600] },
-  { icon: Briefcase, title: 'Expats', description: 'Living & working in Africa', color: Colors.primary[600] },
-  { icon: Briefcase, title: 'Business Professionals', description: 'Conducting commerce', color: Colors.secondary[800] },
-  { icon: GraduationCap, title: 'Students', description: 'Pursuing education', color: Colors.primary[700] },
-  { icon: Home, title: 'Immigrants', description: 'Settling into new homes', color: Colors.accent[500] },
-  { icon: Users, title: 'Locals', description: 'Expanding multilingual abilities', color: Colors.secondary[700] },
-]
-
-const DIFFERENTIATORS = [
-  {
-    icon: MessageCircle,
-    title: 'Colloquial Focus',
-    description: 'Teaching authentic everyday communication rather than formal textbook language.',
-    color: Colors.primary[600],
-  },
-  {
-    icon: Globe,
-    title: 'Side-by-Side Comparison',
-    description: 'Presenting all four languages simultaneously with pronunciation guides and cultural context.',
-    color: Colors.secondary[800],
-  },
-  {
-    icon: Heart,
-    title: 'Built for Africa',
-    description: 'Designed specifically for African learners with cultural and linguistic understanding.',
-    color: Colors.accent[600],
-  },
-]
-
 const URLS = {
   WEBSITE: 'https://lingo.mukoko.com',
   MUKOKO_PLATFORM: 'https://mukoko.com',
@@ -73,6 +43,36 @@ export default function AboutScreen() {
 
   const isTablet = width >= 768
   const isDesktop = width >= 1024
+
+  const AUDIENCES = [
+    { icon: Plane, title: 'Tourists', description: 'Exploring Zimbabwe', color: theme.accent },
+    { icon: Briefcase, title: 'Expats', description: 'Living & working in Africa', color: theme.primary },
+    { icon: Briefcase, title: 'Business Professionals', description: 'Conducting commerce', color: theme.secondary },
+    { icon: GraduationCap, title: 'Students', description: 'Pursuing education', color: theme.primary },
+    { icon: Home, title: 'Immigrants', description: 'Settling into new homes', color: theme.accent },
+    { icon: Users, title: 'Locals', description: 'Expanding multilingual abilities', color: theme.secondary },
+  ]
+
+  const DIFFERENTIATORS = [
+    {
+      icon: MessageCircle,
+      title: 'Colloquial Focus',
+      description: 'Teaching authentic everyday communication rather than formal textbook language.',
+      color: theme.primary,
+    },
+    {
+      icon: Globe,
+      title: 'Side-by-Side Comparison',
+      description: 'Presenting all four languages simultaneously with pronunciation guides and cultural context.',
+      color: theme.secondary,
+    },
+    {
+      icon: Heart,
+      title: 'Built for Africa',
+      description: 'Designed specifically for African learners with cultural and linguistic understanding.',
+      color: theme.accent,
+    },
+  ]
 
   const styles = createStyles(theme, isDark, isTablet, isDesktop)
 
@@ -116,7 +116,7 @@ export default function AboutScreen() {
           <View style={styles.section}>
             <View style={styles.missionCard}>
               <View style={styles.missionIcon}>
-                <Target size={28} color={Colors.primary[600]} />
+                <Target size={28} color={theme.primary} />
               </View>
               <Text style={styles.missionTitle}>Our Mission</Text>
               <Text style={styles.missionText}>
@@ -184,28 +184,28 @@ export default function AboutScreen() {
             <View style={styles.linksList}>
               <TouchableOpacity style={styles.linkCard} onPress={() => openURL(URLS.WEBSITE)}>
                 <View style={styles.linkIcon}>
-                  <Globe size={22} color={Colors.primary[600]} />
+                  <Globe size={22} color={theme.primary} />
                 </View>
                 <Text style={styles.linkText}>Visit Website</Text>
                 <ExternalLink size={18} color={theme.textMuted} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.linkCard} onPress={() => openURL(URLS.MUKOKO_PLATFORM)}>
                 <View style={styles.linkIcon}>
-                  <Heart size={22} color={Colors.accent[600]} />
+                  <Heart size={22} color={theme.accent} />
                 </View>
                 <Text style={styles.linkText}>Mukoko Platform</Text>
                 <ExternalLink size={18} color={theme.textMuted} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.linkCard} onPress={() => router.push('/features')}>
                 <View style={styles.linkIcon}>
-                  <Target size={22} color={Colors.secondary[800]} />
+                  <Target size={22} color={theme.secondary} />
                 </View>
                 <Text style={styles.linkText}>Explore Features</Text>
                 <ArrowRight size={18} color={theme.textMuted} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.linkCard} onPress={() => router.push('/why')}>
                 <View style={styles.linkIcon}>
-                  <MessageCircle size={22} color={Colors.primary[700]} />
+                  <MessageCircle size={22} color={theme.primary} />
                 </View>
                 <Text style={styles.linkText}>Why Mukoko Lingo</Text>
                 <ArrowRight size={18} color={theme.textMuted} />
@@ -269,7 +269,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     },
     heroTagline: {
       fontSize: isTablet ? 18 : 16,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '500',
     },
     section: {
@@ -300,7 +300,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       width: isTablet ? 72 : 60,
       height: isTablet ? 72 : 60,
       borderRadius: 16,
-      backgroundColor: Colors.primary[600] + '15',
+      backgroundColor: theme.primary + '15',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 16,

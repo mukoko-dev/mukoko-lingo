@@ -4,7 +4,7 @@ import { Stack, useRouter } from 'expo-router'
 import { ShieldX, ArrowLeft, LogIn, Home } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { getCurrentUser } from '@/lib/auth/stytch-client'
 import { profilesApi } from '@/lib/services/api-client'
 
@@ -56,7 +56,7 @@ export default function AdminLayout() {
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={Colors.primary[600]} />
+        <ActivityIndicator size="large" color={theme.primary} />
         <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
           Verifying access...
         </Text>
@@ -68,8 +68,8 @@ export default function AdminLayout() {
   if (!isAuthenticated) {
     return (
       <View style={[styles.errorContainer, { backgroundColor: theme.background }]}>
-        <View style={[styles.iconContainer, { backgroundColor: Colors.accent[500] + '20' }]}>
-          <LogIn size={48} color={Colors.accent[500]} />
+        <View style={[styles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+          <LogIn size={48} color={theme.accent} />
         </View>
         <Text style={[styles.errorTitle, { color: theme.text }]}>Sign In Required</Text>
         <Text style={[styles.errorText, { color: theme.textSecondary }]}>
@@ -77,7 +77,7 @@ export default function AdminLayout() {
         </Text>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: Colors.primary[600] }]}
+            style={[styles.primaryButton, { backgroundColor: theme.primary }]}
             onPress={() => router.replace('/auth')}
           >
             <LogIn size={20} color="#ffffff" />
@@ -99,8 +99,8 @@ export default function AdminLayout() {
   if (!isAdmin) {
     return (
       <View style={[styles.errorContainer, { backgroundColor: theme.background }]}>
-        <View style={[styles.iconContainer, { backgroundColor: Colors.accent[500] + '20' }]}>
-          <ShieldX size={48} color={Colors.accent[500]} />
+        <View style={[styles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+          <ShieldX size={48} color={theme.accent} />
         </View>
         <Text style={[styles.errorTitle, { color: theme.text }]}>Access Denied</Text>
         <Text style={[styles.errorText, { color: theme.textSecondary }]}>
@@ -109,7 +109,7 @@ export default function AdminLayout() {
         </Text>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: Colors.primary[600] }]}
+            style={[styles.primaryButton, { backgroundColor: theme.primary }]}
             onPress={() => router.replace('/(tabs)')}
           >
             <Home size={20} color="#ffffff" />
