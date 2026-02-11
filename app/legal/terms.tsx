@@ -15,11 +15,11 @@ import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 const SECTIONS = [
   {
     title: 'Acceptance of Terms',
-    content: `By accessing or using Nyuchi Lingo, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the app.`,
+    content: `By accessing or using Mukoko Lingo, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the app.`,
   },
   {
     title: 'Description of Service',
-    content: `Nyuchi Lingo is an AI-powered language learning platform that provides:
+    content: `Mukoko Lingo is an AI-powered language learning platform that provides:
 • Native phrase learning in multiple languages
 • AI tutoring with Shamwari, our language assistant
 • Progress tracking and skills assessment
@@ -50,7 +50,7 @@ We reserve the right to suspend or terminate accounts that violate these terms.`
   },
   {
     title: 'Intellectual Property',
-    content: `All content, features, and functionality of Nyuchi Lingo are owned by Nyuchi Technology and are protected by international copyright, trademark, and other intellectual property laws.
+    content: `All content, features, and functionality of Mukoko Lingo are owned by Nyuchi Africa and are protected by international copyright, trademark, and other intellectual property laws.
 
 You may not reproduce, distribute, or create derivative works without our express written permission.`,
   },
@@ -80,7 +80,7 @@ You may not reproduce, distribute, or create derivative works without our expres
   },
   {
     title: 'Limitation of Liability',
-    content: `To the maximum extent permitted by law, Nyuchi Technology shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service.`,
+    content: `To the maximum extent permitted by law, Nyuchi Africa shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service.`,
   },
   {
     title: 'Changes to Terms',
@@ -92,8 +92,8 @@ You may not reproduce, distribute, or create derivative works without our expres
   },
 ]
 
-const CONTACT_EMAIL = 'legal@nyuchi.com'
-const FULL_TERMS_URL = 'https://lingo.nyuchi.com/terms'
+const CONTACT_EMAIL = 'legal@mukoko.com'
+const FULL_TERMS_URL = 'https://lingo.mukoko.com/terms'
 
 export default function TermsOfServiceScreen() {
   const router = useRouter()
@@ -145,7 +145,7 @@ export default function TermsOfServiceScreen() {
           </View>
           <Text style={styles.headerTitle}>Terms of Service</Text>
           <Text style={styles.headerSubtitle}>
-            Please read these terms carefully before using Nyuchi Lingo.
+            Please read these terms carefully before using Mukoko Lingo.
           </Text>
           <Text style={styles.lastUpdated}>Last updated: December 2024</Text>
         </View>
@@ -179,7 +179,7 @@ export default function TermsOfServiceScreen() {
 
         {/* Footer */}
         <Text style={styles.footer}>
-          © 2024 Nyuchi Technology. All rights reserved.
+          © 2024 Nyuchi Learning. All rights reserved.
         </Text>
       </ScrollView>
     </>

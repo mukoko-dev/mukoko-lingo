@@ -49,7 +49,7 @@ describe('useLearningLanguage', () => {
 
     expect(result.current.learningLanguage).toBe('chinese')
     expect(AsyncStorage.setItem).toHaveBeenCalledWith(
-      '@nyuchi_learning_language',
+      '@mukoko_learning_language',
       'chinese'
     )
   })

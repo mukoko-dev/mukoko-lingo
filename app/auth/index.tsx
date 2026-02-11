@@ -331,7 +331,7 @@ export default function AuthScreen() {
 
   const renderEmailStep = () => (
     <>
-      <Text style={styles.cardTitle}>Welcome to Nyuchi Lingo</Text>
+      <Text style={styles.cardTitle}>Welcome to Mukoko Lingo</Text>
       <Text style={styles.cardSubtitle}>
         Enter your email to sign in or create an account
       </Text>
@@ -667,11 +667,11 @@ export default function AuthScreen() {
             {/* Header */}
             <View style={styles.header}>
               <Image
-                source={require('@/assets/images/nyuchi-icon.png')}
+                source={require('@/assets/images/icon.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />
-              <Text style={styles.title}>Nyuchi Lingo</Text>
+              <Text style={styles.title}>Mukoko Lingo</Text>
               <Text style={styles.subtitle}>
                 Learn African Languages with AI
               </Text>

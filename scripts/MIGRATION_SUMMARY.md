@@ -1,4 +1,4 @@
-# Nyuchi Lingo Migration Summary
+# Mukoko Lingo Migration Summary
 **Date:** November 10, 2025
 
 ## Overview

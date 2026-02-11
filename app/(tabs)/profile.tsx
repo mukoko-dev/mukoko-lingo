@@ -58,17 +58,17 @@ const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
 
 // Storage keys
 const STORAGE_KEYS = {
-  UI_LANGUAGE: '@nyuchi_ui_language',
-  THEME_PREFERENCE: '@nyuchi_theme_preference',
+  UI_LANGUAGE: '@mukoko_ui_language',
+  THEME_PREFERENCE: '@mukoko_theme_preference',
 }
 
 // URLs
 const URLS = {
-  HELP_CENTER: 'https://support.nyuchi.com',
-  PRIVACY_POLICY: 'https://lingo.nyuchi.com/privacy',
-  TERMS: 'https://lingo.nyuchi.com/terms',
-  WEBSITE: 'https://lingo.nyuchi.com',
-  ABOUT_PROJECT: 'https://learning.nyuchi.com/projects/nyuchi-lingo',
+  HELP_CENTER: 'https://support.mukoko.com',
+  PRIVACY_POLICY: 'https://lingo.mukoko.com/privacy',
+  TERMS: 'https://lingo.mukoko.com/terms',
+  WEBSITE: 'https://lingo.mukoko.com',
+  ABOUT_PROJECT: 'https://mukoko.com/products/mukoko-lingo',
 }
 
 export default function ProfileScreen() {
@@ -386,7 +386,7 @@ export default function ProfileScreen() {
             <Heart size={20} color={Colors.accent[500]} />
           </View>
           <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>About Nyuchi Lingo</Text>
+            <Text style={styles.settingLabel}>About Mukoko Lingo</Text>
           </View>
           <ChevronRight size={20} color={theme.textMuted} />
         </TouchableOpacity>
@@ -399,7 +399,7 @@ export default function ProfileScreen() {
       </TouchableOpacity>
 
       {/* Version */}
-      <Text style={styles.version}>Nyuchi Lingo v1.0.0</Text>
+      <Text style={styles.version}>Mukoko Lingo v1.0.0</Text>
 
       {/* Language Selection Modal (Android) */}
       <Modal
@@ -534,7 +534,7 @@ export default function ProfileScreen() {
         >
           <View style={[styles.modalContent, styles.aboutModalContent]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>About Nyuchi Lingo</Text>
+              <Text style={styles.modalTitle}>About Mukoko Lingo</Text>
               <TouchableOpacity onPress={() => setAboutModalVisible(false)}>
                 <X size={24} color={theme.text} />
               </TouchableOpacity>
@@ -548,11 +548,11 @@ export default function ProfileScreen() {
               />
             </View>
 
-            <Text style={styles.aboutName}>Nyuchi Lingo</Text>
+            <Text style={styles.aboutName}>Mukoko Lingo</Text>
             <Text style={styles.aboutVersion}>Version 1.0.0</Text>
 
             <Text style={styles.aboutDescription}>
-              Nyuchi Lingo is an AI-powered language learning platform designed to help you
+              Mukoko Lingo is an AI-powered language learning platform designed to help you
               master African languages through native phrase learning and personalized AI tutoring.
             </Text>
 
@@ -586,7 +586,7 @@ export default function ProfileScreen() {
             </View>
 
             <Text style={styles.aboutCopyright}>
-              © 2024 Nyuchi Technology. All rights reserved.
+              © 2024 Nyuchi Learning. All rights reserved.
             </Text>
           </View>
         </TouchableOpacity>

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Appearance, ColorSchemeName } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const THEME_STORAGE_KEY = '@nyuchi_theme_preference'
+const THEME_STORAGE_KEY = '@mukoko_theme_preference'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 

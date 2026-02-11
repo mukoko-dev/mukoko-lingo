@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Nyuchi Lingo",
-    "slug": "nyuchi-lingo",
+    "name": "Mukoko Lingo",
+    "slug": "mukoko-lingo",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
-    "scheme": "nyuchilingo",
+    "scheme": "mukokolingo",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.nyuchi.lingo"
+      "bundleIdentifier": "com.mukoko.lingo"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +23,7 @@
         "backgroundColor": "#5f5873"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.nyuchi.lingo"
+      "package": "com.mukoko.lingo"
     },
     "web": {
       "bundler": "metro",

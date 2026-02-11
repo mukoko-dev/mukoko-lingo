@@ -32,7 +32,7 @@ interface OnboardingSlide {
 const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: '1',
-    title: 'Welcome to Nyuchi Lingo',
+    title: 'Welcome to Mukoko Lingo',
     subtitle: 'Learn Shona. Connect with Africa.',
     description: 'Master African languages through native phrase learning and personalized AI tutoring.',
     emoji: '🌍',
@@ -64,7 +64,7 @@ const ONBOARDING_SLIDES: OnboardingSlide[] = [
   },
 ]
 
-const STORAGE_KEY = '@nyuchi_onboarding_complete'
+const STORAGE_KEY = '@mukoko_onboarding_complete'
 
 export default function OnboardingScreen() {
   const router = useRouter()
@@ -181,11 +181,11 @@ export default function OnboardingScreen() {
           {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={require('@/assets/images/nyuchi-icon.png')}
+              source={require('@/assets/images/icon.png')}
               style={styles.logoIcon}
               resizeMode="contain"
             />
-            <Text style={styles.logoTitle}>Nyuchi Lingo</Text>
+            <Text style={styles.logoTitle}>Mukoko Lingo</Text>
           </View>
 
           {/* Slides */}
