@@ -8,7 +8,7 @@ import { lightTheme, darkTheme } from '@/constants/Colors'
 import { useTheme } from '@/lib/hooks/useTheme'
 import { AppHeader } from '@/components/AppHeader'
 import { useAuth } from '@/app/_layout'
-import { signOut } from '@/lib/supabase/client'
+import { signOut } from '@/lib/auth/stytch-client'
 
 const ONBOARDING_KEY = '@mukoko_onboarding_complete'
 
@@ -19,7 +19,7 @@ export default function TabLayout() {
   const { isAuthenticated } = useAuth()
 
   const handleLogout = async () => {
-    // Sign out the Supabase session
+    // Sign out the Stytch session
     await signOut()
     // Clear onboarding status so user sees welcome on next visit
     try {

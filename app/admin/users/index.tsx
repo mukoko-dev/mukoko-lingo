@@ -26,7 +26,7 @@ import {
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { createClient } from '@/lib/supabase/client'
+import { profilesApi } from '@/lib/services/api-client'
 
 interface UserProfile {
   id: string
@@ -54,13 +54,9 @@ export default function AdminUsersScreen() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const { data, error } = await profilesApi.listProfiles()
 
-      if (error) throw error
+      if (error) throw new Error(error)
       setUsers(data || [])
       setFilteredUsers(data || [])
     } catch (err) {
@@ -111,13 +107,9 @@ export default function AdminUsersScreen() {
           onPress: async () => {
             setUpdatingRole(user.id)
             try {
-              const supabase = createClient()
-              const { error } = await supabase
-                .from('profiles')
-                .update({ role: newRole })
-                .eq('id', user.id)
+              const { error } = await profilesApi.updateRole(user.id, newRole)
 
-              if (error) throw error
+              if (error) throw new Error(error)
 
               setUsers((prev) =>
                 prev.map((u) => (u.id === user.id ? { ...u, role: newRole } : u))
