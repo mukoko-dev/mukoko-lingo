@@ -586,7 +586,7 @@ export default function ProfileScreen() {
             </View>
 
             <Text style={styles.aboutCopyright}>
-              © 2024 Nyuchi Africa. All rights reserved.
+              © 2024 Nyuchi Learning. All rights reserved.
             </Text>
           </View>
         </TouchableOpacity>

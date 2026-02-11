@@ -179,7 +179,7 @@ export default function TermsOfServiceScreen() {
 
         {/* Footer */}
         <Text style={styles.footer}>
-          © 2024 Nyuchi Africa. All rights reserved.
+          © 2024 Nyuchi Learning. All rights reserved.
         </Text>
       </ScrollView>
     </>

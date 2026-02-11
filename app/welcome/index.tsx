@@ -248,7 +248,7 @@ export default function WelcomeScreen() {
                   <Text style={styles.footerLink}>Terms</Text>
                 </TouchableOpacity>
               </View>
-              <Text style={styles.copyright}>© 2025 Nyuchi Africa</Text>
+              <Text style={styles.copyright}>© 2025 Nyuchi Learning</Text>
             </View>
           </View>
         </ScrollView>

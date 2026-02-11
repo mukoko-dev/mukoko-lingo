@@ -216,7 +216,7 @@ export default function AboutScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.version}>Version 1.0.0</Text>
-            <Text style={styles.copyright}>© 2025 Nyuchi Africa</Text>
+            <Text style={styles.copyright}>© 2025 Nyuchi Learning</Text>
             <Text style={styles.tagline}>Language learning, built for Africa.</Text>
           </View>
         </View>
