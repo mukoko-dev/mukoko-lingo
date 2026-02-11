@@ -16,7 +16,7 @@ MAJOR.MINOR.PATCH
 - **MINOR**: New features, backwards-compatible enhancements
 - **PATCH**: Bug fixes, security patches, minor improvements
 
-### Current Version: 2.0.0
+### Current Version: 3.1.0
 
 ## Release Channels
 
@@ -24,17 +24,19 @@ MAJOR.MINOR.PATCH
 - **Branch**: `main`
 - **Environment**: Vercel Production
 - **URL**: https://lingo.mukoko.com
-- **Database**: Supabase Production
+- **Database**: MongoDB Atlas Production
+- **Auth**: Stytch Production
 
 ### Staging (Future)
 - **Branch**: `staging`
 - **Environment**: Vercel Preview
-- **Database**: Supabase Staging
+- **Database**: MongoDB Atlas Staging
+- **Auth**: Stytch Test
 
 ### Development
 - **Branch**: Feature branches
 - **Environment**: Local / Vercel Preview
-- **Database**: Local Supabase or shared dev instance
+- **Database**: MongoDB Atlas Dev or local MongoDB
 
 ## Release Process
 
@@ -97,10 +99,10 @@ git push -u origin release/v2.1.0
 
 For releases with database changes:
 
-1. Create numbered migration file in `scripts/` (e.g., `032_new_feature.sql`)
-2. Test migration on staging/development first
-3. Apply to production via Supabase Dashboard SQL Editor
-4. Verify migration success before deploying code
+1. Update `prisma/schema.prisma` with schema changes
+2. Run `npm run prisma:generate` to regenerate the Prisma client
+3. Test locally with `npm run prisma:push`
+4. Schema changes are automatically applied on Vercel deploy via `build:web` script
 
 ### 5. Deployment
 
@@ -194,8 +196,10 @@ For iOS App Store and Google Play releases:
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 2.0.0 | Dec 2025 | Mobile app, Admin dashboard, Skills-based learning |
-| 1.0.0 | Nov 2025 | Initial release with core learning features |
+| 3.1.0 | Feb 2026 | Stytch Auth, WhatsApp OTP, automated schema deploy |
+| 3.0.0 | Dec 2025 | AI-first skills-based architecture |
+| 2.0.0 | Nov 2025 | Layout standardization, sidebar navigation |
+| 1.0.0 | Oct 2025 | Initial release with core learning features |
 
 ## Release Schedule
 
@@ -221,4 +225,4 @@ For release-related questions:
 
 ---
 
-Last updated: December 2025
+Last updated: February 2026
