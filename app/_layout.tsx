@@ -13,13 +13,19 @@ import { ThemeProvider, useTheme } from '@/lib/hooks/useTheme'
 import { LearningLanguageProvider } from '@/lib/hooks/useLearningLanguage'
 import { initDatabase } from '@/lib/storage/database'
 import { lightTheme, darkTheme } from '@/constants/Colors'
-import { onAuthStateChange, getSession, getSupabase } from '@/lib/supabase/client'
+import {
+  onAuthStateChange,
+  getSession,
+  authenticateMagicLink,
+  isAuthConfigured,
+  type StytchSession,
+} from '@/lib/auth/stytch-client'
 
 // Auth context for global auth state
 type AuthContextType = {
   isAuthenticated: boolean
   isLoading: boolean
-  session: any | null
+  session: StytchSession | null
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -106,10 +112,19 @@ export default function RootLayout() {
     checkOnboarding()
   }, [])
 
-  // Initialize auth state and listen for changes
+  // Initialize auth state and listen for changes (Stytch)
   useEffect(() => {
-    // Check initial session
     const initAuth = async () => {
+      if (!isAuthConfigured()) {
+        // No auth configured - allow offline mode
+        setAuthState({
+          isAuthenticated: false,
+          isLoading: false,
+          session: null,
+        })
+        return
+      }
+
       const { session } = await getSession()
       setAuthState({
         isAuthenticated: !!session,
@@ -142,22 +157,25 @@ export default function RootLayout() {
       const url = event.url
       if (!url) return
 
-      // Extract token hash from deep link (magic link / password reset)
-      // Format: mukokolingo://[path]#access_token=...&refresh_token=...
-      const hashIndex = url.indexOf('#')
-      if (hashIndex === -1) return
+      // Extract token from deep link for Stytch magic link
+      // Format: mukokolingo://[path]?token=...&stytch_token_type=magic_links
+      try {
+        const urlObj = new URL(url)
+        const token = urlObj.searchParams.get('token')
+        const tokenType = urlObj.searchParams.get('stytch_token_type')
 
-      const hashParams = new URLSearchParams(url.substring(hashIndex + 1))
-      const accessToken = hashParams.get('access_token')
-      const refreshToken = hashParams.get('refresh_token')
-
-      if (accessToken && refreshToken) {
-        const supabase = getSupabase()
-        if (supabase) {
-          await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          })
+        if (token && tokenType === 'magic_links') {
+          await authenticateMagicLink(token)
+        }
+      } catch {
+        // Also handle hash-based tokens for backwards compatibility
+        const hashIndex = url.indexOf('#')
+        if (hashIndex !== -1) {
+          const hashParams = new URLSearchParams(url.substring(hashIndex + 1))
+          const token = hashParams.get('token')
+          if (token) {
+            await authenticateMagicLink(token)
+          }
         }
       }
     }

@@ -39,7 +39,7 @@ import {
   verifyOtp,
   signInWithMagicLink,
   signOut,
-} from '@/lib/supabase/client'
+} from '@/lib/auth/stytch-client'
 
 type AuthMethod = 'otp' | 'magic-link' | 'password'
 type AuthStep = 'email' | 'verify-otp' | 'magic-link-sent' | 'password-form'
@@ -231,7 +231,7 @@ export default function AuthScreen() {
           throw new Error('Sign in failed. Please check your credentials.')
         }
 
-        if (data.user && !data.user.email_confirmed_at) {
+        if (data.user && data.user.status === 'pending') {
           await signOut()
           throw new Error('Please verify your email before signing in. Check your inbox.')
         }

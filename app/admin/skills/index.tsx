@@ -24,7 +24,7 @@ import {
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { createClient } from '@/lib/supabase/client'
+import { skillsApi, assessmentsApi } from '@/lib/services/api-client'
 
 const SKILL_ICONS: Record<string, typeof Volume2> = {
   pronunciation: Volume2,
@@ -83,13 +83,15 @@ export default function AdminSkillsScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const supabase = createClient()
-
       const [skillsRes, levelsRes, assessmentsRes] = await Promise.all([
-        supabase.from('skills').select('*').order('sort_order'),
-        supabase.from('skill_levels').select('*').order('sort_order'),
-        supabase.from('assessments').select('*').order('created_at', { ascending: false }),
+        skillsApi.listSkills(),
+        skillsApi.getSkillLevels(),
+        assessmentsApi.listAssessments(),
       ])
+
+      if (skillsRes.error) throw new Error(skillsRes.error)
+      if (levelsRes.error) throw new Error(levelsRes.error)
+      if (assessmentsRes.error) throw new Error(assessmentsRes.error)
 
       if (skillsRes.data) setSkills(skillsRes.data)
       if (levelsRes.data) setSkillLevels(levelsRes.data)
@@ -110,11 +112,8 @@ export default function AdminSkillsScreen() {
 
   const toggleSkillActive = async (skillId: string, currentState: boolean) => {
     try {
-      const supabase = createClient()
-      await supabase
-        .from('skills')
-        .update({ is_active: !currentState })
-        .eq('id', skillId)
+      const { error } = await skillsApi.toggleSkillActive(skillId, !currentState)
+      if (error) throw new Error(error)
 
       setSkills(prev =>
         prev.map(s => (s.id === skillId ? { ...s, is_active: !currentState } : s))
@@ -145,7 +144,7 @@ export default function AdminSkillsScreen() {
           <View style={styles.centerContainer}>
             <Text style={styles.errorText}>{error}</Text>
             <Text style={styles.hintText}>
-              The skills tables need to be created in Supabase. Run the migration scripts to set up the database schema.
+              The skills collections need to be created in MongoDB. Run the migration scripts to set up the database schema.
             </Text>
           </View>
         ) : (
