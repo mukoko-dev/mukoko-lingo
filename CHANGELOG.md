@@ -19,6 +19,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.1.0] - 2026-02-11
+
+### Stytch Auth Integration & Build Automation
+
+This release completes the migration from Supabase to Stytch authentication with branded templates, WhatsApp OTP support, and automated database schema deployment.
+
+### Added
+
+#### Authentication
+- **Stytch Auth Integration** - Complete authentication system with email/password, OTP, magic links
+- **WhatsApp OTP** - WhatsApp-based one-time password authentication
+- **Branded Email Templates** - Custom Stytch email templates matching Mukoko Lingo branding
+- **Session Token Management** - SecureStore (native) and AsyncStorage (web) for session persistence
+
+#### API & Infrastructure
+- **Vercel Serverless API Routes** - Full REST API backend with Stytch session validation
+- **Auth Middleware** (`api/_lib/auth-middleware.ts`) - `requireAuth()` and `requireAdmin()` for all API routes
+- **CORS Helper** (`api/_lib/cors.ts`) - Cross-origin request handling for API routes
+- **Prisma API Client** (`api/_lib/prisma.ts`) - Shared Prisma singleton for serverless functions
+- **Stytch Configuration** (`lib/stytch/config.ts`) - Centralized template IDs, redirect URLs, session settings
+
+#### Build & Deploy
+- **Automated Schema Sync** - `prisma db push` runs automatically in `build:web` script on every Vercel deploy
+- **Python Analytics Prototype** - pymongo aggregation pipelines for data analysis
+
+### Changed
+- **Sign-in UX** - Reordered sign-in options: WhatsApp OTP before password for better mobile UX
+- **Brand Alignment** - `Colors.ts` aligned to Mukoko Lingo brand minerals palette
+- **Build Command** - `build:web` now includes `prisma db push --skip-generate` before `expo export`
+
+### Removed
+- **Supabase** - All Supabase dependencies, client libraries, and references completely removed
+- **Legacy Email Templates** - Supabase email templates replaced with Stytch branded templates
+
+### Migration Notes
+
+**From 3.0.0**: No database migration needed. Stytch project credentials must be configured in environment variables. See `.env.example` for required variables.
+
+---
+
 ## [3.0.0] - 2025-12-11
 
 ### Major Release - AI-First Skills-Based Architecture
@@ -382,6 +422,8 @@ This release represents a complete overhaul of the application's layout system a
 
 | Version | Date | Focus |
 |---------|------|-------|
+| **3.1.0** | 2026-02-11 | Stytch Auth Integration & Build Automation |
+| **3.0.0** | 2025-12-11 | AI-First Skills-Based Architecture |
 | **2.0.0** | 2025-11-10 | Layout Standardization & Navigation Unification |
 | **1.5.0** | 2025-11-09 | Brand Implementation & Database Improvements |
 | **1.4.0** | 2025-11-08 | Learning Standards & Performance |
@@ -460,4 +502,4 @@ See [RELEASES.md](RELEASES.md) for guidelines on contributing to releases.
 ---
 
 **Maintained by**: Claude Code
-**Last updated**: November 10, 2025
+**Last updated**: February 11, 2026

@@ -351,8 +351,8 @@ Repeat cycle with higher-level content
 ### Component Architecture
 
 **Server vs Client Pattern**:
-- **Server Components**: Fetch data server-side using `createClient()` from `lib/supabase/server.ts`, pass as props
-- **Client Components**: Marked with `"use client"`, handle interactivity using singleton from `lib/supabase/client.ts`
+- **Server Components**: Vercel API routes use Prisma ORM from `api/_lib/prisma.ts`
+- **Client Components**: Marked with `"use client"`, fetch data via REST API client from `lib/services/api-client.ts`
 
 **Directory Structure**:
 - `components/ui/` - Radix UI primitives (shadcn/ui pattern)
@@ -444,9 +444,9 @@ export function PageClient() {
 ### Admin System
 
 **Access Control**:
-- Server-side: `await isAdmin()` from `lib/supabase/admin.ts`
-- Client-side: `useAdmin()` hook checks role in profiles table
-- Database-level: RLS policies + `is_admin()` function
+- Server-side: `requireAdmin()` from `api/_lib/auth-middleware.ts` validates Stytch session + admin role
+- Client-side: `useAdmin()` hook from `lib/hooks/useAdmin.ts` checks role in profiles table
+- Database-level: Prisma queries filtered by authenticated user ID
 
 **Web Admin Routes** (`/admin/`):
 - `/admin/overview` - Statistics dashboard
@@ -472,7 +472,7 @@ The mobile app includes a full admin dashboard with the following screens:
 
 - Admin access check in `app/admin/_layout.tsx`
 - Admin link in AppHeader (visible only to admin users)
-- All data fetched from Supabase (no hardcoded data)
+- All data fetched from MongoDB via API (no hardcoded data)
 - Pull-to-refresh on all admin screens
 - Confirmation dialogs for destructive actions
 
@@ -777,9 +777,11 @@ When adding new skills-based functionality, follow this pattern:
 1. Configure environment variables (see Environment Setup above)
 2. Start dev server: `npm run dev`
 3. Sign up for a test account via `/auth/login`
-4. To test admin features, manually update your user role in Supabase:
-   ```sql
-   UPDATE profiles SET role = 'admin' WHERE email = 'your-test-email@example.com';
+4. To test admin features, update your user role in MongoDB:
+   ```bash
+   # Via Prisma Studio
+   npx prisma studio
+   # Find your profile and set role to 'admin'
    ```
 5. Access admin dashboard at `http://localhost:3000/admin/overview`
 6. Test AI features at `/app/ai-practice`
@@ -854,8 +856,8 @@ echo "Implementation complete" > NEW_FEATURE_COMPLETE.md  # ❌ Wrong location
 
 ### Core Documentation (Root)
 
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide for Vercel and Supabase
-- **[SECURITY.md](SECURITY.md)** - Security architecture, RLS policies, authentication
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide for Vercel and MongoDB Atlas
+- **[SECURITY.md](SECURITY.md)** - Security architecture, Stytch auth, MongoDB access control
 - **[CHANGELOG.md](CHANGELOG.md)** - Complete version history and release notes
 - **[RELEASES.md](RELEASES.md)** - Release management and versioning guidelines
 - **[DEV_MODE.md](DEV_MODE.md)** - Development mode setup and security warnings
