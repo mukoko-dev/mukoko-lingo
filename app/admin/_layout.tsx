@@ -188,6 +188,13 @@ export default function AdminLayout() {
           headerShown: true,
         }}
       />
+      <Stack.Screen
+        name="analytics/index"
+        options={{
+          title: 'Analytics (Python)',
+          headerShown: true,
+        }}
+      />
     </Stack>
   )
 }

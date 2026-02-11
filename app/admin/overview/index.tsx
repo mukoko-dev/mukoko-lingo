@@ -89,6 +89,13 @@ const QUICK_ACTIONS: QuickAction[] = [
     color: Colors.accent[600],
     description: 'Review flagged content',
   },
+  {
+    label: 'Analytics (Python)',
+    route: '/admin/analytics',
+    icon: TrendingUp,
+    color: '#f59e0b',
+    description: 'Deep analytics powered by Python',
+  },
 ]
 
 export default function AdminOverviewScreen() {
