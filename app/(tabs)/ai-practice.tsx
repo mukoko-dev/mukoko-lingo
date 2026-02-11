@@ -35,7 +35,7 @@ export default function AIPracticeScreen() {
     {
       id: '1',
       role: 'assistant',
-      content: "Mhoro! 🐝 I'm Shamwari, your friendly AI language tutor. I'm here to help you learn Shona, Ndebele, Swahili, and Chinese. What would you like to practice today?",
+      content: "Mhoro! I'm Shamwari, your friendly AI language tutor. Welcome to the hive — I'm here to help you learn Shona, Ndebele, Swahili, and Chinese. What would you like to practice today?",
       timestamp: new Date(),
     },
   ])

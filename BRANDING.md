@@ -1,7 +1,7 @@
-# Nyuchi Lingo - Brand Guidelines & Implementation Guide
+# Mukoko Lingo - Brand Guidelines & Implementation Guide
 
-**Version**: 3.0 - Nyuchi Africa Ecosystem Integration
-**Last Updated**: November 10, 2025
+**Version**: 4.0 - Mukoko Ecosystem Integration
+**Last Updated**: February 2026
 **Status**: Complete & Ready for Implementation
 
 ---
@@ -15,7 +15,7 @@
 5. [Detailed Documentation](#detailed-documentation)
 6. [Getting Started for Developers](#getting-started-for-developers)
 7. [Tailwind Configuration Reference](#tailwind-configuration-reference)
-8. [Nyuchi Africa Ecosystem Context](#nyuchi-africa-ecosystem-context)
+8. [Mukoko Ecosystem Context](#mukoko-ecosystem-context)
 
 ---
 
@@ -23,11 +23,12 @@
 
 ### Who We Are
 
-**Nyuchi Lingo** is the language learning platform within the **Nyuchi Africa ecosystem**, specifically under the Nyuchi Learning division. Born in Zimbabwe, expanding across Africa.
+**Mukoko Lingo** is the language learning platform within the **Mukoko ecosystem** (part of the Bundu Family). Born in Zimbabwe, expanding across Africa.
 
-- **Name Origin**: "Nyuchi" means "bee" in Shona
-- **Symbolism**: Community, hard work, communication, and the sweetness of language learning
+- **Name Origin**: "Mukoko" means "hive" in Shona - the structure where cultural knowledge is stored and preserved
+- **Symbolism**: Cultural preservation, belonging, structured knowledge, community home
 - **Philosophy**: Ubuntu - "I am because we are"
+- **Parent Company**: Nyuchi Africa (nyuchi.com)
 
 ### Mission & Vision
 
@@ -391,8 +392,8 @@ The Nyuchi Africa brand system v3.0 has been fully configured in `tailwind.confi
 ### Logo Files
 
 **Desktop Logos**:
-- Light mode: `Nyuchi_Lingo_purple.svg` (purple text #5f5873 + bee icon)
-- Dark mode: `Nyuchi_Lingo_dark.svg` (light text + light bee icon)
+- Light mode: `Mukoko_Lingo_purple.svg` (purple text #5f5873 + bee icon)
+- Dark mode: `Mukoko_Lingo_dark.svg` (light text + light bee icon)
 - Minimum width: 180px
 
 **Mobile Logo**:
@@ -768,7 +769,7 @@ Add to `globals.css`:
 
 ### Brand Alignment
 
-Nyuchi Lingo is part of the **Nyuchi Africa ecosystem**, sharing core design principles across all divisions.
+Mukoko Lingo is part of the **Nyuchi Africa ecosystem**, sharing core design principles across all divisions.
 
 **Shared Across All Divisions**:
 - Warm purple primary color (#5f5873)
@@ -781,7 +782,7 @@ Nyuchi Lingo is part of the **Nyuchi Africa ecosystem**, sharing core design pri
 - WCAG 2.1 AA accessibility
 - Community-first approach
 
-**Unique to Nyuchi Lingo**:
+**Unique to Mukoko Lingo**:
 - Bee branding and symbolism
 - Language learning focus
 - Educational gamification
@@ -791,7 +792,7 @@ Nyuchi Lingo is part of the **Nyuchi Africa ecosystem**, sharing core design pri
 
 ### Division Context
 
-**Parent**: Nyuchi Learning (Educational frameworks)
+**Parent**: Mukoko Platform (Ecosystem level)
 
 **Sibling Divisions**:
 - Harare Metro (News aggregation)

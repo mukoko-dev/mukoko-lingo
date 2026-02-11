@@ -1,6 +1,6 @@
 /**
  * AI Chat Service for React Native
- * Handles communication with Anthropic Claude API for Shamwari chatbot
+ * Handles communication with Anthropic Claude API for Shamwari AI tutor
  */
 
 import { buildSkillsAwarePrompt } from './skills-aware-prompts'
@@ -112,48 +112,48 @@ function simulateResponse(userMessage: string): ChatResponse {
 
   if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
     return {
-      message: "Mhoro! \u{1F41D} (That's 'hello' in Shona!) I'm Shamwari, your friendly language tutor. I'm here to help you learn Shona, Ndebele, Swahili, and Chinese. What would you like to learn today?",
+      message: "Mhoro! (That's 'hello' in Shona!) I'm Shamwari, your friendly language tutor. Welcome to the hive — I'm here to help you learn Shona, Ndebele, Swahili, and Chinese. What would you like to learn today?",
     }
   }
 
   if (lowerMessage.includes('thank')) {
     return {
-      message: "Maita basa! (Thank you in Shona!) \u{1F41D} You're doing great, friend! Keep up the excellent work on your language learning journey!",
+      message: "Maita basa! (Thank you in Shona!) You're doing great, friend! The hive grows stronger every day with your learning!",
     }
   }
 
   if (lowerMessage.includes('how are you') || lowerMessage.includes("how's it going")) {
     return {
-      message: "Ndiripo! (I am well in Shona!) Thank you for asking! \u{1F41D}\n\nIn Shona, you can say 'Makadii?' to ask 'How are you?' The response would be 'Ndiripo' meaning 'I am well'.\n\nWould you like to practice this greeting exchange?",
+      message: "Ndiripo! (I am well in Shona!) Thank you for asking!\n\nIn Shona, you can say 'Makadii?' to ask 'How are you?' The response would be 'Ndiripo' meaning 'I am well'.\n\nWould you like to practice this greeting exchange?",
     }
   }
 
   if (lowerMessage.includes('shona') || lowerMessage.includes('zimbabwe')) {
     return {
-      message: "Great choice! Shona (chiShona) is a beautiful Bantu language spoken by about 80% of Zimbabwe's population. \u{1F41D}\n\nLet's start with some essential phrases:\n\n\u2022 Mhoro - Hello\n\u2022 Maita basa - Thank you\n\u2022 Ndapota - Please\n\u2022 Ndinonzi... - My name is...\n\nWhich phrase would you like to practice first?",
+      message: "Great choice! Shona (chiShona) is a beautiful Bantu language spoken by about 80% of Zimbabwe's population.\n\nLet's start with some essential phrases:\n\n\u2022 Mhoro - Hello\n\u2022 Maita basa - Thank you\n\u2022 Ndapota - Please\n\u2022 Ndinonzi... - My name is...\n\nWhich phrase would you like to practice first?",
     }
   }
 
   if (lowerMessage.includes('ndebele')) {
     return {
-      message: "Wonderful! Ndebele (isiNdebele) is spoken in Zimbabwe and South Africa. \u{1F41D}\n\nHere are some essential Ndebele phrases:\n\n\u2022 Sawubona - Hello\n\u2022 Ngiyabonga - Thank you\n\u2022 Ngicela - Please\n\u2022 Ibizo lami ngu... - My name is...\n\nWould you like me to help you with pronunciation?",
+      message: "Wonderful! Ndebele (isiNdebele) is spoken in Zimbabwe and South Africa.\n\nHere are some essential Ndebele phrases:\n\n\u2022 Sawubona - Hello\n\u2022 Ngiyabonga - Thank you\n\u2022 Ngicela - Please\n\u2022 Ibizo lami ngu... - My name is...\n\nWould you like me to help you with pronunciation?",
     }
   }
 
   if (lowerMessage.includes('swahili') || lowerMessage.includes('kiswahili')) {
     return {
-      message: "Karibu! (Welcome in Swahili!) Swahili is one of Africa's most widely spoken languages. \u{1F41D}\n\nLet's learn some basics:\n\n\u2022 Jambo/Habari - Hello\n\u2022 Asante - Thank you\n\u2022 Tafadhali - Please\n\u2022 Jina langu ni... - My name is...\n\nSwahili is known for being relatively easy to learn. Which phrase interests you?",
+      message: "Karibu! (Welcome in Swahili!) Swahili is one of Africa's most widely spoken languages.\n\nLet's learn some basics:\n\n\u2022 Jambo/Habari - Hello\n\u2022 Asante - Thank you\n\u2022 Tafadhali - Please\n\u2022 Jina langu ni... - My name is...\n\nSwahili is known for being relatively easy to learn. Which phrase interests you?",
     }
   }
 
   if (lowerMessage.includes('chinese') || lowerMessage.includes('mandarin')) {
     return {
-      message: "\u597D\u7684! (H\u01CEo de - Great!) Chinese is a fascinating language with a rich history. \u{1F41D}\n\nLet's start with essentials:\n\n\u2022 \u4F60\u597D (N\u01D0 h\u01CEo) - Hello\n\u2022 \u8C22\u8C22 (Xi\u00E8xi\u00E8) - Thank you\n\u2022 \u8BF7 (Q\u01D0ng) - Please\n\u2022 \u6211\u53EB... (W\u01D2 ji\u00E0o...) - My name is...\n\nWould you like help with the tones?",
+      message: "\u597D\u7684! (H\u01CEo de - Great!) Chinese is a fascinating language with a rich history.\n\nLet's start with essentials:\n\n\u2022 \u4F60\u597D (N\u01D0 h\u01CEo) - Hello\n\u2022 \u8C22\u8C22 (Xi\u00E8xi\u00E8) - Thank you\n\u2022 \u8BF7 (Q\u01D0ng) - Please\n\u2022 \u6211\u53EB... (W\u01D2 ji\u00E0o...) - My name is...\n\nWould you like help with the tones?",
     }
   }
 
   return {
-    message: "That's a great question! \u{1F41D} As Shamwari, your language learning friend, I'm here to help you learn Shona, Ndebele, Swahili, and Chinese.\n\nYou can ask me to:\n\u2022 Teach you new phrases\n\u2022 Practice conversations\n\u2022 Explain grammar concepts\n\u2022 Help with pronunciation\n\u2022 Share cultural context\n\nWhat would you like to explore?",
+    message: "That's a great question! As Shamwari, your language learning friend, I'm here to help you learn Shona, Ndebele, Swahili, and Chinese.\n\nYou can ask me to:\n\u2022 Teach you new phrases\n\u2022 Practice conversations\n\u2022 Explain grammar concepts\n\u2022 Help with pronunciation\n\u2022 Share cultural context\n\nWhat would you like to explore?",
   }
 }
 

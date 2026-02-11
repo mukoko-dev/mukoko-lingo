@@ -61,8 +61,8 @@ const DIFFERENTIATORS = [
 ]
 
 const URLS = {
-  WEBSITE: 'https://lingo.nyuchi.com',
-  NYUCHI_LEARNING: 'https://learning.nyuchi.com',
+  WEBSITE: 'https://lingo.mukoko.com',
+  MUKOKO_PLATFORM: 'https://mukoko.com',
 }
 
 export default function AboutScreen() {
@@ -103,13 +103,13 @@ export default function AboutScreen() {
           <View style={styles.hero}>
             <View style={styles.heroLogoContainer}>
               <Image
-                source={require('@/assets/images/nyuchi-icon.png')}
+                source={require('@/assets/images/icon.png')}
                 style={styles.heroIcon}
                 resizeMode="contain"
               />
-              <Text style={styles.heroTitle}>Nyuchi Lingo</Text>
+              <Text style={styles.heroTitle}>Mukoko Lingo</Text>
             </View>
-            <Text style={styles.heroTagline}>A Nyuchi Learning Initiative</Text>
+            <Text style={styles.heroTagline}>Part of the Mukoko Ecosystem</Text>
           </View>
 
           {/* Mission Section */}
@@ -150,7 +150,7 @@ export default function AboutScreen() {
           <View style={[styles.section, styles.storySection]}>
             <Text style={styles.sectionTitle}>Our Story</Text>
             <Text style={styles.storyText}>
-              Nyuchi Lingo was founded to address practical language education needs across Zimbabwe and Southern Africa. Whether you're navigating Victoria Falls as a tourist or negotiating business deals in Harare, we provide the language skills you need.
+              Mukoko Lingo was founded to address practical language education needs across Zimbabwe and Southern Africa. Whether you're navigating Victoria Falls as a tourist or negotiating business deals in Harare, we provide the language skills you need.
             </Text>
             <Text style={styles.storyText}>
               Language learning should be accessible to everyone, regardless of whether you're visiting for a week, conducting business for a month, studying for a semester, or building a life here permanently.
@@ -189,11 +189,11 @@ export default function AboutScreen() {
                 <Text style={styles.linkText}>Visit Website</Text>
                 <ExternalLink size={18} color={theme.textMuted} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.linkCard} onPress={() => openURL(URLS.NYUCHI_LEARNING)}>
+              <TouchableOpacity style={styles.linkCard} onPress={() => openURL(URLS.MUKOKO_PLATFORM)}>
                 <View style={styles.linkIcon}>
                   <Heart size={22} color={Colors.accent[600]} />
                 </View>
-                <Text style={styles.linkText}>Nyuchi Learning</Text>
+                <Text style={styles.linkText}>Mukoko Platform</Text>
                 <ExternalLink size={18} color={theme.textMuted} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.linkCard} onPress={() => router.push('/features')}>
@@ -207,7 +207,7 @@ export default function AboutScreen() {
                 <View style={styles.linkIcon}>
                   <MessageCircle size={22} color={Colors.primary[700]} />
                 </View>
-                <Text style={styles.linkText}>Why Nyuchi Lingo</Text>
+                <Text style={styles.linkText}>Why Mukoko Lingo</Text>
                 <ArrowRight size={18} color={theme.textMuted} />
               </TouchableOpacity>
             </View>
@@ -216,7 +216,7 @@ export default function AboutScreen() {
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.version}>Version 1.0.0</Text>
-            <Text style={styles.copyright}>© 2025 Nyuchi Learning</Text>
+            <Text style={styles.copyright}>© 2025 Nyuchi Africa</Text>
             <Text style={styles.tagline}>Language learning, built for Africa.</Text>
           </View>
         </View>

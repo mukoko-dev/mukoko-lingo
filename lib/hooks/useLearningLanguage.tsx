@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const LEARNING_LANGUAGE_KEY = '@nyuchi_learning_language'
+const LEARNING_LANGUAGE_KEY = '@mukoko_learning_language'
 
 export type LearningLanguage = 'shona' | 'ndebele' | 'swahili' | 'chinese'
 

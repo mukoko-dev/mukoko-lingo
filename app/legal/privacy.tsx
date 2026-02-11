@@ -70,8 +70,8 @@ const SECTIONS = [
   },
 ]
 
-const CONTACT_EMAIL = 'privacy@nyuchi.com'
-const FULL_POLICY_URL = 'https://lingo.nyuchi.com/privacy'
+const CONTACT_EMAIL = 'privacy@mukoko.com'
+const FULL_POLICY_URL = 'https://lingo.mukoko.com/privacy'
 
 export default function PrivacyPolicyScreen() {
   const router = useRouter()
@@ -161,7 +161,7 @@ export default function PrivacyPolicyScreen() {
 
         {/* Footer */}
         <Text style={styles.footer}>
-          © 2024 Nyuchi Technology. All rights reserved.
+          © 2024 Nyuchi Africa. All rights reserved.
         </Text>
       </ScrollView>
     </>

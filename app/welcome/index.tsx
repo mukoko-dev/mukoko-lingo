@@ -27,7 +27,7 @@ import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { AppHeader } from '@/components/AppHeader'
 
-const ONBOARDING_KEY = '@nyuchi_onboarding_complete'
+const ONBOARDING_KEY = '@mukoko_onboarding_complete'
 
 const STATS = [
   { value: '200+', label: 'Essential Phrases' },
@@ -248,7 +248,7 @@ export default function WelcomeScreen() {
                   <Text style={styles.footerLink}>Terms</Text>
                 </TouchableOpacity>
               </View>
-              <Text style={styles.copyright}>© 2025 Nyuchi Learning</Text>
+              <Text style={styles.copyright}>© 2025 Nyuchi Africa</Text>
             </View>
           </View>
         </ScrollView>
