@@ -29,7 +29,7 @@ import {
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { createClient } from '@/lib/supabase/client'
+import { standardsApi } from '@/lib/services/api-client'
 
 interface LearningStandard {
   id: string
@@ -85,14 +85,11 @@ export default function AdminStandardsScreen() {
 
   const fetchStandards = useCallback(async () => {
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('learning_standards')
-        .select('*')
-        .order('level_order', { ascending: true })
+      const { data, error } = await standardsApi.listStandards()
 
-      if (error) throw error
-      setStandards(data || [])
+      if (error) throw new Error(error)
+      const sorted = (data || []).sort((a, b) => a.level_order - b.level_order)
+      setStandards(sorted)
     } catch (err) {
       console.error('Error fetching standards:', err)
       Alert.alert('Error', 'Failed to load learning standards')
@@ -113,13 +110,9 @@ export default function AdminStandardsScreen() {
 
   const handleToggleActive = async (standard: LearningStandard) => {
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('learning_standards')
-        .update({ is_active: !standard.is_active })
-        .eq('id', standard.id)
+      const { error } = await standardsApi.toggleStandardActive(standard.id, !standard.is_active)
 
-      if (error) throw error
+      if (error) throw new Error(error)
 
       setStandards((prev) =>
         prev.map((s) =>
@@ -142,19 +135,15 @@ export default function AdminStandardsScreen() {
 
     setSaving(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('learning_standards')
-        .update({
-          title: editingStandard.title,
-          description: editingStandard.description,
-          vocabulary_range: editingStandard.vocabulary_range,
-          ai_prompt_template: editingStandard.ai_prompt_template,
-          is_active: editingStandard.is_active,
-        })
-        .eq('id', editingStandard.id)
+      const { error } = await standardsApi.updateStandard(editingStandard.id, {
+        title: editingStandard.title,
+        description: editingStandard.description,
+        vocabulary_range: editingStandard.vocabulary_range,
+        ai_prompt_template: editingStandard.ai_prompt_template,
+        is_active: editingStandard.is_active,
+      })
 
-      if (error) throw error
+      if (error) throw new Error(error)
 
       setStandards((prev) =>
         prev.map((s) => (s.id === editingStandard.id ? editingStandard : s))

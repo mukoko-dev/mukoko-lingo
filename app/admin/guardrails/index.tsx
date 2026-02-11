@@ -27,7 +27,7 @@ import {
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { createClient } from '@/lib/supabase/client'
+import { guardrailsApi } from '@/lib/services/api-client'
 
 interface Guardrail {
   id: string
@@ -73,14 +73,9 @@ export default function AdminGuardrailsScreen() {
 
   const fetchGuardrails = useCallback(async () => {
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('guardrails')
-        .select('*')
-        .order('severity', { ascending: false })
-        .order('category', { ascending: true })
+      const { data, error } = await guardrailsApi.listGuardrails()
 
-      if (error) throw error
+      if (error) throw new Error(error)
       setGuardrails(data || [])
     } catch (err) {
       console.error('Error fetching guardrails:', err)
@@ -124,13 +119,9 @@ export default function AdminGuardrailsScreen() {
   const performToggle = async (guardrail: Guardrail) => {
     setUpdating(guardrail.id)
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('guardrails')
-        .update({ is_enabled: !guardrail.is_enabled })
-        .eq('id', guardrail.id)
+      const { error } = await guardrailsApi.toggleGuardrailActive(guardrail.id, !guardrail.is_enabled)
 
-      if (error) throw error
+      if (error) throw new Error(error)
 
       setGuardrails((prev) =>
         prev.map((g) =>

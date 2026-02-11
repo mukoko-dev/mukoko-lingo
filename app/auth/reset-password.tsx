@@ -18,7 +18,7 @@ import { Lock, Eye, EyeOff, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-r
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { updatePassword, getSession } from '@/lib/supabase/client'
+import { updatePassword, getSession } from '@/lib/auth/stytch-client'
 import { useAuth } from '../_layout'
 
 export default function ResetPasswordScreen() {

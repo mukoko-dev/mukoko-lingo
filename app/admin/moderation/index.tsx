@@ -27,7 +27,8 @@ import {
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { createClient } from '@/lib/supabase/client'
+import { moderationApi } from '@/lib/services/api-client'
+import { getCurrentUser } from '@/lib/auth/stytch-client'
 
 interface ModerationAlert {
   id: string
@@ -89,37 +90,13 @@ export default function AdminModerationScreen() {
 
   const fetchAlerts = useCallback(async () => {
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('moderation_alerts')
-        .select(`
-          *,
-          user:profiles!moderation_alerts_user_id_fkey (
-            email,
-            display_name
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(100)
+      const { data, error } = await moderationApi.listAlerts()
 
-      if (error) throw error
+      if (error) throw new Error(error)
       setAlerts(data || [])
     } catch (err) {
       console.error('Error fetching moderation alerts:', err)
-      // Try without join if profiles join fails
-      try {
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from('moderation_alerts')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(100)
-
-        if (error) throw error
-        setAlerts(data || [])
-      } catch (err2) {
-        Alert.alert('Error', 'Failed to load moderation alerts')
-      }
+      Alert.alert('Error', 'Failed to load moderation alerts')
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -146,19 +123,14 @@ export default function AdminModerationScreen() {
   const handleAction = async (alert: ModerationAlert, action: 'approved' | 'rejected' | 'dismissed') => {
     setUpdating(alert.id)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { user } = await getCurrentUser()
 
-      const { error } = await supabase
-        .from('moderation_alerts')
-        .update({
-          status: action,
-          reviewed_by: user?.id,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq('id', alert.id)
+      const { error } = await moderationApi.updateAlert(alert.id, {
+        status: action,
+        admin_notes: `Reviewed by ${user?.user_id || 'unknown'}`,
+      })
 
-      if (error) throw error
+      if (error) throw new Error(error)
 
       setAlerts((prev) =>
         prev.map((a) =>

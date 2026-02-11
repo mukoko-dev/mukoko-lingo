@@ -27,7 +27,7 @@ import {
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { createClient } from '@/lib/supabase/client'
+import { adminStatsApi } from '@/lib/services/api-client'
 
 interface AdminStats {
   total_users: number
@@ -89,6 +89,13 @@ const QUICK_ACTIONS: QuickAction[] = [
     color: Colors.accent[600],
     description: 'Review flagged content',
   },
+  {
+    label: 'Analytics (Python)',
+    route: '/admin/analytics',
+    icon: TrendingUp,
+    color: '#f59e0b',
+    description: 'Deep analytics powered by Python',
+  },
 ]
 
 export default function AdminOverviewScreen() {
@@ -107,40 +114,21 @@ export default function AdminOverviewScreen() {
   const fetchStats = useCallback(async () => {
     try {
       setError(null)
-      const supabase = createClient()
 
-      // Fetch stats from admin_stats view
-      const { data: statsData, error: statsError } = await supabase
-        .from('admin_stats')
-        .select('*')
-        .single()
+      const { data, error: statsError } = await adminStatsApi.getStats()
 
-      if (statsError) {
-        // If view doesn't exist, fetch counts manually
-        const [usersResult, phrasesResult, progressResult, bookmarksResult, viewsResult] = await Promise.all([
-          supabase.from('profiles').select('id', { count: 'exact', head: true }),
-          supabase.from('phrases').select('id', { count: 'exact', head: true }),
-          supabase.from('phrase_progress').select('id', { count: 'exact', head: true }),
-          supabase.from('bookmarks').select('id', { count: 'exact', head: true }),
-          supabase.from('phrase_views').select('id', { count: 'exact', head: true }),
-        ])
-
-        const adminResult = await supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .eq('role', 'admin')
-
-        setStats({
-          total_users: usersResult.count || 0,
-          total_admins: adminResult.count || 0,
-          total_phrases: phrasesResult.count || 0,
-          total_progress_records: progressResult.count || 0,
-          total_bookmarks: bookmarksResult.count || 0,
-          total_views: viewsResult.count || 0,
-        })
-      } else {
-        setStats(statsData)
+      if (statsError || !data) {
+        throw new Error(statsError || 'Failed to fetch stats')
       }
+
+      setStats({
+        total_users: data.total_users,
+        total_admins: data.total_admins,
+        total_phrases: data.total_phrases,
+        total_progress_records: data.total_progress_records,
+        total_bookmarks: data.total_bookmarks,
+        total_views: data.total_views,
+      })
     } catch (err) {
       console.error('Error fetching admin stats:', err)
       setError('Failed to load admin statistics')
