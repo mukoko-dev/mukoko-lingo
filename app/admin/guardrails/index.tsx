@@ -143,7 +143,7 @@ export default function AdminGuardrailsScreen() {
       <>
         <Stack.Screen options={{ title: 'Content Guardrails' }} />
         <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-          <ActivityIndicator size="large" color={Colors.primary[600]} />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
             Loading guardrails...
           </Text>
@@ -167,8 +167,8 @@ export default function AdminGuardrailsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Info Banner */}
-        <View style={[styles.infoBanner, { backgroundColor: Colors.accent[600] + '15' }]}>
-          <Shield size={24} color={Colors.accent[600]} />
+        <View style={[styles.infoBanner, { backgroundColor: theme.accent + '15' }]}>
+          <Shield size={24} color={theme.accent} />
           <View style={styles.infoBannerContent}>
             <Text style={[styles.infoBannerTitle, { color: theme.text }]}>
               AI Content Moderation
@@ -182,7 +182,7 @@ export default function AdminGuardrailsScreen() {
         {/* Stats */}
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-            <Text style={[styles.statValue, { color: Colors.secondary[600] }]}>
+            <Text style={[styles.statValue, { color: theme.secondary }]}>
               {enabledCount}/{guardrails.length}
             </Text>
             <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
@@ -248,12 +248,12 @@ export default function AdminGuardrailsScreen() {
                 </View>
                 <View style={styles.controlsRow}>
                   {updating === guardrail.id ? (
-                    <ActivityIndicator size="small" color={Colors.primary[600]} />
+                    <ActivityIndicator size="small" color={theme.primary} />
                   ) : (
                     <Switch
                       value={guardrail.is_enabled}
                       onValueChange={() => handleToggle(guardrail)}
-                      trackColor={{ false: theme.border, true: Colors.secondary[600] }}
+                      trackColor={{ false: theme.border, true: theme.secondary }}
                     />
                   )}
                 </View>
@@ -288,9 +288,9 @@ export default function AdminGuardrailsScreen() {
                     </View>
                   )}
                   {guardrail.is_core && (
-                    <View style={[styles.coreNotice, { backgroundColor: Colors.primary[600] + '15' }]}>
-                      <Info size={16} color={Colors.primary[600]} />
-                      <Text style={[styles.coreNoticeText, { color: Colors.primary[600] }]}>
+                    <View style={[styles.coreNotice, { backgroundColor: theme.primary + '15' }]}>
+                      <Info size={16} color={theme.primary} />
+                      <Text style={[styles.coreNoticeText, { color: theme.primary }]}>
                         This is a core guardrail. It cannot be deleted, only toggled on/off.
                       </Text>
                     </View>

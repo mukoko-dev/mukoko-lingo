@@ -158,7 +158,7 @@ export default function AssessmentScreen() {
           <View key={r.question.id} style={styles.reviewCard}>
             <View style={styles.reviewHeader}>
               {r.correct ? (
-                <CheckCircle size={20} color={Colors.secondary[500]} />
+                <CheckCircle size={20} color={theme.secondary} />
               ) : (
                 <XCircle size={20} color="#ef4444" />
               )}
@@ -177,7 +177,7 @@ export default function AssessmentScreen() {
 
         <View style={styles.resultsActions}>
           <TouchableOpacity style={styles.retryButton} onPress={loadQuestions}>
-            <RotateCcw size={18} color={Colors.primary[600]} />
+            <RotateCcw size={18} color={theme.primary} />
             <Text style={styles.retryButtonText}>Retake Assessment</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.primaryButton} onPress={() => router.back()}>
@@ -271,7 +271,7 @@ export default function AssessmentScreen() {
           <View style={[styles.feedbackCard, isCorrect ? styles.feedbackCorrect : styles.feedbackWrong]}>
             <View style={styles.feedbackHeader}>
               {isCorrect ? (
-                <CheckCircle size={20} color={Colors.secondary[500]} />
+                <CheckCircle size={20} color={theme.secondary} />
               ) : (
                 <XCircle size={20} color="#ef4444" />
               )}
@@ -339,7 +339,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     progressBarFill: {
       height: '100%',
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       borderRadius: 3,
     },
     progressText: {
@@ -354,7 +354,7 @@ const createStyles = (theme: typeof lightTheme) =>
       padding: 20,
     },
     questionTypeBadge: {
-      backgroundColor: Colors.primary[600] + '15',
+      backgroundColor: theme.primary + '15',
       alignSelf: 'flex-start',
       paddingHorizontal: 12,
       paddingVertical: 4,
@@ -364,7 +364,7 @@ const createStyles = (theme: typeof lightTheme) =>
     questionTypeText: {
       fontSize: 12,
       fontWeight: '600',
-      color: Colors.primary[600],
+      color: theme.primary,
     },
     questionText: {
       fontSize: 20,
@@ -384,12 +384,12 @@ const createStyles = (theme: typeof lightTheme) =>
       borderColor: theme.border,
     },
     optionSelected: {
-      borderColor: Colors.primary[600],
-      backgroundColor: Colors.primary[600] + '08',
+      borderColor: theme.primary,
+      backgroundColor: theme.primary + '08',
     },
     optionCorrect: {
-      borderColor: Colors.secondary[500],
-      backgroundColor: Colors.secondary[500] + '10',
+      borderColor: theme.secondary,
+      backgroundColor: theme.secondary + '10',
     },
     optionWrong: {
       borderColor: '#ef4444',
@@ -410,12 +410,12 @@ const createStyles = (theme: typeof lightTheme) =>
       justifyContent: 'center',
     },
     optionDotSelected: {
-      borderColor: Colors.primary[600],
-      backgroundColor: Colors.primary[600],
+      borderColor: theme.primary,
+      backgroundColor: theme.primary,
     },
     optionDotCorrect: {
-      borderColor: Colors.secondary[500],
-      backgroundColor: Colors.secondary[500],
+      borderColor: theme.secondary,
+      backgroundColor: theme.secondary,
     },
     optionDotWrong: {
       borderColor: '#ef4444',
@@ -440,8 +440,8 @@ const createStyles = (theme: typeof lightTheme) =>
       borderWidth: 1,
     },
     feedbackCorrect: {
-      backgroundColor: Colors.secondary[500] + '10',
-      borderColor: Colors.secondary[500] + '30',
+      backgroundColor: theme.secondary + '10',
+      borderColor: theme.secondary + '30',
     },
     feedbackWrong: {
       backgroundColor: '#ef444410',
@@ -475,7 +475,7 @@ const createStyles = (theme: typeof lightTheme) =>
       backgroundColor: theme.card,
     },
     primaryButton: {
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       borderRadius: 12,
       paddingVertical: 16,
       alignItems: 'center',
@@ -509,10 +509,10 @@ const createStyles = (theme: typeof lightTheme) =>
       marginBottom: 16,
     },
     scoreRingPass: {
-      borderColor: Colors.secondary[500],
+      borderColor: theme.secondary,
     },
     scoreRingFail: {
-      borderColor: Colors.accent[500],
+      borderColor: theme.accent,
     },
     scorePercent: {
       fontSize: 32,
@@ -533,7 +533,7 @@ const createStyles = (theme: typeof lightTheme) =>
     passedBadge: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: Colors.secondary[500],
+      backgroundColor: theme.secondary,
       paddingHorizontal: 16,
       paddingVertical: 8,
       borderRadius: 20,
@@ -605,11 +605,11 @@ const createStyles = (theme: typeof lightTheme) =>
       borderRadius: 12,
       paddingVertical: 16,
       borderWidth: 1,
-      borderColor: Colors.primary[600],
+      borderColor: theme.primary,
       gap: 8,
     },
     retryButtonText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 16,
       fontWeight: '600',
     },

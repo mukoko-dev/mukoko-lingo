@@ -24,7 +24,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { AppHeader } from '@/components/AppHeader'
 
 const ONBOARDING_KEY = '@mukoko_onboarding_complete'
@@ -36,66 +36,6 @@ const STATS = [
   { value: 'Free', label: 'To Start' },
 ]
 
-const FEATURES = [
-  {
-    icon: Globe,
-    title: '4 Languages Side-by-Side',
-    description: 'Learn Shona, Ndebele, English, and Chinese with comparisons',
-    color: Colors.primary[600],
-  },
-  {
-    icon: MessageCircle,
-    title: 'AI Conversation Practice',
-    description: 'Adaptive tutoring matching your skill level',
-    color: Colors.secondary[800],
-  },
-  {
-    icon: BookOpen,
-    title: '200+ Essential Phrases',
-    description: 'Real-world vocabulary across multiple contexts',
-    color: Colors.accent[600],
-  },
-  {
-    icon: Mic,
-    title: 'Pronunciation Guides',
-    description: 'Phonetic instruction for all four languages',
-    color: Colors.primary[700],
-  },
-  {
-    icon: BarChart3,
-    title: 'Progress Tracking',
-    description: 'Analytics, streaks, and personalized suggestions',
-    color: Colors.secondary[700],
-  },
-  {
-    icon: Heart,
-    title: 'Cultural Context',
-    description: 'Usage examples and situational appropriateness',
-    color: Colors.accent[500],
-  },
-]
-
-const USE_CASES = [
-  {
-    icon: Plane,
-    title: 'Tourists & Travelers',
-    description: 'Navigation, greetings, shopping, emergencies',
-    color: Colors.accent[600],
-  },
-  {
-    icon: Briefcase,
-    title: 'Business & Expats',
-    description: 'Professional communication and cultural integration',
-    color: Colors.primary[600],
-  },
-  {
-    icon: Users,
-    title: 'Locals',
-    description: 'General language mastery and skill building',
-    color: Colors.secondary[800],
-  },
-]
-
 export default function WelcomeScreen() {
   const router = useRouter()
   const { isDark } = useTheme()
@@ -104,6 +44,66 @@ export default function WelcomeScreen() {
 
   const isTablet = width >= 768
   const isDesktop = width >= 1024
+
+  const FEATURES = [
+    {
+      icon: Globe,
+      title: '4 Languages Side-by-Side',
+      description: 'Learn Shona, Ndebele, English, and Chinese with comparisons',
+      color: theme.primary,
+    },
+    {
+      icon: MessageCircle,
+      title: 'AI Conversation Practice',
+      description: 'Adaptive tutoring matching your skill level',
+      color: theme.secondary,
+    },
+    {
+      icon: BookOpen,
+      title: '200+ Essential Phrases',
+      description: 'Real-world vocabulary across multiple contexts',
+      color: theme.accent,
+    },
+    {
+      icon: Mic,
+      title: 'Pronunciation Guides',
+      description: 'Phonetic instruction for all four languages',
+      color: theme.primary,
+    },
+    {
+      icon: BarChart3,
+      title: 'Progress Tracking',
+      description: 'Analytics, streaks, and personalized suggestions',
+      color: theme.secondary,
+    },
+    {
+      icon: Heart,
+      title: 'Cultural Context',
+      description: 'Usage examples and situational appropriateness',
+      color: theme.accent,
+    },
+  ]
+
+  const USE_CASES = [
+    {
+      icon: Plane,
+      title: 'Tourists & Travelers',
+      description: 'Navigation, greetings, shopping, emergencies',
+      color: theme.accent,
+    },
+    {
+      icon: Briefcase,
+      title: 'Business & Expats',
+      description: 'Professional communication and cultural integration',
+      color: theme.primary,
+    },
+    {
+      icon: Users,
+      title: 'Locals',
+      description: 'General language mastery and skill building',
+      color: theme.secondary,
+    },
+  ]
 
   const styles = createStyles(theme, isDark, isTablet, isDesktop)
 
@@ -314,7 +314,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     statValue: {
       fontSize: isTablet ? 28 : 24,
       fontWeight: '700',
-      color: Colors.primary[600],
+      color: theme.primary,
     },
     statLabel: {
       fontSize: isTablet ? 14 : 12,
@@ -333,7 +333,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingVertical: 16,
       paddingHorizontal: isTablet ? 32 : 24,
       borderRadius: 12,
@@ -354,12 +354,12 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       paddingHorizontal: isTablet ? 32 : 24,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: Colors.primary[600],
+      borderColor: theme.primary,
       width: isTablet ? 'auto' : '100%',
       minWidth: isTablet ? 200 : undefined,
     },
     secondaryButtonText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 17,
       fontWeight: '600',
     },
@@ -456,7 +456,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       paddingVertical: 12,
     },
     signInButtonText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 15,
       fontWeight: '500',
     },
@@ -498,7 +498,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     },
     footerLink: {
       fontSize: 14,
-      color: Colors.primary[600],
+      color: theme.primary,
     },
     copyright: {
       fontSize: 12,

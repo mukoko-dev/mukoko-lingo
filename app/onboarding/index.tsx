@@ -17,7 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ArrowRight, ChevronRight } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 
 interface OnboardingSlide {
   id: string
@@ -29,41 +29,6 @@ interface OnboardingSlide {
   color: string
 }
 
-const ONBOARDING_SLIDES: OnboardingSlide[] = [
-  {
-    id: '1',
-    title: 'Welcome to Mukoko Lingo',
-    subtitle: 'Learn Shona. Connect with Africa.',
-    description: 'Master African languages through native phrase learning and personalized AI tutoring.',
-    emoji: '🌍',
-    color: Colors.primary[600],
-  },
-  {
-    id: '2',
-    title: 'Learn Native Phrases',
-    subtitle: 'Real language, real conversations',
-    description: 'Practice authentic phrases in Shona, Ndebele, Swahili, Chinese, and English with cultural context.',
-    emoji: '📚',
-    color: Colors.secondary[800],
-  },
-  {
-    id: '3',
-    title: 'Meet Shamwari',
-    subtitle: 'Your AI language tutor',
-    description: 'Shamwari (meaning "friend" in Shona) adapts to your learning style and pace for personalized lessons.',
-    useMascot: true,
-    color: Colors.accent[600],
-  },
-  {
-    id: '4',
-    title: 'Track Your Progress',
-    subtitle: 'Skills-based learning',
-    description: 'Build proficiency across pronunciation, vocabulary, grammar, and conversation skills.',
-    emoji: '📊',
-    color: Colors.primary[700],
-  },
-]
-
 const STORAGE_KEY = '@mukoko_onboarding_complete'
 
 export default function OnboardingScreen() {
@@ -71,6 +36,41 @@ export default function OnboardingScreen() {
   const { isDark } = useTheme()
   const theme = isDark ? darkTheme : lightTheme
   const { width: SCREEN_WIDTH } = useWindowDimensions()
+
+  const ONBOARDING_SLIDES: OnboardingSlide[] = [
+    {
+      id: '1',
+      title: 'Welcome to Mukoko Lingo',
+      subtitle: 'Learn Shona. Connect with Africa.',
+      description: 'Master African languages through native phrase learning and personalized AI tutoring.',
+      emoji: '🌍',
+      color: theme.primary,
+    },
+    {
+      id: '2',
+      title: 'Learn Native Phrases',
+      subtitle: 'Real language, real conversations',
+      description: 'Practice authentic phrases in Shona, Ndebele, Swahili, Chinese, and English with cultural context.',
+      emoji: '📚',
+      color: theme.secondary,
+    },
+    {
+      id: '3',
+      title: 'Meet Shamwari',
+      subtitle: 'Your AI language tutor',
+      description: 'Shamwari (meaning "friend" in Shona) adapts to your learning style and pace for personalized lessons.',
+      useMascot: true,
+      color: theme.accent,
+    },
+    {
+      id: '4',
+      title: 'Track Your Progress',
+      subtitle: 'Skills-based learning',
+      description: 'Build proficiency across pronunciation, vocabulary, grammar, and conversation skills.',
+      emoji: '📊',
+      color: theme.primary,
+    },
+  ]
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const flatListRef = useRef<FlatList>(null)
@@ -340,7 +340,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean, SCREEN_WIDTH:
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingVertical: 16,
       paddingHorizontal: 32,
       borderRadius: 12,
@@ -349,7 +349,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean, SCREEN_WIDTH:
       maxWidth: isTablet ? 400 : undefined,
     },
     getStartedButton: {
-      backgroundColor: Colors.secondary[800],
+      backgroundColor: theme.secondary,
     },
     nextButtonText: {
       color: '#ffffff',

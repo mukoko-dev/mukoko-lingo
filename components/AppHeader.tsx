@@ -33,7 +33,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { getCurrentUser } from '@/lib/auth/stytch-client'
 import { profilesApi } from '@/lib/services/api-client'
 
@@ -196,7 +196,7 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
 
           {isAuthenticated && isTablet && isAdmin && (
             <TouchableOpacity style={styles.adminButton} onPress={handleAdmin}>
-              <Shield size={18} color={Colors.accent[600]} />
+              <Shield size={18} color={theme.accent} />
               <Text style={styles.adminButtonText}>Admin</Text>
             </TouchableOpacity>
           )}
@@ -253,7 +253,7 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
                   style={styles.menuItem}
                   onPress={() => handleNavLink(link.route)}
                 >
-                  <Icon size={22} color={Colors.primary[600]} />
+                  <Icon size={22} color={theme.primary} />
                   <Text style={styles.menuItemText}>{link.label}</Text>
                 </TouchableOpacity>
               )
@@ -303,14 +303,14 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
 
                 {isAdmin && (
                   <TouchableOpacity style={styles.menuItem} onPress={handleAdmin}>
-                    <Shield size={22} color={Colors.accent[600]} />
-                    <Text style={[styles.menuItemText, { color: Colors.accent[600] }]}>Admin Dashboard</Text>
+                    <Shield size={22} color={theme.accent} />
+                    <Text style={[styles.menuItemText, { color: theme.accent }]}>Admin Dashboard</Text>
                   </TouchableOpacity>
                 )}
 
                 <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-                  <LogOut size={22} color={Colors.primary[600]} />
-                  <Text style={[styles.menuItemText, { color: Colors.primary[600] }]}>Log out</Text>
+                  <LogOut size={22} color={theme.primary} />
+                  <Text style={[styles.menuItemText, { color: theme.primary }]}>Log out</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -407,7 +407,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     adminButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: Colors.accent[600] + '15',
+      backgroundColor: theme.accent + '15',
       paddingHorizontal: 14,
       paddingVertical: 8,
       borderRadius: 8,
@@ -417,10 +417,10 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     adminButtonText: {
       fontSize: 14,
       fontWeight: '600',
-      color: Colors.accent[600],
+      color: theme.accent,
     },
     getStartedButton: {
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingHorizontal: 20,
       paddingVertical: 10,
       borderRadius: 8,
@@ -511,7 +511,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingVertical: 16,
       borderRadius: 12,
       gap: 8,
