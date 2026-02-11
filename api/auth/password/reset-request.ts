@@ -20,7 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (STYTCH_TEMPLATES.RESET_PASSWORD) {
       resetParams.reset_password_template_id = STYTCH_TEMPLATES.RESET_PASSWORD
     }
-    await stytchClient.passwords.email.resetStart(resetParams)
+    await stytchClient.passwords.email.resetStart(resetParams as any)
     return res.status(200).json({ success: true, message: 'Password reset email sent' })
   } catch (error: any) {
     // Don't reveal whether the email exists
