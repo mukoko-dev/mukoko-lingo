@@ -60,7 +60,7 @@ export function getSupabase(): SupabaseClient | null {
       storage: ExpoSecureStoreAdapter,
       autoRefreshToken: true,
       persistSession: true,
-      detectSessionInUrl: false,
+      detectSessionInUrl: Platform.OS === 'web',
       flowType: 'pkce',
     },
   })
@@ -96,6 +96,54 @@ export async function signUpWithEmail(email: string, password: string) {
   if (!client) return { data: null, error: new Error('Supabase not configured') }
 
   return client.auth.signUp({ email, password })
+}
+
+/**
+ * Send a one-time password (OTP) code to the user's email.
+ * This works for both sign-in and sign-up — if the user doesn't exist,
+ * Supabase will create the account automatically.
+ */
+export async function signInWithOtp(email: string) {
+  const client = getSupabase()
+  if (!client) return { data: null, error: new Error('Supabase not configured') }
+
+  return client.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true,
+    },
+  })
+}
+
+/**
+ * Verify a 6-digit OTP code sent to the user's email.
+ */
+export async function verifyOtp(email: string, token: string) {
+  const client = getSupabase()
+  if (!client) return { data: null, error: new Error('Supabase not configured') }
+
+  return client.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
+  })
+}
+
+/**
+ * Send a magic link to the user's email.
+ * Clicking the link will authenticate the user via deep link.
+ */
+export async function signInWithMagicLink(email: string) {
+  const client = getSupabase()
+  if (!client) return { data: null, error: new Error('Supabase not configured') }
+
+  return client.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true,
+      emailRedirectTo: passwordResetRedirectUrl.replace('/reset-password', ''),
+    },
+  })
 }
 
 export async function signOut() {

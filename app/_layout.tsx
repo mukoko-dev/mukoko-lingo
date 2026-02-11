@@ -4,14 +4,16 @@ import { useFonts } from 'expo-font'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect, useState, createContext, useContext } from 'react'
+import { Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as Linking from 'expo-linking'
 import 'react-native-reanimated'
 
 import { ThemeProvider, useTheme } from '@/lib/hooks/useTheme'
 import { LearningLanguageProvider } from '@/lib/hooks/useLearningLanguage'
 import { initDatabase } from '@/lib/storage/database'
 import { lightTheme, darkTheme } from '@/constants/Colors'
-import { onAuthStateChange, getSession } from '@/lib/supabase/client'
+import { onAuthStateChange, getSession, getSupabase } from '@/lib/supabase/client'
 
 // Auth context for global auth state
 type AuthContextType = {
@@ -129,6 +131,47 @@ export default function RootLayout() {
 
     return () => {
       subscription.unsubscribe()
+    }
+  }, [])
+
+  // Handle deep links for magic link auth on native platforms
+  useEffect(() => {
+    if (Platform.OS === 'web') return
+
+    const handleDeepLink = async (event: { url: string }) => {
+      const url = event.url
+      if (!url) return
+
+      // Extract token hash from deep link (magic link / password reset)
+      // Format: nyuchilingo://[path]#access_token=...&refresh_token=...
+      const hashIndex = url.indexOf('#')
+      if (hashIndex === -1) return
+
+      const hashParams = new URLSearchParams(url.substring(hashIndex + 1))
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+
+      if (accessToken && refreshToken) {
+        const supabase = getSupabase()
+        if (supabase) {
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+        }
+      }
+    }
+
+    // Handle links that opened the app
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url })
+    })
+
+    // Handle links while app is running
+    const subscription = Linking.addEventListener('url', handleDeepLink)
+
+    return () => {
+      subscription.remove()
     }
   }, [])
 
