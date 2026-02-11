@@ -62,6 +62,7 @@ export default function AuthScreen() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', ''])
   const [phoneNumber, setPhoneNumber] = useState('')
   const [otpMethodId, setOtpMethodId] = useState('')
@@ -74,6 +75,21 @@ export default function AuthScreen() {
   const isTablet = width >= 768
 
   const styles = createStyles(theme, isTablet)
+
+  // Show error message inline (Alert.alert is unreliable on Expo Web)
+  const showError = (message: string) => {
+    setErrorMessage(message)
+    setStatusMessage('')
+    // Also try Alert for native platforms
+    if (Platform.OS !== 'web') {
+      Alert.alert('Error', message)
+    }
+  }
+
+  // Clear error when user interacts
+  const clearError = () => {
+    if (errorMessage) setErrorMessage('')
+  }
 
   // Email validation
   const validateEmail = (value: string): boolean => {
@@ -100,12 +116,13 @@ export default function AuthScreen() {
 
   // Handle sending OTP code
   const handleSendOtp = async () => {
+    clearError()
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address')
+      showError('Please enter your email address')
       return
     }
     if (!validateEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address')
+      showError('Please enter a valid email address')
       return
     }
 
@@ -119,7 +136,7 @@ export default function AuthScreen() {
       setAuthStep('verify-otp')
       setStatusMessage('')
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send code')
+      showError(error.message || 'Failed to send code')
       setStatusMessage('')
     } finally {
       setLoading(false)
@@ -128,9 +145,10 @@ export default function AuthScreen() {
 
   // Handle OTP verification
   const handleVerifyOtp = async () => {
+    clearError()
     const code = otpCode.join('')
     if (code.length !== 6) {
-      Alert.alert('Error', 'Please enter the complete 6-digit code')
+      showError('Please enter the complete 6-digit code')
       return
     }
 
@@ -149,7 +167,7 @@ export default function AuthScreen() {
         throw new Error('Verification failed. Please try again.')
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Invalid code. Please try again.')
+      showError(error.message || 'Invalid code. Please try again.')
       setStatusMessage('')
     } finally {
       setLoading(false)
@@ -158,12 +176,13 @@ export default function AuthScreen() {
 
   // Handle magic link
   const handleSendMagicLink = async () => {
+    clearError()
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address')
+      showError('Please enter your email address')
       return
     }
     if (!validateEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address')
+      showError('Please enter a valid email address')
       return
     }
 
@@ -176,7 +195,7 @@ export default function AuthScreen() {
       setAuthStep('magic-link-sent')
       setStatusMessage('')
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send magic link')
+      showError(error.message || 'Failed to send magic link')
       setStatusMessage('')
     } finally {
       setLoading(false)
@@ -185,24 +204,25 @@ export default function AuthScreen() {
 
   // Handle password auth (existing flow)
   const handlePasswordAuth = async () => {
+    clearError()
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields')
+      showError('Please fill in all fields')
       return
     }
 
     if (!validateEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address')
+      showError('Please enter a valid email address')
       return
     }
 
     if (isSignUp) {
       const passwordError = validatePassword(password)
       if (passwordError) {
-        Alert.alert('Invalid Password', passwordError)
+        showError(passwordError)
         return
       }
       if (password !== confirmPassword) {
-        Alert.alert('Error', 'Passwords do not match')
+        showError('Passwords do not match')
         return
       }
     }
@@ -217,12 +237,7 @@ export default function AuthScreen() {
 
         if (data?.user && !data?.session) {
           setLoading(false)
-          setStatusMessage('')
-          Alert.alert(
-            'Check Your Email',
-            'We sent you a verification link. Please check your email and click the link to activate your account.',
-            [{ text: 'OK' }]
-          )
+          setStatusMessage('Check your email! We sent a verification link to activate your account.')
         } else if (data?.session) {
           setStatusMessage('Account created! Redirecting...')
           await new Promise(resolve => setTimeout(resolve, 500))
@@ -248,8 +263,7 @@ export default function AuthScreen() {
         router.replace('/(tabs)')
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Authentication failed')
-      setStatusMessage('')
+      showError(error.message || 'Authentication failed')
     } finally {
       setLoading(false)
     }
@@ -257,15 +271,16 @@ export default function AuthScreen() {
 
   // Handle WhatsApp OTP send
   const handleSendWhatsAppOtp = async () => {
+    clearError()
     if (!phoneNumber) {
-      Alert.alert('Error', 'Please enter your phone number')
+      showError('Please enter your phone number')
       return
     }
 
     // Validate E.164 format
     const phoneRegex = /^\+[1-9]\d{6,14}$/
     if (!phoneRegex.test(phoneNumber)) {
-      Alert.alert('Error', 'Please enter a valid phone number with country code (e.g. +263771234567)')
+      showError('Please enter a valid phone number with country code (e.g. +263771234567)')
       return
     }
 
@@ -279,7 +294,7 @@ export default function AuthScreen() {
       setAuthStep('verify-whatsapp')
       setStatusMessage('')
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send WhatsApp OTP')
+      showError(error.message || 'Failed to send WhatsApp OTP')
       setStatusMessage('')
     } finally {
       setLoading(false)
@@ -288,9 +303,10 @@ export default function AuthScreen() {
 
   // Handle WhatsApp OTP verification
   const handleVerifyWhatsAppOtp = async () => {
+    clearError()
     const code = otpCode.join('')
     if (code.length !== 6) {
-      Alert.alert('Error', 'Please enter the complete 6-digit code')
+      showError('Please enter the complete 6-digit code')
       return
     }
 
@@ -309,44 +325,36 @@ export default function AuthScreen() {
         throw new Error('Verification failed. Please try again.')
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Invalid code. Please try again.')
+      showError(error.message || 'Invalid code. Please try again.')
       setStatusMessage('')
     } finally {
       setLoading(false)
     }
   }
 
-  // Handle OTP input
-  const handleOtpChange = (text: string, index: number) => {
-    // Only allow digits
-    const digit = text.replace(/[^0-9]/g, '')
-    const newOtp = [...otpCode]
-    newOtp[index] = digit.slice(-1)
-    setOtpCode(newOtp)
+  // Handle OTP input (typing or paste)
+  const handleOtpInput = (text: string, index: number) => {
+    const digits = text.replace(/[^0-9]/g, '')
 
-    // Auto-advance to next input
-    if (digit && index < 5) {
-      otpInputRefs.current[index + 1]?.focus()
-    }
-  }
-
-  const handleOtpKeyPress = (key: string, index: number) => {
-    if (key === 'Backspace' && !otpCode[index] && index > 0) {
-      otpInputRefs.current[index - 1]?.focus()
-    }
-  }
-
-  // Handle paste for OTP
-  const handleOtpPaste = (text: string) => {
-    const digits = text.replace(/[^0-9]/g, '').slice(0, 6)
     if (digits.length > 1) {
-      const newOtp = [...otpCode]
+      // Multi-digit input = paste. Distribute across all boxes starting from index 0.
+      const newOtp = ['', '', '', '', '', '']
       for (let i = 0; i < digits.length && i < 6; i++) {
         newOtp[i] = digits[i]
       }
       setOtpCode(newOtp)
-      const nextIndex = Math.min(digits.length, 5)
-      otpInputRefs.current[nextIndex]?.focus()
+      const focusIndex = Math.min(digits.length, 5)
+      otpInputRefs.current[focusIndex]?.focus()
+    } else {
+      // Single digit input = normal typing
+      const newOtp = [...otpCode]
+      newOtp[index] = digits.slice(-1)
+      setOtpCode(newOtp)
+
+      // Auto-advance to next input
+      if (digits && index < 5) {
+        otpInputRefs.current[index + 1]?.focus()
+      }
     }
   }
 
@@ -554,16 +562,13 @@ export default function AuthScreen() {
               digit ? styles.otpInputFilled : null,
             ]}
             value={digit}
-            onChangeText={(text) => {
-              if (text.length > 1) {
-                handleOtpPaste(text)
-              } else {
-                handleOtpChange(text, index)
+            onChangeText={(text) => handleOtpInput(text, index)}
+            onKeyPress={({ nativeEvent }) => {
+              if (nativeEvent.key === 'Backspace' && !otpCode[index] && index > 0) {
+                otpInputRefs.current[index - 1]?.focus()
               }
             }}
-            onKeyPress={({ nativeEvent }) => handleOtpKeyPress(nativeEvent.key, index)}
             keyboardType="number-pad"
-            maxLength={1}
             textAlign="center"
             autoFocus={index === 0}
           />
@@ -813,16 +818,13 @@ export default function AuthScreen() {
               digit ? styles.otpInputFilled : null,
             ]}
             value={digit}
-            onChangeText={(text) => {
-              if (text.length > 1) {
-                handleOtpPaste(text)
-              } else {
-                handleOtpChange(text, index)
+            onChangeText={(text) => handleOtpInput(text, index)}
+            onKeyPress={({ nativeEvent }) => {
+              if (nativeEvent.key === 'Backspace' && !otpCode[index] && index > 0) {
+                otpInputRefs.current[index - 1]?.focus()
               }
             }}
-            onKeyPress={({ nativeEvent }) => handleOtpKeyPress(nativeEvent.key, index)}
             keyboardType="number-pad"
-            maxLength={1}
             textAlign="center"
             autoFocus={index === 0}
           />
@@ -884,6 +886,18 @@ export default function AuthScreen() {
                 Learn African Languages with AI
               </Text>
             </View>
+
+            {/* Error Message */}
+            {errorMessage ? (
+              <TouchableOpacity
+                style={styles.errorContainer}
+                onPress={() => setErrorMessage('')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.errorText}>{errorMessage}</Text>
+                <Text style={styles.errorDismiss}>Tap to dismiss</Text>
+              </TouchableOpacity>
+            ) : null}
 
             {/* Status Message */}
             {statusMessage ? (
@@ -983,6 +997,26 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
     subtitle: {
       fontSize: isTablet ? 18 : 16,
       color: theme.textSecondary,
+    },
+    errorContainer: {
+      backgroundColor: '#fef2f2',
+      borderWidth: 1,
+      borderColor: '#fecaca',
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 16,
+    },
+    errorText: {
+      fontSize: 14,
+      color: '#dc2626',
+      fontWeight: '500',
+      textAlign: 'center',
+    },
+    errorDismiss: {
+      fontSize: 12,
+      color: '#9ca3af',
+      textAlign: 'center',
+      marginTop: 4,
     },
     statusContainer: {
       flexDirection: 'row',
