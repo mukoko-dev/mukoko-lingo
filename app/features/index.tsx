@@ -29,74 +29,6 @@ import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { AppHeader } from '@/components/AppHeader'
 
-const CORE_FEATURES = [
-  {
-    icon: Globe,
-    title: 'Four Languages Side-by-Side',
-    description: 'View English, Shona, Ndebele, and Chinese simultaneously with phonetic pronunciations and cultural context.',
-    highlights: [
-      'Phonetic pronunciations for each phrase',
-      'Cultural context and usage notes',
-      'Audio guides (coming soon)',
-    ],
-    color: Colors.primary[600], // Sunset Deep
-  },
-  {
-    icon: MessageCircle,
-    title: 'AI Conversation Practice',
-    description: 'Practice with Shamwari, our AI tutor powered by Claude. Get instant feedback and corrections.',
-    highlights: [
-      'Adapts to your proficiency level',
-      'Scenario-based practice',
-      'Instant feedback and corrections',
-    ],
-    color: Colors.secondary[800], // Navy Blue
-  },
-  {
-    icon: BookOpen,
-    title: '200+ Essential Phrases',
-    description: 'Real-world vocabulary organized by category for practical everyday use.',
-    highlights: [
-      'Greetings & Basics',
-      'Travel & Directions',
-      'Business & Professional',
-      'Food & Dining',
-      'Emergencies',
-    ],
-    color: Colors.accent[600], // Purple
-  },
-]
-
-const LEARNING_TOOLS = [
-  { icon: BarChart3, title: 'Progress Tracking', description: 'Monitor your learning journey', color: Colors.primary[600] },
-  { icon: Bookmark, title: 'Bookmarks', description: 'Save phrases for later', color: Colors.secondary[800] },
-  { icon: TrendingUp, title: 'Learning Analytics', description: 'Study statistics & insights', color: Colors.accent[600] },
-  { icon: Flame, title: 'Study Streaks', description: 'Build learning habits', color: Colors.primary[700] },
-  { icon: Sparkles, title: 'Smart Recommendations', description: 'AI-powered suggestions', color: Colors.secondary[700] },
-  { icon: Award, title: 'Achievements', description: 'Earn badges & rewards', color: Colors.accent[500] },
-]
-
-const BUILT_FOR_AFRICA = [
-  {
-    icon: Heart,
-    title: 'Cultural Context',
-    description: 'Learn from native speakers with authentic cultural understanding',
-    color: Colors.accent[600],
-  },
-  {
-    icon: Users,
-    title: 'Real Conversations',
-    description: 'Authentic language as spoken in daily life, not textbook formality',
-    color: Colors.primary[600],
-  },
-  {
-    icon: Shield,
-    title: 'Safe & Respectful',
-    description: 'A learning environment that honors African languages and cultures',
-    color: Colors.secondary[800],
-  },
-]
-
 export default function FeaturesScreen() {
   const router = useRouter()
   const { isDark } = useTheme()
@@ -105,6 +37,74 @@ export default function FeaturesScreen() {
 
   const isTablet = width >= 768
   const isDesktop = width >= 1024
+
+  const CORE_FEATURES = [
+    {
+      icon: Globe,
+      title: 'Four Languages Side-by-Side',
+      description: 'View English, Shona, Ndebele, and Chinese simultaneously with phonetic pronunciations and cultural context.',
+      highlights: [
+        'Phonetic pronunciations for each phrase',
+        'Cultural context and usage notes',
+        'Audio guides (coming soon)',
+      ],
+      color: theme.primary,
+    },
+    {
+      icon: MessageCircle,
+      title: 'AI Conversation Practice',
+      description: 'Practice with Shamwari, our AI tutor powered by Claude. Get instant feedback and corrections.',
+      highlights: [
+        'Adapts to your proficiency level',
+        'Scenario-based practice',
+        'Instant feedback and corrections',
+      ],
+      color: theme.secondary,
+    },
+    {
+      icon: BookOpen,
+      title: '200+ Essential Phrases',
+      description: 'Real-world vocabulary organized by category for practical everyday use.',
+      highlights: [
+        'Greetings & Basics',
+        'Travel & Directions',
+        'Business & Professional',
+        'Food & Dining',
+        'Emergencies',
+      ],
+      color: theme.accent,
+    },
+  ]
+
+  const LEARNING_TOOLS = [
+    { icon: BarChart3, title: 'Progress Tracking', description: 'Monitor your learning journey', color: theme.primary },
+    { icon: Bookmark, title: 'Bookmarks', description: 'Save phrases for later', color: theme.secondary },
+    { icon: TrendingUp, title: 'Learning Analytics', description: 'Study statistics & insights', color: theme.accent },
+    { icon: Flame, title: 'Study Streaks', description: 'Build learning habits', color: theme.primary },
+    { icon: Sparkles, title: 'Smart Recommendations', description: 'AI-powered suggestions', color: Colors.secondary[700] },
+    { icon: Award, title: 'Achievements', description: 'Earn badges & rewards', color: theme.accent },
+  ]
+
+  const BUILT_FOR_AFRICA = [
+    {
+      icon: Heart,
+      title: 'Cultural Context',
+      description: 'Learn from native speakers with authentic cultural understanding',
+      color: theme.accent,
+    },
+    {
+      icon: Users,
+      title: 'Real Conversations',
+      description: 'Authentic language as spoken in daily life, not textbook formality',
+      color: theme.primary,
+    },
+    {
+      icon: Shield,
+      title: 'Safe & Respectful',
+      description: 'A learning environment that honors African languages and cultures',
+      color: theme.secondary,
+    },
+  ]
 
   const styles = createStyles(theme, isDark, isTablet, isDesktop)
 
@@ -417,7 +417,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       paddingVertical: isTablet ? 48 : 32,
       marginHorizontal: isTablet ? 48 : 24,
       marginTop: 8,
-      backgroundColor: Colors.primary[600] + '10',
+      backgroundColor: theme.primary + '10',
       borderRadius: 20,
     },
     ctaTitle: {
@@ -435,7 +435,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingVertical: 14,
       paddingHorizontal: 28,
       borderRadius: 12,

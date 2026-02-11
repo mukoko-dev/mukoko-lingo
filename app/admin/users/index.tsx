@@ -25,7 +25,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { profilesApi } from '@/lib/services/api-client'
 
 interface UserProfile {
@@ -142,7 +142,7 @@ export default function AdminUsersScreen() {
       <>
         <Stack.Screen options={{ title: 'User Management' }} />
         <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-          <ActivityIndicator size="large" color={Colors.primary[600]} />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
             Loading users...
           </Text>
@@ -172,7 +172,7 @@ export default function AdminUsersScreen() {
             <Text style={[styles.statsText, { color: theme.textSecondary }]}>
               {filteredUsers.length} users found
             </Text>
-            <Text style={[styles.statsText, { color: Colors.primary[600] }]}>
+            <Text style={[styles.statsText, { color: theme.primary }]}>
               {users.filter((u) => u.role === 'admin').length} admins
             </Text>
           </View>
@@ -217,15 +217,15 @@ export default function AdminUsersScreen() {
                         {
                           backgroundColor:
                             user.role === 'admin'
-                              ? Colors.primary[600] + '20'
-                              : Colors.secondary[700] + '20',
+                              ? theme.primary + '20'
+                              : theme.secondary + '20',
                         },
                       ]}
                     >
                       {user.role === 'admin' ? (
-                        <Shield size={20} color={Colors.primary[600]} />
+                        <Shield size={20} color={theme.primary} />
                       ) : (
-                        <User size={20} color={Colors.secondary[700]} />
+                        <User size={20} color={theme.secondary} />
                       )}
                     </View>
                     <View style={styles.userDetails}>
@@ -244,8 +244,8 @@ export default function AdminUsersScreen() {
                         {
                           backgroundColor:
                             user.role === 'admin'
-                              ? Colors.primary[600]
-                              : Colors.secondary[700],
+                              ? theme.primary
+                              : theme.secondary,
                         },
                       ]}
                     >
@@ -281,7 +281,7 @@ export default function AdminUsersScreen() {
                             backgroundColor:
                               user.role === 'admin'
                                 ? '#ef4444' + '20'
-                                : Colors.primary[600] + '20',
+                                : theme.primary + '20',
                           },
                         ]}
                         onPress={() => handleToggleRole(user)}
@@ -291,7 +291,7 @@ export default function AdminUsersScreen() {
                           <ActivityIndicator
                             size="small"
                             color={
-                              user.role === 'admin' ? '#ef4444' : Colors.primary[600]
+                              user.role === 'admin' ? '#ef4444' : theme.primary
                             }
                           />
                         ) : (
@@ -299,7 +299,7 @@ export default function AdminUsersScreen() {
                             <Shield
                               size={16}
                               color={
-                                user.role === 'admin' ? '#ef4444' : Colors.primary[600]
+                                user.role === 'admin' ? '#ef4444' : theme.primary
                               }
                             />
                             <Text
@@ -309,7 +309,7 @@ export default function AdminUsersScreen() {
                                   color:
                                     user.role === 'admin'
                                       ? '#ef4444'
-                                      : Colors.primary[600],
+                                      : theme.primary,
                                 },
                               ]}
                             >

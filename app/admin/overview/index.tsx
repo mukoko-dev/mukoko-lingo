@@ -26,7 +26,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { adminStatsApi } from '@/lib/services/api-client'
 
 interface AdminStats {
@@ -46,7 +46,7 @@ interface QuickAction {
   description: string
 }
 
-const QUICK_ACTIONS: QuickAction[] = [
+const getQuickActions = (theme: typeof lightTheme): QuickAction[] => [
   {
     label: 'User Management',
     route: '/admin/users',
@@ -263,7 +263,7 @@ export default function AdminOverviewScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionsList}>
-            {QUICK_ACTIONS.map((action, index) => {
+            {getQuickActions(theme).map((action, index) => {
               const Icon = action.icon
               return (
                 <TouchableOpacity
