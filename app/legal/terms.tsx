@@ -10,7 +10,7 @@ import { useRouter, Stack } from 'expo-router'
 import { ArrowLeft, ExternalLink, FileText, Mail } from 'lucide-react-native'
 
 import { useColorScheme } from '@/components/useColorScheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 
 const SECTIONS = [
   {
@@ -141,7 +141,7 @@ export default function TermsOfServiceScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerIcon}>
-            <FileText size={32} color={Colors.secondary[500]} />
+            <FileText size={32} color={theme.secondary} />
           </View>
           <Text style={styles.headerTitle}>Terms of Service</Text>
           <Text style={styles.headerSubtitle}>
@@ -166,7 +166,7 @@ export default function TermsOfServiceScreen() {
             If you have any questions about these Terms of Service, please contact us:
           </Text>
           <TouchableOpacity style={styles.contactButton} onPress={openEmail}>
-            <Mail size={20} color={Colors.primary[600]} />
+            <Mail size={20} color={theme.primary} />
             <Text style={styles.contactButtonText}>{CONTACT_EMAIL}</Text>
           </TouchableOpacity>
         </View>
@@ -174,7 +174,7 @@ export default function TermsOfServiceScreen() {
         {/* Full Terms Link */}
         <TouchableOpacity style={styles.fullTermsButton} onPress={openFullTerms}>
           <Text style={styles.fullTermsText}>View Full Terms of Service</Text>
-          <ExternalLink size={16} color={Colors.primary[600]} />
+          <ExternalLink size={16} color={theme.primary} />
         </TouchableOpacity>
 
         {/* Footer */}
@@ -207,7 +207,7 @@ const createStyles = (theme: typeof lightTheme) =>
       width: 64,
       height: 64,
       borderRadius: 16,
-      backgroundColor: Colors.secondary[500] + '15',
+      backgroundColor: theme.secondary + '15',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 16,
@@ -238,7 +238,7 @@ const createStyles = (theme: typeof lightTheme) =>
     sectionNumber: {
       fontSize: 14,
       fontWeight: '600',
-      color: Colors.primary[600],
+      color: theme.primary,
       marginBottom: 4,
     },
     sectionTitle: {
@@ -280,7 +280,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     contactButtonText: {
       fontSize: 15,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '500',
     },
     fullTermsButton: {
@@ -294,11 +294,11 @@ const createStyles = (theme: typeof lightTheme) =>
       backgroundColor: theme.card,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: Colors.primary[600],
+      borderColor: theme.primary,
     },
     fullTermsText: {
       fontSize: 16,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '600',
     },
     footer: {

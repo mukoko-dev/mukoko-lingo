@@ -25,7 +25,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { analyticsApi } from '@/lib/services/api-client'
 
 // =============================================================================
@@ -195,7 +195,7 @@ export default function AnalyticsScreen() {
       <>
         <Stack.Screen options={{ title: 'Analytics (Python)' }} />
         <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-          <ActivityIndicator size="large" color={Colors.accent[600]} />
+          <ActivityIndicator size="large" color={theme.accent} />
           <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
             Loading analytics...
           </Text>
@@ -241,7 +241,7 @@ export default function AnalyticsScreen() {
                 theme={theme}
                 styles={styles}
                 icon={Users}
-                iconColor={Colors.primary[600]}
+                iconColor={theme.primary}
                 label="Total Users"
                 value={overview.growth.total_users}
               />
@@ -249,7 +249,7 @@ export default function AnalyticsScreen() {
                 theme={theme}
                 styles={styles}
                 icon={Activity}
-                iconColor={Colors.accent[600]}
+                iconColor={theme.accent}
                 label="Active (7d)"
                 value={overview.growth.active_users_7d}
               />
@@ -269,7 +269,7 @@ export default function AnalyticsScreen() {
                 theme={theme}
                 styles={styles}
                 icon={BookOpen}
-                iconColor={Colors.secondary[700]}
+                iconColor={theme.secondary}
                 label="Phrases"
                 value={overview.content.total_phrases}
               />
@@ -289,21 +289,21 @@ export default function AnalyticsScreen() {
                 label="Signed Up"
                 value={overview.user_funnel.total}
                 max={overview.user_funnel.total}
-                color={Colors.primary[600]}
+                color={theme.primary}
               />
               <FunnelBar
                 theme={theme}
                 label="Started Learning"
                 value={overview.user_funnel.started_learning}
                 max={overview.user_funnel.total}
-                color={Colors.accent[600]}
+                color={theme.accent}
               />
               <FunnelBar
                 theme={theme}
                 label="Bookmarked Phrases"
                 value={overview.user_funnel.bookmarked_phrases}
                 max={overview.user_funnel.total}
-                color={Colors.secondary[500]}
+                color={theme.secondary}
               />
               <FunnelBar
                 theme={theme}
@@ -344,7 +344,7 @@ export default function AnalyticsScreen() {
                 theme={theme}
                 styles={styles}
                 icon={Clock}
-                iconColor={Colors.accent[600]}
+                iconColor={theme.accent}
                 label="Avg Days to Master"
                 value={velocity.time_to_mastery.avg_days_to_master}
               />
@@ -375,7 +375,7 @@ export default function AnalyticsScreen() {
                               ? '#22c55e'
                               : item.status === 'practiced'
                               ? '#f59e0b'
-                              : Colors.primary[600],
+                              : theme.primary,
                         },
                       ]}
                     />
@@ -431,7 +431,7 @@ export default function AnalyticsScreen() {
                 theme={theme}
                 styles={styles}
                 icon={BarChart3}
-                iconColor={Colors.accent[600]}
+                iconColor={theme.accent}
                 label="Avg Proficiency"
                 value={skills.overall.avg_proficiency}
               />
@@ -439,7 +439,7 @@ export default function AnalyticsScreen() {
                 theme={theme}
                 styles={styles}
                 icon={Users}
-                iconColor={Colors.secondary[700]}
+                iconColor={theme.secondary}
                 label="With Skills"
                 value={skills.overall.unique_users_with_skills}
               />
@@ -455,7 +455,7 @@ export default function AnalyticsScreen() {
                   <Text style={[styles.cardTitle, { color: theme.text }]}>
                     {skill.skill_name || 'Unknown Skill'}
                   </Text>
-                  <Text style={[styles.skillScore, { color: Colors.accent[600] }]}>
+                  <Text style={[styles.skillScore, { color: theme.accent }]}>
                     {skill.avg_score}/100
                   </Text>
                 </View>
@@ -467,7 +467,7 @@ export default function AnalyticsScreen() {
                       styles.progressBarFill,
                       {
                         width: `${Math.min(skill.avg_score, 100)}%`,
-                        backgroundColor: Colors.accent[600],
+                        backgroundColor: theme.accent,
                       },
                     ]}
                   />
@@ -524,7 +524,7 @@ export default function AnalyticsScreen() {
             {/* AI Usage */}
             <View style={[styles.card, { backgroundColor: theme.card }]}>
               <View style={styles.aiHeader}>
-                <Brain size={20} color={Colors.accent[600]} />
+                <Brain size={20} color={theme.accent} />
                 <Text style={[styles.cardTitle, { color: theme.text, marginBottom: 0 }]}>
                   Shamwari AI Usage
                 </Text>
@@ -551,7 +551,7 @@ export default function AnalyticsScreen() {
                 <View style={styles.aiLanguages}>
                   {engagement.ai_usage.by_language.map((lang, i) => (
                     <View key={i} style={styles.langBadge}>
-                      <MessageCircle size={12} color={Colors.accent[600]} />
+                      <MessageCircle size={12} color={theme.accent} />
                       <Text style={[styles.langText, { color: theme.text }]}>
                         {lang.language}: {lang.count}
                       </Text>
@@ -915,7 +915,7 @@ const createStyles = (theme: any, isDark: boolean, isTablet: boolean) =>
       paddingHorizontal: 10,
       paddingVertical: 4,
       borderRadius: 12,
-      backgroundColor: Colors.accent[600] + '15',
+      backgroundColor: theme.accent + '15',
     },
     langText: { fontSize: 12, fontWeight: '500' },
 

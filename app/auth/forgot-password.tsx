@@ -17,7 +17,7 @@ import { useRouter, Stack } from 'expo-router'
 import { Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { resetPasswordForEmail } from '@/lib/auth/stytch-client'
 
 export default function ForgotPasswordScreen() {
@@ -70,7 +70,7 @@ export default function ForgotPasswordScreen() {
         <View style={styles.container}>
           <View style={styles.successContent}>
             <View style={styles.successIconContainer}>
-              <CheckCircle size={64} color={Colors.secondary[500]} />
+              <CheckCircle size={64} color={theme.secondary} />
             </View>
             <Text style={styles.successTitle}>Check Your Email</Text>
             <Text style={styles.successText}>
@@ -263,7 +263,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingVertical: 16,
       borderRadius: 12,
       marginTop: 8,
@@ -279,7 +279,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       marginTop: 16,
     },
     backToSignInText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 15,
     },
     // Success state styles
@@ -293,7 +293,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       width: 120,
       height: 120,
       borderRadius: 60,
-      backgroundColor: Colors.secondary[500] + '20',
+      backgroundColor: theme.secondary + '20',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 24,
@@ -326,7 +326,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       marginTop: 16,
     },
     resendText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 15,
       textDecorationLine: 'underline',
     },

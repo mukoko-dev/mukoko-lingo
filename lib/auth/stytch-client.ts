@@ -193,11 +193,12 @@ export async function signUpWithEmail(email: string, password: string): Promise<
 
 /**
  * Send OTP code to email (works for both sign-in and sign-up)
+ * Returns the method_id needed for verification.
  */
-export async function signInWithOtp(email: string): Promise<AuthResult> {
+export async function signInWithOtp(email: string): Promise<AuthResult & { method_id?: string }> {
   try {
     const data = await apiCall('/otp/send', { email })
-    return { data: { user: null, session: null }, error: null }
+    return { data: { user: null, session: null }, error: null, method_id: data.method_id }
   } catch (error: any) {
     return { data: null, error }
   }
@@ -205,10 +206,12 @@ export async function signInWithOtp(email: string): Promise<AuthResult> {
 
 /**
  * Verify OTP code
+ * @param methodId - The method_id returned from signInWithOtp
+ * @param token - The 6-digit OTP code
  */
-export async function verifyOtp(email: string, token: string): Promise<AuthResult> {
+export async function verifyOtp(methodId: string, token: string): Promise<AuthResult> {
   try {
-    const data = await apiCall('/otp/verify', { email, code: token })
+    const data = await apiCall('/otp/verify', { method_id: methodId, code: token })
     const session: StytchSession = {
       session_token: data.session_token,
       session_jwt: data.session_jwt,
@@ -226,11 +229,12 @@ export async function verifyOtp(email: string, token: string): Promise<AuthResul
 /**
  * Send WhatsApp OTP to phone number (works for both sign-in and sign-up)
  * Phone number must be in E.164 format (e.g. +263771234567)
+ * Returns the method_id needed for verification.
  */
-export async function signInWithWhatsApp(phoneNumber: string): Promise<AuthResult> {
+export async function signInWithWhatsApp(phoneNumber: string): Promise<AuthResult & { method_id?: string }> {
   try {
-    await apiCall('/whatsapp/send', { phone_number: phoneNumber })
-    return { data: { user: null, session: null }, error: null }
+    const data = await apiCall('/whatsapp/send', { phone_number: phoneNumber })
+    return { data: { user: null, session: null }, error: null, method_id: data.method_id }
   } catch (error: any) {
     return { data: null, error }
   }
@@ -238,10 +242,13 @@ export async function signInWithWhatsApp(phoneNumber: string): Promise<AuthResul
 
 /**
  * Verify WhatsApp OTP code
+ * @param methodId - The method_id returned from signInWithWhatsApp
+ * @param code - The 6-digit OTP code
+ * @param phoneNumber - Original phone number for profile creation fallback
  */
-export async function verifyWhatsAppOtp(phoneNumber: string, code: string): Promise<AuthResult> {
+export async function verifyWhatsAppOtp(methodId: string, code: string, phoneNumber?: string): Promise<AuthResult> {
   try {
-    const data = await apiCall('/whatsapp/verify', { phone_number: phoneNumber, code })
+    const data = await apiCall('/whatsapp/verify', { method_id: methodId, code, phone_number: phoneNumber })
     const session: StytchSession = {
       session_token: data.session_token,
       session_jwt: data.session_jwt,

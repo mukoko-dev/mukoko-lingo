@@ -17,7 +17,7 @@ import { useRouter, Stack, useLocalSearchParams } from 'expo-router'
 import { Lock, Eye, EyeOff, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { updatePassword, getSession } from '@/lib/auth/stytch-client'
 import { useAuth } from '../_layout'
 
@@ -116,7 +116,7 @@ export default function ResetPasswordScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={[styles.container, styles.centerContent]}>
-          <ActivityIndicator size="large" color={Colors.primary[600]} />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={styles.loadingText}>Verifying your session...</Text>
         </View>
       </>
@@ -130,8 +130,8 @@ export default function ResetPasswordScreen() {
         <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.container}>
           <View style={styles.successContent}>
-            <View style={[styles.successIconContainer, { backgroundColor: Colors.accent[500] + '20' }]}>
-              <AlertCircle size={64} color={Colors.accent[500]} />
+            <View style={[styles.successIconContainer, { backgroundColor: theme.accent + '20' }]}>
+              <AlertCircle size={64} color={theme.accent} />
             </View>
             <Text style={styles.successTitle}>Session Expired</Text>
             <Text style={styles.successText}>
@@ -163,7 +163,7 @@ export default function ResetPasswordScreen() {
         <View style={styles.container}>
           <View style={styles.successContent}>
             <View style={styles.successIconContainer}>
-              <CheckCircle size={64} color={Colors.secondary[500]} />
+              <CheckCircle size={64} color={theme.secondary} />
             </View>
             <Text style={styles.successTitle}>Password Reset!</Text>
             <Text style={styles.successText}>
@@ -310,7 +310,7 @@ function RequirementItem({
       <View
         style={[
           requirementStyles.indicator,
-          { backgroundColor: met ? Colors.secondary[500] : theme.border },
+          { backgroundColor: met ? theme.secondary : theme.border },
         ]}
       />
       <Text
@@ -440,7 +440,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingVertical: 16,
       borderRadius: 12,
       marginTop: 8,
@@ -464,7 +464,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       width: 120,
       height: 120,
       borderRadius: 60,
-      backgroundColor: Colors.secondary[500] + '20',
+      backgroundColor: theme.secondary + '20',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 24,
@@ -486,7 +486,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       marginTop: 16,
     },
     resendText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 15,
       textDecorationLine: 'underline',
     },

@@ -23,7 +23,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { skillsApi, assessmentsApi } from '@/lib/services/api-client'
 
 const SKILL_ICONS: Record<string, typeof Volume2> = {
@@ -34,13 +34,13 @@ const SKILL_ICONS: Record<string, typeof Volume2> = {
   conversation: MessageSquare,
 }
 
-const SKILL_COLORS: Record<string, string> = {
-  pronunciation: Colors.primary[600],
-  vocabulary: Colors.secondary[500],
-  grammar: Colors.accent[500],
+const getSkillColors = (theme: typeof lightTheme): Record<string, string> => ({
+  pronunciation: theme.primary,
+  vocabulary: theme.secondary,
+  grammar: theme.accent,
   comprehension: '#3b82f6',
   conversation: '#8b5cf6',
-}
+})
 
 interface SkillRow {
   id: string
@@ -137,7 +137,7 @@ export default function AdminSkillsScreen() {
       >
         {loading ? (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color={Colors.primary[600]} />
+            <ActivityIndicator size="large" color={theme.primary} />
             <Text style={styles.loadingText}>Loading skills...</Text>
           </View>
         ) : error ? (
@@ -177,7 +177,7 @@ export default function AdminSkillsScreen() {
             ) : (
               skills.map(skill => {
                 const Icon = SKILL_ICONS[skill.name] || BookText
-                const color = SKILL_COLORS[skill.name] || Colors.primary[600]
+                const color = getSkillColors(theme)[skill.name] || theme.primary
                 const isExpanded = expandedSkill === skill.id
                 const levels = skillLevels.filter(l => l.skill_id === skill.id)
                 const skillAssessments = assessments.filter(a => a.skill_id === skill.id)
@@ -200,7 +200,7 @@ export default function AdminSkillsScreen() {
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
                         {skill.is_active ? (
-                          <ToggleRight size={28} color={Colors.secondary[500]} />
+                          <ToggleRight size={28} color={theme.secondary} />
                         ) : (
                           <ToggleLeft size={28} color={theme.textMuted} />
                         )}
@@ -273,14 +273,14 @@ export default function AdminSkillsScreen() {
                     <View style={[styles.typeBadge, {
                       backgroundColor:
                         a.type === 'diagnostic' ? '#3b82f620' :
-                        a.type === 'formative' ? Colors.accent[500] + '20' :
-                        Colors.secondary[500] + '20',
+                        a.type === 'formative' ? theme.accent + '20' :
+                        theme.secondary + '20',
                     }]}>
                       <Text style={[styles.typeBadgeText, {
                         color:
                           a.type === 'diagnostic' ? '#3b82f6' :
-                          a.type === 'formative' ? Colors.accent[500] :
-                          Colors.secondary[500],
+                          a.type === 'formative' ? theme.accent :
+                          theme.secondary,
                       }]}>
                         {a.type}
                       </Text>
@@ -447,7 +447,7 @@ const createStyles = (theme: typeof lightTheme) =>
       borderRadius: 8,
     },
     activeBadge: {
-      backgroundColor: Colors.secondary[500] + '20',
+      backgroundColor: theme.secondary + '20',
     },
     inactiveBadge: {
       backgroundColor: theme.border,

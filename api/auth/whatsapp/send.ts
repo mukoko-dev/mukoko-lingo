@@ -19,11 +19,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    await stytchClient.otps.whatsapp.loginOrCreate({
+    const response = await stytchClient.otps.whatsapp.loginOrCreate({
       phone_number,
       expiration_minutes: OTP_EXPIRATION_MINUTES,
     })
-    return res.status(200).json({ success: true, message: 'OTP sent via WhatsApp' })
+    return res.status(200).json({
+      success: true,
+      message: 'OTP sent via WhatsApp',
+      method_id: response.phone_id,
+    })
   } catch (error: any) {
     return res.status(400).json({ error: error.error_message || 'Failed to send WhatsApp OTP' })
   }
