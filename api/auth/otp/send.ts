@@ -13,18 +13,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const response = await stytchClient.otps.email.loginOrCreate({
+    const otpParams: Record<string, any> = {
       email,
       expiration_minutes: OTP_EXPIRATION_MINUTES,
-      login_template_id: STYTCH_TEMPLATES.OTP,
-      signup_template_id: STYTCH_TEMPLATES.OTP,
-    })
+    }
+    if (STYTCH_TEMPLATES.OTP) {
+      otpParams.login_template_id = STYTCH_TEMPLATES.OTP
+      otpParams.signup_template_id = STYTCH_TEMPLATES.OTP
+    }
+    const response = await stytchClient.otps.email.loginOrCreate(otpParams as any)
     return res.status(200).json({
       success: true,
       message: 'OTP sent to email',
       method_id: response.email_id,
     })
   } catch (error: any) {
-    return res.status(400).json({ error: error.error_message || 'Failed to send OTP' })
+    const errorType = error.error_type || ''
+    let message: string
+    if (errorType.includes('invalid_email')) {
+      message = 'Invalid email address. Please check and try again.'
+    } else if (errorType.includes('too_many_requests') || error.status_code === 429) {
+      message = 'Too many attempts. Please wait a moment and try again.'
+    } else {
+      message = error.error_message || 'Failed to send verification code. Please try again.'
+    }
+    return res.status(error.status_code || 400).json({ error: message })
   }
 }

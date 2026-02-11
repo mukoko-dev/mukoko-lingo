@@ -23,7 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Who users interact with**: All AI conversations are with Shamwari
 - **Personality**: Warm, patient, encouraging, playful but professional
 - **Voice**: Friendly but knowledgeable, like a supportive teacher
-- **Mascot file**: `/public/Shamwari_logo_Mascot.svg`
+- **Mascot file**: `/public/Shamwari_logo_Mascot.svg` (web), `/assets/images/icon.png` (app icon)
 
 When implementing AI features, the AI should:
 - Introduce itself as "Shamwari"
@@ -88,6 +88,13 @@ EXPO_PUBLIC_ANTHROPIC_API_KEY=your_anthropic_api_key_here
 
 # Vercel AI Gateway (for web API routes)
 AI_GATEWAY_API_KEY=your_api_key_here
+
+# Optional: Custom Stytch email template IDs (omit to use Stytch defaults)
+# These must exist in your Stytch dashboard before setting them
+STYTCH_TEMPLATE_LOGIN=mukoko_lingo_login
+STYTCH_TEMPLATE_SIGNUP=mukoko_lingo_signup
+STYTCH_TEMPLATE_OTP=mukoko_lingo_otp
+STYTCH_TEMPLATE_RESET_PASSWORD=mukoko_lingo_reset_password
 ```
 
 **Note**: See `.env.example` for complete configuration template.
@@ -552,7 +559,7 @@ Authentication is handled by Stytch. Session tokens are stored in SecureStore (n
 
 ### Testing Infrastructure
 - **Framework**: Jest with jest-expo preset, React Testing Library
-- **Test count**: 87+ tests across 8 test suites
+- **Test count**: 107+ tests across 9 test suites
 - **CI pipeline**: GitHub Actions runs tests on push (`npm test -- --ci`)
 - **Coverage areas**:
   - `lib/data/__tests__/` - Phrase data integrity, translations, assessment questions
