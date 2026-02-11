@@ -221,7 +221,7 @@ export default function WhyScreen() {
           </View>
 
           {/* Footer */}
-          <Text style={styles.footer}>© 2025 Nyuchi Africa</Text>
+          <Text style={styles.footer}>© 2025 Nyuchi Learning</Text>
         </View>
       </ScrollView>
       </SafeAreaView>
