@@ -104,18 +104,33 @@ let _currentSession: StytchSession | null = null
 
 async function apiCall(endpoint: string, body: Record<string, any>): Promise<any> {
   const url = `${API_BASE_URL}/api/auth${endpoint}`
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
 
-  const data = await response.json()
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+  } catch (networkError: any) {
+    // Network-level failure (DNS, connection refused, CORS, offline)
+    if (!API_BASE_URL) {
+      throw new Error('App not configured: missing API URL. Please set EXPO_PUBLIC_API_BASE_URL.')
+    }
+    throw new Error('Unable to reach the server. Please check your internet connection and try again.')
+  }
+
+  let data: any
+  try {
+    data = await response.json()
+  } catch {
+    throw new Error(`Server error (${response.status}). Please try again later.`)
+  }
 
   if (!response.ok) {
-    throw new Error(data.error || data.message || `Auth request failed: ${response.status}`)
+    throw new Error(data.error || data.message || `Auth request failed (${response.status})`)
   }
 
   return data
