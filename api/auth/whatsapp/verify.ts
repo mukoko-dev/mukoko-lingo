@@ -8,21 +8,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { phone_number, code } = req.body || {}
-  if (!phone_number || !code) {
-    return res.status(400).json({ error: 'Phone number and code are required' })
+  const { method_id, code, phone_number } = req.body || {}
+  if (!method_id || !code) {
+    return res.status(400).json({ error: 'method_id and code are required' })
   }
 
   try {
     const response = await stytchClient.otps.authenticate({
-      method_id: phone_number,
+      method_id,
       code,
       session_duration_minutes: SESSION_DURATION_MINUTES,
     })
 
     const stytchUserId = response.user.user_id
     const email = response.user.emails?.[0]?.email || ''
-    const phone = response.user.phone_numbers?.[0]?.phone_number || phone_number
+    const phone = response.user.phone_numbers?.[0]?.phone_number || phone_number || ''
 
     // Upsert profile
     await prisma.profile.upsert({

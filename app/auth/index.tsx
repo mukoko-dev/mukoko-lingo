@@ -64,6 +64,7 @@ export default function AuthScreen() {
   const [statusMessage, setStatusMessage] = useState('')
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', ''])
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [otpMethodId, setOtpMethodId] = useState('')
   const [showMoreOptions, setShowMoreOptions] = useState(false)
   const { width } = useWindowDimensions()
 
@@ -112,8 +113,9 @@ export default function AuthScreen() {
     setStatusMessage('Sending code...')
 
     try {
-      const { error } = await signInWithOtp(email)
-      if (error) throw error
+      const result = await signInWithOtp(email)
+      if (result.error) throw result.error
+      if (result.method_id) setOtpMethodId(result.method_id)
       setAuthStep('verify-otp')
       setStatusMessage('')
     } catch (error: any) {
@@ -136,7 +138,7 @@ export default function AuthScreen() {
     setStatusMessage('Verifying code...')
 
     try {
-      const { data, error } = await verifyOtp(email, code)
+      const { data, error } = await verifyOtp(otpMethodId, code)
       if (error) throw error
 
       if (data?.session) {
@@ -271,8 +273,9 @@ export default function AuthScreen() {
     setStatusMessage('Sending WhatsApp code...')
 
     try {
-      const { error } = await signInWithWhatsApp(phoneNumber)
-      if (error) throw error
+      const result = await signInWithWhatsApp(phoneNumber)
+      if (result.error) throw result.error
+      if (result.method_id) setOtpMethodId(result.method_id)
       setAuthStep('verify-whatsapp')
       setStatusMessage('')
     } catch (error: any) {
@@ -295,7 +298,7 @@ export default function AuthScreen() {
     setStatusMessage('Verifying code...')
 
     try {
-      const { data, error } = await verifyWhatsAppOtp(phoneNumber, code)
+      const { data, error } = await verifyWhatsAppOtp(otpMethodId, code, phoneNumber)
       if (error) throw error
 
       if (data?.session) {
@@ -351,10 +354,12 @@ export default function AuthScreen() {
     if (authStep === 'verify-whatsapp') {
       setAuthStep('whatsapp-phone')
       setOtpCode(['', '', '', '', '', ''])
+      setOtpMethodId('')
       setStatusMessage('')
     } else if (authStep === 'verify-otp' || authStep === 'magic-link-sent' || authStep === 'password-form' || authStep === 'whatsapp-phone') {
       setAuthStep('email')
       setOtpCode(['', '', '', '', '', ''])
+      setOtpMethodId('')
       setStatusMessage('')
     } else {
       router.back()
