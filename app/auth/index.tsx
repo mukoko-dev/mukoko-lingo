@@ -231,7 +231,7 @@ export default function AuthScreen() {
           throw new Error('Sign in failed. Please check your credentials.')
         }
 
-        if (data.user && !data.user.email_confirmed_at) {
+        if (data.user && data.user.status === 'pending') {
           await signOut()
           throw new Error('Please verify your email before signing in. Check your inbox.')
         }
