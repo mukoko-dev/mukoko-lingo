@@ -1,8 +1,8 @@
 /**
  * Mukoko Lingo Brand Colors
- * Official Brand System from Mukoko Brand Guidelines
+ * Official Brand System from Mukoko Brand Guidelines v1.0
  *
- * Brand: Mukoko Lingo
+ * Brand: Mukoko Lingo (part of Mukoko ecosystem)
  * Tagline: "Language lives in the hive"
  * Voice: Welcoming, structured, protective
  *
@@ -10,52 +10,58 @@
  * - PRIMARY: Cobalt #0047AB / #00B0FF (trust, clarity)
  * - SECONDARY: Tanzanite #4B0082 / #B388FF (depth, creativity)
  * - ACCENT: Gold #5D4037 / #FFD740 (achievement, warmth)
+ *
+ * Dark Theme: Default Charcoal (#0A0A0A base, #141414 surface)
+ * Light Theme: Warm Cream (#FAF9F5 base, #FFFFFF surface)
  */
 
 export const Colors = {
-  // Primary - Cobalt (Mukoko Lingo Brand Color)
+  // Primary - Cobalt (trust, clarity)
+  // Light mode: #0047AB | Dark mode: #00B0FF
   primary: {
-    50: '#fef7f6',
-    100: '#fdecea',
-    200: '#fbd5d0',
-    300: '#f7b5ac',
-    400: '#f08879',
-    500: '#e46b5a',
-    600: '#D4634A', // Main brand color - Sunset Deep
-    700: '#b8513c',
-    800: '#994435',
-    900: '#7f3b30',
+    50: '#e8f4ff',
+    100: '#d0e8ff',
+    200: '#a3d4ff',
+    300: '#66bbff',
+    400: '#00B0FF',  // Dark mode primary
+    500: '#0088dd',
+    600: '#0047AB',  // Light mode primary (MAIN)
+    700: '#003d94',
+    800: '#003380',
+    900: '#002560',
   },
 
-  // Secondary - Navy Blue (Education/Trust)
+  // Secondary - Tanzanite (depth, creativity)
+  // Light mode: #4B0082 | Dark mode: #B388FF
   secondary: {
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    300: '#93c5fd',
-    400: '#60a5fa',
-    500: '#3b82f6',
-    600: '#2563eb',
-    700: '#1d4ed8',
-    800: '#1E3A8A', // Main secondary - Navy Blue
-    900: '#1e3a5f',
+    50: '#f8f2ff',
+    100: '#f0e5ff',
+    200: '#dcc6ff',
+    300: '#B388FF',  // Dark mode secondary
+    400: '#9a60ff',
+    500: '#8040e8',
+    600: '#6620cc',
+    700: '#5600a8',
+    800: '#4B0082',  // Light mode secondary (MAIN)
+    900: '#350060',
   },
 
-  // Accent - Purple (Innovation/Creativity)
+  // Accent - Gold (achievement, warmth)
+  // Light mode: #5D4037 | Dark mode: #FFD740
   accent: {
-    50: '#f5f3ff',
-    100: '#ede9fe',
-    200: '#ddd6fe',
-    300: '#c4b5fd',
-    400: '#a78bfa',
-    500: '#8b7cf5',
-    600: '#7C73E6', // Main accent - Purple
-    700: '#6d5dd3',
-    800: '#5b4cb8',
-    900: '#4c3d9b',
+    50: '#fffbeb',
+    100: '#fef3c7',
+    200: '#fde68a',
+    300: '#FFD740',  // Dark mode accent (bright gold)
+    400: '#f5c518',
+    500: '#d4a80f',
+    600: '#a88010',
+    700: '#7c5d0e',
+    800: '#5D4037',  // Light mode accent (warm brown)
+    900: '#3e2a22',
   },
 
-  // Success - Army Green (kept for success states)
+  // Success - Army Green (semantic: mastery, progress)
   success: {
     50: '#f0fdf4',
     100: '#dcfce7',
@@ -89,30 +95,31 @@ export const Colors = {
   semanticError: '#ef4444',
   semanticInfo: '#3b82f6',
 
-  // Background colors
+  // Background colors (Mukoko brand)
   background: {
-    light: '#faf9fb',
-    dark: '#101010',
-    surface: '#f0eef4',
+    light: '#FAF9F5',      // Warm Cream
+    dark: '#0A0A0A',       // Charcoal base (NOT Slate)
+    surface: '#F3F2EE',    // Surface Dim
+    elevated: '#1E1E1E',   // Dark elevated surface
     card: {
-      light: '#ffffff',
-      dark: '#1a1a1a',
+      light: '#FFFFFF',
+      dark: '#141414',     // Charcoal card surface
     },
   },
 
-  // Text colors
+  // Text colors (Mukoko brand)
   text: {
     primary: {
-      light: '#171717',
-      dark: '#fafafa',
+      light: '#141413',
+      dark: '#F5F5F4',
     },
     secondary: {
-      light: '#525252',
-      dark: '#a3a3a3',
+      light: '#52524E',
+      dark: '#A8A8A3',
     },
     muted: {
-      light: '#737373',
-      dark: '#737373',
+      light: '#8C8B87',
+      dark: '#6B6B66',
     },
   },
 }
@@ -124,9 +131,9 @@ export const lightTheme = {
   text: Colors.text.primary.light,
   textSecondary: Colors.text.secondary.light,
   textMuted: Colors.text.muted.light,
-  primary: Colors.primary[600], // Sunset Deep
-  secondary: Colors.secondary[800], // Navy Blue
-  accent: Colors.accent[600], // Purple
+  primary: Colors.primary[600],      // Cobalt #0047AB
+  secondary: Colors.secondary[800],  // Tanzanite #4B0082
+  accent: Colors.accent[800],        // Gold (warm brown) #5D4037
   success: Colors.success[500],
   border: Colors.neutral[200],
   tint: Colors.primary[600],
@@ -140,14 +147,14 @@ export const darkTheme = {
   text: Colors.text.primary.dark,
   textSecondary: Colors.text.secondary.dark,
   textMuted: Colors.text.muted.dark,
-  primary: Colors.primary[500], // Lighter Sunset for dark mode
-  secondary: Colors.secondary[600], // Lighter Navy for dark mode
-  accent: Colors.accent[500], // Lighter Purple for dark mode
+  primary: Colors.primary[400],      // Cobalt bright #00B0FF
+  secondary: Colors.secondary[300],  // Tanzanite bright #B388FF
+  accent: Colors.accent[300],        // Gold bright #FFD740
   success: Colors.success[400],
   border: Colors.neutral[700],
-  tint: Colors.primary[500],
+  tint: Colors.primary[400],
   tabIconDefault: Colors.neutral[500],
-  tabIconSelected: Colors.primary[500],
+  tabIconSelected: Colors.primary[400],
 }
 
 export type Theme = typeof lightTheme
