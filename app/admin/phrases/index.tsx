@@ -27,7 +27,7 @@ import {
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { createClient } from '@/lib/supabase/client'
+import { phrasesApi } from '@/lib/services/api-client'
 
 interface Phrase {
   id: string
@@ -68,14 +68,9 @@ export default function AdminPhrasesScreen() {
 
   const fetchPhrases = useCallback(async () => {
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('phrases')
-        .select('*')
-        .order('category', { ascending: true })
-        .order('english', { ascending: true })
+      const { data, error } = await phrasesApi.listPhrases()
 
-      if (error) throw error
+      if (error) throw new Error(error)
       setPhrases(data || [])
       setFilteredPhrases(data || [])
 
@@ -140,10 +135,9 @@ export default function AdminPhrasesScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const supabase = createClient()
-              const { error } = await supabase.from('phrases').delete().eq('id', phrase.id)
+              const { error } = await phrasesApi.deletePhrase(phrase.id)
 
-              if (error) throw error
+              if (error) throw new Error(error)
 
               setPhrases((prev) => prev.filter((p) => p.id !== phrase.id))
               Alert.alert('Success', 'Phrase deleted')
@@ -167,24 +161,20 @@ export default function AdminPhrasesScreen() {
 
     setSaving(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('phrases')
-        .update({
-          english: editingPhrase.english,
-          shona: editingPhrase.shona,
-          ndebele: editingPhrase.ndebele,
-          chinese: editingPhrase.chinese,
-          pronunciation_shona: editingPhrase.pronunciation_shona,
-          pronunciation_ndebele: editingPhrase.pronunciation_ndebele,
-          pronunciation_chinese: editingPhrase.pronunciation_chinese,
-          category: editingPhrase.category,
-          context: editingPhrase.context,
-          difficulty: editingPhrase.difficulty,
-        })
-        .eq('id', editingPhrase.id)
+      const { error } = await phrasesApi.updatePhrase(editingPhrase.id, {
+        english: editingPhrase.english,
+        shona: editingPhrase.shona,
+        ndebele: editingPhrase.ndebele,
+        chinese: editingPhrase.chinese,
+        pronunciation_shona: editingPhrase.pronunciation_shona,
+        pronunciation_ndebele: editingPhrase.pronunciation_ndebele,
+        pronunciation_chinese: editingPhrase.pronunciation_chinese,
+        category: editingPhrase.category,
+        context: editingPhrase.context,
+        difficulty: editingPhrase.difficulty,
+      })
 
-      if (error) throw error
+      if (error) throw new Error(error)
 
       setPhrases((prev) =>
         prev.map((p) => (p.id === editingPhrase.id ? editingPhrase : p))

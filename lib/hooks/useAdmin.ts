@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { getCurrentUser, onAuthStateChange } from '@/lib/auth/stytch-client'
+import { profilesApi } from '@/lib/services/api-client'
 
 interface AdminState {
   isAdmin: boolean
@@ -12,6 +13,7 @@ interface AdminState {
 /**
  * Hook to check if the current user is an admin.
  * Handles authentication state and admin role verification.
+ * Uses Stytch auth + MongoDB/API for profile data.
  */
 export function useAdmin(): AdminState & { refresh: () => Promise<void> } {
   const [state, setState] = useState<AdminState>({
@@ -26,8 +28,7 @@ export function useAdmin(): AdminState & { refresh: () => Promise<void> } {
     setState(prev => ({ ...prev, isLoading: true, error: null }))
 
     try {
-      const supabase = createClient()
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      const { user, error: userError } = await getCurrentUser()
 
       if (userError) {
         throw userError
@@ -44,11 +45,8 @@ export function useAdmin(): AdminState & { refresh: () => Promise<void> } {
         return
       }
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
+      // Fetch profile from API (MongoDB-backed)
+      const { data: profile, error: profileError } = await profilesApi.getMyProfile()
 
       if (profileError) {
         console.error('Error fetching profile:', profileError)
@@ -57,7 +55,7 @@ export function useAdmin(): AdminState & { refresh: () => Promise<void> } {
           isAuthenticated: true,
           isLoading: false,
           error: 'Failed to fetch profile',
-          userId: user.id,
+          userId: user.user_id,
         })
         return
       }
@@ -67,7 +65,7 @@ export function useAdmin(): AdminState & { refresh: () => Promise<void> } {
         isAuthenticated: true,
         isLoading: false,
         error: null,
-        userId: user.id,
+        userId: user.user_id,
       })
     } catch (error: any) {
       console.error('Error checking admin status:', error)
@@ -85,8 +83,7 @@ export function useAdmin(): AdminState & { refresh: () => Promise<void> } {
     checkAdminStatus()
 
     // Subscribe to auth state changes
-    const supabase = createClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = onAuthStateChange(() => {
       checkAdminStatus()
     })
 

@@ -18,7 +18,7 @@ import { Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { resetPasswordForEmail } from '@/lib/supabase/client'
+import { resetPasswordForEmail } from '@/lib/auth/stytch-client'
 
 export default function ForgotPasswordScreen() {
   const router = useRouter()

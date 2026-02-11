@@ -34,7 +34,8 @@ import {
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { createClient } from '@/lib/supabase/client'
+import { getCurrentUser } from '@/lib/auth/stytch-client'
+import { profilesApi } from '@/lib/services/api-client'
 
 const PUBLIC_NAV_LINKS = [
   { label: 'Features', route: '/features', icon: Sparkles },
@@ -72,14 +73,9 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
 
   const checkAdminStatus = async () => {
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { user } = await getCurrentUser()
       if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single()
+        const { data: profile } = await profilesApi.getMyProfile()
         setIsAdmin(profile?.role === 'admin')
       }
     } catch (error) {

@@ -39,7 +39,7 @@ import {
   verifyOtp,
   signInWithMagicLink,
   signOut,
-} from '@/lib/supabase/client'
+} from '@/lib/auth/stytch-client'
 
 type AuthMethod = 'otp' | 'magic-link' | 'password'
 type AuthStep = 'email' | 'verify-otp' | 'magic-link-sent' | 'password-form'

@@ -5,7 +5,8 @@ import { ShieldX, ArrowLeft, LogIn, Home } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { createClient } from '@/lib/supabase/client'
+import { getCurrentUser } from '@/lib/auth/stytch-client'
+import { profilesApi } from '@/lib/services/api-client'
 
 export default function AdminLayout() {
   const { isDark } = useTheme()
@@ -21,8 +22,7 @@ export default function AdminLayout() {
 
   const checkAdminAccess = async () => {
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { user } = await getCurrentUser()
 
       if (!user) {
         setIsAuthenticated(false)
@@ -33,11 +33,15 @@ export default function AdminLayout() {
 
       setIsAuthenticated(true)
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
+      // Fetch profile from MongoDB via API
+      const { data: profile, error } = await profilesApi.getMyProfile()
+
+      if (error) {
+        console.error('Error fetching profile:', error)
+        setIsAdmin(false)
+        setLoading(false)
+        return
+      }
 
       setIsAdmin(profile?.role === 'admin')
     } catch (error) {
