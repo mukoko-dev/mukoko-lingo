@@ -509,20 +509,22 @@ export default function AuthScreen() {
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity
-            style={styles.methodOption}
-            onPress={() => handleMethodSelect('password')}
-          >
-            <View style={[styles.methodIconContainer, { backgroundColor: Colors.primary[600] + '20' }]}>
-              <Lock size={18} color={Colors.primary[600]} />
-            </View>
-            <View style={styles.methodOptionTextContainer}>
-              <Text style={styles.methodOptionTitle}>Password</Text>
-              <Text style={styles.methodOptionDescription}>
-                Sign in or sign up with email and password
-              </Text>
-            </View>
-          </TouchableOpacity>
+          {authMethod !== 'password' && (
+            <TouchableOpacity
+              style={styles.methodOption}
+              onPress={() => handleMethodSelect('password')}
+            >
+              <View style={[styles.methodIconContainer, { backgroundColor: Colors.primary[600] + '20' }]}>
+                <Lock size={18} color={Colors.primary[600]} />
+              </View>
+              <View style={styles.methodOptionTextContainer}>
+                <Text style={styles.methodOptionTitle}>Password</Text>
+                <Text style={styles.methodOptionDescription}>
+                  Sign in or sign up with email and password
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </>
