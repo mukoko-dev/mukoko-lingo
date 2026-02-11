@@ -21,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       otpParams.login_template_id = STYTCH_TEMPLATES.OTP
       otpParams.signup_template_id = STYTCH_TEMPLATES.OTP
     }
-    const response = await stytchClient.otps.email.loginOrCreate(otpParams)
+    const response = await stytchClient.otps.email.loginOrCreate(otpParams as any)
     return res.status(200).json({
       success: true,
       message: 'OTP sent to email',

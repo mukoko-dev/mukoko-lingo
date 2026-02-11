@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (STYTCH_TEMPLATES.SIGNUP) {
       mlParams.signup_template_id = STYTCH_TEMPLATES.SIGNUP
     }
-    await stytchClient.magicLinks.email.loginOrCreate(mlParams)
+    await stytchClient.magicLinks.email.loginOrCreate(mlParams as any)
     return res.status(200).json({ success: true, message: 'Magic link sent to email' })
   } catch (error: any) {
     const errorType = error.error_type || ''

@@ -391,20 +391,23 @@ The Nyuchi Africa brand system v3.0 has been fully configured in `tailwind.confi
 
 ### Logo Files
 
-**Desktop Logos**:
-- Light mode: `Mukoko_Lingo_purple.svg` (purple text #5f5873 + hive icon)
+**App Icons** (PNG, generated from `/public/favicon.svg`):
+- `assets/images/icon.png` (1024x1024) — Main app icon, white M on Cobalt `#0047AB`
+- `assets/images/adaptive-icon.png` (1024x1024) — Android adaptive icon
+- `assets/images/splash-icon.png` (1024x1024) — Splash screen icon
+- `assets/images/favicon.png` (256x256) — Web favicon
+
+**SVG Sources**:
+- Light mode: `Mukoko_Lingo_purple.svg` (purple text + hive icon)
 - Dark mode: `Mukoko_Lingo_dark.svg` (light text + light hive icon)
+- Favicon source: `/public/favicon.svg`
 - Minimum width: 180px
 
 **Mobile Logo**:
-- `mukoko-logo-mobile.svg` (icon only, no wordmark)
-- Size: 40px × 40px
+- `assets/images/icon.png` (used in AppHeader component)
+- Display size: 32x32px, source 1024x1024
 
-**Favicon**:
-- `mukoko-favicon.svg`
-- Sizes: 16px, 32px, 48px
-
-**Location**: Logos should be placed in `/public/images/logos/`
+**Location**: PNG icons in `/assets/images/`, SVG sources in `/public/`
 
 **Clear Space**: Minimum clear space = height of hive icon on all sides
 
