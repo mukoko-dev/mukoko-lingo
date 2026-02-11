@@ -23,7 +23,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { skillsApi, assessmentsApi } from '@/lib/services/api-client'
 
 const SKILL_ICONS: Record<string, typeof Volume2> = {
@@ -34,13 +34,13 @@ const SKILL_ICONS: Record<string, typeof Volume2> = {
   conversation: MessageSquare,
 }
 
-const SKILL_COLORS: Record<string, string> = {
+const getSkillColors = (theme: typeof lightTheme): Record<string, string> => ({
   pronunciation: theme.primary,
   vocabulary: theme.secondary,
   grammar: theme.accent,
   comprehension: '#3b82f6',
   conversation: '#8b5cf6',
-}
+})
 
 interface SkillRow {
   id: string
@@ -177,7 +177,7 @@ export default function AdminSkillsScreen() {
             ) : (
               skills.map(skill => {
                 const Icon = SKILL_ICONS[skill.name] || BookText
-                const color = SKILL_COLORS[skill.name] || theme.primary
+                const color = getSkillColors(theme)[skill.name] || theme.primary
                 const isExpanded = expandedSkill === skill.id
                 const levels = skillLevels.filter(l => l.skill_id === skill.id)
                 const skillAssessments = assessments.filter(a => a.skill_id === skill.id)

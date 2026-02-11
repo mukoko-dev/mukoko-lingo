@@ -28,7 +28,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { standardsApi } from '@/lib/services/api-client'
 
 interface LearningStandard {
@@ -54,12 +54,12 @@ interface LearningStandard {
   updated_at: string
 }
 
-const LEVEL_COLORS: Record<string, string> = {
-  beginner: Colors.secondary[600],
-  novice: Colors.primary[600],
-  advanced: Colors.accent[600],
-  fluent: Colors.primary[700],
-}
+const getLevelColors = (theme: typeof lightTheme): Record<string, string> => ({
+  beginner: theme.secondary,
+  novice: theme.primary,
+  advanced: theme.accent,
+  fluent: theme.primary,
+})
 
 const LEVEL_ICONS: Record<string, typeof GraduationCap> = {
   beginner: BookOpen,
@@ -165,7 +165,7 @@ export default function AdminStandardsScreen() {
       <>
         <Stack.Screen options={{ title: 'Learning Standards' }} />
         <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-          <ActivityIndicator size="large" color={Colors.primary[600]} />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
             Loading standards...
           </Text>
@@ -186,8 +186,8 @@ export default function AdminStandardsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Info Banner */}
-        <View style={[styles.infoBanner, { backgroundColor: Colors.primary[600] + '15' }]}>
-          <GraduationCap size={24} color={Colors.primary[600]} />
+        <View style={[styles.infoBanner, { backgroundColor: theme.primary + '15' }]}>
+          <GraduationCap size={24} color={theme.primary} />
           <View style={styles.infoBannerContent}>
             <Text style={[styles.infoBannerTitle, { color: theme.text }]}>
               Learning Standards
@@ -201,7 +201,7 @@ export default function AdminStandardsScreen() {
         {/* Standards List */}
         {standards.map((standard) => {
           const Icon = LEVEL_ICONS[standard.level] || GraduationCap
-          const color = LEVEL_COLORS[standard.level] || Colors.primary[600]
+          const color = getLevelColors(theme)[standard.level] || theme.primary
 
           return (
             <View
@@ -317,10 +317,10 @@ export default function AdminStandardsScreen() {
                           key={idx}
                           style={[
                             styles.tag,
-                            { backgroundColor: Colors.secondary[700] + '20' },
+                            { backgroundColor: theme.secondary + '20' },
                           ]}
                         >
-                          <Text style={[styles.tagText, { color: Colors.secondary[700] }]}>
+                          <Text style={[styles.tagText, { color: theme.secondary }]}>
                             {concept}
                           </Text>
                         </View>
@@ -347,11 +347,11 @@ export default function AdminStandardsScreen() {
                       <Switch
                         value={standard.is_active}
                         onValueChange={() => handleToggleActive(standard)}
-                        trackColor={{ false: theme.border, true: Colors.primary[600] }}
+                        trackColor={{ false: theme.border, true: theme.primary }}
                       />
                     </View>
                     <TouchableOpacity
-                      style={[styles.editButton, { backgroundColor: Colors.primary[600] }]}
+                      style={[styles.editButton, { backgroundColor: theme.primary }]}
                       onPress={() => handleEdit(standard)}
                     >
                       <Edit3 size={16} color="#fff" />
@@ -382,9 +382,9 @@ export default function AdminStandardsScreen() {
             </Text>
             <TouchableOpacity onPress={handleSave} disabled={saving}>
               {saving ? (
-                <ActivityIndicator size="small" color={Colors.primary[600]} />
+                <ActivityIndicator size="small" color={theme.primary} />
               ) : (
-                <Check size={24} color={Colors.primary[600]} />
+                <Check size={24} color={theme.primary} />
               )}
             </TouchableOpacity>
           </View>
@@ -463,7 +463,7 @@ export default function AdminStandardsScreen() {
                     onValueChange={(value) =>
                       setEditingStandard({ ...editingStandard, is_active: value })
                     }
-                    trackColor={{ false: theme.border, true: Colors.primary[600] }}
+                    trackColor={{ false: theme.border, true: theme.primary }}
                   />
                 </View>
               </>

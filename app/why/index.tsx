@@ -38,63 +38,6 @@ const PROBLEMS = [
   },
 ]
 
-const SOLUTIONS = [
-  {
-    icon: CheckCircle,
-    title: 'Practical & Real',
-    description: 'Learn phrases relevant to modern conversations, not outdated textbook examples.',
-    color: Colors.success[500],
-  },
-  {
-    icon: Heart,
-    title: 'Culturally Authentic',
-    description: 'Context-aware instruction explaining when and how to use each phrase appropriately.',
-    color: Colors.accent[600],
-  },
-  {
-    icon: Layers,
-    title: 'Multi-Language Comparison',
-    description: 'Side-by-side viewing with pronunciation guides for pattern recognition.',
-    color: Colors.primary[600],
-  },
-  {
-    icon: BarChart3,
-    title: 'Progress Tracking',
-    description: 'Analytics, bookmarks, and cross-device synchronization to track your journey.',
-    color: Colors.secondary[800],
-  },
-]
-
-const LANGUAGES = [
-  {
-    name: 'English',
-    description: 'Global business and technology language',
-    color: Colors.primary[600],
-  },
-  {
-    name: 'Shona',
-    description: 'Spoken by 10+ million in Zimbabwe and surrounding regions',
-    color: Colors.secondary[800],
-  },
-  {
-    name: 'Ndebele',
-    description: 'Important for Zimbabwe and South Africa cultural access',
-    color: Colors.accent[600],
-  },
-  {
-    name: 'Chinese',
-    description: 'Growing economic presence in Africa',
-    color: Colors.primary[700],
-  },
-]
-
-const AUDIENCES = [
-  { icon: Briefcase, title: 'Business Professionals', color: Colors.primary[600] },
-  { icon: GraduationCap, title: 'Students & Academics', color: Colors.secondary[800] },
-  { icon: Plane, title: 'Travelers & Expats', color: Colors.accent[600] },
-  { icon: Sparkles, title: 'Language Enthusiasts', color: Colors.primary[700] },
-]
-
 export default function WhyScreen() {
   const router = useRouter()
   const { isDark } = useTheme()
@@ -103,6 +46,63 @@ export default function WhyScreen() {
 
   const isTablet = width >= 768
   const isDesktop = width >= 1024
+
+  const SOLUTIONS = [
+    {
+      icon: CheckCircle,
+      title: 'Practical & Real',
+      description: 'Learn phrases relevant to modern conversations, not outdated textbook examples.',
+      color: Colors.success[500],
+    },
+    {
+      icon: Heart,
+      title: 'Culturally Authentic',
+      description: 'Context-aware instruction explaining when and how to use each phrase appropriately.',
+      color: theme.accent,
+    },
+    {
+      icon: Layers,
+      title: 'Multi-Language Comparison',
+      description: 'Side-by-side viewing with pronunciation guides for pattern recognition.',
+      color: theme.primary,
+    },
+    {
+      icon: BarChart3,
+      title: 'Progress Tracking',
+      description: 'Analytics, bookmarks, and cross-device synchronization to track your journey.',
+      color: theme.secondary,
+    },
+  ]
+
+  const LANGUAGES = [
+    {
+      name: 'English',
+      description: 'Global business and technology language',
+      color: theme.primary,
+    },
+    {
+      name: 'Shona',
+      description: 'Spoken by 10+ million in Zimbabwe and surrounding regions',
+      color: theme.secondary,
+    },
+    {
+      name: 'Ndebele',
+      description: 'Important for Zimbabwe and South Africa cultural access',
+      color: theme.accent,
+    },
+    {
+      name: 'Chinese',
+      description: 'Growing economic presence in Africa',
+      color: theme.primary,
+    },
+  ]
+
+  const AUDIENCES = [
+    { icon: Briefcase, title: 'Business Professionals', color: theme.primary },
+    { icon: GraduationCap, title: 'Students & Academics', color: theme.secondary },
+    { icon: Plane, title: 'Travelers & Expats', color: theme.accent },
+    { icon: Sparkles, title: 'Language Enthusiasts', color: theme.primary },
+  ]
 
   const styles = createStyles(theme, isDark, isTablet, isDesktop)
 
@@ -136,7 +136,7 @@ export default function WhyScreen() {
               {PROBLEMS.map((problem, index) => (
                 <View key={index} style={styles.problemCard}>
                   <View style={styles.problemIcon}>
-                    <AlertCircle size={24} color={Colors.accent[600]} />
+                    <AlertCircle size={24} color={theme.accent} />
                   </View>
                   <View style={styles.problemContent}>
                     <Text style={styles.problemTitle}>{problem.title}</Text>
@@ -264,7 +264,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     },
     heroTagline: {
       fontSize: isTablet ? 20 : 18,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '500',
       lineHeight: isTablet ? 30 : 26,
       textAlign: isTablet ? 'center' : 'left',
@@ -312,7 +312,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       width: 44,
       height: 44,
       borderRadius: 12,
-      backgroundColor: Colors.accent[600] + '15',
+      backgroundColor: theme.accent + '15',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 16,
@@ -432,7 +432,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       paddingVertical: isTablet ? 48 : 32,
       marginHorizontal: isTablet ? 48 : 24,
       marginTop: 8,
-      backgroundColor: Colors.secondary[800] + '15',
+      backgroundColor: theme.secondary + '15',
       borderRadius: 20,
     },
     ctaTitle: {
@@ -452,7 +452,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: Colors.secondary[800],
+      backgroundColor: theme.secondary,
       paddingVertical: 14,
       paddingHorizontal: 28,
       borderRadius: 12,
