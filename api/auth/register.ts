@@ -45,8 +45,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       expires_at: response.session?.expires_at,
     })
   } catch (error: any) {
-    const message = error.error_message || error.message || 'Registration failed'
-    const status = message.includes('already exists') ? 409 : 400
-    return res.status(status).json({ error: message })
+    const errorType = error.error_type || ''
+    if (errorType === 'duplicate_email' || errorType.includes('already_exists') || (error.error_message || '').includes('already exists')) {
+      return res.status(409).json({ error: 'An account with this email already exists. Try signing in instead.' })
+    }
+    if (errorType === 'weak_password' || (error.error_message || '').includes('password')) {
+      return res.status(400).json({ error: error.error_message || 'Password does not meet requirements. Use at least 8 characters with uppercase, lowercase, and a number.' })
+    }
+    const message = error.error_message || error.message || 'Registration failed. Please try again.'
+    return res.status(400).json({ error: message })
   }
 }

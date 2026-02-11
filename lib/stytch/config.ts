@@ -13,11 +13,11 @@
 // =============================================================================
 
 export const STYTCH_TEMPLATES = {
-  LOGIN: process.env.STYTCH_TEMPLATE_LOGIN || 'mukoko_lingo_login',
-  SIGNUP: process.env.STYTCH_TEMPLATE_SIGNUP || 'mukoko_lingo_signup',
-  RESET_PASSWORD: process.env.STYTCH_TEMPLATE_RESET_PASSWORD || 'mukoko_lingo_reset_password',
-  OTP: process.env.STYTCH_TEMPLATE_OTP || 'mukoko_lingo_otp',
-} as const
+  LOGIN: process.env.STYTCH_TEMPLATE_LOGIN || undefined,
+  SIGNUP: process.env.STYTCH_TEMPLATE_SIGNUP || undefined,
+  RESET_PASSWORD: process.env.STYTCH_TEMPLATE_RESET_PASSWORD || undefined,
+  OTP: process.env.STYTCH_TEMPLATE_OTP || undefined,
+}
 
 // =============================================================================
 // Redirect URLs
