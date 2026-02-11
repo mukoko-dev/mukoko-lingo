@@ -28,6 +28,8 @@ import {
   Link2,
   ChevronDown,
   ChevronUp,
+  MessageCircle,
+  Phone,
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
@@ -38,11 +40,13 @@ import {
   signInWithOtp,
   verifyOtp,
   signInWithMagicLink,
+  signInWithWhatsApp,
+  verifyWhatsAppOtp,
   signOut,
 } from '@/lib/auth/stytch-client'
 
-type AuthMethod = 'otp' | 'magic-link' | 'password'
-type AuthStep = 'email' | 'verify-otp' | 'magic-link-sent' | 'password-form'
+type AuthMethod = 'otp' | 'magic-link' | 'password' | 'whatsapp'
+type AuthStep = 'email' | 'verify-otp' | 'magic-link-sent' | 'password-form' | 'whatsapp-phone' | 'verify-whatsapp'
 
 export default function AuthScreen() {
   const router = useRouter()
@@ -59,6 +63,7 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', ''])
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [showMoreOptions, setShowMoreOptions] = useState(false)
   const { width } = useWindowDimensions()
 
@@ -248,6 +253,66 @@ export default function AuthScreen() {
     }
   }
 
+  // Handle WhatsApp OTP send
+  const handleSendWhatsAppOtp = async () => {
+    if (!phoneNumber) {
+      Alert.alert('Error', 'Please enter your phone number')
+      return
+    }
+
+    // Validate E.164 format
+    const phoneRegex = /^\+[1-9]\d{6,14}$/
+    if (!phoneRegex.test(phoneNumber)) {
+      Alert.alert('Error', 'Please enter a valid phone number with country code (e.g. +263771234567)')
+      return
+    }
+
+    setLoading(true)
+    setStatusMessage('Sending WhatsApp code...')
+
+    try {
+      const { error } = await signInWithWhatsApp(phoneNumber)
+      if (error) throw error
+      setAuthStep('verify-whatsapp')
+      setStatusMessage('')
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to send WhatsApp OTP')
+      setStatusMessage('')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Handle WhatsApp OTP verification
+  const handleVerifyWhatsAppOtp = async () => {
+    const code = otpCode.join('')
+    if (code.length !== 6) {
+      Alert.alert('Error', 'Please enter the complete 6-digit code')
+      return
+    }
+
+    setLoading(true)
+    setStatusMessage('Verifying code...')
+
+    try {
+      const { data, error } = await verifyWhatsAppOtp(phoneNumber, code)
+      if (error) throw error
+
+      if (data?.session) {
+        setStatusMessage('Success! Redirecting...')
+        await new Promise(resolve => setTimeout(resolve, 500))
+        router.replace('/(tabs)')
+      } else {
+        throw new Error('Verification failed. Please try again.')
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Invalid code. Please try again.')
+      setStatusMessage('')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Handle OTP input
   const handleOtpChange = (text: string, index: number) => {
     // Only allow digits
@@ -283,7 +348,11 @@ export default function AuthScreen() {
   }
 
   const handleBack = () => {
-    if (authStep === 'verify-otp' || authStep === 'magic-link-sent' || authStep === 'password-form') {
+    if (authStep === 'verify-whatsapp') {
+      setAuthStep('whatsapp-phone')
+      setOtpCode(['', '', '', '', '', ''])
+      setStatusMessage('')
+    } else if (authStep === 'verify-otp' || authStep === 'magic-link-sent' || authStep === 'password-form' || authStep === 'whatsapp-phone') {
       setAuthStep('email')
       setOtpCode(['', '', '', '', '', ''])
       setStatusMessage('')
@@ -302,6 +371,8 @@ export default function AuthScreen() {
     setShowMoreOptions(false)
     if (method === 'password') {
       setAuthStep('password-form')
+    } else if (method === 'whatsapp') {
+      setAuthStep('whatsapp-phone')
     }
   }
 
@@ -326,6 +397,8 @@ export default function AuthScreen() {
       handleSendOtp()
     } else if (authMethod === 'magic-link') {
       handleSendMagicLink()
+    } else if (authMethod === 'whatsapp') {
+      handleSendWhatsAppOtp()
     }
   }
 
@@ -414,6 +487,23 @@ export default function AuthScreen() {
                 <Text style={styles.methodOptionTitle}>Magic link</Text>
                 <Text style={styles.methodOptionDescription}>
                   We'll email you a link to sign in instantly
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {authMethod !== 'whatsapp' && (
+            <TouchableOpacity
+              style={styles.methodOption}
+              onPress={() => handleMethodSelect('whatsapp')}
+            >
+              <View style={[styles.methodIconContainer, { backgroundColor: '#25D366' + '20' }]}>
+                <MessageCircle size={18} color="#25D366" />
+              </View>
+              <View style={styles.methodOptionTextContainer}>
+                <Text style={styles.methodOptionTitle}>WhatsApp</Text>
+                <Text style={styles.methodOptionDescription}>
+                  Receive a code via WhatsApp message
                 </Text>
               </View>
             </TouchableOpacity>
@@ -647,6 +737,117 @@ export default function AuthScreen() {
     </>
   )
 
+  const renderWhatsAppPhoneStep = () => (
+    <>
+      <Text style={styles.cardTitle}>WhatsApp Sign In</Text>
+      <Text style={styles.cardSubtitle}>
+        Enter your phone number with country code to receive a verification code via WhatsApp
+      </Text>
+
+      {/* Phone Number Input */}
+      <View style={styles.inputContainer}>
+        <Phone size={20} color={theme.textMuted} style={styles.inputIcon} />
+        <TextInput
+          style={styles.input}
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+          placeholder="+263 77 123 4567"
+          placeholderTextColor={theme.textMuted}
+          keyboardType="phone-pad"
+          autoFocus
+        />
+      </View>
+
+      {/* Send Button */}
+      <TouchableOpacity
+        style={styles.submitButton}
+        onPress={handleSendWhatsAppOtp}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#ffffff" />
+        ) : (
+          <>
+            <Text style={styles.submitButtonText}>Send WhatsApp Code</Text>
+            <ArrowRight size={20} color="#ffffff" />
+          </>
+        )}
+      </TouchableOpacity>
+
+      {/* Switch to email */}
+      <TouchableOpacity
+        style={styles.switchMethodButton}
+        onPress={() => {
+          setAuthMethod('otp')
+          setAuthStep('email')
+        }}
+      >
+        <Text style={styles.switchMethodText}>Use email sign-in instead</Text>
+      </TouchableOpacity>
+    </>
+  )
+
+  const renderWhatsAppVerifyStep = () => (
+    <>
+      <Text style={styles.cardTitle}>Enter your code</Text>
+      <Text style={styles.cardSubtitle}>
+        We sent a 6-digit code via WhatsApp to{'\n'}
+        <Text style={styles.emailHighlight}>{phoneNumber}</Text>
+      </Text>
+
+      {/* OTP Input */}
+      <View style={styles.otpContainer}>
+        {otpCode.map((digit, index) => (
+          <TextInput
+            key={index}
+            ref={ref => { otpInputRefs.current[index] = ref }}
+            style={[
+              styles.otpInput,
+              digit ? styles.otpInputFilled : null,
+            ]}
+            value={digit}
+            onChangeText={(text) => {
+              if (text.length > 1) {
+                handleOtpPaste(text)
+              } else {
+                handleOtpChange(text, index)
+              }
+            }}
+            onKeyPress={({ nativeEvent }) => handleOtpKeyPress(nativeEvent.key, index)}
+            keyboardType="number-pad"
+            maxLength={1}
+            textAlign="center"
+            autoFocus={index === 0}
+          />
+        ))}
+      </View>
+
+      {/* Verify Button */}
+      <TouchableOpacity
+        style={[
+          styles.submitButton,
+          otpCode.join('').length !== 6 && styles.submitButtonDisabled,
+        ]}
+        onPress={handleVerifyWhatsAppOtp}
+        disabled={loading || otpCode.join('').length !== 6}
+      >
+        {loading ? (
+          <ActivityIndicator color="#ffffff" />
+        ) : (
+          <>
+            <Text style={styles.submitButtonText}>Verify Code</Text>
+            <ArrowRight size={20} color="#ffffff" />
+          </>
+        )}
+      </TouchableOpacity>
+
+      {/* Resend */}
+      <TouchableOpacity style={styles.resendButton} onPress={handleResend} disabled={loading}>
+        <Text style={styles.resendText}>Didn't receive a code? Resend</Text>
+      </TouchableOpacity>
+    </>
+  )
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -691,6 +892,8 @@ export default function AuthScreen() {
               {authStep === 'verify-otp' && renderOtpVerifyStep()}
               {authStep === 'magic-link-sent' && renderMagicLinkSentStep()}
               {authStep === 'password-form' && renderPasswordForm()}
+              {authStep === 'whatsapp-phone' && renderWhatsAppPhoneStep()}
+              {authStep === 'verify-whatsapp' && renderWhatsAppVerifyStep()}
             </View>
 
             {/* Skip Button */}

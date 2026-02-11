@@ -5,10 +5,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
   'http://localhost:8081',
   'http://localhost:19006',
   'https://mukoko.com',
   'https://www.mukoko.com',
+  'https://lingo.mukoko.com',
   'https://mukoko-lingo.vercel.app',
 ]
 
