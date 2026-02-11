@@ -6,7 +6,7 @@ import { Phrase } from '../data/phrases-data'
 let db: SQLite.SQLiteDatabase | null = null
 
 export async function initDatabase() {
-  db = await SQLite.openDatabaseAsync('nyuchi-lingo.db')
+  db = await SQLite.openDatabaseAsync('mukoko-lingo.db')
 
   // Create tables
   await db.execAsync(`

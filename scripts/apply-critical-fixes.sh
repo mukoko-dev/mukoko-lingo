@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Nyuchi Lingo - Apply Critical Fixes
+# Mukoko Lingo - Apply Critical Fixes
 # Applies migration 027 using Supabase connection string
 
 set -e
 
-echo "🔧 Nyuchi Lingo - Applying Critical Fixes Migration"
+echo "🔧 Mukoko Lingo - Applying Critical Fixes Migration"
 echo "====================================================="
 echo ""
 

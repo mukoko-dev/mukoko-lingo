@@ -79,7 +79,7 @@ INSERT INTO guardrails (name, description, category, rule_type, is_active, sever
   'block',
   true,
   5,
-  'If the user message contains hate speech, slurs, or discriminatory language, do NOT respond to the content. Instead, gently redirect to language learning and remind that Nyuchi Lingo is a safe, inclusive space for all learners.'
+  'If the user message contains hate speech, slurs, or discriminatory language, do NOT respond to the content. Instead, gently redirect to language learning and remind that Mukoko Lingo is a safe, inclusive space for all learners.'
 ),
 (
   'No Sexual Content',

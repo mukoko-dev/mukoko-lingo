@@ -27,7 +27,7 @@ import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { AppHeader } from '@/components/AppHeader'
 
-const ONBOARDING_KEY = '@nyuchi_onboarding_complete'
+const ONBOARDING_KEY = '@mukoko_onboarding_complete'
 
 const STATS = [
   { value: '200+', label: 'Essential Phrases' },

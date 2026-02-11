@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Nyuchi Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Swahili, Chinese) with both web (Next.js 16) and mobile (Expo/React Native) applications, powered by Supabase, Vercel, Anthropic Claude, and AI Gateway.
+**Mukoko Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Swahili, Chinese) with both web (Next.js 16) and mobile (Expo/React Native) applications, powered by Supabase, Vercel, Anthropic Claude, and AI Gateway.
 
 ### Core Philosophy
 
@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Shamwari - The AI Mascot
 
-**Shamwari** (meaning "friend" in Shona) is the friendly AI language tutor mascot of Nyuchi Lingo. Shamwari is:
+**Shamwari** (meaning "friend" in Shona) is the friendly AI language tutor mascot of Mukoko Lingo. Shamwari is:
 - **Who users interact with**: All AI conversations are with Shamwari
 - **Personality**: Warm, patient, encouraging, playful but professional
 - **Voice**: Friendly but knowledgeable, like a supportive teacher
@@ -479,7 +479,7 @@ All admin API routes use `requireAdmin()` check.
 
 ### AI Integration (AI-First Architecture) ⚡
 
-**Philosophy**: Nyuchi Lingo is an AI-first application. The AI tutor is the CORE of the learning experience, reading user proficiency from the database for EVERY interaction to provide adaptive, personalized teaching.
+**Philosophy**: Mukoko Lingo is an AI-first application. The AI tutor is the CORE of the learning experience, reading user proficiency from the database for EVERY interaction to provide adaptive, personalized teaching.
 
 **Configuration** (`lib/ai/config.ts`):
 - **API Key**: `AI_GATEWAY_API_KEY` environment variable (required)

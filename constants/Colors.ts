@@ -1,19 +1,19 @@
 /**
- * Nyuchi Lingo Brand Colors
- * Official Brand System from Nyuchi Brand Guidelines
+ * Mukoko Lingo Brand Colors
+ * Official Brand System from Mukoko Brand Guidelines
  *
- * Brand: Nyuchi Lingo
- * Tagline: "Learn Shona. Connect with Africa."
- * Voice: Encouraging, educational, culturally respectful
+ * Brand: Mukoko Lingo
+ * Tagline: "Language lives in the hive"
+ * Voice: Welcoming, structured, protective
  *
- * BRAND SYSTEM:
- * - PRIMARY: Sunset Deep #D4634A (distinctive, energetic)
- * - ACCENT: Purple #7C73E6 (innovation, creativity)
- * - SECONDARY: Navy Blue #1E3A8A (education, trust)
+ * BRAND SYSTEM (Five African Minerals):
+ * - PRIMARY: Cobalt #0047AB / #00B0FF (trust, clarity)
+ * - SECONDARY: Tanzanite #4B0082 / #B388FF (depth, creativity)
+ * - ACCENT: Gold #5D4037 / #FFD740 (achievement, warmth)
  */
 
 export const Colors = {
-  // Primary - Sunset Deep (Nyuchi Lingo Brand Color)
+  // Primary - Cobalt (Mukoko Lingo Brand Color)
   primary: {
     50: '#fef7f6',
     100: '#fdecea',

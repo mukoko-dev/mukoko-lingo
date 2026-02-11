@@ -1,4 +1,4 @@
-# Changelog - Nyuchi Lingo
+# Changelog - Mukoko Lingo
 
 All notable changes to this project will be documented in this file.
 
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Major Release - AI-First Skills-Based Architecture
 
-This release transforms Nyuchi Lingo into an AI-first, skills-based learning platform where the AI tutor reads user proficiency from the database for every interaction.
+This release transforms Mukoko Lingo into an AI-first, skills-based learning platform where the AI tutor reads user proficiency from the database for every interaction.
 
 ### Added
 
@@ -455,7 +455,7 @@ See [RELEASES.md](RELEASES.md) for guidelines on contributing to releases.
 - **Deployment**: [DEPLOYMENT.md](DEPLOYMENT.md)
 - **Security**: [SECURITY.md](SECURITY.md)
 - **Releases**: [RELEASES.md](RELEASES.md)
-- **Repository**: [GitHub](https://github.com/yourusername/nyuchi-lingo)
+- **Repository**: [GitHub](https://github.com/yourusername/mukoko-lingo)
 
 ---
 

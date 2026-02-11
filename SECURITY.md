@@ -2,7 +2,7 @@
 
 ## Overview
 
-Nyuchi Lingo takes security seriously. This document outlines our security practices, how to report vulnerabilities, and our commitment to protecting user data.
+Mukoko Lingo takes security seriously. This document outlines our security practices, how to report vulnerabilities, and our commitment to protecting user data.
 
 ## Supported Versions
 
@@ -16,7 +16,7 @@ Nyuchi Lingo takes security seriously. This document outlines our security pract
 If you discover a security vulnerability, please report it responsibly:
 
 1. **Do NOT** open a public issue
-2. Email security concerns to: security@nyuchi.com
+2. Email security concerns to: security@mukoko.com
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
@@ -140,7 +140,7 @@ In case of a security incident:
 
 ## Compliance
 
-Nyuchi Lingo is designed with privacy in mind:
+Mukoko Lingo is designed with privacy in mind:
 
 - **GDPR-friendly**: Users can request data export and deletion
 - **Minimal Data Collection**: We only collect data necessary for functionality
@@ -153,7 +153,7 @@ Security patches are prioritized and deployed immediately. Subscribe to release 
 
 ## Questions
 
-For security-related questions, contact: security@nyuchi.com
+For security-related questions, contact: security@mukoko.com
 
 ---
 

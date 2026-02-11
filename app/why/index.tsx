@@ -123,7 +123,7 @@ export default function WhyScreen() {
         <View style={styles.contentWrapper}>
           {/* Hero Section */}
           <View style={styles.hero}>
-            <Text style={styles.heroTitle}>Why Nyuchi Lingo?</Text>
+            <Text style={styles.heroTitle}>Why Mukoko Lingo?</Text>
             <Text style={styles.heroTagline}>
               The bridge between cultures, powered by language learning that actually works.
             </Text>
@@ -151,7 +151,7 @@ export default function WhyScreen() {
           <View style={[styles.section, styles.solutionSection]}>
             <Text style={styles.sectionTitle}>Built Different, Built Better</Text>
             <Text style={styles.sectionSubtitle}>
-              We designed Nyuchi Lingo to solve real communication challenges.
+              We designed Mukoko Lingo to solve real communication challenges.
             </Text>
             <View style={styles.solutionsGrid}>
               {SOLUTIONS.map((solution, index) => {

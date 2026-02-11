@@ -2,11 +2,11 @@
 
 ## Overview
 
-This document describes the release process for Nyuchi Lingo, including versioning, release procedures, and deployment workflows.
+This document describes the release process for Mukoko Lingo, including versioning, release procedures, and deployment workflows.
 
 ## Versioning
 
-Nyuchi Lingo follows [Semantic Versioning](https://semver.org/):
+Mukoko Lingo follows [Semantic Versioning](https://semver.org/):
 
 ```
 MAJOR.MINOR.PATCH
@@ -23,7 +23,7 @@ MAJOR.MINOR.PATCH
 ### Production
 - **Branch**: `main`
 - **Environment**: Vercel Production
-- **URL**: https://lingo.nyuchi.com
+- **URL**: https://lingo.mukoko.com
 - **Database**: Supabase Production
 
 ### Staging (Future)
@@ -216,8 +216,8 @@ If a release causes issues:
 ## Contact
 
 For release-related questions:
-- Engineering: dev@nyuchi.com
-- Security issues: security@nyuchi.com
+- Engineering: dev@mukoko.com
+- Security issues: security@mukoko.com
 
 ---
 
