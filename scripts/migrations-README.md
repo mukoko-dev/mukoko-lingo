@@ -1,4 +1,4 @@
-# Database Migrations for Nyuchi Lingo
+# Database Migrations for Mukoko Lingo
 
 This directory contains SQL migrations to optimize the database for million-user scale.
 

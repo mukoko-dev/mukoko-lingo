@@ -38,7 +38,7 @@ import { createClient } from '@/lib/supabase/client'
 
 const PUBLIC_NAV_LINKS = [
   { label: 'Features', route: '/features', icon: Sparkles },
-  { label: 'Why Nyuchi', route: '/why', icon: HelpCircle },
+  { label: 'Why Mukoko', route: '/why', icon: HelpCircle },
   { label: 'About', route: '/about', icon: Info },
 ]
 
@@ -150,11 +150,11 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
       <View style={styles.navbar}>
         <TouchableOpacity style={styles.logoContainer} onPress={handleLogoPress}>
           <Image
-            source={require('@/assets/images/nyuchi-icon.png')}
+            source={require('@/assets/images/icon.png')}
             style={styles.navIcon}
             resizeMode="contain"
           />
-          <Text style={styles.navTitle}>Nyuchi Lingo</Text>
+          <Text style={styles.navTitle}>Mukoko Lingo</Text>
         </TouchableOpacity>
 
         {/* Desktop nav links */}
@@ -236,11 +236,11 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
           <View style={styles.menuHeader}>
             <View style={styles.logoContainer}>
               <Image
-                source={require('@/assets/images/nyuchi-icon.png')}
+                source={require('@/assets/images/icon.png')}
                 style={styles.menuIcon}
                 resizeMode="contain"
               />
-              <Text style={styles.menuTitle}>Nyuchi Lingo</Text>
+              <Text style={styles.menuTitle}>Mukoko Lingo</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={() => setMenuOpen(false)}>
               <X size={24} color={theme.text} />

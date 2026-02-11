@@ -40,13 +40,13 @@ export const unstable_settings = {
   initialRouteName: 'index',
 }
 
-const ONBOARDING_KEY = '@nyuchi_onboarding_complete'
+const ONBOARDING_KEY = '@mukoko_onboarding_complete'
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
-// Custom theme with Nyuchi Lingo brand colors
-const NyuchiLightTheme = {
+// Custom theme with Mukoko Lingo brand colors
+const MukokoLightTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
@@ -58,7 +58,7 @@ const NyuchiLightTheme = {
   },
 }
 
-const NyuchiDarkTheme = {
+const MukokoDarkTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
@@ -143,7 +143,7 @@ export default function RootLayout() {
       if (!url) return
 
       // Extract token hash from deep link (magic link / password reset)
-      // Format: nyuchilingo://[path]#access_token=...&refresh_token=...
+      // Format: mukokolingo://[path]#access_token=...&refresh_token=...
       const hashIndex = url.indexOf('#')
       if (hashIndex === -1) return
 
@@ -210,7 +210,7 @@ function RootLayoutNav({ hasCompletedOnboarding }: { hasCompletedOnboarding: boo
   // This keeps the navigation clean and allows users to access all public pages
 
   return (
-    <NavigationThemeProvider value={colorScheme === 'dark' ? NyuchiDarkTheme : NyuchiLightTheme}>
+    <NavigationThemeProvider value={colorScheme === 'dark' ? MukokoDarkTheme : MukokoLightTheme}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />

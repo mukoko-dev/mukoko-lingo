@@ -122,7 +122,7 @@ export default function ForgotPasswordScreen() {
             {/* Header */}
             <View style={styles.header}>
               <Image
-                source={require('@/assets/images/nyuchi-icon.png')}
+                source={require('@/assets/images/icon.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Nyuchi Lingo - Database Migration Script
+# Mukoko Lingo - Database Migration Script
 # Applies SQL migrations to Supabase database
 
 set -e  # Exit on error
 
-echo "🚀 Nyuchi Lingo Database Migration Tool"
+echo "🚀 Mukoko Lingo Database Migration Tool"
 echo "========================================"
 echo ""
 

@@ -6,7 +6,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native'
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 
-const ONBOARDING_KEY = '@nyuchi_onboarding_complete'
+const ONBOARDING_KEY = '@mukoko_onboarding_complete'
 
 export default function IndexRedirect() {
   const router = useRouter()

@@ -217,7 +217,7 @@ export default function FeaturesScreen() {
           </View>
 
           {/* Footer */}
-          <Text style={styles.footer}>© 2025 Nyuchi Learning</Text>
+          <Text style={styles.footer}>© 2025 Nyuchi Africa</Text>
         </View>
       </ScrollView>
       </SafeAreaView>
