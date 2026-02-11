@@ -234,7 +234,7 @@ export default function ProfileScreen() {
       {/* Profile Header */}
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <User size={32} color={Colors.primary[600]} />
+          <User size={32} color={theme.primary} />
         </View>
         <View style={styles.headerInfo}>
           <Text style={styles.userName}>
@@ -275,7 +275,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={styles.settingItem} onPress={openLanguageSelector}>
           <View style={styles.settingIcon}>
-            <Globe size={20} color={Colors.primary[600]} />
+            <Globe size={20} color={theme.primary} />
           </View>
           <View style={styles.settingContent}>
             <Text style={styles.settingLabel}>UI Language</Text>
@@ -288,7 +288,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={styles.settingItem} onPress={() => setLearningLanguageModalVisible(true)}>
           <View style={styles.settingIcon}>
-            <BookOpen size={20} color={Colors.primary[600]} />
+            <BookOpen size={20} color={theme.primary} />
           </View>
           <View style={styles.settingContent}>
             <Text style={styles.settingLabel}>Learning Language</Text>
@@ -302,9 +302,9 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.settingItem} onPress={openThemeSelector}>
           <View style={styles.settingIcon}>
             {colorScheme === 'dark' ? (
-              <Moon size={20} color={Colors.primary[600]} />
+              <Moon size={20} color={theme.primary} />
             ) : (
-              <Sun size={20} color={Colors.primary[600]} />
+              <Sun size={20} color={theme.primary} />
             )}
           </View>
           <View style={styles.settingContent}>
@@ -316,7 +316,7 @@ export default function ProfileScreen() {
 
         <View style={styles.settingItem}>
           <View style={styles.settingIcon}>
-            <Bell size={20} color={Colors.primary[600]} />
+            <Bell size={20} color={theme.primary} />
           </View>
           <View style={styles.settingContent}>
             <Text style={styles.settingLabel}>Notifications</Text>
@@ -324,14 +324,14 @@ export default function ProfileScreen() {
           <Switch
             value={notifications}
             onValueChange={setNotifications}
-            trackColor={{ false: theme.border, true: Colors.primary[600] }}
+            trackColor={{ false: theme.border, true: theme.primary }}
             thumbColor="#ffffff"
           />
         </View>
 
         <View style={styles.settingItem}>
           <View style={styles.settingIcon}>
-            <Download size={20} color={Colors.primary[600]} />
+            <Download size={20} color={theme.primary} />
           </View>
           <View style={styles.settingContent}>
             <Text style={styles.settingLabel}>Offline Mode</Text>
@@ -342,7 +342,7 @@ export default function ProfileScreen() {
           <Switch
             value={offlineMode}
             onValueChange={setOfflineMode}
-            trackColor={{ false: theme.border, true: Colors.primary[600] }}
+            trackColor={{ false: theme.border, true: theme.primary }}
             thumbColor="#ffffff"
           />
         </View>
@@ -353,7 +353,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={styles.settingItem} onPress={() => openURL(URLS.HELP_CENTER)}>
           <View style={styles.settingIcon}>
-            <HelpCircle size={20} color={Colors.secondary[500]} />
+            <HelpCircle size={20} color={theme.secondary} />
           </View>
           <View style={styles.settingContent}>
             <Text style={styles.settingLabel}>Help Center</Text>
@@ -363,7 +363,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={styles.settingItem} onPress={() => openURL(URLS.PRIVACY_POLICY)}>
           <View style={styles.settingIcon}>
-            <Shield size={20} color={Colors.secondary[500]} />
+            <Shield size={20} color={theme.secondary} />
           </View>
           <View style={styles.settingContent}>
             <Text style={styles.settingLabel}>Privacy Policy</Text>
@@ -373,7 +373,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={styles.settingItem} onPress={() => openURL(URLS.TERMS)}>
           <View style={styles.settingIcon}>
-            <Shield size={20} color={Colors.secondary[500]} />
+            <Shield size={20} color={theme.secondary} />
           </View>
           <View style={styles.settingContent}>
             <Text style={styles.settingLabel}>Terms of Service</Text>
@@ -383,7 +383,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={styles.settingItem} onPress={() => setAboutModalVisible(true)}>
           <View style={styles.settingIcon}>
-            <Heart size={20} color={Colors.accent[500]} />
+            <Heart size={20} color={theme.accent} />
           </View>
           <View style={styles.settingContent}>
             <Text style={styles.settingLabel}>About Mukoko Lingo</Text>
@@ -431,7 +431,7 @@ export default function ProfileScreen() {
                   <Text style={styles.modalOptionSubtext}>{lang.nativeName}</Text>
                 </View>
                 {uiLanguage === lang.code && (
-                  <Check size={20} color={Colors.primary[600]} />
+                  <Check size={20} color={theme.primary} />
                 )}
               </TouchableOpacity>
             ))}
@@ -472,7 +472,7 @@ export default function ProfileScreen() {
                   <Text style={styles.modalOptionSubtext}>{lang.nativeName}</Text>
                 </View>
                 {learningLanguage === lang.key && (
-                  <Check size={20} color={Colors.primary[600]} />
+                  <Check size={20} color={theme.primary} />
                 )}
               </TouchableOpacity>
             ))}
@@ -512,7 +512,7 @@ export default function ProfileScreen() {
                   )}
                 </View>
                 {themePreference === option.value && (
-                  <Check size={20} color={Colors.primary[600]} />
+                  <Check size={20} color={theme.primary} />
                 )}
               </TouchableOpacity>
             ))}
@@ -569,7 +569,7 @@ export default function ProfileScreen() {
                   openURL(URLS.WEBSITE)
                 }}
               >
-                <Globe size={16} color={Colors.primary[600]} />
+                <Globe size={16} color={theme.primary} />
                 <Text style={styles.aboutLinkText}>Website</Text>
               </TouchableOpacity>
 
@@ -580,7 +580,7 @@ export default function ProfileScreen() {
                   openURL(URLS.ABOUT_PROJECT)
                 }}
               >
-                <Heart size={16} color={Colors.accent[500]} />
+                <Heart size={16} color={theme.accent} />
                 <Text style={styles.aboutLinkText}>About Project</Text>
               </TouchableOpacity>
             </View>
@@ -616,7 +616,7 @@ const createStyles = (theme: typeof lightTheme) =>
       width: 64,
       height: 64,
       borderRadius: 32,
-      backgroundColor: Colors.primary[600] + '20',
+      backgroundColor: theme.primary + '20',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 16,
@@ -826,7 +826,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     aboutLinkText: {
       fontSize: 14,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '500',
     },
     aboutCopyright: {

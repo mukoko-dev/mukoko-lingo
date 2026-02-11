@@ -103,141 +103,50 @@ AI_GATEWAY_API_KEY=your_api_key_here
 ## Design System & Colors
 
 ### Background Colors
-- **Light Theme**: `#faf9f5` - Warm off-white, reduces eye strain, better contrast
-- **Dark Theme**: `#101010` - Very dark for depth
-- **Cards**: Always white (#ffffff) in light mode, #1a1a1a in dark mode for elevation
+- **Light Theme**: `#FAF9F5` - Warm Cream
+- **Dark Theme**: `#0A0A0A` - Charcoal base
+- **Cards**: White (#FFFFFF) in light mode, #141414 (Charcoal surface) in dark mode
+- **Surface**: `#F3F2EE` (light), `#1E1E1E` (dark elevated)
+
+### Color Palette (Five African Minerals)
+
+The brand uses the **Five African Minerals** palette defined in `constants/Colors.ts`:
+
+```typescript
+// Primary - Cobalt (trust, clarity)
+primary-600: #0047AB  // Light mode primary (MAIN)
+primary-400: #00B0FF  // Dark mode primary
+
+// Secondary - Tanzanite (depth, creativity)
+secondary-800: #4B0082  // Light mode secondary (MAIN)
+secondary-300: #B388FF  // Dark mode secondary
+
+// Accent - Gold (achievement, warmth)
+accent-800: #5D4037   // Light mode accent (warm brown)
+accent-300: #FFD740   // Dark mode accent (bright gold)
+
+// Success - Army Green (semantic: mastery, progress)
+success-500: #729B63  // Main green
+success-400: #8FB47F  // Lighter (hover)
+success-600: #5d804f  // Darker (active)
+```
+
+### Text Colors
+- **Primary**: `#141413` (light) / `#F5F5F4` (dark)
+- **Secondary**: `#52524E` (light) / `#A8A8A3` (dark)
+- **Muted**: `#8C8B87` (light) / `#6B6B66` (dark)
 
 ### Button Colors (CRITICAL - Always follow these)
 
 **Light Mode Buttons:**
-- Primary: `bg-primary-700` (#5f5873) with white text
-- Secondary: `bg-secondary-500` (#729B63) with white text
-- Hover: `bg-primary-600` / `bg-secondary-400`
-- Active: `bg-primary-800` / `bg-secondary-600`
+- Primary: Cobalt `#0047AB` with white text
+- Secondary: Tanzanite `#4B0082` with white text
 
 **Dark Mode Buttons:**
-- Primary: `bg-primary-600` (#7c73e6 - Ubuntu blue) with white text
-- Secondary: `bg-secondary-400` (#8FB47F) with white text
-- Hover: `bg-primary-500` / `bg-secondary-300`
-
-**NEVER use `bg-primary` without scale suffix (700/600/500)** - it references CSS variables that blend with backgrounds.
-
-### Navigation Colors (CRITICAL - Sidebar & Menu)
-
-**IMPORTANT**: Navigation items use hardcoded hex values (not CSS variables) for guaranteed WCAG compliance.
-
-**Section Headers:**
-```tsx
-// Always use hardcoded hex values
-className="text-[#6b6b6b] dark:text-[#a8a8a8]"  // 5.74:1 / 4.93:1 contrast
-```
-
-**Active Navigation Items:**
-```tsx
-// Active state - high contrast
-className="bg-[#5f5873] text-white shadow-sm dark:bg-[#7c73e6]"  // 8.5:1 / 7.2:1 contrast
-```
-
-**Inactive/Hover Navigation Items:**
-```tsx
-// Default and hover states
-className="text-[#6b6b6b] hover:bg-[#f0f0f0] hover:text-[#2a2a2a] dark:text-[#a8a8a8] dark:hover:bg-[#343434] dark:hover:text-[#faf9f5]"
-```
-
-**Why Hex Values?**
-- CSS variables like `bg-primary` or `text-muted-foreground` can blend with backgrounds
-- Hardcoded values guarantee WCAG AA/AAA contrast ratios (4.93:1 to 14.2:1)
-- Same approach as Button component for consistency
-- Next.js 16 + Turbopack compatibility
-
-**Example Pattern** (AppSidebar):
-```tsx
-<Link
-  className={cn(
-    "flex items-center gap-3 rounded-lg transition-colors",
-    isActive
-      ? "bg-[#5f5873] text-white shadow-sm dark:bg-[#7c73e6]"
-      : "text-[#6b6b6b] hover:bg-[#f0f0f0] hover:text-[#2a2a2a] dark:text-[#a8a8a8] dark:hover:bg-[#343434] dark:hover:text-[#faf9f5]"
-  )}
->
-  <Icon className="h-5 w-5 shrink-0" />
-  <span className="text-sm font-medium">{label}</span>
-</Link>
-```
-
-### Badge Colors
-- Default: Same as primary buttons (bg-primary-700 light / bg-primary-600 dark)
-- Success: `bg-secondary-500` (Army green) with white text
-- Outline: `border-border bg-transparent` with foreground text
-
-### Color Palette Reference
-```typescript
-// Primary - Warm Purple (Nyuchi Africa)
-primary-700: #5f5873  // Main brand (buttons, badges)
-primary-600: #7c73e6  // Ubuntu blue (dark mode, hover)
-primary-500: #9186ae  // Lighter variant
-primary-800: #4a4560  // Active states
-
-// Secondary - Army Green (Success)
-secondary-500: #729B63  // Main green
-secondary-400: #8FB47F  // Lighter (hover)
-secondary-600: #5d804f  // Darker (active)
-
-// Accent - Sunset Gold
-accent-500: #F6AD55  // Achievements, premium
-```
+- Primary: Cobalt Bright `#00B0FF` with white text
+- Secondary: Tanzanite Bright `#B388FF` with white text
 
 See [BRANDING.md](BRANDING.md) for complete brand guidelines.
-
-### Marketing Site Design System
-
-**Visual Design Principles:**
-- Use gradient backgrounds instead of plain white/colors
-- Gradient text with `bg-gradient-to-r bg-clip-text text-transparent`
-- Hover effects with scale transforms and shadow transitions
-- Border-2 on cards with subtle hover states
-- Rounded-xl (12px) for modern icon containers
-- Leading-relaxed for improved readability
-
-**Gradient Patterns:**
-```tsx
-// Hero Section
-bg-gradient-to-br from-primary-700/10 via-background to-secondary-500/5
-
-// Stats Bar
-bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50
-
-// Solutions Section
-bg-gradient-to-br from-secondary-500/5 via-background to-primary-700/5
-
-// CTA Section
-bg-gradient-to-br from-primary-700/10 via-secondary-500/5 to-accent-500/5
-```
-
-**Card Design:**
-```tsx
-// Feature Cards
-<Card className="border-2 hover:border-primary-700/50 hover:shadow-lg transition-all duration-300 group bg-card">
-  <CardContent className="p-6">
-    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-700/20 to-primary-600/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-      <Icon className="w-6 h-6 text-primary-700" />
-    </div>
-  </CardContent>
-</Card>
-```
-
-**Accessibility:**
-- All gradients maintain WCAG AA contrast ratios
-- Hover states work with keyboard navigation
-- Semantic HTML with proper headings (h1 → h6)
-- ARIA labels on interactive elements
-- Focus visible states on all interactive elements
-
-**Mobile Responsiveness:**
-- Grid layouts: `grid-cols-2 md:grid-cols-4` for stats
-- Text sizing: `text-4xl sm:text-5xl md:text-6xl` for headings
-- Padding: `px-4 sm:px-6` for consistent spacing
-- Buttons: `flex-col sm:flex-row` for stacked mobile layout
 
 ## Architecture
 
@@ -902,56 +811,29 @@ echo "Implementation complete" > NEW_FEATURE_COMPLETE.md  # ❌ Wrong location
 4. Add proficiency tracking dashboard
 5. Enhance AI tutor with granular skill awareness
 
-## Brand Colors (November 11, 2025 Update)
-
-### Button Color Implementation
-
-**IMPORTANT**: Buttons use hardcoded hex values (not Tailwind classes) due to Next.js 16 + Turbopack compatibility.
-
-### Available Button Variants
-
-```tsx
-// Primary (Purple #5f5873)
-<Button>Primary Action</Button>
-<Button variant="default">Primary Action</Button>
-
-// Secondary (Green #729B63)
-<Button variant="secondary">Secondary Action</Button>
-
-// Sunset Deep (Orange #d4634a) - Premium/Highlights
-<Button variant="gold">Premium Feature</Button>
-
-// Warm Brown (#8B7355) - Cultural Content
-<Button variant="warm-brown">Cultural Content</Button>
-
-// Other Variants
-<Button variant="outline">Outline</Button>
-<Button variant="ghost">Ghost</Button>
-<Button variant="destructive">Delete</Button>
-<Button variant="success">Success</Button>
-<Button variant="link">Link</Button>
-```
+## Brand Colors (February 2026 — Five African Minerals)
 
 ### Brand Color Palette
 
-| Color | Hex | Usage | Variant |
-|-------|-----|-------|---------|
-| **Primary Purple** | #5f5873 | Main CTAs, primary actions | `default` |
-| **Secondary Green** | #729B63 | Success, secondary actions | `secondary` |
-| **Sunset Deep** | #d4634a | Premium, highlights | `gold` |
-| **Warm Brown** | #8B7355 | Cultural content | `warm-brown` |
+| Color | Light Hex | Dark Hex | Usage |
+|-------|-----------|----------|-------|
+| **Cobalt (Primary)** | #0047AB | #00B0FF | Main CTAs, primary actions, trust |
+| **Tanzanite (Secondary)** | #4B0082 | #B388FF | Depth, creativity, secondary actions |
+| **Gold (Accent)** | #5D4037 | #FFD740 | Achievement, warmth, premium |
+| **Army Green (Success)** | #729B63 | #8FB47F | Mastery, progress, success states |
 
-### Why Hex Values?
+### Implementation
 
-Buttons use `bg-[#5f5873]` instead of `bg-primary-700` because Next.js 16 + Turbopack + CVA doesn't reliably generate dynamic Tailwind classes. Arbitrary value syntax guarantees colors render correctly.
+Colors are defined in `constants/Colors.ts` and consumed via `lightTheme` / `darkTheme` objects. All styling uses React Native `StyleSheet` (no Tailwind/CSS).
 
-### Accessibility
+```typescript
+import { Colors, lightTheme, darkTheme } from '@/constants/Colors'
 
-All button combinations meet WCAG 2.1 standards:
-- Purple + White: 8.5:1 (AAA) ✅
-- Green + White: 5.1:1 (AA) ✅
-- Sunset + White: 4.8:1 (AA) ✅
-- Brown + White: 4.9:1 (AA) ✅
+// Use theme objects for semantic colors
+const theme = isDark ? darkTheme : lightTheme
+style={{ backgroundColor: theme.primary }}  // #0047AB or #00B0FF
 
-**See**: [summaries/CONTRAST_FIXES_COMPLETE.md](summaries/CONTRAST_FIXES_COMPLETE.md) for complete contrast ratio documentation and navigation color patterns.
+// Use Colors directly for specific shades
+style={{ backgroundColor: Colors.primary[600] }}  // Always #0047AB
+```
 

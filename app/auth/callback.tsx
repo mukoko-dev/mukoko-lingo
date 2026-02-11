@@ -8,7 +8,7 @@ import {
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { authenticateMagicLink } from '@/lib/auth/stytch-client'
 
 /**
@@ -78,7 +78,7 @@ export default function AuthCallbackScreen() {
       <View style={styles.container}>
         {status === 'loading' ? (
           <View style={styles.content}>
-            <ActivityIndicator size="large" color={Colors.primary[600]} />
+            <ActivityIndicator size="large" color={theme.primary} />
             <Text style={styles.title}>Authenticating...</Text>
             <Text style={styles.subtitle}>Please wait while we verify your identity</Text>
           </View>

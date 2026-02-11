@@ -23,27 +23,27 @@ import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { getUserSkills, getStudyStreak, getProgress } from '@/lib/storage/database'
 
-const SKILLS = [
+const getSkills = (theme: typeof lightTheme) => [
   {
     id: 'pronunciation',
     name: 'Pronunciation',
     description: 'Sound production, tone, rhythm',
     icon: Volume2,
-    color: Colors.primary[600],
+    color: theme.primary,
   },
   {
     id: 'vocabulary',
     name: 'Vocabulary',
     description: 'Word knowledge, context usage',
     icon: BookText,
-    color: Colors.secondary[500],
+    color: theme.secondary,
   },
   {
     id: 'grammar',
     name: 'Grammar',
     description: 'Sentence structure, verb forms',
     icon: Languages,
-    color: Colors.accent[500],
+    color: theme.accent,
   },
   {
     id: 'comprehension',
@@ -107,22 +107,22 @@ export default function SkillsScreen() {
       {/* Stats Cards */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: Colors.accent[500] + '20' }]}>
-            <Flame size={24} color={Colors.accent[500]} />
+          <View style={[styles.statIcon, { backgroundColor: theme.accent + '20' }]}>
+            <Flame size={24} color={theme.accent} />
           </View>
           <Text style={styles.statValue}>{streak}</Text>
           <Text style={styles.statLabel}>Day Streak</Text>
         </View>
         <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: Colors.secondary[500] + '20' }]}>
-            <Trophy size={24} color={Colors.secondary[500]} />
+          <View style={[styles.statIcon, { backgroundColor: theme.secondary + '20' }]}>
+            <Trophy size={24} color={theme.secondary} />
           </View>
           <Text style={styles.statValue}>{overallProgress}%</Text>
           <Text style={styles.statLabel}>Overall</Text>
         </View>
         <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: Colors.primary[600] + '20' }]}>
-            <Trophy size={24} color={Colors.primary[600]} />
+          <View style={[styles.statIcon, { backgroundColor: theme.primary + '20' }]}>
+            <Trophy size={24} color={theme.primary} />
           </View>
           <Text style={styles.statValue}>{masteredCount}</Text>
           <Text style={styles.statLabel}>Mastered</Text>
@@ -151,7 +151,7 @@ export default function SkillsScreen() {
 
       {/* Skills List */}
       <Text style={styles.sectionTitle}>Skills Breakdown</Text>
-      {SKILLS.map(skill => {
+      {getSkills(theme).map(skill => {
         const userSkill = skills[skill.id]
         const score = userSkill?.score || 0
         const Icon = skill.icon
@@ -252,7 +252,7 @@ const createStyles = (theme: typeof lightTheme) =>
       height: 100,
       borderRadius: 50,
       borderWidth: 8,
-      borderColor: Colors.primary[600],
+      borderColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 16,
@@ -264,7 +264,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     progressLevel: {
       fontSize: 12,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '600',
     },
     progressInfo: {
@@ -283,7 +283,7 @@ const createStyles = (theme: typeof lightTheme) =>
       marginBottom: 12,
     },
     assessButton: {
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingHorizontal: 16,
       paddingVertical: 8,
       borderRadius: 8,
@@ -351,7 +351,7 @@ const createStyles = (theme: typeof lightTheme) =>
       marginRight: 4,
     },
     ubuntuCard: {
-      backgroundColor: Colors.primary[700],
+      backgroundColor: theme.primary,
       borderRadius: 16,
       padding: 20,
       marginTop: 12,

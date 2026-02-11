@@ -33,7 +33,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import {
   signInWithEmail,
   signUpWithEmail,
@@ -62,8 +62,10 @@ export default function AuthScreen() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', ''])
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [otpMethodId, setOtpMethodId] = useState('')
   const [showMoreOptions, setShowMoreOptions] = useState(false)
   const { width } = useWindowDimensions()
 
@@ -72,7 +74,22 @@ export default function AuthScreen() {
   // Responsive breakpoints
   const isTablet = width >= 768
 
-  const styles = createStyles(theme, isTablet)
+  const styles = createStyles(theme, isTablet, isDark)
+
+  // Show error message inline (Alert.alert is unreliable on Expo Web)
+  const showError = (message: string) => {
+    setErrorMessage(message)
+    setStatusMessage('')
+    // Also try Alert for native platforms
+    if (Platform.OS !== 'web') {
+      Alert.alert('Error', message)
+    }
+  }
+
+  // Clear error when user interacts
+  const clearError = () => {
+    if (errorMessage) setErrorMessage('')
+  }
 
   // Email validation
   const validateEmail = (value: string): boolean => {
@@ -99,12 +116,13 @@ export default function AuthScreen() {
 
   // Handle sending OTP code
   const handleSendOtp = async () => {
+    clearError()
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address')
+      showError('Please enter your email address')
       return
     }
     if (!validateEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address')
+      showError('Please enter a valid email address')
       return
     }
 
@@ -112,12 +130,13 @@ export default function AuthScreen() {
     setStatusMessage('Sending code...')
 
     try {
-      const { error } = await signInWithOtp(email)
-      if (error) throw error
+      const result = await signInWithOtp(email)
+      if (result.error) throw result.error
+      if (result.method_id) setOtpMethodId(result.method_id)
       setAuthStep('verify-otp')
       setStatusMessage('')
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send code')
+      showError(error.message || 'Failed to send code')
       setStatusMessage('')
     } finally {
       setLoading(false)
@@ -126,9 +145,10 @@ export default function AuthScreen() {
 
   // Handle OTP verification
   const handleVerifyOtp = async () => {
+    clearError()
     const code = otpCode.join('')
     if (code.length !== 6) {
-      Alert.alert('Error', 'Please enter the complete 6-digit code')
+      showError('Please enter the complete 6-digit code')
       return
     }
 
@@ -136,7 +156,7 @@ export default function AuthScreen() {
     setStatusMessage('Verifying code...')
 
     try {
-      const { data, error } = await verifyOtp(email, code)
+      const { data, error } = await verifyOtp(otpMethodId, code)
       if (error) throw error
 
       if (data?.session) {
@@ -147,7 +167,7 @@ export default function AuthScreen() {
         throw new Error('Verification failed. Please try again.')
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Invalid code. Please try again.')
+      showError(error.message || 'Invalid code. Please try again.')
       setStatusMessage('')
     } finally {
       setLoading(false)
@@ -156,12 +176,13 @@ export default function AuthScreen() {
 
   // Handle magic link
   const handleSendMagicLink = async () => {
+    clearError()
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address')
+      showError('Please enter your email address')
       return
     }
     if (!validateEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address')
+      showError('Please enter a valid email address')
       return
     }
 
@@ -174,7 +195,7 @@ export default function AuthScreen() {
       setAuthStep('magic-link-sent')
       setStatusMessage('')
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send magic link')
+      showError(error.message || 'Failed to send magic link')
       setStatusMessage('')
     } finally {
       setLoading(false)
@@ -183,24 +204,25 @@ export default function AuthScreen() {
 
   // Handle password auth (existing flow)
   const handlePasswordAuth = async () => {
+    clearError()
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields')
+      showError('Please fill in all fields')
       return
     }
 
     if (!validateEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address')
+      showError('Please enter a valid email address')
       return
     }
 
     if (isSignUp) {
       const passwordError = validatePassword(password)
       if (passwordError) {
-        Alert.alert('Invalid Password', passwordError)
+        showError(passwordError)
         return
       }
       if (password !== confirmPassword) {
-        Alert.alert('Error', 'Passwords do not match')
+        showError('Passwords do not match')
         return
       }
     }
@@ -215,12 +237,7 @@ export default function AuthScreen() {
 
         if (data?.user && !data?.session) {
           setLoading(false)
-          setStatusMessage('')
-          Alert.alert(
-            'Check Your Email',
-            'We sent you a verification link. Please check your email and click the link to activate your account.',
-            [{ text: 'OK' }]
-          )
+          setStatusMessage('Check your email! We sent a verification link to activate your account.')
         } else if (data?.session) {
           setStatusMessage('Account created! Redirecting...')
           await new Promise(resolve => setTimeout(resolve, 500))
@@ -246,8 +263,7 @@ export default function AuthScreen() {
         router.replace('/(tabs)')
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Authentication failed')
-      setStatusMessage('')
+      showError(error.message || 'Authentication failed')
     } finally {
       setLoading(false)
     }
@@ -255,15 +271,16 @@ export default function AuthScreen() {
 
   // Handle WhatsApp OTP send
   const handleSendWhatsAppOtp = async () => {
+    clearError()
     if (!phoneNumber) {
-      Alert.alert('Error', 'Please enter your phone number')
+      showError('Please enter your phone number')
       return
     }
 
     // Validate E.164 format
     const phoneRegex = /^\+[1-9]\d{6,14}$/
     if (!phoneRegex.test(phoneNumber)) {
-      Alert.alert('Error', 'Please enter a valid phone number with country code (e.g. +263771234567)')
+      showError('Please enter a valid phone number with country code (e.g. +263771234567)')
       return
     }
 
@@ -271,12 +288,13 @@ export default function AuthScreen() {
     setStatusMessage('Sending WhatsApp code...')
 
     try {
-      const { error } = await signInWithWhatsApp(phoneNumber)
-      if (error) throw error
+      const result = await signInWithWhatsApp(phoneNumber)
+      if (result.error) throw result.error
+      if (result.method_id) setOtpMethodId(result.method_id)
       setAuthStep('verify-whatsapp')
       setStatusMessage('')
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send WhatsApp OTP')
+      showError(error.message || 'Failed to send WhatsApp OTP')
       setStatusMessage('')
     } finally {
       setLoading(false)
@@ -285,9 +303,10 @@ export default function AuthScreen() {
 
   // Handle WhatsApp OTP verification
   const handleVerifyWhatsAppOtp = async () => {
+    clearError()
     const code = otpCode.join('')
     if (code.length !== 6) {
-      Alert.alert('Error', 'Please enter the complete 6-digit code')
+      showError('Please enter the complete 6-digit code')
       return
     }
 
@@ -295,7 +314,7 @@ export default function AuthScreen() {
     setStatusMessage('Verifying code...')
 
     try {
-      const { data, error } = await verifyWhatsAppOtp(phoneNumber, code)
+      const { data, error } = await verifyWhatsAppOtp(otpMethodId, code, phoneNumber)
       if (error) throw error
 
       if (data?.session) {
@@ -306,44 +325,36 @@ export default function AuthScreen() {
         throw new Error('Verification failed. Please try again.')
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Invalid code. Please try again.')
+      showError(error.message || 'Invalid code. Please try again.')
       setStatusMessage('')
     } finally {
       setLoading(false)
     }
   }
 
-  // Handle OTP input
-  const handleOtpChange = (text: string, index: number) => {
-    // Only allow digits
-    const digit = text.replace(/[^0-9]/g, '')
-    const newOtp = [...otpCode]
-    newOtp[index] = digit.slice(-1)
-    setOtpCode(newOtp)
+  // Handle OTP input (typing or paste)
+  const handleOtpInput = (text: string, index: number) => {
+    const digits = text.replace(/[^0-9]/g, '')
 
-    // Auto-advance to next input
-    if (digit && index < 5) {
-      otpInputRefs.current[index + 1]?.focus()
-    }
-  }
-
-  const handleOtpKeyPress = (key: string, index: number) => {
-    if (key === 'Backspace' && !otpCode[index] && index > 0) {
-      otpInputRefs.current[index - 1]?.focus()
-    }
-  }
-
-  // Handle paste for OTP
-  const handleOtpPaste = (text: string) => {
-    const digits = text.replace(/[^0-9]/g, '').slice(0, 6)
     if (digits.length > 1) {
-      const newOtp = [...otpCode]
+      // Multi-digit input = paste. Distribute across all boxes starting from index 0.
+      const newOtp = ['', '', '', '', '', '']
       for (let i = 0; i < digits.length && i < 6; i++) {
         newOtp[i] = digits[i]
       }
       setOtpCode(newOtp)
-      const nextIndex = Math.min(digits.length, 5)
-      otpInputRefs.current[nextIndex]?.focus()
+      const focusIndex = Math.min(digits.length, 5)
+      otpInputRefs.current[focusIndex]?.focus()
+    } else {
+      // Single digit input = normal typing
+      const newOtp = [...otpCode]
+      newOtp[index] = digits.slice(-1)
+      setOtpCode(newOtp)
+
+      // Auto-advance to next input
+      if (digits && index < 5) {
+        otpInputRefs.current[index + 1]?.focus()
+      }
     }
   }
 
@@ -351,10 +362,12 @@ export default function AuthScreen() {
     if (authStep === 'verify-whatsapp') {
       setAuthStep('whatsapp-phone')
       setOtpCode(['', '', '', '', '', ''])
+      setOtpMethodId('')
       setStatusMessage('')
     } else if (authStep === 'verify-otp' || authStep === 'magic-link-sent' || authStep === 'password-form' || authStep === 'whatsapp-phone') {
       setAuthStep('email')
       setOtpCode(['', '', '', '', '', ''])
+      setOtpMethodId('')
       setStatusMessage('')
     } else {
       router.back()
@@ -450,9 +463,9 @@ export default function AuthScreen() {
       >
         <Text style={styles.methodToggleText}>More sign-in options</Text>
         {showMoreOptions ? (
-          <ChevronUp size={16} color={Colors.primary[600]} />
+          <ChevronUp size={16} color={theme.primary} />
         ) : (
-          <ChevronDown size={16} color={Colors.primary[600]} />
+          <ChevronDown size={16} color={theme.primary} />
         )}
       </TouchableOpacity>
 
@@ -463,8 +476,8 @@ export default function AuthScreen() {
               style={styles.methodOption}
               onPress={() => handleMethodSelect('otp')}
             >
-              <View style={[styles.methodIconContainer, { backgroundColor: Colors.accent[600] + '20' }]}>
-                <KeyRound size={18} color={Colors.accent[600]} />
+              <View style={[styles.methodIconContainer, { backgroundColor: theme.accent + '20' }]}>
+                <KeyRound size={18} color={theme.accent} />
               </View>
               <View style={styles.methodOptionTextContainer}>
                 <Text style={styles.methodOptionTitle}>Email code</Text>
@@ -480,8 +493,8 @@ export default function AuthScreen() {
               style={styles.methodOption}
               onPress={() => handleMethodSelect('magic-link')}
             >
-              <View style={[styles.methodIconContainer, { backgroundColor: Colors.secondary[800] + '20' }]}>
-                <Link2 size={18} color={Colors.secondary[800]} />
+              <View style={[styles.methodIconContainer, { backgroundColor: theme.secondary + '20' }]}>
+                <Link2 size={18} color={theme.secondary} />
               </View>
               <View style={styles.methodOptionTextContainer}>
                 <Text style={styles.methodOptionTitle}>Magic link</Text>
@@ -514,8 +527,8 @@ export default function AuthScreen() {
               style={styles.methodOption}
               onPress={() => handleMethodSelect('password')}
             >
-              <View style={[styles.methodIconContainer, { backgroundColor: Colors.primary[600] + '20' }]}>
-                <Lock size={18} color={Colors.primary[600]} />
+              <View style={[styles.methodIconContainer, { backgroundColor: theme.primary + '20' }]}>
+                <Lock size={18} color={theme.primary} />
               </View>
               <View style={styles.methodOptionTextContainer}>
                 <Text style={styles.methodOptionTitle}>Password</Text>
@@ -549,16 +562,13 @@ export default function AuthScreen() {
               digit ? styles.otpInputFilled : null,
             ]}
             value={digit}
-            onChangeText={(text) => {
-              if (text.length > 1) {
-                handleOtpPaste(text)
-              } else {
-                handleOtpChange(text, index)
+            onChangeText={(text) => handleOtpInput(text, index)}
+            onKeyPress={({ nativeEvent }) => {
+              if (nativeEvent.key === 'Backspace' && !otpCode[index] && index > 0) {
+                otpInputRefs.current[index - 1]?.focus()
               }
             }}
-            onKeyPress={({ nativeEvent }) => handleOtpKeyPress(nativeEvent.key, index)}
             keyboardType="number-pad"
-            maxLength={1}
             textAlign="center"
             autoFocus={index === 0}
           />
@@ -594,7 +604,7 @@ export default function AuthScreen() {
   const renderMagicLinkSentStep = () => (
     <>
       <View style={styles.sentIconContainer}>
-        <Mail size={48} color={Colors.primary[600]} />
+        <Mail size={48} color={theme.primary} />
       </View>
       <Text style={styles.cardTitle}>Check your email</Text>
       <Text style={styles.cardSubtitle}>
@@ -610,7 +620,7 @@ export default function AuthScreen() {
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color={Colors.primary[600]} />
+          <ActivityIndicator color={theme.primary} />
         ) : (
           <Text style={styles.secondaryButtonText}>Resend magic link</Text>
         )}
@@ -808,16 +818,13 @@ export default function AuthScreen() {
               digit ? styles.otpInputFilled : null,
             ]}
             value={digit}
-            onChangeText={(text) => {
-              if (text.length > 1) {
-                handleOtpPaste(text)
-              } else {
-                handleOtpChange(text, index)
+            onChangeText={(text) => handleOtpInput(text, index)}
+            onKeyPress={({ nativeEvent }) => {
+              if (nativeEvent.key === 'Backspace' && !otpCode[index] && index > 0) {
+                otpInputRefs.current[index - 1]?.focus()
               }
             }}
-            onKeyPress={({ nativeEvent }) => handleOtpKeyPress(nativeEvent.key, index)}
             keyboardType="number-pad"
-            maxLength={1}
             textAlign="center"
             autoFocus={index === 0}
           />
@@ -880,10 +887,22 @@ export default function AuthScreen() {
               </Text>
             </View>
 
+            {/* Error Message */}
+            {errorMessage ? (
+              <TouchableOpacity
+                style={styles.errorContainer}
+                onPress={() => setErrorMessage('')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.errorText}>{errorMessage}</Text>
+                <Text style={styles.errorDismiss}>Tap to dismiss</Text>
+              </TouchableOpacity>
+            ) : null}
+
             {/* Status Message */}
             {statusMessage ? (
               <View style={styles.statusContainer}>
-                <ActivityIndicator size="small" color={Colors.primary[600]} />
+                <ActivityIndicator size="small" color={theme.primary} />
                 <Text style={styles.statusText}>{statusMessage}</Text>
               </View>
             ) : null}
@@ -907,20 +926,20 @@ export default function AuthScreen() {
             <View style={styles.features}>
               <Text style={styles.featuresTitle}>Why create an account?</Text>
               <View style={styles.featureItem}>
-                <View style={[styles.featureIconContainer, { backgroundColor: Colors.accent[600] + '20' }]}>
-                  <Cloud size={18} color={Colors.accent[600]} />
+                <View style={[styles.featureIconContainer, { backgroundColor: theme.accent + '20' }]}>
+                  <Cloud size={18} color={theme.accent} />
                 </View>
                 <Text style={styles.featureText}>Sync progress across devices</Text>
               </View>
               <View style={styles.featureItem}>
-                <View style={[styles.featureIconContainer, { backgroundColor: Colors.primary[600] + '20' }]}>
-                  <Bot size={18} color={Colors.primary[600]} />
+                <View style={[styles.featureIconContainer, { backgroundColor: theme.primary + '20' }]}>
+                  <Bot size={18} color={theme.primary} />
                 </View>
                 <Text style={styles.featureText}>Personalized AI tutoring</Text>
               </View>
               <View style={styles.featureItem}>
-                <View style={[styles.featureIconContainer, { backgroundColor: Colors.secondary[800] + '20' }]}>
-                  <BarChart3 size={18} color={Colors.secondary[800]} />
+                <View style={[styles.featureIconContainer, { backgroundColor: theme.secondary + '20' }]}>
+                  <BarChart3 size={18} color={theme.secondary} />
                 </View>
                 <Text style={styles.featureText}>Track your learning journey</Text>
               </View>
@@ -932,7 +951,7 @@ export default function AuthScreen() {
   )
 }
 
-const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
+const createStyles = (theme: typeof lightTheme, isTablet: boolean, isDark: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -979,6 +998,26 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       fontSize: isTablet ? 18 : 16,
       color: theme.textSecondary,
     },
+    errorContainer: {
+      backgroundColor: isDark ? '#450a0a' : '#fef2f2',
+      borderWidth: 1,
+      borderColor: isDark ? '#7f1d1d' : '#fecaca',
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 16,
+    },
+    errorText: {
+      fontSize: 14,
+      color: isDark ? '#fca5a5' : '#dc2626',
+      fontWeight: '500',
+      textAlign: 'center',
+    },
+    errorDismiss: {
+      fontSize: 12,
+      color: theme.textMuted,
+      textAlign: 'center',
+      marginTop: 4,
+    },
     statusContainer: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -988,7 +1027,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
     },
     statusText: {
       fontSize: 14,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '500',
     },
     card: {
@@ -1040,7 +1079,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingVertical: 16,
       borderRadius: 12,
       marginTop: 8,
@@ -1063,10 +1102,10 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       borderRadius: 12,
       marginTop: 8,
       borderWidth: 1.5,
-      borderColor: Colors.primary[600],
+      borderColor: theme.primary,
     },
     secondaryButtonText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 16,
       fontWeight: '600',
     },
@@ -1078,7 +1117,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       gap: 4,
     },
     methodToggleText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 14,
       fontWeight: '500',
     },
@@ -1135,8 +1174,8 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       textAlign: 'center',
     },
     otpInputFilled: {
-      borderColor: Colors.primary[600],
-      backgroundColor: Colors.primary[600] + '08',
+      borderColor: theme.primary,
+      backgroundColor: theme.primary + '08',
     },
     resendButton: {
       alignItems: 'center',
@@ -1144,7 +1183,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       paddingVertical: 8,
     },
     resendText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 14,
     },
     sentIconContainer: {
@@ -1167,7 +1206,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       marginBottom: 8,
     },
     forgotPasswordText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 14,
     },
     toggleButton: {
@@ -1175,7 +1214,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean) =>
       marginTop: 16,
     },
     toggleText: {
-      color: Colors.primary[600],
+      color: theme.primary,
       fontSize: 15,
     },
     skipButton: {

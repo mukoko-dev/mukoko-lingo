@@ -26,7 +26,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { phrasesApi } from '@/lib/services/api-client'
 
 interface Phrase {
@@ -196,7 +196,7 @@ export default function AdminPhrasesScreen() {
       <>
         <Stack.Screen options={{ title: 'Phrase Management' }} />
         <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-          <ActivityIndicator size="large" color={Colors.primary[600]} />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
             Loading phrases...
           </Text>
@@ -225,7 +225,7 @@ export default function AdminPhrasesScreen() {
             style={[styles.filterButton, { backgroundColor: theme.card }]}
             onPress={() => setShowFilters(!showFilters)}
           >
-            <Filter size={20} color={Colors.primary[600]} />
+            <Filter size={20} color={theme.primary} />
           </TouchableOpacity>
         </View>
 
@@ -247,7 +247,7 @@ export default function AdminPhrasesScreen() {
                     styles.filterChip,
                     {
                       backgroundColor:
-                        selectedCategory === cat ? Colors.primary[600] : theme.card,
+                        selectedCategory === cat ? theme.primary : theme.card,
                     },
                   ]}
                   onPress={() => setSelectedCategory(cat)}
@@ -278,7 +278,7 @@ export default function AdminPhrasesScreen() {
                     styles.filterChip,
                     {
                       backgroundColor:
-                        selectedDifficulty === diff ? Colors.secondary[700] : theme.card,
+                        selectedDifficulty === diff ? theme.secondary : theme.card,
                     },
                   ]}
                   onPress={() => setSelectedDifficulty(diff)}
@@ -346,11 +346,11 @@ export default function AdminPhrasesScreen() {
                       <View
                         style={[
                           styles.categoryBadge,
-                          { backgroundColor: Colors.primary[600] + '20' },
+                          { backgroundColor: theme.primary + '20' },
                         ]}
                       >
                         <Text
-                          style={[styles.categoryText, { color: Colors.primary[600] }]}
+                          style={[styles.categoryText, { color: theme.primary }]}
                         >
                           {phrase.category}
                         </Text>
@@ -359,11 +359,11 @@ export default function AdminPhrasesScreen() {
                         <View
                           style={[
                             styles.difficultyBadge,
-                            { backgroundColor: Colors.secondary[700] + '20' },
+                            { backgroundColor: theme.secondary + '20' },
                           ]}
                         >
                           <Text
-                            style={[styles.difficultyText, { color: Colors.secondary[700] }]}
+                            style={[styles.difficultyText, { color: theme.secondary }]}
                           >
                             {phrase.difficulty}
                           </Text>
@@ -416,11 +416,11 @@ export default function AdminPhrasesScreen() {
                     )}
                     <View style={styles.actionsRow}>
                       <TouchableOpacity
-                        style={[styles.actionButton, { backgroundColor: Colors.primary[600] + '20' }]}
+                        style={[styles.actionButton, { backgroundColor: theme.primary + '20' }]}
                         onPress={() => handleEdit(phrase)}
                       >
-                        <Edit3 size={16} color={Colors.primary[600]} />
-                        <Text style={[styles.actionButtonText, { color: Colors.primary[600] }]}>
+                        <Edit3 size={16} color={theme.primary} />
+                        <Text style={[styles.actionButtonText, { color: theme.primary }]}>
                           Edit
                         </Text>
                       </TouchableOpacity>
@@ -457,9 +457,9 @@ export default function AdminPhrasesScreen() {
             <Text style={[styles.modalTitle, { color: theme.text }]}>Edit Phrase</Text>
             <TouchableOpacity onPress={handleSave} disabled={saving}>
               {saving ? (
-                <ActivityIndicator size="small" color={Colors.primary[600]} />
+                <ActivityIndicator size="small" color={theme.primary} />
               ) : (
-                <Text style={[styles.saveButton, { color: Colors.primary[600] }]}>Save</Text>
+                <Text style={[styles.saveButton, { color: theme.primary }]}>Save</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -552,7 +552,7 @@ export default function AdminPhrasesScreen() {
                           {
                             backgroundColor:
                               editingPhrase.difficulty === diff
-                                ? Colors.primary[600]
+                                ? theme.primary
                                 : theme.card,
                           },
                         ]}

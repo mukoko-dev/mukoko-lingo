@@ -26,7 +26,7 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 import { adminStatsApi } from '@/lib/services/api-client'
 
 interface AdminStats {
@@ -46,33 +46,33 @@ interface QuickAction {
   description: string
 }
 
-const QUICK_ACTIONS: QuickAction[] = [
+const getQuickActions = (theme: typeof lightTheme): QuickAction[] => [
   {
     label: 'User Management',
     route: '/admin/users',
     icon: Users,
-    color: Colors.primary[600],
+    color: theme.primary,
     description: 'Manage users and roles',
   },
   {
     label: 'Phrase Management',
     route: '/admin/phrases',
     icon: BookOpen,
-    color: Colors.secondary[700],
+    color: theme.secondary,
     description: 'Add, edit, delete phrases',
   },
   {
     label: 'Learning Standards',
     route: '/admin/standards',
     icon: GraduationCap,
-    color: Colors.primary[700],
+    color: theme.primary,
     description: 'Configure AI proficiency levels',
   },
   {
     label: 'Content Guardrails',
     route: '/admin/guardrails',
     icon: Shield,
-    color: Colors.secondary[600],
+    color: theme.secondary,
     description: 'Manage moderation rules',
   },
   {
@@ -86,7 +86,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     label: 'Content Moderation',
     route: '/admin/moderation',
     icon: AlertTriangle,
-    color: Colors.accent[600],
+    color: theme.accent,
     description: 'Review flagged content',
   },
   {
@@ -154,7 +154,7 @@ export default function AdminOverviewScreen() {
       <>
         <Stack.Screen options={{ title: 'Admin Dashboard' }} />
         <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
-          <ActivityIndicator size="large" color={Colors.primary[600]} />
+          <ActivityIndicator size="large" color={theme.primary} />
           <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
             Loading dashboard...
           </Text>
@@ -186,8 +186,8 @@ export default function AdminOverviewScreen() {
           <Text style={styles.sectionTitle}>Overview</Text>
           <View style={styles.statsGrid}>
             <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-              <View style={[styles.statIcon, { backgroundColor: Colors.primary[600] + '20' }]}>
-                <Users size={24} color={Colors.primary[600]} />
+              <View style={[styles.statIcon, { backgroundColor: theme.primary + '20' }]}>
+                <Users size={24} color={theme.primary} />
               </View>
               <Text style={[styles.statValue, { color: theme.text }]}>
                 {stats?.total_users || 0}
@@ -198,8 +198,8 @@ export default function AdminOverviewScreen() {
             </View>
 
             <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-              <View style={[styles.statIcon, { backgroundColor: Colors.secondary[700] + '20' }]}>
-                <BookOpen size={24} color={Colors.secondary[700]} />
+              <View style={[styles.statIcon, { backgroundColor: theme.secondary + '20' }]}>
+                <BookOpen size={24} color={theme.secondary} />
               </View>
               <Text style={[styles.statValue, { color: theme.text }]}>
                 {stats?.total_phrases || 0}
@@ -210,8 +210,8 @@ export default function AdminOverviewScreen() {
             </View>
 
             <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-              <View style={[styles.statIcon, { backgroundColor: Colors.accent[600] + '20' }]}>
-                <Eye size={24} color={Colors.accent[600]} />
+              <View style={[styles.statIcon, { backgroundColor: theme.accent + '20' }]}>
+                <Eye size={24} color={theme.accent} />
               </View>
               <Text style={[styles.statValue, { color: theme.text }]}>
                 {stats?.total_views || 0}
@@ -222,8 +222,8 @@ export default function AdminOverviewScreen() {
             </View>
 
             <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-              <View style={[styles.statIcon, { backgroundColor: Colors.primary[700] + '20' }]}>
-                <Bookmark size={24} color={Colors.primary[700]} />
+              <View style={[styles.statIcon, { backgroundColor: theme.primary + '20' }]}>
+                <Bookmark size={24} color={theme.primary} />
               </View>
               <Text style={[styles.statValue, { color: theme.text }]}>
                 {stats?.total_bookmarks || 0}
@@ -234,8 +234,8 @@ export default function AdminOverviewScreen() {
             </View>
 
             <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-              <View style={[styles.statIcon, { backgroundColor: Colors.secondary[600] + '20' }]}>
-                <TrendingUp size={24} color={Colors.secondary[600]} />
+              <View style={[styles.statIcon, { backgroundColor: theme.secondary + '20' }]}>
+                <TrendingUp size={24} color={theme.secondary} />
               </View>
               <Text style={[styles.statValue, { color: theme.text }]}>
                 {stats?.total_progress_records || 0}
@@ -246,8 +246,8 @@ export default function AdminOverviewScreen() {
             </View>
 
             <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-              <View style={[styles.statIcon, { backgroundColor: Colors.accent[500] + '20' }]}>
-                <Activity size={24} color={Colors.accent[500]} />
+              <View style={[styles.statIcon, { backgroundColor: theme.accent + '20' }]}>
+                <Activity size={24} color={theme.accent} />
               </View>
               <Text style={[styles.statValue, { color: theme.text }]}>
                 {stats?.total_admins || 0}
@@ -263,7 +263,7 @@ export default function AdminOverviewScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionsList}>
-            {QUICK_ACTIONS.map((action, index) => {
+            {getQuickActions(theme).map((action, index) => {
               const Icon = action.icon
               return (
                 <TouchableOpacity

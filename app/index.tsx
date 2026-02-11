@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { View, ActivityIndicator, StyleSheet } from 'react-native'
 
 import { useColorScheme } from '@/components/useColorScheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
+import { lightTheme, darkTheme } from '@/constants/Colors'
 
 const ONBOARDING_KEY = '@mukoko_onboarding_complete'
 
@@ -35,7 +35,7 @@ export default function IndexRedirect() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <ActivityIndicator size="large" color={Colors.primary[600]} />
+      <ActivityIndicator size="large" color={theme.primary} />
     </View>
   )
 }

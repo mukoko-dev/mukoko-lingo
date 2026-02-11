@@ -109,8 +109,8 @@ export default function InsightsScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'mastered': return Colors.success[500]
-      case 'practiced': return Colors.secondary[500]
-      case 'learning': return Colors.accent[500]
+      case 'practiced': return theme.secondary
+      case 'learning': return theme.accent
       default: return theme.textMuted
     }
   }
@@ -179,8 +179,8 @@ export default function InsightsScreen() {
           {/* Quick Stats Row */}
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
-              <View style={[styles.statIconBg, { backgroundColor: Colors.accent[500] + '20' }]}>
-                <Flame size={20} color={Colors.accent[500]} />
+              <View style={[styles.statIconBg, { backgroundColor: theme.accent + '20' }]}>
+                <Flame size={20} color={theme.accent} />
               </View>
               <Text style={styles.statValue}>{data.streak}</Text>
               <Text style={styles.statLabel}>Day Streak</Text>
@@ -193,15 +193,15 @@ export default function InsightsScreen() {
               <Text style={styles.statLabel}>Mastered</Text>
             </View>
             <View style={styles.statCard}>
-              <View style={[styles.statIconBg, { backgroundColor: Colors.secondary[500] + '20' }]}>
-                <Bookmark size={20} color={Colors.secondary[500]} />
+              <View style={[styles.statIconBg, { backgroundColor: theme.secondary + '20' }]}>
+                <Bookmark size={20} color={theme.secondary} />
               </View>
               <Text style={styles.statValue}>{data.bookmarkedIds.length}</Text>
               <Text style={styles.statLabel}>Bookmarks</Text>
             </View>
             <View style={styles.statCard}>
-              <View style={[styles.statIconBg, { backgroundColor: Colors.primary[600] + '20' }]}>
-                <Clock size={20} color={Colors.primary[600]} />
+              <View style={[styles.statIconBg, { backgroundColor: theme.primary + '20' }]}>
+                <Clock size={20} color={theme.primary} />
               </View>
               <Text style={styles.statValue}>
                 {totalHours > 0 ? `${totalHours}h` : `${totalMinutes}m`}
@@ -213,7 +213,7 @@ export default function InsightsScreen() {
           {/* Proficiency Card */}
           <View style={styles.proficiencyCard}>
             <View style={styles.proficiencyHeader}>
-              <TrendingUp size={20} color={Colors.primary[600]} />
+              <TrendingUp size={20} color={theme.primary} />
               <Text style={styles.proficiencyTitle}>Overall Proficiency</Text>
             </View>
             <View style={styles.proficiencyContent}>
@@ -253,7 +253,7 @@ export default function InsightsScreen() {
           {/* Phrase Mastery Breakdown */}
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <BarChart3 size={20} color={Colors.primary[600]} />
+              <BarChart3 size={20} color={theme.primary} />
               <Text style={styles.sectionTitle}>Phrase Mastery</Text>
             </View>
 
@@ -268,13 +268,13 @@ export default function InsightsScreen() {
               {practicedCount > 0 && (
                 <View style={[
                   styles.masterySegment,
-                  { flex: practicedCount, backgroundColor: Colors.secondary[500] },
+                  { flex: practicedCount, backgroundColor: theme.secondary },
                 ]} />
               )}
               {learningCount > 0 && (
                 <View style={[
                   styles.masterySegment,
-                  { flex: learningCount, backgroundColor: Colors.accent[500] },
+                  { flex: learningCount, backgroundColor: theme.accent },
                 ]} />
               )}
               {totalPhrases - totalTracked > 0 && (
@@ -291,11 +291,11 @@ export default function InsightsScreen() {
                 <Text style={styles.legendText}>Mastered ({masteredCount})</Text>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: Colors.secondary[500] }]} />
+                <View style={[styles.legendDot, { backgroundColor: theme.secondary }]} />
                 <Text style={styles.legendText}>Practiced ({practicedCount})</Text>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: Colors.accent[500] }]} />
+                <View style={[styles.legendDot, { backgroundColor: theme.accent }]} />
                 <Text style={styles.legendText}>Learning ({learningCount})</Text>
               </View>
               <View style={styles.legendItem}>
@@ -308,7 +308,7 @@ export default function InsightsScreen() {
           {/* Category Breakdown */}
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <BookOpen size={20} color={Colors.primary[600]} />
+              <BookOpen size={20} color={theme.primary} />
               <Text style={styles.sectionTitle}>By Category</Text>
             </View>
             {categoryBreakdown.map(cat => (
@@ -331,7 +331,7 @@ export default function InsightsScreen() {
           {recentSessions.length > 0 && (
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeader}>
-                <Clock size={20} color={Colors.primary[600]} />
+                <Clock size={20} color={theme.primary} />
                 <Text style={styles.sectionTitle}>Recent Activity</Text>
               </View>
               {recentSessions.map((session, idx) => {
@@ -461,8 +461,8 @@ export default function InsightsScreen() {
               {practicedCount > 0 && (
                 <View style={styles.progressGroup}>
                   <View style={styles.progressGroupHeader}>
-                    <Target size={16} color={Colors.secondary[500]} />
-                    <Text style={[styles.progressGroupTitle, { color: Colors.secondary[500] }]}>
+                    <Target size={16} color={theme.secondary} />
+                    <Text style={[styles.progressGroupTitle, { color: theme.secondary }]}>
                       Practiced ({practicedCount})
                     </Text>
                   </View>
@@ -491,8 +491,8 @@ export default function InsightsScreen() {
               {learningCount > 0 && (
                 <View style={styles.progressGroup}>
                   <View style={styles.progressGroupHeader}>
-                    <Circle size={16} color={Colors.accent[500]} />
-                    <Text style={[styles.progressGroupTitle, { color: Colors.accent[500] }]}>
+                    <Circle size={16} color={theme.accent} />
+                    <Text style={[styles.progressGroupTitle, { color: theme.accent }]}>
                       Learning ({learningCount})
                     </Text>
                   </View>
@@ -562,7 +562,7 @@ const createStyles = (theme: typeof lightTheme) =>
       alignItems: 'center',
     },
     sectionTabActive: {
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
     },
     sectionTabText: {
       fontSize: 14,
@@ -629,7 +629,7 @@ const createStyles = (theme: typeof lightTheme) =>
       height: 80,
       borderRadius: 40,
       borderWidth: 6,
-      borderColor: Colors.primary[600],
+      borderColor: theme.primary,
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 16,
@@ -641,7 +641,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     proficiencyLevel: {
       fontSize: 10,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontWeight: '600',
     },
     proficiencyDetails: {
@@ -667,7 +667,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     skillBarFill: {
       height: '100%',
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       borderRadius: 3,
     },
     skillScore: {
@@ -678,7 +678,7 @@ const createStyles = (theme: typeof lightTheme) =>
       textAlign: 'right',
     },
     assessButton: {
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       borderRadius: 8,
       paddingVertical: 10,
       paddingHorizontal: 16,
@@ -788,7 +788,7 @@ const createStyles = (theme: typeof lightTheme) =>
       width: 8,
       height: 8,
       borderRadius: 4,
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       marginRight: 12,
     },
     activityInfo: {
@@ -837,7 +837,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     phraseTranslation: {
       fontSize: 14,
-      color: Colors.primary[600],
+      color: theme.primary,
       fontStyle: 'italic',
       flex: 1,
     },
@@ -900,7 +900,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     emptyStateButton: {
       marginTop: 20,
-      backgroundColor: Colors.primary[600],
+      backgroundColor: theme.primary,
       paddingHorizontal: 24,
       paddingVertical: 10,
       borderRadius: 8,
