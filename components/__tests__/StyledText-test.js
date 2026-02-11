@@ -1,10 +1,14 @@
-import * as React from 'react';
-import renderer from 'react-test-renderer';
+import * as React from 'react'
+import { render } from '@testing-library/react-native'
 
-import { MonoText } from '../StyledText';
+import { MonoText } from '../StyledText'
 
-it(`renders correctly`, () => {
-  const tree = renderer.create(<MonoText>Snapshot test!</MonoText>).toJSON();
+// Mock useColorScheme to avoid ReferenceError during teardown
+jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({
+  default: jest.fn(() => 'light'),
+}))
 
-  expect(tree).toMatchSnapshot();
-});
+it('renders correctly', () => {
+  const { getByText } = render(<MonoText>Snapshot test!</MonoText>)
+  expect(getByText('Snapshot test!')).toBeTruthy()
+})

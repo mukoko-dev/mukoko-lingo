@@ -7,6 +7,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { lightTheme, darkTheme } from '@/constants/Colors'
 import { useTheme } from '@/lib/hooks/useTheme'
 import { AppHeader } from '@/components/AppHeader'
+import { useAuth } from '@/app/_layout'
+import { signOut } from '@/lib/supabase/client'
 
 const ONBOARDING_KEY = '@nyuchi_onboarding_complete'
 
@@ -14,8 +16,11 @@ export default function TabLayout() {
   const { isDark } = useTheme()
   const theme = isDark ? darkTheme : lightTheme
   const router = useRouter()
+  const { isAuthenticated } = useAuth()
 
   const handleLogout = async () => {
+    // Sign out the Supabase session
+    await signOut()
     // Clear onboarding status so user sees welcome on next visit
     try {
       await AsyncStorage.removeItem(ONBOARDING_KEY)
@@ -27,8 +32,8 @@ export default function TabLayout() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Shared header - NOT sticky for authenticated users */}
-      <AppHeader isAuthenticated={true} onLogout={handleLogout} />
+      {/* Shared header */}
+      <AppHeader isAuthenticated={isAuthenticated} onLogout={handleLogout} />
 
       <Tabs
         screenOptions={{
