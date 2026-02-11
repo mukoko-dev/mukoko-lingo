@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { stytchClient } from '../../_lib/auth-middleware'
+import { STYTCH_TEMPLATES, OTP_EXPIRATION_MINUTES } from '../../../lib/stytch/config'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -14,7 +15,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await stytchClient.otps.email.loginOrCreate({
       email,
-      expiration_minutes: 10,
+      expiration_minutes: OTP_EXPIRATION_MINUTES,
+      login_template_id: STYTCH_TEMPLATES.OTP,
+      signup_template_id: STYTCH_TEMPLATES.OTP,
     })
     return res.status(200).json({ success: true, message: 'OTP sent to email' })
   } catch (error: any) {

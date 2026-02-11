@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { stytchClient } from '../../_lib/auth-middleware'
+import { STYTCH_TEMPLATES, STYTCH_REDIRECTS } from '../../../lib/stytch/config'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -11,11 +12,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Email is required' })
   }
 
+  const url = redirect_url || STYTCH_REDIRECTS.MOBILE
+
   try {
     await stytchClient.magicLinks.email.loginOrCreate({
       email,
-      login_magic_link_url: redirect_url || 'mukokolingo://',
-      signup_magic_link_url: redirect_url || 'mukokolingo://',
+      login_magic_link_url: url,
+      signup_magic_link_url: url,
+      login_template_id: STYTCH_TEMPLATES.LOGIN,
+      signup_template_id: STYTCH_TEMPLATES.SIGNUP,
     })
     return res.status(200).json({ success: true, message: 'Magic link sent to email' })
   } catch (error: any) {
