@@ -8,7 +8,8 @@ Mukoko Lingo takes security seriously. This document outlines our security pract
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 2.x.x   | :white_check_mark: |
+| 3.x.x   | :white_check_mark: |
+| 2.x.x   | :x:                |
 | 1.x.x   | :x:                |
 
 ## Reporting a Vulnerability
@@ -29,24 +30,25 @@ We will acknowledge receipt within 48 hours and provide a detailed response with
 
 ### Authentication
 
-- **Supabase Auth**: All authentication is handled by Supabase with industry-standard security
-- **Session Management**: JWT tokens with automatic refresh via middleware
-- **No Dev Mode**: Development mode (which bypassed auth) has been permanently removed
-- **Protected Routes**: Middleware validates sessions and redirects unauthenticated users
+- **Stytch**: All authentication is handled by Stytch with industry-standard security
+- **Methods Supported**: Email/password, OTP (email & WhatsApp), magic links
+- **Session Management**: Stytch session tokens stored via SecureStore (native) or AsyncStorage (web)
+- **Server Validation**: All API routes validate sessions via `requireAuth()` middleware using Stytch SDK
+- **Protected Routes**: API middleware validates Stytch session tokens and rejects unauthenticated requests
 
 ### Authorization
 
-- **Role-Based Access Control (RBAC)**: Users have `user` or `admin` roles stored in profiles
-- **Row Level Security (RLS)**: All database tables have RLS policies enabled
-- **Admin Verification**: Admin access is checked both client-side and server-side
-- **Database Functions**: `is_admin()` and `check_is_admin()` provide secure role verification
+- **Role-Based Access Control (RBAC)**: Users have `user` or `admin` roles stored in `profiles` collection
+- **Server-Side Admin Check**: `requireAdmin()` middleware validates both Stytch session and admin role
+- **Client-Side Admin Check**: `useAdmin()` hook checks role via API for UI gating
+- **API Route Protection**: All admin API routes enforce `requireAdmin()` before processing
 
 ### Data Protection
 
-- **RLS Policies**: Users can only access their own data unless they have admin privileges
-- **Service Role Isolation**: Service role key is only used server-side, never exposed to client
-- **Input Validation**: All user inputs are validated before database operations
-- **SQL Injection Prevention**: Supabase client handles query parameterization
+- **MongoDB Atlas Security**: Database hosted on MongoDB Atlas with encryption at rest and in transit
+- **Prisma ORM**: All database queries go through Prisma, preventing injection attacks
+- **Input Validation**: All user inputs validated in API routes before database operations
+- **No Direct Client Access**: All data flows through authenticated Vercel serverless API routes
 
 ### AI Content Moderation
 
@@ -66,65 +68,67 @@ We will acknowledge receipt within 48 hours and provide a detailed response with
 Required environment variables (never commit actual values):
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=        # Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY=   # Public anonymous key (safe for client)
-SUPABASE_SERVICE_ROLE_KEY=       # Server-only, never expose to client
-AI_GATEWAY_API_KEY=              # AI service API key
+MONGODB_URI=                     # MongoDB Atlas connection string
+STYTCH_PROJECT_ID=               # Stytch project ID (server-side)
+STYTCH_SECRET=                   # Stytch secret key (server-side, never expose)
+EXPO_PUBLIC_STYTCH_PROJECT_ID=   # Stytch project ID (client-side)
+EXPO_PUBLIC_STYTCH_PUBLIC_TOKEN= # Stytch public token (safe for client)
+EXPO_PUBLIC_API_BASE_URL=        # API base URL
+AI_GATEWAY_API_KEY=              # AI service API key (server-side)
+EXPO_PUBLIC_ANTHROPIC_API_KEY=   # Anthropic key for mobile AI
 ```
 
 ### Security Headers
 
-The application implements standard security headers:
-- Content Security Policy (CSP)
-- X-Frame-Options
-- X-Content-Type-Options
-- Referrer-Policy
+The application implements standard security headers via `vercel.json`:
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: DENY
+- X-XSS-Protection: 1; mode=block
 
 ## Database Security
 
-### Row Level Security Policies
+### MongoDB Atlas
 
-All tables have RLS enabled with policies following these principles:
+- **Encryption at Rest**: AES-256 encryption for stored data
+- **Encryption in Transit**: TLS/SSL for all connections
+- **Network Access**: IP allowlist configured in Atlas
+- **Authentication**: Connection string with credentials, never exposed to client
 
-1. **Users access own data**: `auth.uid() = user_id`
-2. **Admins can access all**: `is_admin()` or `check_is_admin(auth.uid())`
-3. **Public data is readable**: Some tables (like phrases) allow public SELECT
-4. **Mutations require auth**: INSERT, UPDATE, DELETE require authenticated users
+### Access Control Pattern
 
-### Key Tables and Their Policies
+All data access follows this pattern:
 
-| Table | SELECT | INSERT | UPDATE | DELETE |
-|-------|--------|--------|--------|--------|
-| profiles | Own or Admin | System only | Own or Admin | Admin only |
-| phrases | Public | Admin only | Admin only | Admin only |
-| bookmarks | Own only | Own only | Own only | Own only |
-| phrase_progress | Own only | Own only | Own only | Own only |
-| learning_standards | Active or Admin | Admin only | Admin only | Admin only |
-| guardrails | Admin only | N/A | Admin only | N/A |
-| moderation_alerts | Admin only | System | Admin only | N/A |
+1. Client sends request with Stytch session token in `Authorization` header
+2. API middleware (`auth-middleware.ts`) validates token with Stytch SDK
+3. Authenticated user ID used to scope Prisma queries
+4. Admin routes additionally verify `profile.role === 'admin'`
 
-### Sensitive Functions
+### Key Collections and Their Access
 
-These database functions use `SECURITY DEFINER` to execute with elevated privileges:
-
-- `handle_new_user()` - Creates profile on signup
-- `is_admin()` / `check_is_admin()` - Verifies admin role
-- `update_study_streak()` - Updates user statistics
-- `get_learning_standard()` - Retrieves proficiency levels
+| Collection | Read | Write | Delete |
+|------------|------|-------|--------|
+| profiles | Own or Admin | Own or Admin | Admin only |
+| phrases | Public | Admin only | Admin only |
+| bookmarks | Own only | Own only | Own only |
+| phrase_progress | Own only | Own only | Own only |
+| learning_standards | Public | Admin only | Admin only |
+| guardrails | Admin only | Admin only | N/A |
+| moderation_alerts | Admin only | System | Admin only |
+| user_skills | Own or AI system | System | N/A |
 
 ## Mobile App Security
 
 ### Expo/React Native Considerations
 
-- **Secure Storage**: Sensitive data uses `@react-native-async-storage/async-storage` with encryption where available
+- **Secure Storage**: Session tokens use `expo-secure-store` (native) with AsyncStorage fallback (web)
 - **No Hardcoded Secrets**: All API keys are loaded from environment variables
 - **Deep Link Validation**: External URLs are validated before navigation
-- **Supabase Client**: Singleton pattern ensures proper session management
+- **API Client**: Singleton pattern with automatic auth header injection
 
 ### Admin Access
 
 - Admin routes are protected at the layout level
-- User role is verified from the `profiles` table on each admin page load
+- User role is verified from the `profiles` collection on each admin page load
 - Admin actions (role changes, content moderation) require confirmation dialogs
 
 ## Incident Response
@@ -145,7 +149,7 @@ Mukoko Lingo is designed with privacy in mind:
 - **GDPR-friendly**: Users can request data export and deletion
 - **Minimal Data Collection**: We only collect data necessary for functionality
 - **No Third-Party Tracking**: No advertising or tracking pixels
-- **Data Localization**: Database hosted in user-selected Supabase region
+- **Data Localization**: Database hosted on MongoDB Atlas with configurable regions
 
 ## Security Updates
 
@@ -157,4 +161,4 @@ For security-related questions, contact: security@mukoko.com
 
 ---
 
-Last updated: December 2025
+Last updated: February 2026

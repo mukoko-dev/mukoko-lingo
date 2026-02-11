@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { stytchClient } from '../../_lib/auth-middleware'
+import { STYTCH_TEMPLATES, STYTCH_REDIRECTS } from '../../../lib/stytch/config'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -27,7 +28,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // For a simpler approach, we authenticate the session and create a new password
     await stytchClient.passwords.email.resetStart({
       email,
-      reset_password_redirect_url: 'mukokolingo://reset-password',
+      reset_password_redirect_url: STYTCH_REDIRECTS.MOBILE,
+      reset_password_template_id: STYTCH_TEMPLATES.RESET_PASSWORD,
     })
 
     return res.status(200).json({
