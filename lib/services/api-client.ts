@@ -335,3 +335,21 @@ export const adminStatsApi = {
   getPopularPhrases: (daysBack?: number) =>
     apiGet<any[]>('/admin/popular-phrases', daysBack ? { days_back: String(daysBack) } : undefined),
 }
+
+// =============================================================================
+// Analytics Operations (Python-powered)
+// =============================================================================
+
+export const analyticsApi = {
+  /** Get platform overview analytics */
+  getOverview: () => apiGet<any>('/analytics/overview'),
+
+  /** Get learning velocity metrics */
+  getLearningVelocity: () => apiGet<any>('/analytics/learning-velocity'),
+
+  /** Get skill distribution analytics */
+  getSkillDistribution: () => apiGet<any>('/analytics/skill-distribution'),
+
+  /** Get engagement analytics */
+  getEngagement: () => apiGet<any>('/analytics/engagement'),
+}
