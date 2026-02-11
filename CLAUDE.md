@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Mukoko Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Swahili, Chinese) with both web (Next.js 16) and mobile (Expo/React Native) applications, powered by Supabase, Vercel, Anthropic Claude, and AI Gateway.
+**Mukoko Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Swahili, Chinese) with both web and mobile (Expo/React Native) applications, powered by MongoDB Atlas, Stytch Auth, Vercel Serverless Functions, and Anthropic Claude.
 
 ### Core Philosophy
 
@@ -43,12 +43,17 @@ When implementing AI features, the AI should:
 
 ```bash
 # Development
-npm run dev              # Start Next.js dev server (localhost:3000)
-npx expo start           # Start Expo dev server (mobile)
+npx expo start           # Start Expo dev server (mobile + web)
+npx expo start --web     # Start web dev server only
 
 # Build & Deploy
-npm run build            # Production build
-npm run start            # Start production server
+npm run build:web        # Export web build for Vercel
+npm run build:ios        # Build iOS via EAS
+npm run build:android    # Build Android via EAS
+
+# Database (Prisma + MongoDB)
+npm run prisma:generate  # Generate Prisma client
+npm run prisma:push      # Push schema to MongoDB
 
 # Testing
 npm test                 # Run all tests (Jest + jest-expo)
@@ -56,7 +61,6 @@ npm run test:watch       # Run tests in watch mode
 npm run test:coverage    # Run tests with coverage report
 
 # Code Quality
-npm run lint             # Run ESLint
 npx tsc --noEmit         # TypeScript type checking
 ```
 
@@ -65,30 +69,36 @@ npx tsc --noEmit         # TypeScript type checking
 **Required Environment Variables**:
 
 ```bash
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+# MongoDB Atlas
+MONGODB_URI=mongodb+srv://...@mukoko-lingo.xxxxx.mongodb.net/?retryWrites=true&w=majority
 
-# Cloudflare AI Gateway Configuration (Required for AI tutor features)
+# Stytch Authentication (server-side)
+STYTCH_PROJECT_ID=project-test-6add5f68-59c6-4086-88e8-8e0dc819a9a3
+STYTCH_SECRET=your-stytch-secret-key
+
+# Stytch (client-side - exposed to mobile app)
+EXPO_PUBLIC_STYTCH_PROJECT_ID=project-test-6add5f68-59c6-4086-88e8-8e0dc819a9a3
+EXPO_PUBLIC_STYTCH_PUBLIC_TOKEN=your-stytch-public-token
+
+# API Base URL (Vercel serverless functions)
+EXPO_PUBLIC_API_BASE_URL=https://your-api-domain.vercel.app
+
+# Anthropic Claude API Key (for mobile AI tutor)
+EXPO_PUBLIC_ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# Vercel AI Gateway (for web API routes)
 AI_GATEWAY_API_KEY=your_api_key_here
-
-# Get your gateway API key from Cloudflare AI Gateway dashboard
-# Note: Currently using Vercel AI SDK with Cloudflare gateway integration
 ```
 
 **Note**: See `.env.example` for complete configuration template.
 
 ### Local Development
 
-For local development, you must configure proper Supabase authentication:
-
 1. Copy `.env.example` to `.env.local`
-2. Fill in your Supabase credentials from the Supabase dashboard
-3. Add your `AI_GATEWAY_API_KEY` from Vercel
-4. Run `npm run dev`
-
-**Dev Mode Removed**: As of recent security updates, development mode (which bypassed authentication) has been removed. All environments now require proper Supabase authentication. See [DEV_MODE.md](DEV_MODE.md) for historical context and security rationale.
+2. Fill in your MongoDB Atlas connection string
+3. Fill in your Stytch project credentials from https://stytch.com/dashboard
+4. Run `npm run prisma:generate` to generate the Prisma client
+5. Run `npx expo start` to start the dev server
 
 ## Design System & Colors
 
@@ -234,54 +244,51 @@ bg-gradient-to-br from-primary-700/10 via-secondary-500/5 to-accent-500/5
 ### Authentication System
 
 **Architecture:**
-- **Supabase Auth** with server/client separation (all environments)
-  - Server: `lib/supabase/server.ts` (async cookies)
-  - Client: `lib/supabase/client.ts` (singleton)
-  - Middleware: `middleware.ts` refreshes sessions and protects routes
-- **Previous Dev Mode**: Removed for security (see `.env.example` and [DEV_MODE.md](DEV_MODE.md))
+- **Stytch** for authentication (email/password, OTP, magic links)
+  - Client: `lib/auth/stytch-client.ts` - Mobile/web auth client with secure storage
+  - Server: `api/_lib/auth-middleware.ts` - Vercel API auth middleware
+  - Session tokens stored via SecureStore (native) or AsyncStorage (web)
+- **Vercel Serverless Functions** - Backend API validates sessions with Stytch SDK
 
-**Flow**: Middleware validates Supabase session → refreshes if needed → redirects unauthenticated users to `/auth/login`
+**Flow**: Client stores Stytch session token → API requests include Bearer token → Server validates with Stytch SDK → MongoDB profile lookup
 
 **Key Files**:
-- [middleware.ts](middleware.ts) - Route protection and session refresh
-- [lib/supabase/admin.ts](lib/supabase/admin.ts) - `isAdmin()` server-side check
-- [lib/hooks/use-admin.ts](lib/hooks/use-admin.ts) - `useAdmin()` client-side hook
-- [lib/dev-mode.ts](lib/dev-mode.ts) - Legacy file (no longer used)
+- [lib/auth/stytch-client.ts](lib/auth/stytch-client.ts) - Client-side auth (sign in, sign up, OTP, magic links)
+- [api/_lib/auth-middleware.ts](api/_lib/auth-middleware.ts) - Server-side auth validation + admin checks
+- [lib/hooks/useAdmin.ts](lib/hooks/useAdmin.ts) - `useAdmin()` client-side hook
+- [lib/services/api-client.ts](lib/services/api-client.ts) - REST API client with auth headers
 
-### Database Schema (Skills-Based Architecture)
+### Database Schema (MongoDB + Prisma ORM)
 
-**Skills & Learning Tables** (Core):
+**Schema Location**: `prisma/schema.prisma` - 18 Prisma models mapped to MongoDB collections.
+
+**Skills & Learning Collections**:
 - `skills` - 5 core skills (pronunciation, vocabulary, grammar, comprehension, conversation)
 - `skill_levels` - 25 proficiency levels (5 per skill: beginner → fluent)
 - `user_skills` - ⚡ **READ BY AI TUTOR FOR EVERY INTERACTION** - Current user proficiency
 - `assessments` - Assessment templates for measuring skill proficiency
-- `user_assessments` - User test results (auto-updates user_skills via trigger)
-- `learning_standards` - AI tutor configuration by proficiency level (legacy, deprecated)
+- `user_assessments` - User test results
+- `learning_standards` - AI tutor configuration by proficiency level
 
-**Phrase Learning Tables**:
-- `phrases` - 200+ phrases in 4 languages mapped to skills and proficiency levels
-- `categories` - Organized by skill level (beginner phrases, intermediate, etc.)
+**Phrase Learning Collections**:
+- `phrases` - 200+ phrases in 5 languages mapped to skills and proficiency levels
 - `phrase_progress` - Learning status tracking (learning/practiced/mastered)
 - `bookmarks` - User-saved phrases for review
+- `phrase_views` - View tracking analytics
 
-**User & Progress Tables**:
-- `profiles` - User profiles with role (user/admin), current proficiency level, preferences
+**User & Progress Collections**:
+- `profiles` - User profiles linked to Stytch via `stytch_user_id`, with role and preferences
 - `study_sessions` - Daily study session analytics
-- `phrase_progress` - Individual phrase mastery tracking
 
-**AI Tutor Tables**:
+**AI Tutor Collections**:
 - `ai_conversations` - Chat history with conversation type and language
 - `ai_messages` - Individual messages with moderation flags
+- `ai_generated_phrases` - AI-created practice phrases
+- `ai_recommendations` - Phrase suggestions
 - `moderation_alerts` - Flagged content from AI moderation for admin review
+- `guardrails` - Content moderation rules
 
-**Key Functions**:
-- `is_admin()` / `check_is_admin()` - Role checking for admin access
-- `update_study_streak()` - Trigger maintains daily streaks
-- `get_user_activity_summary()` - Admin dashboard analytics
-- `update_user_skill_from_assessment()` - Auto-updates user_skills when assessment completes
-- `get_user_overall_proficiency(user_id)` - Calculate overall proficiency level
-
-**Row Level Security**: All tables have RLS policies. Users access only their own data; admins have elevated access via role checks.
+**Access Control**: API routes enforce auth via Stytch session validation. Admin routes check `profile.role === 'admin'` in the auth middleware.
 
 **Architecture Note**: The app is transitioning to a full skills-based model where:
 1. Skills define learning objectives
@@ -560,82 +567,48 @@ All admin API routes use `requireAdmin()` check.
 
 ## Data Fetching Patterns
 
-### Server-Side (Preferred)
+### API Client (All data flows through REST API)
 ```typescript
-// In Server Component (app/page.tsx)
-import { createClient } from '@/lib/supabase/server'
+// In any component
+import { phrasesApi, bookmarksApi, profilesApi } from '@/lib/services/api-client'
 
-const supabase = await createClient()
-const { data } = await supabase.from('phrases').select('*')
-return <ClientComponent data={data} />
+// Fetch data (auth token automatically included)
+const { data: phrases } = await phrasesApi.listPhrases({ category: 'greetings' })
+const { data: bookmarks } = await bookmarksApi.listBookmarks()
+const { data: profile } = await profilesApi.getMyProfile()
 ```
 
-### Client-Side (Interactive)
+### Server-Side (Vercel API Routes)
 ```typescript
-// In Client Component
-"use client"
-import { createClient } from '@/lib/supabase/client'
+// In api/ serverless functions - use Prisma directly
+import prisma from '../_lib/prisma'
+import { requireAuth, requireAdmin } from '../_lib/auth-middleware'
 
-const supabase = createClient() // singleton
-const { data } = await supabase.from('bookmarks').select('*')
+const user = await requireAuth(req)
+const phrases = await prisma.phrase.findMany({ where: { category: 'greetings' } })
 ```
 
 ### Optimistic Updates
-Bookmarks and progress use optimistic UI updates: update local state immediately, sync to database, revert on error.
+Bookmarks and progress use optimistic UI updates: update local state immediately, sync to API, revert on error.
 
-## Database Migrations
+## Database Schema Management
 
-**Location**: `scripts/` directory (27 SQL files numbered 001-027)
+**Schema**: `prisma/schema.prisma` (Prisma ORM with MongoDB)
 
-**Migration Types**:
-- Schema changes (CREATE TABLE, ALTER TABLE)
-- Row Level Security policies
-- Database functions (PL/pgSQL)
-- Database triggers
-- Indexes for performance
-- Data seeding
-
-**Applying Migrations**:
-
-1. **Create SQL file** in `scripts/` (e.g., `028_your_migration.sql`)
-2. **Apply via Supabase Dashboard**:
-   - Go to SQL Editor
-   - Copy migration file contents
-   - Paste and run
-   - Verify success
-3. **Or use Supabase CLI** (development):
-   ```bash
-   # Install CLI
-   npm install -g supabase
-
-   # Link project
-   supabase link --project-ref your-project-ref
-
-   # Apply all migrations
-   supabase db push
-
-   # Reset database (DESTRUCTIVE - Dev only!)
-   supabase db reset
-   ```
-
-**Migration Order**: Critical! Apply in numerical order (001 → 027)
-
-**Recent Migrations**:
-- 001-002: Initial phrases and seed data
-- 003-004: Profiles and preferences
-- 005-007: Bookmarks and favorites
-- 008-011: Progress tracking and AI features
-- 012-015: AI conversations and moderation
-- 016-020: User ID column fixes
-- 022-024: Learning standards
-- 025: Performance indexes
-- 026: User status and partitioning
-- 027: Critical RLS policy fixes
+**Commands**:
+```bash
+npm run prisma:generate    # Generate Prisma client types
+npm run prisma:push         # Push schema changes to MongoDB
+npx prisma studio           # Open Prisma Studio (GUI for data)
+```
 
 ## Key Utilities
 
 **Core Libraries**:
-- `lib/supabase/` - Database client configurations
+- `lib/db/prisma.ts` - Prisma client singleton (MongoDB ORM)
+- `lib/db/mongodb.ts` - Raw MongoDB client for direct queries
+- `lib/auth/stytch-client.ts` - Stytch auth client (email, OTP, magic links, sessions)
+- `lib/services/api-client.ts` - REST API client for all data operations
 - `lib/ai/config.ts` - AI model configuration and Vercel AI Gateway setup
 - `lib/ai/chat-service.ts` - Anthropic Claude API integration for Shamwari chatbot
 - `lib/ai/moderation.ts` - Content moderation (local guardrails + AI-based via Claude Haiku)
@@ -661,7 +634,7 @@ Bookmarks and progress use optimistic UI updates: update local state immediately
 ## Special Considerations
 
 ### Authentication Security
-**Dev mode has been removed** as of recent updates. All environments now require proper Supabase authentication. The previous dev mode (which used `NEXT_PUBLIC_DEV_MODE` and a mock UUID) has been deprecated for security reasons. See [DEV_MODE.md](DEV_MODE.md) and `.env.example` for details.
+Authentication is handled by Stytch. Session tokens are stored in SecureStore (native) or AsyncStorage (web). All API routes validate sessions via the Stytch SDK on the server side.
 
 ### Build Configuration
 - Image optimization disabled (`unoptimized: true`)
@@ -908,10 +881,10 @@ echo "Implementation complete" > NEW_FEATURE_COMPLETE.md  # ❌ Wrong location
 
 ## Project Status
 
-**Current Version**: 2.0.0 (November 19, 2025)
-**Framework**: Next.js 16, React 19, Supabase, Vercel, Cloudflare AI Gateway
-**Status**: Production-ready with continuous deployment
-**Architecture**: Transitioning to full skills-based learning system
+**Current Version**: 3.0.0 (February 2026)
+**Framework**: Expo/React Native, MongoDB Atlas, Prisma ORM, Stytch Auth, Vercel Serverless Functions
+**Status**: Active development - migrated from Supabase to MongoDB + Stytch
+**Architecture**: Skills-based learning system with Vercel API backend
 
 **Strategic Direction**:
 - **Primary Goal**: Native phrase learning for multilingual proficiency
