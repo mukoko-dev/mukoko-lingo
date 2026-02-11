@@ -13,13 +13,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    await stytchClient.otps.email.loginOrCreate({
+    const response = await stytchClient.otps.email.loginOrCreate({
       email,
       expiration_minutes: OTP_EXPIRATION_MINUTES,
       login_template_id: STYTCH_TEMPLATES.OTP,
       signup_template_id: STYTCH_TEMPLATES.OTP,
     })
-    return res.status(200).json({ success: true, message: 'OTP sent to email' })
+    return res.status(200).json({
+      success: true,
+      message: 'OTP sent to email',
+      method_id: response.email_id,
+    })
   } catch (error: any) {
     return res.status(400).json({ error: error.error_message || 'Failed to send OTP' })
   }
