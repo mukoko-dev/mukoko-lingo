@@ -40,35 +40,19 @@ export default function OnboardingScreen() {
   const ONBOARDING_SLIDES: OnboardingSlide[] = [
     {
       id: '1',
-      title: 'Welcome to Mukoko Lingo',
-      subtitle: 'Learn Shona. Connect with Africa.',
-      description: 'Master African languages through native phrase learning and personalized AI tutoring.',
-      emoji: '🌍',
+      title: 'Daily Lessons, Real Phrases',
+      subtitle: '5 phrases a day builds fluency',
+      description: 'Learn Shona, Ndebele, and Chinese through daily flash cards, quizzes, and spaced repetition.',
+      emoji: '📚',
       color: theme.primary,
     },
     {
       id: '2',
-      title: 'Learn Native Phrases',
-      subtitle: 'Real language, real conversations',
-      description: 'Practice authentic phrases in Shona, Ndebele, Swahili, Chinese, and English with cultural context.',
-      emoji: '📚',
-      color: theme.secondary,
-    },
-    {
-      id: '3',
       title: 'Meet Shamwari',
-      subtitle: 'Your AI language tutor',
-      description: 'Shamwari (meaning "friend" in Shona) adapts to your learning style and pace for personalized lessons.',
+      subtitle: 'Your AI language friend',
+      description: 'Practice conversations with Shamwari, who adapts to your level and helps you master what you learn.',
       useMascot: true,
       color: theme.accent,
-    },
-    {
-      id: '4',
-      title: 'Track Your Progress',
-      subtitle: 'Skills-based learning',
-      description: 'Build proficiency across pronunciation, vocabulary, grammar, and conversation skills.',
-      emoji: '📊',
-      color: theme.primary,
     },
   ]
 

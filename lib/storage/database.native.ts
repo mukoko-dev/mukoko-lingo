@@ -239,3 +239,35 @@ export async function getStudyStreak(): Promise<number> {
 
   return streak
 }
+
+// Daily lesson operations - use AsyncStorage for simplicity (small data)
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+const DAILY_LESSON_KEY = 'dailyLesson_'
+const DAILY_GOAL_KEY = 'dailyGoal_'
+const DEFAULT_DAILY_GOAL = 5
+
+export async function getDailyLesson(date: string): Promise<string[] | null> {
+  const data = await AsyncStorage.getItem(DAILY_LESSON_KEY + date)
+  return data ? JSON.parse(data) : null
+}
+
+export async function setDailyLesson(date: string, phraseIds: string[]): Promise<void> {
+  await AsyncStorage.setItem(DAILY_LESSON_KEY + date, JSON.stringify(phraseIds))
+}
+
+export async function getDailyGoalProgress(date: string): Promise<{ learned: number; goal: number; completed: boolean }> {
+  const data = await AsyncStorage.getItem(DAILY_GOAL_KEY + date)
+  if (data) return JSON.parse(data)
+  return { learned: 0, goal: DEFAULT_DAILY_GOAL, completed: false }
+}
+
+export async function updateDailyGoalProgress(date: string, learned: number): Promise<void> {
+  const current = await getDailyGoalProgress(date)
+  const updated = {
+    learned,
+    goal: current.goal,
+    completed: learned >= current.goal,
+  }
+  await AsyncStorage.setItem(DAILY_GOAL_KEY + date, JSON.stringify(updated))
+}

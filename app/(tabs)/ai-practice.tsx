@@ -13,6 +13,7 @@ import {
   Image,
 } from 'react-native'
 import { Send, Sparkles } from 'lucide-react-native'
+import { useLocalSearchParams } from 'expo-router'
 
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme } from '@/constants/Colors'
@@ -30,12 +31,20 @@ export default function AIPracticeScreen() {
   const colorScheme = useColorScheme()
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme
   const flatListRef = useRef<FlatList>(null)
+  const { phraseContext } = useLocalSearchParams<{ phraseContext?: string }>()
+
+  const getWelcomeMessage = () => {
+    if (phraseContext) {
+      return `Mhoro! I'm Shamwari, your friendly AI language tutor. I see you'd like to practice: "${phraseContext}". Let's work on this together! Try using it in a sentence, or ask me anything about it.`
+    }
+    return "Mhoro! I'm Shamwari, your friendly AI language tutor. Welcome to the hive — I'm here to help you learn Shona, Ndebele, Swahili, and Chinese. What would you like to practice today?"
+  }
 
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: "Mhoro! I'm Shamwari, your friendly AI language tutor. Welcome to the hive — I'm here to help you learn Shona, Ndebele, Swahili, and Chinese. What would you like to practice today?",
+      content: getWelcomeMessage(),
       timestamp: new Date(),
     },
   ])
