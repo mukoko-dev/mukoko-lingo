@@ -246,29 +246,6 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{streak}</Text>
-          <Text style={styles.statLabel}>Day Streak</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{sessionsCount}</Text>
-          <Text style={styles.statLabel}>Sessions</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{masteredCount}</Text>
-          <Text style={styles.statLabel}>Mastered</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>{bookmarksCount}</Text>
-          <Text style={styles.statLabel}>Saved</Text>
-        </View>
-      </View>
-
       {/* Settings Sections */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Preferences</Text>

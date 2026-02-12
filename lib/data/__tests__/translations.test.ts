@@ -24,6 +24,33 @@ describe('translations', () => {
       'aiPractice',
       'settings',
       'categories',
+      // Progress tab / Daily lesson keys
+      'navProgress',
+      'todaysLesson',
+      'browseAll',
+      'startPracticeQuiz',
+      'flipAllCards',
+      'practiceQuiz',
+      'practiceWithShamwari',
+      'continueLearning',
+      'dailyGoalComplete',
+      'todaysGoal',
+      'dashboard',
+      'phrases',
+      'dayStreak',
+      'saved',
+      'overallProficiency',
+      'takeAssessment',
+      'phraseProgress',
+      'noPhraseYet',
+      'bookmarkOrPractice',
+      'startLearning',
+      // Quiz / FlashCard keys
+      'translateTo',
+      'correct',
+      'keepPracticing',
+      'excellent',
+      'goodJob',
     ]
     requiredKeys.forEach(key => {
       expect(en).toHaveProperty(key)

@@ -53,7 +53,7 @@ const PUBLIC_NAV_LINKS = [
 const AUTH_NAV_LINKS = [
   { label: 'Learn', labelKey: 'navHome' as const, route: '/(tabs)', icon: BookOpen },
   { label: 'Shamwari', labelKey: 'aiPractice' as const, route: '/(tabs)/ai-practice', icon: MessageCircle },
-  { label: 'Skills', labelKey: 'navHome' as const, route: '/(tabs)/skills', icon: Target },
+  { label: 'Progress', labelKey: 'navProgress' as const, route: '/(tabs)/insights', icon: Target },
 ]
 
 interface AppHeaderProps {

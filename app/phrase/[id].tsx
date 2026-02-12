@@ -24,8 +24,11 @@ import {
   addBookmark,
   removeBookmark,
   updateProgress,
+  updateUserSkill,
+  getUserSkills,
 } from '@/lib/storage/database'
 import { useLearningLanguage } from '@/lib/hooks/useLearningLanguage'
+import { getSkillForCategory } from '@/lib/services/daily-lesson'
 
 type Language = 'english' | 'shona' | 'ndebele' | 'swahili' | 'chinese'
 
@@ -66,16 +69,34 @@ export default function PhraseDetailScreen() {
     setIsBookmarked(!isBookmarked)
   }
 
+  const updateSkillScore = async (increment: number) => {
+    if (!phrase) return
+    const skill = getSkillForCategory(phrase.category)
+    const skills = await getUserSkills()
+    const currentScore = skills[skill]?.score || 0
+    await updateUserSkill(skill, Math.min(currentScore + increment, 100))
+  }
+
   const markAsPracticed = async () => {
     if (!id) return
     await updateProgress(id, 'practiced')
+    await updateSkillScore(2)
     router.back()
   }
 
   const markAsMastered = async () => {
     if (!id) return
     await updateProgress(id, 'mastered')
+    await updateSkillScore(5)
     router.back()
+  }
+
+  const practiceWithShamwari = () => {
+    if (!phrase) return
+    router.push({
+      pathname: '/(tabs)/ai-practice',
+      params: { phraseContext: phrase.english },
+    })
   }
 
   const styles = createStyles(theme)
@@ -219,7 +240,7 @@ export default function PhraseDetailScreen() {
         {/* Practice with AI */}
         <TouchableOpacity
           style={styles.aiButton}
-          onPress={() => router.push('/(tabs)/ai-practice' as const)}
+          onPress={practiceWithShamwari}
         >
           <MessageCircle size={20} color={theme.primary} />
           <Text style={styles.aiButtonText}>Practice with Shamwari</Text>
