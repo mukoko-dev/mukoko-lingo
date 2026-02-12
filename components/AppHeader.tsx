@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   StyleSheet,
   View,
@@ -7,6 +7,7 @@ import {
   Modal,
   SafeAreaView,
   useWindowDimensions,
+  Platform,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import {
@@ -31,24 +32,28 @@ import {
   Shield,
   Search,
   Bell,
+  Globe,
+  ChevronDown,
 } from 'lucide-react-native'
 
 import { MukokoIcon } from '@/components/MukokoIcon'
 import { useTheme } from '@/lib/hooks/useTheme'
+import { useUILanguage, UI_LANGUAGES } from '@/lib/hooks/useUILanguage'
 import { Colors, lightTheme, darkTheme } from '@/constants/Colors'
 import { getCurrentUser } from '@/lib/auth/stytch-client'
 import { profilesApi } from '@/lib/services/api-client'
+import type { UILanguage } from '@/lib/data/translations'
 
 const PUBLIC_NAV_LINKS = [
-  { label: 'Features', route: '/features', icon: Sparkles },
-  { label: 'Why Mukoko', route: '/why', icon: HelpCircle },
-  { label: 'About', route: '/about', icon: Info },
+  { label: 'Features', labelKey: 'exploreFeatures' as const, route: '/features', icon: Sparkles },
+  { label: 'Why Mukoko', labelKey: 'navWhy' as const, route: '/why', icon: HelpCircle },
+  { label: 'About', labelKey: 'about' as const, route: '/about', icon: Info },
 ]
 
 const AUTH_NAV_LINKS = [
-  { label: 'Learn', route: '/(tabs)', icon: BookOpen },
-  { label: 'Shamwari', route: '/(tabs)/ai-practice', icon: MessageCircle },
-  { label: 'Skills', route: '/(tabs)/skills', icon: Target },
+  { label: 'Learn', labelKey: 'navHome' as const, route: '/(tabs)', icon: BookOpen },
+  { label: 'Shamwari', labelKey: 'aiPractice' as const, route: '/(tabs)/ai-practice', icon: MessageCircle },
+  { label: 'Skills', labelKey: 'navHome' as const, route: '/(tabs)/skills', icon: Target },
 ]
 
 interface AppHeaderProps {
@@ -59,8 +64,10 @@ interface AppHeaderProps {
 export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps) {
   const router = useRouter()
   const { isDark, toggleTheme, themeMode } = useTheme()
+  const { uiLanguage, setUILanguage, uiLanguageOption, t } = useUILanguage()
   const theme = isDark ? darkTheme : lightTheme
   const [menuOpen, setMenuOpen] = useState(false)
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const { width } = useWindowDimensions()
 
@@ -143,8 +150,13 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
     router.replace('/welcome')
   }
 
-  // Icon pill colors
-  const pillBg = isDark ? Colors.secondary[800] + 'CC' : Colors.secondary[800]
+  const handleLanguageSelect = (lang: UILanguage) => {
+    setUILanguage(lang)
+    setLangDropdownOpen(false)
+  }
+
+  // Icon pill colors - use PRIMARY (Cobalt) instead of secondary (Tanzanite)
+  const pillBg = isDark ? Colors.primary[800] + 'CC' : Colors.primary[600]
   const pillIconColor = '#FFFFFF'
 
   const styles = createStyles(theme, isDark, isTablet, isLandscapeTablet)
@@ -179,7 +191,7 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
           </View>
         )}
 
-        {/* RIGHT: Icon pill group */}
+        {/* RIGHT: Language selector + Icon pill + extras */}
         <View style={styles.rightGroup}>
           {/* Admin badge - outside pill, tablet+ only */}
           {isAuthenticated && isTablet && isAdmin && (
@@ -188,6 +200,56 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
               <Text style={styles.adminButtonText}>Admin</Text>
             </TouchableOpacity>
           )}
+
+          {/* Language selector */}
+          <View style={styles.langSelectorContainer}>
+            <TouchableOpacity
+              style={styles.langSelector}
+              onPress={() => setLangDropdownOpen(!langDropdownOpen)}
+            >
+              <Globe size={16} color={theme.primary} />
+              <Text style={styles.langSelectorText}>{uiLanguageOption.flag} {uiLanguageOption.key.toUpperCase()}</Text>
+              <ChevronDown size={12} color={theme.textSecondary} />
+            </TouchableOpacity>
+
+            {/* Language dropdown */}
+            {langDropdownOpen && (
+              <>
+                {/* Backdrop to close dropdown */}
+                <TouchableOpacity
+                  style={styles.langDropdownBackdrop}
+                  onPress={() => setLangDropdownOpen(false)}
+                  activeOpacity={1}
+                />
+                <View style={styles.langDropdown}>
+                  {UI_LANGUAGES.map((lang) => (
+                    <TouchableOpacity
+                      key={lang.key}
+                      style={[
+                        styles.langDropdownItem,
+                        uiLanguage === lang.key && styles.langDropdownItemActive,
+                      ]}
+                      onPress={() => handleLanguageSelect(lang.key)}
+                    >
+                      <Text style={styles.langDropdownFlag}>{lang.flag}</Text>
+                      <View style={styles.langDropdownTextContainer}>
+                        <Text style={[
+                          styles.langDropdownName,
+                          uiLanguage === lang.key && styles.langDropdownNameActive,
+                        ]}>{lang.name}</Text>
+                        <Text style={styles.langDropdownNative}>{lang.nativeName}</Text>
+                      </View>
+                      {uiLanguage === lang.key && (
+                        <View style={styles.langDropdownCheck}>
+                          <Text style={styles.langDropdownCheckText}>✓</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
+          </View>
 
           {/* Icon pill */}
           <View style={[styles.iconPill, { backgroundColor: pillBg }]}>
@@ -262,6 +324,29 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
           </View>
 
           <View style={styles.menuContent}>
+            {/* Language selector in mobile menu */}
+            <Text style={styles.menuSectionTitle}>{t.languages || 'Language'}</Text>
+            <View style={styles.menuLangRow}>
+              {UI_LANGUAGES.map((lang) => (
+                <TouchableOpacity
+                  key={lang.key}
+                  style={[
+                    styles.menuLangChip,
+                    uiLanguage === lang.key && styles.menuLangChipActive,
+                  ]}
+                  onPress={() => setUILanguage(lang.key)}
+                >
+                  <Text style={styles.menuLangChipFlag}>{lang.flag}</Text>
+                  <Text style={[
+                    styles.menuLangChipText,
+                    uiLanguage === lang.key && styles.menuLangChipTextActive,
+                  ]}>{lang.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.menuDivider} />
+
             {/* Main navigation links */}
             {navLinks.map((link, index) => {
               const Icon = link.icon
@@ -304,31 +389,31 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
               <>
                 <TouchableOpacity style={styles.menuItem} onPress={handleSignIn}>
                   <LogIn size={22} color={theme.text} />
-                  <Text style={styles.menuItemText}>Log in</Text>
+                  <Text style={styles.menuItemText}>{t.logIn || 'Log in'}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.menuItem} onPress={handleGetStarted}>
                   <UserPlus size={22} color={theme.text} />
-                  <Text style={styles.menuItemText}>Sign up</Text>
+                  <Text style={styles.menuItemText}>{t.signUp || 'Sign up'}</Text>
                 </TouchableOpacity>
               </>
             ) : (
               <>
                 <TouchableOpacity style={styles.menuItem} onPress={handleProfile}>
                   <User size={22} color={theme.text} />
-                  <Text style={styles.menuItemText}>Profile</Text>
+                  <Text style={styles.menuItemText}>{t.profile || 'Profile'}</Text>
                 </TouchableOpacity>
 
                 {isAdmin && (
                   <TouchableOpacity style={styles.menuItem} onPress={handleAdmin}>
                     <Shield size={22} color={theme.accent} />
-                    <Text style={[styles.menuItemText, { color: theme.accent }]}>Admin Dashboard</Text>
+                    <Text style={[styles.menuItemText, { color: theme.accent }]}>{t.adminDashboard || 'Admin Dashboard'}</Text>
                   </TouchableOpacity>
                 )}
 
                 <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
                   <LogOut size={22} color={theme.primary} />
-                  <Text style={[styles.menuItemText, { color: theme.primary }]}>Log out</Text>
+                  <Text style={[styles.menuItemText, { color: theme.primary }]}>{t.logOut || 'Log out'}</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -344,12 +429,12 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
           <View style={styles.menuFooter}>
             {!isAuthenticated ? (
               <TouchableOpacity style={styles.menuCta} onPress={handleGetStarted}>
-                <Text style={styles.menuCtaText}>Get Started Free</Text>
+                <Text style={styles.menuCtaText}>{t.getStartedFree || 'Get Started Free'}</Text>
                 <ArrowRight size={20} color="#ffffff" />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={styles.menuCta} onPress={() => handleNavLink('/(tabs)')}>
-                <Text style={styles.menuCtaText}>Back to Learning</Text>
+                <Text style={styles.menuCtaText}>{t.backToLearning || 'Back to Learning'}</Text>
                 <ArrowRight size={20} color="#ffffff" />
               </TouchableOpacity>
             )}
@@ -449,6 +534,99 @@ const createStyles = (
       fontWeight: '600',
       color: theme.accent,
     },
+
+    // ── Language Selector ────────────────────
+    langSelectorContainer: {
+      position: 'relative',
+      zIndex: 1000,
+    },
+    langSelector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: isDark ? Colors.primary[400] + '15' : Colors.primary[600] + '08',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 20,
+      gap: 4,
+      borderWidth: 1,
+      borderColor: isDark ? Colors.primary[400] + '30' : Colors.primary[600] + '20',
+    },
+    langSelectorText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.primary,
+    },
+    langDropdownBackdrop: {
+      position: 'fixed' as any,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 999,
+    },
+    langDropdown: {
+      position: 'absolute',
+      top: 40,
+      right: 0,
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.border,
+      paddingVertical: 4,
+      minWidth: 200,
+      zIndex: 1000,
+      ...(Platform.OS === 'web' ? {
+        boxShadow: isDark
+          ? '0px 8px 24px rgba(0,0,0,0.5)'
+          : '0px 8px 24px rgba(0,0,0,0.12)',
+      } : {
+        elevation: 8,
+      }),
+    },
+    langDropdownItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      gap: 10,
+    },
+    langDropdownItemActive: {
+      backgroundColor: isDark ? Colors.primary[400] + '15' : Colors.primary[600] + '08',
+    },
+    langDropdownFlag: {
+      fontSize: 18,
+    },
+    langDropdownTextContainer: {
+      flex: 1,
+    },
+    langDropdownName: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: theme.text,
+    },
+    langDropdownNameActive: {
+      color: theme.primary,
+      fontWeight: '600',
+    },
+    langDropdownNative: {
+      fontSize: 12,
+      color: theme.textMuted,
+    },
+    langDropdownCheck: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: theme.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    langDropdownCheckText: {
+      color: '#FFFFFF',
+      fontSize: 12,
+      fontWeight: '700',
+    },
+
+    // ── Icon Pill ────────────────────────────
     iconPill: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -466,7 +644,7 @@ const createStyles = (
     pillDivider: {
       width: 1,
       height: 16,
-      backgroundColor: 'rgba(255,255,255,0.2)',
+      backgroundColor: 'rgba(255,255,255,0.25)',
     },
     menuButton: {
       width: 38,
@@ -511,6 +689,40 @@ const createStyles = (
       letterSpacing: 1,
       marginBottom: 8,
       marginTop: 4,
+    },
+    // ── Mobile Menu Language Chips ────────────
+    menuLangRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 4,
+    },
+    menuLangChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: isDark ? Colors.neutral[800] : Colors.neutral[100],
+      gap: 6,
+      borderWidth: 1.5,
+      borderColor: 'transparent',
+    },
+    menuLangChipActive: {
+      backgroundColor: isDark ? Colors.primary[400] + '20' : Colors.primary[600] + '10',
+      borderColor: theme.primary,
+    },
+    menuLangChipFlag: {
+      fontSize: 16,
+    },
+    menuLangChipText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: theme.textSecondary,
+    },
+    menuLangChipTextActive: {
+      color: theme.primary,
+      fontWeight: '600',
     },
     menuItem: {
       flexDirection: 'row',
