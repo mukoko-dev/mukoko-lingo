@@ -1,37 +1,28 @@
 import { useEffect } from 'react'
 import { useRouter } from 'expo-router'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { View, ActivityIndicator, StyleSheet } from 'react-native'
 
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme } from '@/constants/Colors'
-
-const ONBOARDING_KEY = '@mukoko_onboarding_complete'
+import { useAuth } from './_layout'
 
 export default function IndexRedirect() {
   const router = useRouter()
   const colorScheme = useColorScheme()
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme
+  const { isAuthenticated, isLoading } = useAuth()
 
   useEffect(() => {
-    const checkAndRedirect = async () => {
-      try {
-        const completed = await AsyncStorage.getItem(ONBOARDING_KEY)
-        if (completed === 'true') {
-          // Returning user - go straight to app
-          router.replace('/(tabs)')
-        } else {
-          // New user - show welcome/landing page (NOT onboarding)
-          router.replace('/welcome')
-        }
-      } catch (error) {
-        console.error('Error checking onboarding:', error)
-        router.replace('/welcome')
-      }
-    }
+    if (isLoading) return
 
-    checkAndRedirect()
-  }, [router])
+    if (isAuthenticated) {
+      // Authenticated user - go straight to app
+      router.replace('/(tabs)')
+    } else {
+      // Unauthenticated user - always show landing page
+      router.replace('/welcome')
+    }
+  }, [router, isAuthenticated, isLoading])
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
