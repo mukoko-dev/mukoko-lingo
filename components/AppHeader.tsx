@@ -4,7 +4,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
   Modal,
   SafeAreaView,
   useWindowDimensions,
@@ -30,10 +29,13 @@ import {
   MessageCircle,
   Target,
   Shield,
+  Search,
+  Bell,
 } from 'lucide-react-native'
 
+import { MukokoIcon } from '@/components/MukokoIcon'
 import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme } from '@/constants/Colors'
+import { Colors, lightTheme, darkTheme } from '@/constants/Colors'
 import { getCurrentUser } from '@/lib/auth/stytch-client'
 import { profilesApi } from '@/lib/services/api-client'
 
@@ -62,6 +64,9 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
   const [isAdmin, setIsAdmin] = useState(false)
   const { width } = useWindowDimensions()
 
+  // Landscape tablet and above for center nav
+  const isLandscapeTablet = width >= 1024
+  // Basic tablet for some layout adjustments
   const isTablet = width >= 768
 
   // Check if user is admin
@@ -82,8 +87,6 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
       console.error('Error checking admin status:', error)
     }
   }
-
-  const styles = createStyles(theme, isDark, isTablet)
 
   const navLinks = isAuthenticated ? AUTH_NAV_LINKS : PUBLIC_NAV_LINKS
 
@@ -140,82 +143,96 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
     router.replace('/welcome')
   }
 
+  // Icon pill colors
+  const pillBg = isDark ? Colors.secondary[800] + 'CC' : Colors.secondary[800]
+  const pillIconColor = '#FFFFFF'
+
+  const styles = createStyles(theme, isDark, isTablet, isLandscapeTablet)
+
   return (
     <>
       {/* Navigation Header */}
       <View style={styles.navbar}>
+        {/* LEFT: Icon + Wordmark */}
         <TouchableOpacity style={styles.logoContainer} onPress={handleLogoPress}>
-          <Image
-            source={require('@/assets/images/icon.png')}
-            style={styles.navIcon}
-            resizeMode="contain"
-          />
-          <Text style={styles.navTitle}>Mukoko Lingo</Text>
+          <View style={styles.iconWrapper}>
+            <MukokoIcon size={26} color={theme.primary} />
+          </View>
+          <View>
+            <Text style={styles.wordmark}>mukoko</Text>
+            <Text style={styles.wordmarkSub}>lingo</Text>
+          </View>
         </TouchableOpacity>
 
-        {/* Desktop nav links */}
-        {isTablet && (
-          <View style={styles.desktopNavLinks}>
+        {/* CENTER: Nav links (landscape tablet+) */}
+        {isLandscapeTablet && (
+          <View style={styles.centerNav}>
             {navLinks.map((link, index) => (
               <TouchableOpacity
                 key={index}
-                style={styles.desktopNavLink}
+                style={styles.centerNavLink}
                 onPress={() => router.push(link.route as any)}
               >
-                <Text style={styles.desktopNavLinkText}>{link.label}</Text>
+                <Text style={styles.centerNavLinkText}>{link.label}</Text>
               </TouchableOpacity>
             ))}
-            {/* Marketing links for authenticated users */}
-            {isAuthenticated && (
-              <>
-                <View style={styles.navDivider} />
-                {PUBLIC_NAV_LINKS.map((link, index) => (
-                  <TouchableOpacity
-                    key={`public-${index}`}
-                    style={styles.desktopNavLink}
-                    onPress={() => router.push(link.route as any)}
-                  >
-                    <Text style={styles.desktopNavLinkTextSecondary}>{link.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </>
-            )}
           </View>
         )}
 
-        <View style={styles.navRight}>
-          <TouchableOpacity style={styles.navIconButton} onPress={toggleTheme}>
-            {getThemeIcon()}
-          </TouchableOpacity>
-
-          {!isAuthenticated && (
-            <TouchableOpacity style={styles.navIconButton} onPress={handleSignIn}>
-              <LogIn size={20} color={theme.text} />
-            </TouchableOpacity>
-          )}
-
+        {/* RIGHT: Icon pill group */}
+        <View style={styles.rightGroup}>
+          {/* Admin badge - outside pill, tablet+ only */}
           {isAuthenticated && isTablet && isAdmin && (
             <TouchableOpacity style={styles.adminButton} onPress={handleAdmin}>
-              <Shield size={18} color={theme.accent} />
+              <Shield size={16} color={theme.accent} />
               <Text style={styles.adminButtonText}>Admin</Text>
             </TouchableOpacity>
           )}
 
-          {isAuthenticated && isTablet && (
-            <TouchableOpacity style={styles.navIconButton} onPress={handleProfile}>
-              <User size={20} color={theme.text} />
+          {/* Icon pill */}
+          <View style={[styles.iconPill, { backgroundColor: pillBg }]}>
+            <TouchableOpacity style={styles.pillIcon} onPress={toggleTheme}>
+              {themeMode === 'light' && <Sun size={18} color={pillIconColor} />}
+              {themeMode === 'dark' && <Moon size={18} color={pillIconColor} />}
+              {themeMode === 'system' && <Monitor size={18} color={pillIconColor} />}
             </TouchableOpacity>
-          )}
 
-          {!isTablet && (
+            <View style={styles.pillDivider} />
+
+            {isAuthenticated ? (
+              <>
+                <TouchableOpacity
+                  style={styles.pillIcon}
+                  onPress={() => router.push('/(tabs)/insights' as any)}
+                >
+                  <Bell size={18} color={pillIconColor} />
+                </TouchableOpacity>
+
+                <View style={styles.pillDivider} />
+
+                <TouchableOpacity style={styles.pillIcon} onPress={handleProfile}>
+                  <User size={18} color={pillIconColor} />
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity style={styles.pillIcon} onPress={handleSignIn}>
+                  <LogIn size={18} color={pillIconColor} />
+                </TouchableOpacity>
+
+                <View style={styles.pillDivider} />
+
+                <TouchableOpacity style={styles.pillIcon} onPress={handleGetStarted}>
+                  <UserPlus size={18} color={pillIconColor} />
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+
+          {/* Hamburger menu (below landscape tablet) */}
+          {!isLandscapeTablet && (
             <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)}>
-              <Menu size={24} color={theme.text} />
-            </TouchableOpacity>
-          )}
-
-          {isTablet && !isAuthenticated && (
-            <TouchableOpacity style={styles.getStartedButton} onPress={handleGetStarted}>
-              <Text style={styles.getStartedButtonText}>Get Started</Text>
+              <Menu size={22} color={theme.text} />
             </TouchableOpacity>
           )}
         </View>
@@ -231,12 +248,13 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
         <SafeAreaView style={styles.menuModal}>
           <View style={styles.menuHeader}>
             <View style={styles.logoContainer}>
-              <Image
-                source={require('@/assets/images/icon.png')}
-                style={styles.menuIcon}
-                resizeMode="contain"
-              />
-              <Text style={styles.menuTitle}>Mukoko Lingo</Text>
+              <View style={styles.iconWrapper}>
+                <MukokoIcon size={26} color={theme.primary} />
+              </View>
+              <View>
+                <Text style={styles.wordmark}>mukoko</Text>
+                <Text style={styles.wordmarkSub}>lingo</Text>
+              </View>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={() => setMenuOpen(false)}>
               <X size={24} color={theme.text} />
@@ -342,103 +360,124 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
   )
 }
 
-const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boolean) =>
+const createStyles = (
+  theme: typeof lightTheme,
+  isDark: boolean,
+  isTablet: boolean,
+  isLandscapeTablet: boolean,
+) =>
   StyleSheet.create({
+    // ── Navbar ────────────────────────────────
     navbar: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: isTablet ? 32 : 16,
-      paddingVertical: 12,
+      paddingVertical: 10,
       backgroundColor: theme.card,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
     },
+
+    // ── LEFT: Logo + Wordmark ────────────────
     logoContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
     },
-    navIcon: {
-      width: 32,
-      height: 32,
+    iconWrapper: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      backgroundColor: isDark ? Colors.primary[400] + '15' : Colors.primary[600] + '10',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    navTitle: {
-      fontSize: 18,
+    wordmark: {
+      fontSize: 16,
       fontWeight: '700',
       color: theme.text,
+      lineHeight: 18,
+      letterSpacing: 0.5,
     },
-    desktopNavLinks: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 24,
-    },
-    desktopNavLink: {
-      paddingVertical: 8,
-    },
-    desktopNavLinkText: {
-      fontSize: 15,
+    wordmarkSub: {
+      fontSize: 11,
       fontWeight: '500',
-      color: theme.text,
+      color: theme.primary,
+      lineHeight: 13,
+      letterSpacing: 2,
+      textTransform: 'uppercase',
     },
-    desktopNavLinkTextSecondary: {
-      fontSize: 14,
-      fontWeight: '400',
-      color: theme.textSecondary,
-    },
-    navDivider: {
-      width: 1,
-      height: 20,
-      backgroundColor: theme.border,
-      marginHorizontal: 8,
-    },
-    navRight: {
+
+    // ── CENTER: Nav links ────────────────────
+    centerNav: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
+      position: 'absolute',
+      left: '50%',
+      transform: [{ translateX: -120 }],
     },
-    navIconButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+    centerNavLink: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 8,
+    },
+    centerNavLinkText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: theme.textSecondary,
+    },
+
+    // ── RIGHT: Icon pill + extras ────────────
+    rightGroup: {
+      flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
+      gap: 10,
     },
     adminButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.accent + '15',
-      paddingHorizontal: 14,
-      paddingVertical: 8,
+      backgroundColor: isDark ? Colors.accent[300] + '15' : Colors.accent[800] + '10',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
       borderRadius: 8,
-      gap: 6,
-      marginRight: 4,
+      gap: 5,
     },
     adminButtonText: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '600',
       color: theme.accent,
     },
-    getStartedButton: {
-      backgroundColor: theme.primary,
-      paddingHorizontal: 20,
-      paddingVertical: 10,
-      borderRadius: 8,
-      marginLeft: 8,
+    iconPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: 24,
+      paddingHorizontal: 4,
+      paddingVertical: 4,
     },
-    getStartedButtonText: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: '#ffffff',
-    },
-    menuButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+    pillIcon: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    // Mobile Menu Modal
+    pillDivider: {
+      width: 1,
+      height: 16,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+    },
+    menuButton: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: isDark ? Colors.neutral[800] : Colors.neutral[100],
+    },
+
+    // ── Mobile Menu Modal ────────────────────
     menuModal: {
       flex: 1,
       backgroundColor: theme.background,
@@ -451,15 +490,6 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       paddingVertical: 16,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
-    },
-    menuIcon: {
-      width: 36,
-      height: 36,
-    },
-    menuTitle: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: theme.text,
     },
     closeButton: {
       width: 44,
