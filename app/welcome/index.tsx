@@ -24,62 +24,64 @@ import {
 } from 'lucide-react-native'
 
 import { useTheme } from '@/lib/hooks/useTheme'
+import { useUILanguage } from '@/lib/hooks/useUILanguage'
 import { lightTheme, darkTheme } from '@/constants/Colors'
 import { AppHeader } from '@/components/AppHeader'
 
 const ONBOARDING_KEY = '@mukoko_onboarding_complete'
 
-const STATS = [
-  { value: '200+', label: 'Essential Phrases' },
-  { value: '4', label: 'Languages' },
-  { value: 'AI', label: 'Powered Tutor' },
-  { value: 'Free', label: 'To Start' },
-]
-
 export default function WelcomeScreen() {
   const router = useRouter()
   const { isDark } = useTheme()
+  const { t } = useUILanguage()
   const theme = isDark ? darkTheme : lightTheme
   const { width } = useWindowDimensions()
 
   const isTablet = width >= 768
   const isDesktop = width >= 1024
 
+  const STATS = [
+    { value: '200+', label: t.essentialPhrases || 'Essential Phrases' },
+    { value: '4', label: t.languages || 'Languages' },
+    { value: 'AI', label: t.poweredTutor || 'Powered Tutor' },
+    { value: 'Free', label: t.freeToStart || 'To Start' },
+  ]
+
   const FEATURES = [
     {
       icon: Globe,
-      title: '4 Languages Side-by-Side',
-      description: 'Learn Shona, Ndebele, English, and Chinese with comparisons',
+      title: t.feat4Languages || '4 Languages Side-by-Side',
+      description: t.feat4LanguagesDesc || 'Learn Shona, Ndebele, English, and Chinese with comparisons',
       color: theme.primary,
     },
     {
       icon: MessageCircle,
-      title: 'AI Conversation Practice',
-      description: 'Adaptive tutoring matching your skill level',
+      title: t.featAIConversation || 'AI Conversation Practice',
+      description: t.featAIConversationDesc || 'Adaptive tutoring matching your skill level',
       color: theme.secondary,
     },
     {
       icon: BookOpen,
-      title: '200+ Essential Phrases',
-      description: 'Real-world vocabulary across multiple contexts',
+      title: t.featPhrases || '200+ Essential Phrases',
+      description: t.featPhrasesDesc || 'Real-world vocabulary across multiple contexts',
       color: theme.accent,
     },
     {
       icon: Mic,
-      title: 'Pronunciation Guides',
-      description: 'Phonetic instruction for all four languages',
+      title: t.featPronunciation || 'Pronunciation Guides',
+      description: t.featPronunciationDesc || 'Phonetic instruction for all four languages',
       color: theme.primary,
     },
     {
       icon: BarChart3,
-      title: 'Progress Tracking',
-      description: 'Analytics, streaks, and personalized suggestions',
+      title: t.featProgress || 'Progress Tracking',
+      description: t.featProgressDesc || 'Analytics, streaks, and personalized suggestions',
       color: theme.secondary,
     },
     {
       icon: Heart,
-      title: 'Cultural Context',
-      description: 'Usage examples and situational appropriateness',
+      title: t.featCulture || 'Cultural Context',
+      description: t.featCultureDesc || 'Usage examples and situational appropriateness',
       color: theme.accent,
     },
   ]
@@ -87,20 +89,20 @@ export default function WelcomeScreen() {
   const USE_CASES = [
     {
       icon: Plane,
-      title: 'Tourists & Travelers',
-      description: 'Navigation, greetings, shopping, emergencies',
+      title: t.useCaseTourists || 'Tourists & Travelers',
+      description: t.useCaseTouristsDesc || 'Navigation, greetings, shopping, emergencies',
       color: theme.accent,
     },
     {
       icon: Briefcase,
-      title: 'Business & Expats',
-      description: 'Professional communication and cultural integration',
+      title: t.useCaseBusiness || 'Business & Expats',
+      description: t.useCaseBusinessDesc || 'Professional communication and cultural integration',
       color: theme.primary,
     },
     {
       icon: Users,
-      title: 'Locals',
-      description: 'General language mastery and skill building',
+      title: t.useCaseLocals || 'Locals',
+      description: t.useCaseLocalsDesc || 'General language mastery and skill building',
       color: theme.secondary,
     },
   ]
@@ -150,9 +152,9 @@ export default function WelcomeScreen() {
           <View style={styles.contentWrapper}>
             {/* Hero Section */}
             <View style={styles.hero}>
-              <Text style={styles.heroTitle}>Language learning,{'\n'}built for Africa</Text>
+              <Text style={styles.heroTitle}>{t.welcomeTitle || 'Language learning,\nbuilt for Africa'}</Text>
               <Text style={styles.heroDescription}>
-                Master Shona, Ndebele, English, and Chinese with AI-powered tools. Perfect for tourists, expats, business professionals, and locals.
+                {t.welcomeDescription || 'Master Shona, Ndebele, English, and Chinese with AI-powered tools. Perfect for tourists, expats, business professionals, and locals.'}
               </Text>
             </View>
 
@@ -169,18 +171,18 @@ export default function WelcomeScreen() {
             {/* Primary CTAs */}
             <View style={styles.ctaSection}>
               <TouchableOpacity style={styles.primaryButton} onPress={handleGetStarted}>
-                <Text style={styles.primaryButtonText}>Start for free</Text>
+                <Text style={styles.primaryButtonText}>{t.startForFree || 'Start for free'}</Text>
                 <ArrowRight size={20} color="#ffffff" />
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.secondaryButton} onPress={handleExploreFeatures}>
-                <Text style={styles.secondaryButtonText}>Explore features</Text>
+                <Text style={styles.secondaryButtonText}>{t.exploreFeatures || 'Explore features'}</Text>
               </TouchableOpacity>
             </View>
 
             {/* Features Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Features</Text>
+              <Text style={styles.sectionTitle}>{t.features || 'Features'}</Text>
               <View style={styles.featuresGrid}>
                 {FEATURES.map((feature, index) => {
                   const Icon = feature.icon
@@ -199,7 +201,7 @@ export default function WelcomeScreen() {
 
             {/* Use Cases Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Perfect for</Text>
+              <Text style={styles.sectionTitle}>{t.perfectFor || 'Perfect for'}</Text>
               <View style={styles.useCasesContainer}>
                 {USE_CASES.map((useCase, index) => {
                   const Icon = useCase.icon
@@ -221,11 +223,11 @@ export default function WelcomeScreen() {
             {/* Secondary Actions */}
             <View style={styles.secondaryActions}>
               <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
-                <Text style={styles.signInButtonText}>Already have an account? Sign in</Text>
+                <Text style={styles.signInButtonText}>{t.alreadyHaveAccount || 'Already have an account? Sign in'}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.guestButton} onPress={handleContinueAsGuest}>
-                <Text style={styles.guestButtonText}>Continue as Guest</Text>
+                <Text style={styles.guestButtonText}>{t.continueAsGuest || 'Continue as Guest'}</Text>
               </TouchableOpacity>
             </View>
 
@@ -239,13 +241,13 @@ export default function WelcomeScreen() {
             <View style={styles.footer}>
               <View style={styles.footerLinks}>
                 <TouchableOpacity onPress={() => router.push('/about')}>
-                  <Text style={styles.footerLink}>About</Text>
+                  <Text style={styles.footerLink}>{t.about || 'About'}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => router.push('/legal/privacy')}>
-                  <Text style={styles.footerLink}>Privacy</Text>
+                  <Text style={styles.footerLink}>{t.privacy || 'Privacy'}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => router.push('/legal/terms')}>
-                  <Text style={styles.footerLink}>Terms</Text>
+                  <Text style={styles.footerLink}>{t.terms || 'Terms'}</Text>
                 </TouchableOpacity>
               </View>
               <Text style={styles.copyright}>© 2025 Nyuchi Learning</Text>

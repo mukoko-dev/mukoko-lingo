@@ -20,3 +20,9 @@ export function getUserSkills(): Promise<Record<string, { score: number; lastAss
 export function recordStudySession(phrasesPracticed: number, durationMinutes: number): Promise<void>
 export function getStudySessions(): Promise<Array<{ date: string; phrasesPracticed: number; durationMinutes: number }>>
 export function getStudyStreak(): Promise<number>
+
+// Daily lesson operations
+export function getDailyLesson(date: string): Promise<string[] | null>
+export function setDailyLesson(date: string, phraseIds: string[]): Promise<void>
+export function getDailyGoalProgress(date: string): Promise<{ learned: number; goal: number; completed: boolean }>
+export function updateDailyGoalProgress(date: string, learned: number): Promise<void>
