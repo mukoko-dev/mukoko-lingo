@@ -36,6 +36,10 @@ import {
   recordStudySession,
   getStudySessions,
   getStudyStreak,
+  getDailyLesson,
+  setDailyLesson,
+  getDailyGoalProgress,
+  updateDailyGoalProgress,
 } from '../database.web'
 
 describe('database (web)', () => {
@@ -182,6 +186,104 @@ describe('database (web)', () => {
       await recordStudySession(5, 10)
       const streak = await getStudyStreak()
       expect(streak).toBe(1)
+    })
+  })
+
+  describe('daily lessons', () => {
+    it('returns null when no lesson is set for a date', async () => {
+      const lesson = await getDailyLesson('2026-02-12')
+      expect(lesson).toBeNull()
+    })
+
+    it('stores and retrieves a daily lesson', async () => {
+      const phraseIds = ['phrase-1', 'phrase-2', 'phrase-3']
+      await setDailyLesson('2026-02-12', phraseIds)
+      const lesson = await getDailyLesson('2026-02-12')
+      expect(lesson).toEqual(phraseIds)
+    })
+
+    it('keeps lessons separate by date', async () => {
+      await setDailyLesson('2026-02-12', ['phrase-1', 'phrase-2'])
+      await setDailyLesson('2026-02-13', ['phrase-3', 'phrase-4'])
+
+      const lesson1 = await getDailyLesson('2026-02-12')
+      const lesson2 = await getDailyLesson('2026-02-13')
+
+      expect(lesson1).toEqual(['phrase-1', 'phrase-2'])
+      expect(lesson2).toEqual(['phrase-3', 'phrase-4'])
+    })
+
+    it('overwrites a lesson for the same date', async () => {
+      await setDailyLesson('2026-02-12', ['phrase-1'])
+      await setDailyLesson('2026-02-12', ['phrase-5', 'phrase-6'])
+      const lesson = await getDailyLesson('2026-02-12')
+      expect(lesson).toEqual(['phrase-5', 'phrase-6'])
+    })
+
+    it('handles empty phrase array', async () => {
+      await setDailyLesson('2026-02-12', [])
+      const lesson = await getDailyLesson('2026-02-12')
+      expect(lesson).toEqual([])
+    })
+  })
+
+  describe('daily goal progress', () => {
+    it('returns default progress when no data exists', async () => {
+      const progress = await getDailyGoalProgress('2026-02-12')
+      expect(progress).toEqual({ learned: 0, goal: 5, completed: false })
+    })
+
+    it('updates learned count', async () => {
+      await updateDailyGoalProgress('2026-02-12', 3)
+      const progress = await getDailyGoalProgress('2026-02-12')
+      expect(progress.learned).toBe(3)
+      expect(progress.goal).toBe(5)
+      expect(progress.completed).toBe(false)
+    })
+
+    it('marks completed when learned reaches goal', async () => {
+      await updateDailyGoalProgress('2026-02-12', 5)
+      const progress = await getDailyGoalProgress('2026-02-12')
+      expect(progress.learned).toBe(5)
+      expect(progress.completed).toBe(true)
+    })
+
+    it('marks completed when learned exceeds goal', async () => {
+      await updateDailyGoalProgress('2026-02-12', 7)
+      const progress = await getDailyGoalProgress('2026-02-12')
+      expect(progress.learned).toBe(7)
+      expect(progress.completed).toBe(true)
+    })
+
+    it('keeps progress separate by date', async () => {
+      await updateDailyGoalProgress('2026-02-12', 3)
+      await updateDailyGoalProgress('2026-02-13', 1)
+
+      const progress1 = await getDailyGoalProgress('2026-02-12')
+      const progress2 = await getDailyGoalProgress('2026-02-13')
+
+      expect(progress1.learned).toBe(3)
+      expect(progress2.learned).toBe(1)
+    })
+
+    it('preserves goal value across updates', async () => {
+      await updateDailyGoalProgress('2026-02-12', 1)
+      await updateDailyGoalProgress('2026-02-12', 2)
+      await updateDailyGoalProgress('2026-02-12', 3)
+
+      const progress = await getDailyGoalProgress('2026-02-12')
+      expect(progress.learned).toBe(3)
+      expect(progress.goal).toBe(5)
+    })
+
+    it('transitions from not completed to completed correctly', async () => {
+      await updateDailyGoalProgress('2026-02-12', 4)
+      let progress = await getDailyGoalProgress('2026-02-12')
+      expect(progress.completed).toBe(false)
+
+      await updateDailyGoalProgress('2026-02-12', 5)
+      progress = await getDailyGoalProgress('2026-02-12')
+      expect(progress.completed).toBe(true)
     })
   })
 })

@@ -11,6 +11,7 @@ import 'react-native-reanimated'
 
 import { ThemeProvider, useTheme } from '@/lib/hooks/useTheme'
 import { LearningLanguageProvider } from '@/lib/hooks/useLearningLanguage'
+import { UILanguageProvider } from '@/lib/hooks/useUILanguage'
 import { initDatabase } from '@/lib/storage/database'
 import { lightTheme, darkTheme } from '@/constants/Colors'
 import {
@@ -211,9 +212,11 @@ export default function RootLayout() {
   return (
     <AuthContext.Provider value={authState}>
       <ThemeProvider>
-        <LearningLanguageProvider>
-          <RootLayoutNav hasCompletedOnboarding={hasCompletedOnboarding} />
-        </LearningLanguageProvider>
+        <UILanguageProvider>
+          <LearningLanguageProvider>
+            <RootLayoutNav hasCompletedOnboarding={hasCompletedOnboarding} />
+          </LearningLanguageProvider>
+        </UILanguageProvider>
       </ThemeProvider>
     </AuthContext.Provider>
   )

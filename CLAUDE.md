@@ -387,11 +387,10 @@ nyuchi-lingo/
 ### Navigation System
 
 **Mobile Tab Navigation** (`app/(tabs)/_layout.tsx`):
-1. **Learn** (`index.tsx`) - Phrase browsing with language selector, search, category filters
-2. **Shamwari** (`ai-practice.tsx`) - AI chat tutor powered by Anthropic Claude
-3. **Insights** (`insights.tsx`) - Bookmarks, phrase mastery, skill proficiency, study analytics
-4. **Skills** (`skills.tsx`) - Skills breakdown with progress bars and assessment entry points
-5. **Profile** (`profile.tsx`) - User settings, preferences, stats summary
+1. **Learn** (`index.tsx`) - Daily lesson (flash cards + quiz) and phrase browsing with language selector, search, category filters
+2. **Shamwari** (`ai-practice.tsx`) - AI chat tutor powered by Anthropic Claude, accepts phrase context from Learn/Phrase screens
+3. **Progress** (`insights.tsx`) - Dashboard (daily goal, streak, skill proficiency, phrase mastery) + Phrases (bookmarked/tracked phrases)
+4. **Profile** (`profile.tsx`) - User settings and preferences
 
 **Other Routes**:
 - `app/assessment/[skill].tsx` - Skill assessment page

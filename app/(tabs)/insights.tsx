@@ -11,64 +11,69 @@ import { useRouter } from 'expo-router'
 import {
   Bookmark,
   TrendingUp,
-  Clock,
   Award,
   ChevronRight,
   Flame,
-  BookOpen,
   CheckCircle2,
   Circle,
   Target,
-  BarChart3,
 } from 'lucide-react-native'
 
-import { useColorScheme } from '@/components/useColorScheme'
+import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import {
   getBookmarks,
   getProgress,
   getUserSkills,
   getStudyStreak,
-  getStudySessions,
 } from '@/lib/storage/database'
-import { phrases, categories } from '@/lib/data/phrases-data'
+import { getTodayProgress } from '@/lib/services/daily-lesson'
+import { phrases } from '@/lib/data/phrases-data'
 import { useLearningLanguage, LEARNING_LANGUAGES } from '@/lib/hooks/useLearningLanguage'
 
 type ProgressStatus = 'learning' | 'practiced' | 'mastered'
 
-interface InsightsData {
+const SKILL_DEFINITIONS = [
+  { id: 'pronunciation', name: 'Pronunciation' },
+  { id: 'vocabulary', name: 'Vocabulary' },
+  { id: 'grammar', name: 'Grammar' },
+  { id: 'comprehension', name: 'Comprehension' },
+  { id: 'conversation', name: 'Conversation' },
+]
+
+interface ProgressData {
   bookmarkedIds: string[]
   progress: Record<string, { status: string; lastPracticed: string }>
   skills: Record<string, { score: number; lastAssessed: string }>
   streak: number
-  sessions: Array<{ date: string; phrasesPracticed: number; durationMinutes: number }>
+  dailyGoal: { learned: number; goal: number; completed: boolean }
 }
 
-export default function InsightsScreen() {
-  const colorScheme = useColorScheme()
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme
+export default function ProgressScreen() {
+  const { isDark } = useTheme()
+  const theme = isDark ? darkTheme : lightTheme
   const router = useRouter()
-  const { learningLanguage, learningLanguageOption } = useLearningLanguage()
+  const { learningLanguage } = useLearningLanguage()
 
-  const [data, setData] = useState<InsightsData>({
+  const [data, setData] = useState<ProgressData>({
     bookmarkedIds: [],
     progress: {},
     skills: {},
     streak: 0,
-    sessions: [],
+    dailyGoal: { learned: 0, goal: 5, completed: false },
   })
   const [refreshing, setRefreshing] = useState(false)
-  const [activeSection, setActiveSection] = useState<'overview' | 'bookmarks' | 'progress'>('overview')
+  const [activeSection, setActiveSection] = useState<'dashboard' | 'phrases'>('dashboard')
 
   const loadData = useCallback(async () => {
-    const [bookmarkedIds, progress, skills, streak, sessions] = await Promise.all([
+    const [bookmarkedIds, progress, skills, streak, dailyGoal] = await Promise.all([
       getBookmarks(),
       getProgress(),
       getUserSkills(),
       getStudyStreak(),
-      getStudySessions(),
+      getTodayProgress(),
     ])
-    setData({ bookmarkedIds, progress, skills, streak, sessions })
+    setData({ bookmarkedIds, progress, skills, streak, dailyGoal })
   }, [])
 
   useEffect(() => {
@@ -87,11 +92,6 @@ export default function InsightsScreen() {
   const practicedCount = progressEntries.filter(([, v]) => v.status === 'practiced').length
   const learningCount = progressEntries.filter(([, v]) => v.status === 'learning').length
   const totalPhrases = phrases.length
-  const totalTracked = progressEntries.length
-
-  const totalMinutes = data.sessions.reduce((sum, s) => sum + s.durationMinutes, 0)
-  const totalHours = Math.floor(totalMinutes / 60)
-  const remainingMinutes = totalMinutes % 60
 
   const skillEntries = Object.entries(data.skills)
   const overallScore = skillEntries.length > 0
@@ -124,31 +124,24 @@ export default function InsightsScreen() {
     }
   }
 
-  // Get bookmarked phrases
-  const bookmarkedPhrases = phrases.filter(p => data.bookmarkedIds.includes(p.id))
+  // Bookmarked + in-progress phrases combined
+  const trackedPhrases = phrases.filter(p =>
+    data.bookmarkedIds.includes(p.id) || data.progress[p.id]
+  ).sort((a, b) => {
+    const aBookmarked = data.bookmarkedIds.includes(a.id) ? 1 : 0
+    const bBookmarked = data.bookmarkedIds.includes(b.id) ? 1 : 0
+    if (aBookmarked !== bBookmarked) return bBookmarked - aBookmarked
+    const statusOrder: Record<string, number> = { learning: 0, practiced: 1, mastered: 2 }
+    const aStatus = statusOrder[data.progress[a.id]?.status] ?? -1
+    const bStatus = statusOrder[data.progress[b.id]?.status] ?? -1
+    return aStatus - bStatus
+  })
 
-  // Get recent activity (last 7 days sessions)
-  const recentSessions = data.sessions
-    .slice(-7)
-    .reverse()
+  const dailyPercent = data.dailyGoal.goal > 0
+    ? Math.min((data.dailyGoal.learned / data.dailyGoal.goal) * 100, 100)
+    : 0
 
-  // Category breakdown
-  const categoryBreakdown = categories.map(cat => {
-    const catPhrases = phrases.filter(p => p.category === cat.id)
-    const catProgress = catPhrases.filter(p => data.progress[p.id])
-    const catMastered = catPhrases.filter(p => data.progress[p.id]?.status === 'mastered')
-    return {
-      ...cat,
-      total: catPhrases.length,
-      practiced: catProgress.length,
-      mastered: catMastered.length,
-      percentage: catPhrases.length > 0
-        ? Math.round((catProgress.length / catPhrases.length) * 100)
-        : 0,
-    }
-  }).sort((a, b) => b.percentage - a.percentage)
-
-  const styles = createStyles(theme)
+  const styles = createStyles(theme, isDark)
 
   return (
     <ScrollView
@@ -158,7 +151,7 @@ export default function InsightsScreen() {
     >
       {/* Section Tabs */}
       <View style={styles.sectionTabs}>
-        {(['overview', 'bookmarks', 'progress'] as const).map(section => (
+        {(['dashboard', 'phrases'] as const).map(section => (
           <TouchableOpacity
             key={section}
             style={[styles.sectionTab, activeSection === section && styles.sectionTabActive]}
@@ -168,14 +161,38 @@ export default function InsightsScreen() {
               styles.sectionTabText,
               activeSection === section && styles.sectionTabTextActive,
             ]}>
-              {section === 'overview' ? 'Overview' : section === 'bookmarks' ? 'Bookmarks' : 'Progress'}
+              {section === 'dashboard' ? 'Dashboard' : 'Phrases'}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {activeSection === 'overview' && (
+      {activeSection === 'dashboard' && (
         <>
+          {/* Daily Goal Card */}
+          <View style={styles.dailyGoalCard}>
+            <View style={styles.dailyGoalHeader}>
+              <Target size={18} color={data.dailyGoal.completed ? Colors.success[500] : theme.primary} />
+              <Text style={styles.dailyGoalTitle}>
+                {data.dailyGoal.completed ? 'Daily Goal Complete!' : "Today's Goal"}
+              </Text>
+            </View>
+            <View style={styles.dailyGoalProgress}>
+              <Text style={styles.dailyGoalCount}>
+                {data.dailyGoal.learned}/{data.dailyGoal.goal}
+              </Text>
+              <View style={styles.dailyGoalBarBg}>
+                <View style={[
+                  styles.dailyGoalBarFill,
+                  {
+                    width: `${dailyPercent}%`,
+                    backgroundColor: data.dailyGoal.completed ? Colors.success[500] : theme.primary,
+                  },
+                ]} />
+              </View>
+            </View>
+          </View>
+
           {/* Quick Stats Row */}
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
@@ -197,20 +214,11 @@ export default function InsightsScreen() {
                 <Bookmark size={20} color={theme.secondary} />
               </View>
               <Text style={styles.statValue}>{data.bookmarkedIds.length}</Text>
-              <Text style={styles.statLabel}>Bookmarks</Text>
-            </View>
-            <View style={styles.statCard}>
-              <View style={[styles.statIconBg, { backgroundColor: theme.primary + '20' }]}>
-                <Clock size={20} color={theme.primary} />
-              </View>
-              <Text style={styles.statValue}>
-                {totalHours > 0 ? `${totalHours}h` : `${totalMinutes}m`}
-              </Text>
-              <Text style={styles.statLabel}>Study Time</Text>
+              <Text style={styles.statLabel}>Saved</Text>
             </View>
           </View>
 
-          {/* Proficiency Card */}
+          {/* Proficiency + Skills */}
           <View style={styles.proficiencyCard}>
             <View style={styles.proficiencyHeader}>
               <TrendingUp size={20} color={theme.primary} />
@@ -222,21 +230,22 @@ export default function InsightsScreen() {
                 <Text style={styles.proficiencyLevel}>{getProficiencyLevel(overallScore)}</Text>
               </View>
               <View style={styles.proficiencyDetails}>
-                {skillEntries.length > 0 ? skillEntries.map(([name, skill]) => (
-                  <View key={name} style={styles.skillRow}>
-                    <Text style={styles.skillLabel}>
-                      {name.charAt(0).toUpperCase() + name.slice(1)}
-                    </Text>
-                    <View style={styles.skillBarBg}>
-                      <View
-                        style={[styles.skillBarFill, { width: `${skill.score}%` }]}
-                      />
+                {SKILL_DEFINITIONS.map(skill => {
+                  const userSkill = data.skills[skill.id]
+                  const score = userSkill?.score || 0
+                  return (
+                    <View key={skill.id} style={styles.skillRow}>
+                      <Text style={styles.skillLabel}>{skill.name}</Text>
+                      <View style={styles.skillBarBg}>
+                        <View style={[styles.skillBarFill, { width: `${score}%` }]} />
+                      </View>
+                      <Text style={styles.skillScore}>{score}%</Text>
                     </View>
-                    <Text style={styles.skillScore}>{skill.score}%</Text>
-                  </View>
-                )) : (
+                  )
+                })}
+                {skillEntries.length === 0 && (
                   <Text style={styles.emptyText}>
-                    Take an assessment to see your skill levels
+                    Practice phrases to build skills
                   </Text>
                 )}
               </View>
@@ -250,41 +259,23 @@ export default function InsightsScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Phrase Mastery Breakdown */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <BarChart3 size={20} color={theme.primary} />
-              <Text style={styles.sectionTitle}>Phrase Mastery</Text>
-            </View>
-
-            {/* Progress Summary Bar */}
+          {/* Mastery Summary */}
+          <View style={styles.masteryCard}>
+            <Text style={styles.masteryTitle}>Phrase Progress</Text>
             <View style={styles.masteryBar}>
               {masteredCount > 0 && (
-                <View style={[
-                  styles.masterySegment,
-                  { flex: masteredCount, backgroundColor: Colors.success[500] },
-                ]} />
+                <View style={[styles.masterySegment, { flex: masteredCount, backgroundColor: Colors.success[500] }]} />
               )}
               {practicedCount > 0 && (
-                <View style={[
-                  styles.masterySegment,
-                  { flex: practicedCount, backgroundColor: theme.secondary },
-                ]} />
+                <View style={[styles.masterySegment, { flex: practicedCount, backgroundColor: theme.secondary }]} />
               )}
               {learningCount > 0 && (
-                <View style={[
-                  styles.masterySegment,
-                  { flex: learningCount, backgroundColor: theme.accent },
-                ]} />
+                <View style={[styles.masterySegment, { flex: learningCount, backgroundColor: theme.accent }]} />
               )}
-              {totalPhrases - totalTracked > 0 && (
-                <View style={[
-                  styles.masterySegment,
-                  { flex: totalPhrases - totalTracked, backgroundColor: theme.border },
-                ]} />
+              {totalPhrases - (masteredCount + practicedCount + learningCount) > 0 && (
+                <View style={[styles.masterySegment, { flex: totalPhrases - (masteredCount + practicedCount + learningCount), backgroundColor: theme.border }]} />
               )}
             </View>
-
             <View style={styles.masteryLegend}>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: Colors.success[500] }]} />
@@ -298,76 +289,22 @@ export default function InsightsScreen() {
                 <View style={[styles.legendDot, { backgroundColor: theme.accent }]} />
                 <Text style={styles.legendText}>Learning ({learningCount})</Text>
               </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: theme.border }]} />
-                <Text style={styles.legendText}>New ({totalPhrases - totalTracked})</Text>
-              </View>
             </View>
           </View>
-
-          {/* Category Breakdown */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <BookOpen size={20} color={theme.primary} />
-              <Text style={styles.sectionTitle}>By Category</Text>
-            </View>
-            {categoryBreakdown.map(cat => (
-              <View key={cat.id} style={styles.categoryRow}>
-                <Text style={styles.categoryIcon}>{cat.icon}</Text>
-                <View style={styles.categoryInfo}>
-                  <Text style={styles.categoryName}>{cat.name}</Text>
-                  <View style={styles.categoryBarBg}>
-                    <View
-                      style={[styles.categoryBarFill, { width: `${cat.percentage}%` }]}
-                    />
-                  </View>
-                </View>
-                <Text style={styles.categoryPercent}>{cat.percentage}%</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Recent Activity */}
-          {recentSessions.length > 0 && (
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionHeader}>
-                <Clock size={20} color={theme.primary} />
-                <Text style={styles.sectionTitle}>Recent Activity</Text>
-              </View>
-              {recentSessions.map((session, idx) => {
-                const sessionDate = new Date(session.date)
-                const isToday = session.date === new Date().toISOString().split('T')[0]
-                return (
-                  <View key={idx} style={styles.activityRow}>
-                    <View style={styles.activityDot} />
-                    <View style={styles.activityInfo}>
-                      <Text style={styles.activityDate}>
-                        {isToday ? 'Today' : sessionDate.toLocaleDateString('en-US', {
-                          weekday: 'short', month: 'short', day: 'numeric',
-                        })}
-                      </Text>
-                      <Text style={styles.activityDetail}>
-                        {session.phrasesPracticed} phrases &middot; {session.durationMinutes} min
-                      </Text>
-                    </View>
-                  </View>
-                )
-              })}
-            </View>
-          )}
         </>
       )}
 
-      {activeSection === 'bookmarks' && (
+      {activeSection === 'phrases' && (
         <>
-          {bookmarkedPhrases.length > 0 ? (
+          {trackedPhrases.length > 0 ? (
             <>
               <Text style={styles.resultCount}>
-                {bookmarkedPhrases.length} bookmarked phrase{bookmarkedPhrases.length !== 1 ? 's' : ''}
+                {trackedPhrases.length} phrase{trackedPhrases.length !== 1 ? 's' : ''} tracked
               </Text>
-              {bookmarkedPhrases.map(phrase => {
+              {trackedPhrases.map(phrase => {
                 const langOption = LEARNING_LANGUAGES.find(l => l.key === learningLanguage)
                 const progressStatus = data.progress[phrase.id]?.status as ProgressStatus | undefined
+                const isBookmarked = data.bookmarkedIds.includes(phrase.id)
                 const StatusIcon = progressStatus ? getStatusIcon(progressStatus) : null
 
                 return (
@@ -378,18 +315,17 @@ export default function InsightsScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={styles.phraseCardContent}>
-                      <Text style={styles.phraseEnglish}>{phrase.english}</Text>
+                      <View style={styles.phraseTopRow}>
+                        <Text style={styles.phraseEnglish}>{phrase.english}</Text>
+                        {isBookmarked && <Bookmark size={14} color={theme.primary} />}
+                      </View>
                       <View style={styles.phraseTranslationRow}>
                         <Text style={styles.phraseFlag}>{langOption?.flag}</Text>
-                        <Text style={styles.phraseTranslation}>
-                          {phrase[learningLanguage]}
-                        </Text>
+                        <Text style={styles.phraseTranslation}>{phrase[learningLanguage]}</Text>
                       </View>
                       {progressStatus && (
                         <View style={styles.phraseStatusRow}>
-                          {StatusIcon && (
-                            <StatusIcon size={12} color={getStatusColor(progressStatus)} />
-                          )}
+                          {StatusIcon && <StatusIcon size={12} color={getStatusColor(progressStatus)} />}
                           <Text style={[styles.phraseStatusText, { color: getStatusColor(progressStatus) }]}>
                             {progressStatus.charAt(0).toUpperCase() + progressStatus.slice(1)}
                           </Text>
@@ -404,125 +340,9 @@ export default function InsightsScreen() {
           ) : (
             <View style={styles.emptyState}>
               <Bookmark size={48} color={theme.textMuted} />
-              <Text style={styles.emptyStateTitle}>No Bookmarks Yet</Text>
+              <Text style={styles.emptyStateTitle}>No Phrases Yet</Text>
               <Text style={styles.emptyStateText}>
-                Bookmark phrases while learning to review them here
-              </Text>
-              <TouchableOpacity
-                style={styles.emptyStateButton}
-                onPress={() => router.push('/(tabs)')}
-              >
-                <Text style={styles.emptyStateButtonText}>Browse Phrases</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </>
-      )}
-
-      {activeSection === 'progress' && (
-        <>
-          {totalTracked > 0 ? (
-            <>
-              <Text style={styles.resultCount}>
-                {totalTracked} of {totalPhrases} phrases tracked
-              </Text>
-
-              {/* Mastered phrases */}
-              {masteredCount > 0 && (
-                <View style={styles.progressGroup}>
-                  <View style={styles.progressGroupHeader}>
-                    <CheckCircle2 size={16} color={Colors.success[500]} />
-                    <Text style={[styles.progressGroupTitle, { color: Colors.success[500] }]}>
-                      Mastered ({masteredCount})
-                    </Text>
-                  </View>
-                  {progressEntries
-                    .filter(([, v]) => v.status === 'mastered')
-                    .map(([id]) => {
-                      const phrase = phrases.find(p => p.id === id)
-                      if (!phrase) return null
-                      return (
-                        <TouchableOpacity
-                          key={id}
-                          style={styles.progressPhraseRow}
-                          onPress={() => router.push(`/phrase/${id}`)}
-                        >
-                          <Text style={styles.progressPhraseText} numberOfLines={1}>
-                            {phrase.english}
-                          </Text>
-                          <ChevronRight size={14} color={theme.textMuted} />
-                        </TouchableOpacity>
-                      )
-                    })}
-                </View>
-              )}
-
-              {/* Practiced phrases */}
-              {practicedCount > 0 && (
-                <View style={styles.progressGroup}>
-                  <View style={styles.progressGroupHeader}>
-                    <Target size={16} color={theme.secondary} />
-                    <Text style={[styles.progressGroupTitle, { color: theme.secondary }]}>
-                      Practiced ({practicedCount})
-                    </Text>
-                  </View>
-                  {progressEntries
-                    .filter(([, v]) => v.status === 'practiced')
-                    .map(([id]) => {
-                      const phrase = phrases.find(p => p.id === id)
-                      if (!phrase) return null
-                      return (
-                        <TouchableOpacity
-                          key={id}
-                          style={styles.progressPhraseRow}
-                          onPress={() => router.push(`/phrase/${id}`)}
-                        >
-                          <Text style={styles.progressPhraseText} numberOfLines={1}>
-                            {phrase.english}
-                          </Text>
-                          <ChevronRight size={14} color={theme.textMuted} />
-                        </TouchableOpacity>
-                      )
-                    })}
-                </View>
-              )}
-
-              {/* Learning phrases */}
-              {learningCount > 0 && (
-                <View style={styles.progressGroup}>
-                  <View style={styles.progressGroupHeader}>
-                    <Circle size={16} color={theme.accent} />
-                    <Text style={[styles.progressGroupTitle, { color: theme.accent }]}>
-                      Learning ({learningCount})
-                    </Text>
-                  </View>
-                  {progressEntries
-                    .filter(([, v]) => v.status === 'learning')
-                    .map(([id]) => {
-                      const phrase = phrases.find(p => p.id === id)
-                      if (!phrase) return null
-                      return (
-                        <TouchableOpacity
-                          key={id}
-                          style={styles.progressPhraseRow}
-                          onPress={() => router.push(`/phrase/${id}`)}
-                        >
-                          <Text style={styles.progressPhraseText} numberOfLines={1}>
-                            {phrase.english}
-                          </Text>
-                          <ChevronRight size={14} color={theme.textMuted} />
-                        </TouchableOpacity>
-                      )
-                    })}
-                </View>
-              )}
-            </>
-          ) : (
-            <View style={styles.emptyState}>
-              <Target size={48} color={theme.textMuted} />
-              <Text style={styles.emptyStateTitle}>No Progress Yet</Text>
-              <Text style={styles.emptyStateText}>
-                Start practicing phrases to track your progress here
+                Bookmark phrases or start practicing to see them here
               </Text>
               <TouchableOpacity
                 style={styles.emptyStateButton}
@@ -538,7 +358,7 @@ export default function InsightsScreen() {
   )
 }
 
-const createStyles = (theme: typeof lightTheme) =>
+const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -572,6 +392,49 @@ const createStyles = (theme: typeof lightTheme) =>
     sectionTabTextActive: {
       color: '#ffffff',
     },
+    // Daily Goal
+    dailyGoalCard: {
+      backgroundColor: theme.card,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    dailyGoalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 10,
+    },
+    dailyGoalTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: theme.text,
+    },
+    dailyGoalProgress: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    dailyGoalCount: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: theme.primary,
+      minWidth: 36,
+    },
+    dailyGoalBarBg: {
+      flex: 1,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: isDark ? Colors.neutral[700] : Colors.neutral[200],
+      overflow: 'hidden',
+    },
+    dailyGoalBarFill: {
+      height: '100%',
+      borderRadius: 4,
+    },
+    // Stats
     statsGrid: {
       flexDirection: 'row',
       gap: 8,
@@ -602,6 +465,7 @@ const createStyles = (theme: typeof lightTheme) =>
       color: theme.textMuted,
       marginTop: 2,
     },
+    // Proficiency
     proficiencyCard: {
       backgroundColor: theme.card,
       borderRadius: 16,
@@ -692,22 +556,18 @@ const createStyles = (theme: typeof lightTheme) =>
       fontSize: 14,
       fontWeight: '600',
     },
-    sectionCard: {
+    // Mastery
+    masteryCard: {
       backgroundColor: theme.card,
       borderRadius: 16,
       padding: 16,
       marginBottom: 16,
     },
-    sectionHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      marginBottom: 12,
-    },
-    sectionTitle: {
+    masteryTitle: {
       fontSize: 16,
       fontWeight: '700',
       color: theme.text,
+      marginBottom: 12,
     },
     masteryBar: {
       flexDirection: 'row',
@@ -738,73 +598,7 @@ const createStyles = (theme: typeof lightTheme) =>
       fontSize: 12,
       color: theme.textSecondary,
     },
-    categoryRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 8,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
-    },
-    categoryIcon: {
-      fontSize: 18,
-      marginRight: 10,
-    },
-    categoryInfo: {
-      flex: 1,
-    },
-    categoryName: {
-      fontSize: 14,
-      fontWeight: '500',
-      color: theme.text,
-      marginBottom: 4,
-    },
-    categoryBarBg: {
-      height: 4,
-      backgroundColor: theme.border,
-      borderRadius: 2,
-      overflow: 'hidden',
-    },
-    categoryBarFill: {
-      height: '100%',
-      backgroundColor: Colors.success[500],
-      borderRadius: 2,
-    },
-    categoryPercent: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: theme.textSecondary,
-      marginLeft: 8,
-      width: 35,
-      textAlign: 'right',
-    },
-    activityRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 8,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
-    },
-    activityDot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: theme.primary,
-      marginRight: 12,
-    },
-    activityInfo: {
-      flex: 1,
-    },
-    activityDate: {
-      fontSize: 14,
-      fontWeight: '500',
-      color: theme.text,
-    },
-    activityDetail: {
-      fontSize: 12,
-      color: theme.textMuted,
-      marginTop: 2,
-    },
-    // Bookmarks & Progress
+    // Phrases list
     resultCount: {
       fontSize: 13,
       color: theme.textMuted,
@@ -821,11 +615,17 @@ const createStyles = (theme: typeof lightTheme) =>
     phraseCardContent: {
       flex: 1,
     },
+    phraseTopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 4,
+    },
     phraseEnglish: {
       fontSize: 15,
       fontWeight: '600',
       color: theme.text,
-      marginBottom: 4,
+      flex: 1,
     },
     phraseTranslationRow: {
       flexDirection: 'row',
@@ -850,35 +650,6 @@ const createStyles = (theme: typeof lightTheme) =>
     phraseStatusText: {
       fontSize: 11,
       fontWeight: '600',
-    },
-    // Progress groups
-    progressGroup: {
-      backgroundColor: theme.card,
-      borderRadius: 12,
-      padding: 12,
-      marginBottom: 12,
-    },
-    progressGroupHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      marginBottom: 8,
-    },
-    progressGroupTitle: {
-      fontSize: 14,
-      fontWeight: '700',
-    },
-    progressPhraseRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 8,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
-    },
-    progressPhraseText: {
-      flex: 1,
-      fontSize: 14,
-      color: theme.text,
     },
     // Empty states
     emptyState: {

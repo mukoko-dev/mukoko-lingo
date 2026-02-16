@@ -9,15 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### UX Overhaul - Learning Loop & Tab Restructure
+
+Major UX overhaul addressing 7 core issues with app identity and learning experience.
+
+### Added
+- **Daily Lessons** - Smart phrase selection system (5 phrases/day) prioritizing weak skills and unmastered content
+- **Flash Cards** - Flip-to-reveal card component for learning phrases with pronunciation guides
+- **Mini Quiz** - 3-option multiple choice quiz after reviewing daily lesson cards
+- **Celebration Cards** - Animated celebrations for daily goal completion and quiz results
+- **Daily Goal System** - Track phrases learned per day with progress bars throughout app
+- **Streak Banner** - Persistent streak display on Learn tab for habit reinforcement
+- **Phrase Context in AI** - Shamwari now accepts phrase context from Learn/Phrase screens for contextual practice
+- **Skill Score Updates** - Phrase practice and mastery now updates skill scores automatically
+- **UI Language System** - Full `useUILanguage` hook with system language detection and 5-language support
+- **Header Language Selector** - Globe dropdown in AppHeader for switching UI language
+
 ### Changed
-- **Icons: SVG to PNG conversion** - Generated PNG app icons from `/public/favicon.svg`: `icon.png` (1024x1024), `favicon.png` (256x256), `adaptive-icon.png` (1024x1024), `splash-icon.png` (1024x1024). White M logo on Cobalt `#0047AB` background.
-- **app.json: Brand colors** - Updated splash and adaptive icon background from `#5f5873` to Cobalt `#0047AB`
+- **Tab Restructure (5→4)** - Removed Skills tab, merged content into new Progress tab (Dashboard + Phrases views)
+- **Learn Tab** - Split into "Today's Lesson" (daily flash cards + quiz) and "Browse All" (original phrase browser)
+- **Progress Tab** - Combined dashboard with daily goal, stats, skill proficiency, and phrase mastery breakdown
+- **Profile Tab** - Removed duplicate stats (now in Progress tab)
+- **Header Colors** - Changed icon pill from Tanzanite secondary to Cobalt primary colors
+- **Onboarding** - Simplified from 4 slides to 2 slides (Learn Phrases + Meet Shamwari)
+- **Features/Why Pages** - Redirect to welcome page (content consolidated)
+- **About Page** - Simplified to essential company info
+- **Landing Page Routing** - Changed from onboarding-flag-based to auth-based routing
 
 ### Fixed
-- **Auth: All login methods failing** - Removed hardcoded Stytch custom template IDs (`mukoko_lingo_otp`, `mukoko_lingo_login`, etc.) that caused OTP, magic link, and password reset to fail when templates don't exist in the Stytch dashboard. Template IDs are now optional and only sent when configured via environment variables.
-- **Auth: Improved error messages** - User-friendly error messages for common auth failures (wrong password, no password set, duplicate email, rate limits, network errors, missing API URL)
-- **Auth: Network error handling** - Client-side `apiCall` now catches network errors separately, handles non-JSON responses, and detects missing `EXPO_PUBLIC_API_BASE_URL` configuration
-- **TypeScript: Stytch API route types** - Fixed type assertions in magic-link, OTP, and password-reset API routes
+- **Landing Page Missing** - Users now always see welcome page when not authenticated
+- **Language Preferences** - Added working UI language selector with system detection and persistence
+- **Header Colors** - Primary Cobalt colors instead of secondary Tanzanite
+
+### Technical
+- New storage functions: `getDailyLesson`, `setDailyLesson`, `getDailyGoalProgress`, `updateDailyGoalProgress`
+- New service: `lib/services/daily-lesson.ts` with smart phrase selection, quiz generation
+- New components: `FlashCard`, `DailyLessonCard`, `MiniQuiz`, `CelebrationCard`
+- New translations: 25+ keys added to all 5 languages (en, sn, nd, zh, sw)
+- Updated tests for database operations and translation completeness
 
 ### Planned
 - Offline mode support for phrase browsing
