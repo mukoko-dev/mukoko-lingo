@@ -20,7 +20,9 @@
   },
   "jest": {
     "preset": "jest-expo",
-    "setupFilesAfterFramework": ["./jest.setup.ts"],
+    "setupFilesAfterFramework": [
+      "./jest.setup.ts"
+    ],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|lucide-react-native)"
     ],
@@ -45,6 +47,7 @@
     "@prisma/client": "^6.3.0",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/native": "^7.1.8",
+    "@supabase/supabase-js": "^2.101.1",
     "@vercel/functions": "^1.5.0",
     "ai": "^5.0.110",
     "expo": "~54.0.27",
