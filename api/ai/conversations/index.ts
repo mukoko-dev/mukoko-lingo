@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { requireAuth } from '../../_lib/auth-middleware'
-import prisma from '../../_lib/prisma'
+import supabase from '../../_lib/supabase'
+import { LANG_CODE_MAP } from '../../../lib/db/transform-phrase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -10,11 +11,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await requireAuth(req)
 
     if (req.method === 'GET') {
-      const conversations = await prisma.aiConversation.findMany({
-        where: { userId: user.profileId },
-        orderBy: { updatedAt: 'desc' },
-        take: 50,
-      })
+      const { data: conversations, error } = await supabase
+        .from('ai_conversation')
+        .select('*')
+        .eq('user_id', user.personId)
+        .order('updated_at', { ascending: false })
+        .limit(50)
+
+      if (error) throw new Error(error.message)
       return res.status(200).json({ data: conversations })
     }
 
@@ -24,14 +28,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'type and language are required' })
       }
 
-      const conversation = await prisma.aiConversation.create({
-        data: {
-          userId: user.profileId,
+      // Map language name to code if needed (e.g. 'english' → 'en')
+      const langCode = LANG_CODE_MAP[language.toLowerCase()] || language
+
+      const { data: conversation, error } = await supabase
+        .from('ai_conversation')
+        .insert({
+          user_id: user.personId,
           type,
-          language,
+          language_id: langCode,
           title: title || `${type} - ${language}`,
-        },
-      })
+        })
+        .select()
+        .single()
+
+      if (error) throw new Error(error.message)
       return res.status(201).json({ data: conversation })
     }
 

@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { requireAdmin } from '../_lib/auth-middleware'
-import prisma from '../_lib/prisma'
+import supabase from '../_lib/supabase'
+import { flattenPhrases } from '../../lib/db/transform-phrase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -10,28 +11,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await requireAdmin(req)
 
-    const daysBack = parseInt(req.query.days_back as string) || 30
-    const since = new Date()
-    since.setDate(since.getDate() - daysBack)
+    // Use phrase_stats_cache for popular phrases (Doris domain cache)
+    const { data: stats, error } = await supabase
+      .from('phrase_stats_cache')
+      .select(`
+        phrase_id, view_count, bookmark_count,
+        phrase:phrase(
+          id, category, content_type, difficulty, skill_id, required_proficiency, created_at,
+          translations:translation(language_id, text, pronunciation, context)
+        )
+      `)
+      .order('view_count', { ascending: false })
+      .limit(20)
 
-    // Get most viewed phrases
-    const phraseViews = await prisma.phraseView.groupBy({
-      by: ['phraseId'],
-      _count: { phraseId: true },
-      where: { viewedAt: { gte: since } },
-      orderBy: { _count: { phraseId: 'desc' } },
-      take: 20,
-    })
+    if (error) throw new Error(error.message)
 
-    // Fetch phrase details
-    const phraseIds = phraseViews.map(v => v.phraseId)
-    const phrases = await prisma.phrase.findMany({
-      where: { id: { in: phraseIds } },
-    })
-
-    const results = phraseViews.map(v => ({
-      ...phrases.find(p => p.id === v.phraseId),
-      view_count: v._count.phraseId,
+    const results = (stats || []).map((s: any) => ({
+      ...flattenPhrases([s.phrase])[0],
+      view_count: s.view_count,
+      bookmark_count: s.bookmark_count,
     }))
 
     return res.status(200).json({ data: results })

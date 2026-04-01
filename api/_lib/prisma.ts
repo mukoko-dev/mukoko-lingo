@@ -1,19 +1,9 @@
 /**
- * Prisma Client Singleton for API routes
- * Re-exports the shared Prisma client.
+ * @deprecated This file is no longer used. The app now uses Supabase PostgreSQL.
+ * See api/_lib/supabase.ts for the active database client.
+ *
+ * Retained temporarily for reference during migration. Will be removed
+ * after the app is confirmed working on the lingo.* schema.
  */
 
-import { PrismaClient } from '@prisma/client'
-
-declare global {
-  // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined
-}
-
-const prisma = global.prisma || new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prisma
-}
-
-export default prisma
+export default null as any

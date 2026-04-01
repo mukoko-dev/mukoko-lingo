@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../../_lib/cors'
 import { requireAuth } from '../../../_lib/auth-middleware'
-import prisma from '../../../_lib/prisma'
+import supabase from '../../../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -12,18 +12,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await requireAuth(req)
 
     // Verify conversation ownership
-    const conversation = await prisma.aiConversation.findFirst({
-      where: { id: id as string, userId: user.profileId },
-    })
+    const { data: conversation } = await supabase
+      .from('ai_conversation')
+      .select('id')
+      .eq('id', id as string)
+      .eq('user_id', user.personId)
+      .single()
+
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' })
     }
 
     if (req.method === 'GET') {
-      const messages = await prisma.aiMessage.findMany({
-        where: { conversationId: id as string },
-        orderBy: { createdAt: 'asc' },
-      })
+      const { data: messages, error } = await supabase
+        .from('ai_message')
+        .select('*')
+        .eq('conversation_id', id as string)
+        .order('created_at', { ascending: true })
+
+      if (error) throw new Error(error.message)
       return res.status(200).json({ data: messages })
     }
 
@@ -33,19 +40,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'role and content are required' })
       }
 
-      const message = await prisma.aiMessage.create({
-        data: {
-          conversationId: id as string,
+      const { data: message, error } = await supabase
+        .from('ai_message')
+        .insert({
+          conversation_id: id as string,
           role,
           content,
-        },
-      })
+        })
+        .select()
+        .single()
+
+      if (error) throw new Error(error.message)
 
       // Update conversation timestamp
-      await prisma.aiConversation.update({
-        where: { id: id as string },
-        data: { updatedAt: new Date() },
-      })
+      await supabase
+        .from('ai_conversation')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', id as string)
 
       return res.status(201).json({ data: message })
     }

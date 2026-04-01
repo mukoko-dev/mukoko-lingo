@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { requireAdmin } from '../_lib/auth-middleware'
-import prisma from '../_lib/prisma'
+import supabase, { supabaseIdentity } from '../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -12,32 +12,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const since = thirtyDaysAgo.toISOString()
 
-    const [recentUsers, recentSessions, recentAlerts] = await Promise.all([
-      prisma.profile.findMany({
-        where: { createdAt: { gte: thirtyDaysAgo } },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-        select: { id: true, email: true, displayName: true, createdAt: true, role: true },
-      }),
-      prisma.studySession.findMany({
-        where: { sessionDate: { gte: thirtyDaysAgo } },
-        orderBy: { sessionDate: 'desc' },
-        take: 50,
-        include: { user: { select: { email: true, displayName: true } } },
-      }),
-      prisma.moderationAlert.findMany({
-        where: { createdAt: { gte: thirtyDaysAgo } },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-      }),
+    const [
+      { data: recentUsers },
+      { data: recentSessions },
+      { data: recentAlerts },
+    ] = await Promise.all([
+      supabaseIdentity
+        .from('person')
+        .select('id, email, display_name, created_at, role')
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(20),
+      supabase
+        .from('study_session')
+        .select('*')
+        .gte('session_date', since)
+        .order('session_date', { ascending: false })
+        .limit(50),
+      supabase
+        .from('moderation_alert')
+        .select('*')
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(20),
     ])
 
     return res.status(200).json({
       data: {
-        recent_users: recentUsers,
-        recent_sessions: recentSessions,
-        recent_alerts: recentAlerts,
+        recent_users: recentUsers || [],
+        recent_sessions: recentSessions || [],
+        recent_alerts: recentAlerts || [],
       },
     })
   } catch (error: any) {

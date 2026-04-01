@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import prisma from '../_lib/prisma'
+import supabase from '../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -12,9 +12,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await requireAuth(req)
 
     if (req.method === 'DELETE') {
-      await prisma.bookmark.deleteMany({
-        where: { userId: user.profileId, phraseId: phraseId as string },
-      })
+      // Set bookmarked=false on phrase_progress
+      const { error } = await supabase
+        .from('phrase_progress')
+        .update({ bookmarked: false })
+        .eq('user_id', user.personId)
+        .eq('phrase_id', phraseId as string)
+
+      if (error) throw new Error(error.message)
       return res.status(200).json({ data: { success: true } })
     }
 

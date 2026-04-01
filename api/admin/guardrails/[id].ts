@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { requireAdmin } from '../../_lib/auth-middleware'
-import prisma from '../../_lib/prisma'
+import { supabaseSystem } from '../../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -12,22 +12,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await requireAdmin(req)
 
-    const data: any = {}
-    if (req.body.name !== undefined) data.name = req.body.name
-    if (req.body.description !== undefined) data.description = req.body.description
-    if (req.body.category !== undefined) data.category = req.body.category
-    if (req.body.rule_type !== undefined) data.ruleType = req.body.rule_type
-    if (req.body.patterns !== undefined) data.patterns = req.body.patterns
-    if (req.body.keywords !== undefined) data.keywords = req.body.keywords
-    if (req.body.ai_instructions !== undefined) data.aiInstructions = req.body.ai_instructions
-    if (req.body.is_active !== undefined) data.isActive = req.body.is_active
-    if (req.body.severity !== undefined) data.severity = req.body.severity
+    const update: Record<string, any> = {}
+    if (req.body.name !== undefined) update.name = req.body.name
+    if (req.body.description !== undefined) update.description = req.body.description
+    if (req.body.category !== undefined) update.category = req.body.category
+    if (req.body.rule_type !== undefined) update.rule_type = req.body.rule_type
+    if (req.body.patterns !== undefined) update.patterns = req.body.patterns
+    if (req.body.keywords !== undefined) update.keywords = req.body.keywords
+    if (req.body.ai_instructions !== undefined) update.ai_instructions = req.body.ai_instructions
+    if (req.body.is_active !== undefined) update.is_active = req.body.is_active
+    if (req.body.severity !== undefined) update.severity = req.body.severity
 
-    const guardrail = await prisma.guardrail.update({
-      where: { id: id as string },
-      data,
-    })
+    const { data: guardrail, error } = await supabaseSystem
+      .from('guardrail')
+      .update(update)
+      .eq('id', id as string)
+      .select()
+      .single()
 
+    if (error) throw new Error(error.message)
     return res.status(200).json({ data: guardrail })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
