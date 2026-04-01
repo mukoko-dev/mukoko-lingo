@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import prisma from '../_lib/prisma'
+import supabase from '../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -10,11 +10,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const user = await requireAuth(req)
 
-    const assessments = await prisma.userAssessment.findMany({
-      where: { userId: user.profileId },
-      include: { assessment: { include: { skill: true } } },
-      orderBy: { completedAt: 'desc' },
-    })
+    const { data: assessments, error } = await supabase
+      .from('user_assessment')
+      .select('*, assessment(*, skill(*))')
+      .eq('user_id', user.personId)
+      .order('completed_at', { ascending: false })
+
+    if (error) throw new Error(error.message)
     return res.status(200).json({ data: assessments })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })

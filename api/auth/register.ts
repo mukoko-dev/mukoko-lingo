@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { stytchClient } from '../_lib/auth-middleware'
-import prisma from '../_lib/prisma'
+import { supabaseIdentity } from '../_lib/supabase'
 import { SESSION_DURATION_MINUTES } from '../../lib/stytch/config'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -23,14 +23,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const stytchUserId = response.user.user_id
     const userEmail = response.user.emails?.[0]?.email || email
 
-    // Create profile in MongoDB
-    const profile = await prisma.profile.create({
-      data: {
-        stytchUserId,
+    // Create person in identity.person
+    const { data: person } = await supabaseIdentity
+      .from('person')
+      .insert({
         email: userEmail,
-        displayName: userEmail.split('@')[0],
-      },
-    })
+        display_name: userEmail.split('@')[0],
+        role: 'user',
+        status: 'active',
+      })
+      .select('id, status')
+      .single()
 
     return res.status(201).json({
       session_token: response.session_token,
@@ -40,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         email: userEmail,
         name: response.user.name,
         created_at: response.user.created_at,
-        status: profile.status,
+        status: person?.status || 'active',
       },
       expires_at: response.session?.expires_at,
     })

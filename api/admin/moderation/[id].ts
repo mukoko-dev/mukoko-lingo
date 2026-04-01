@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { requireAdmin } from '../../_lib/auth-middleware'
-import prisma from '../../_lib/prisma'
+import supabase from '../../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -15,21 +15,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { status, admin_notes } = req.body || {}
     if (!status) return res.status(400).json({ error: 'status is required' })
 
-    const data: any = { status }
-    if (admin_notes !== undefined) data.adminNotes = admin_notes
+    const update: Record<string, any> = { status }
+    if (admin_notes !== undefined) update.admin_notes = admin_notes
 
     if (status === 'reviewed') {
-      data.reviewedBy = admin.profileId
-      data.reviewedAt = new Date()
+      update.reviewed_by = admin.personId
+      update.reviewed_at = new Date().toISOString()
     } else if (status === 'resolved') {
-      data.resolvedBy = admin.profileId
+      update.resolved_by = admin.personId
     }
 
-    const alert = await prisma.moderationAlert.update({
-      where: { id: id as string },
-      data,
-    })
+    const { data: alert, error } = await supabase
+      .from('moderation_alert')
+      .update(update)
+      .eq('id', id as string)
+      .select()
+      .single()
 
+    if (error) throw new Error(error.message)
     return res.status(200).json({ data: alert })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })

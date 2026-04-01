@@ -1,21 +1,9 @@
 /**
- * Prisma Client Singleton
- * Server-side only - used by API routes / Vercel serverless functions
+ * @deprecated This file is no longer used. The app now uses Supabase PostgreSQL.
+ * See lib/db/supabase.ts for the active database client.
  *
- * Provides type-safe database access via Prisma ORM connected to MongoDB.
+ * Retained temporarily for reference during migration. Will be removed
+ * after the app is confirmed working on the lingo.* schema.
  */
 
-import { PrismaClient } from '@prisma/client'
-
-declare global {
-  // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined
-}
-
-const prisma = global.prisma || new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prisma
-}
-
-export default prisma
+export default null as any

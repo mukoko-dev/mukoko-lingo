@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import prisma from '../_lib/prisma'
+import supabase from '../_lib/supabase'
+import { supabaseIdentity } from '../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -10,11 +11,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await requireAuth(req)
 
     if (req.method === 'GET') {
-      const sessions = await prisma.studySession.findMany({
-        where: { userId: user.profileId },
-        orderBy: { sessionDate: 'desc' },
-        take: 30,
-      })
+      const { data: sessions, error } = await supabase
+        .from('study_session')
+        .select('*')
+        .eq('user_id', user.personId)
+        .order('session_date', { ascending: false })
+        .limit(30)
+
+      if (error) throw new Error(error.message)
       return res.status(200).json({ data: sessions })
     }
 
@@ -23,33 +27,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const today = new Date()
       today.setHours(0, 0, 0, 0)
+      const todayIso = today.toISOString()
 
-      const session = await prisma.studySession.upsert({
-        where: {
-          userId_sessionDate: { userId: user.profileId, sessionDate: today },
-        },
-        create: {
-          userId: user.profileId,
-          sessionDate: today,
-          phrasesStudied: phrases_studied || 0,
-          timeSpentMinutes: time_spent_minutes || 0,
-        },
-        update: {
-          phrasesStudied: { increment: phrases_studied || 0 },
-          timeSpentMinutes: { increment: time_spent_minutes || 0 },
-        },
-      })
+      // Check for existing session today
+      const { data: existing } = await supabase
+        .from('study_session')
+        .select('id, phrases_studied, time_spent_minutes')
+        .eq('user_id', user.personId)
+        .eq('session_date', todayIso)
+        .single()
 
-      // Update study streak
-      await prisma.profile.update({
-        where: { id: user.profileId },
-        data: {
-          lastStudyDate: new Date(),
-          lastActive: new Date(),
-        },
-      })
+      let result
+      if (existing) {
+        const { data, error } = await supabase
+          .from('study_session')
+          .update({
+            phrases_studied: existing.phrases_studied + (phrases_studied || 0),
+            time_spent_minutes: existing.time_spent_minutes + (time_spent_minutes || 0),
+          })
+          .eq('id', existing.id)
+          .select()
+          .single()
+        if (error) throw new Error(error.message)
+        result = data
+      } else {
+        const { data, error } = await supabase
+          .from('study_session')
+          .insert({
+            user_id: user.personId,
+            session_date: todayIso,
+            phrases_studied: phrases_studied || 0,
+            time_spent_minutes: time_spent_minutes || 0,
+          })
+          .select()
+          .single()
+        if (error) throw new Error(error.message)
+        result = data
+      }
 
-      return res.status(200).json({ data: session })
+      // Update last study date on identity.person
+      await supabaseIdentity
+        .from('person')
+        .update({
+          last_study_date: new Date().toISOString(),
+          last_active: new Date().toISOString(),
+        })
+        .eq('id', user.personId)
+
+      return res.status(200).json({ data: result })
     }
 
     return res.status(405).json({ error: 'Method not allowed' })
