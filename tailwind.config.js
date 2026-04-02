@@ -42,7 +42,20 @@ module.exports = {
           800: '#4B0082',
           900: '#350060',
         },
-        // Accent — Gold (achievement, warmth)
+        // Malachite (success, positive actions)
+        malachite: {
+          50: '#e0fff5',
+          100: '#b3ffe6',
+          200: '#80ffd4',
+          300: '#64FFDA',
+          400: '#4de8c4',
+          500: '#33ccab',
+          600: '#1aad8f',
+          700: '#008f74',
+          800: '#006b57',
+          900: '#004D40',
+        },
+        // Gold (achievements, rewards, highlights)
         gold: {
           50: '#fff8e6',
           100: '#ffefbf',
@@ -55,7 +68,20 @@ module.exports = {
           800: '#4a3020',
           900: '#362010',
         },
-        // Success — Army Green (mastery, progress)
+        // Terracotta (community, warmth)
+        terracotta: {
+          50: '#fdf2eb',
+          100: '#fae3d4',
+          200: '#f0c9ab',
+          300: '#D4A574',
+          400: '#c48f5e',
+          500: '#b07948',
+          600: '#8c5f38',
+          700: '#68462a',
+          800: '#442e1c',
+          900: '#20170e',
+        },
+        // Army Green (mastery, progress — Lingo-specific)
         army: {
           50: '#f0f7ed',
           100: '#dcecd5',
