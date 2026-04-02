@@ -49,6 +49,8 @@ interface ProgressData {
   dailyGoal: { learned: number; goal: number; completed: boolean }
 }
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/RouteErrorBoundary'
+
 export default function ProgressScreen() {
   const { isDark } = useTheme()
   const theme = isDark ? darkTheme : lightTheme
