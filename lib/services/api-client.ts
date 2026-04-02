@@ -1,7 +1,7 @@
 /**
  * API Client for Mukoko Lingo
- * Handles all data operations via REST API backed by MongoDB.
- * Replaces direct Supabase client queries.
+ * Handles all data operations via REST API backed by Supabase PostgreSQL.
+ * Queries the normalized lingo.* / identity.* / system.* schemas.
  *
  * All requests include the Stytch session token for authentication.
  */
@@ -334,6 +334,99 @@ export const adminStatsApi = {
   /** Get popular phrases */
   getPopularPhrases: (daysBack?: number) =>
     apiGet<any[]>('/admin/popular-phrases', daysBack ? { days_back: String(daysBack) } : undefined),
+}
+
+// =============================================================================
+// Class Operations (School/Business Model)
+// =============================================================================
+
+export const classesApi = {
+  /** List classes the user belongs to */
+  listClasses: (params?: { organization_id?: string }) =>
+    apiGet<any[]>('/classes', params as Record<string, string>),
+
+  /** Get class details with members and assignments */
+  getClass: (id: string) => apiGet<any>(`/classes/${id}`),
+
+  /** Create a new class */
+  createClass: (data: { name: string; organization_id: string; description?: string; language_id?: string }) =>
+    apiPost<any>('/classes', data),
+
+  /** Update class details (teacher only) */
+  updateClass: (id: string, data: Record<string, any>) => apiPut<any>(`/classes/${id}`, data),
+
+  /** Delete class (teacher only) */
+  deleteClass: (id: string) => apiDelete<any>(`/classes/${id}`),
+
+  /** List class members */
+  getMembers: (classId: string) => apiGet<any[]>(`/classes/${classId}/members`),
+
+  /** Add a member to a class */
+  addMember: (classId: string, data: { person_id?: string; email?: string; role?: string }) =>
+    apiPost<any>(`/classes/${classId}/members`, data),
+}
+
+// =============================================================================
+// Assignment Operations
+// =============================================================================
+
+export const assignmentsApi = {
+  /** List assignments for a class */
+  listAssignments: (classId: string) =>
+    apiGet<any[]>('/assignments', { class_id: classId }),
+
+  /** Get assignment details with submissions */
+  getAssignment: (id: string) => apiGet<any>(`/assignments/${id}`),
+
+  /** Create assignment (teacher only) */
+  createAssignment: (data: { class_id: string; title: string; description?: string; phrase_ids?: string[]; due_date?: string }) =>
+    apiPost<any>('/assignments', data),
+
+  /** Update assignment (teacher only) */
+  updateAssignment: (id: string, data: Record<string, any>) => apiPut<any>(`/assignments/${id}`, data),
+
+  /** Delete assignment (teacher only) */
+  deleteAssignment: (id: string) => apiDelete<any>(`/assignments/${id}`),
+
+  /** Submit assignment (student) */
+  submitAssignment: (id: string, data: { answers?: any; score?: number; time_taken?: number }) =>
+    apiPost<any>(`/assignments/${id}/submit`, data),
+}
+
+// =============================================================================
+// Enrollment Operations
+// =============================================================================
+
+export const enrollmentsApi = {
+  /** List organization enrollments */
+  listEnrollments: (params?: { organization_id?: string }) =>
+    apiGet<any[]>('/enrollments', params as Record<string, string>),
+
+  /** Enroll an organization (admin only) */
+  enrollOrganization: (data: { organization_id: string; plan?: string; seat_count?: number }) =>
+    apiPost<any>('/enrollments', data),
+}
+
+// =============================================================================
+// OneRoster Sync Operations
+// =============================================================================
+
+export const oneRosterApi = {
+  /** Sync roster from a OneRoster v1.1 compliant server (admin only) */
+  syncRoster: (data: {
+    oneroster_base_url: string
+    oneroster_token_url?: string
+    client_id: string
+    client_secret: string
+    organization_id: string
+  }) => apiPost<{
+    classes_synced: number
+    users_synced: number
+    enrollments_synced: number
+    total_roster_classes: number
+    total_roster_users: number
+    total_roster_enrollments: number
+  }>('/oneroster/sync', data),
 }
 
 // =============================================================================

@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'POST') {
-      const { type, language, title } = req.body || {}
+      const { type, language, title, class_id, shamwari_conversation_id } = req.body || {}
       if (!type || !language) {
         return res.status(400).json({ error: 'type and language are required' })
       }
@@ -38,6 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           type,
           language_id: langCode,
           title: title || `${type} - ${language}`,
+          class_id: class_id || null,
+          shamwari_conversation_id: shamwari_conversation_id || null,
         })
         .select()
         .single()
