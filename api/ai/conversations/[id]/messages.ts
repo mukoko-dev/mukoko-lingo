@@ -35,7 +35,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'POST') {
-      const { role, content } = req.body || {}
+      const { role, content, scylladb_message_id } = req.body || {}
       if (!role || !content) {
         return res.status(400).json({ error: 'role and content are required' })
       }
@@ -46,6 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           conversation_id: id as string,
           role,
           content,
+          scylladb_message_id: scylladb_message_id || null,
         })
         .select()
         .single()
