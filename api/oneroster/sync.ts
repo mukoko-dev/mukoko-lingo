@@ -35,12 +35,29 @@ interface OneRosterToken {
 /**
  * Get OAuth2 access token from OneRoster server
  */
+const RETRY_DELAYS = [1000, 2000, 4000]
+
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
+  let lastError: any
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const response = await fetch(url, options)
+      if (response.ok || response.status < 500 || i === retries) return response
+      await new Promise(r => setTimeout(r, RETRY_DELAYS[i] || 4000))
+    } catch (error) {
+      lastError = error
+      if (i < retries) await new Promise(r => setTimeout(r, RETRY_DELAYS[i] || 4000))
+    }
+  }
+  throw lastError || new Error('Request failed after retries')
+}
+
 async function getOneRosterToken(
   tokenUrl: string,
   clientId: string,
   clientSecret: string
 ): Promise<OneRosterToken> {
-  const response = await fetch(tokenUrl, {
+  const response = await fetchWithRetry(tokenUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -72,7 +89,7 @@ async function fetchOneRoster<T>(
 
   while (true) {
     const url = `${baseUrl}${path}?limit=${limit}&offset=${offset}`
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',

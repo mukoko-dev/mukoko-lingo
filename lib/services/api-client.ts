@@ -11,7 +11,7 @@ import { getSessionToken } from '@/lib/auth/stytch-client'
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''
 
 // =============================================================================
-// Core HTTP Client
+// Core HTTP Client with Exponential Backoff Retry
 // =============================================================================
 
 interface ApiResponse<T> {
@@ -19,6 +19,9 @@ interface ApiResponse<T> {
   error: string | null
   count?: number
 }
+
+const MAX_RETRIES = 3
+const RETRY_DELAYS = [1000, 2000, 4000] // exponential backoff: 1s, 2s, 4s
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getSessionToken()
@@ -31,6 +34,43 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return headers
 }
 
+/**
+ * Determine if a failed request should be retried.
+ * Retries on network errors and 5xx server errors, not on 4xx client errors.
+ */
+function shouldRetry(error: any, response?: Response): boolean {
+  if (!response) return true // network error
+  return response.status >= 500 && response.status < 600
+}
+
+async function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries: number = MAX_RETRIES
+): Promise<Response> {
+  let lastError: any
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, options)
+      if (response.ok || !shouldRetry(null, response) || attempt === retries) {
+        return response
+      }
+      // Server error — retry after delay
+      await delay(RETRY_DELAYS[attempt] || 4000)
+    } catch (error) {
+      lastError = error
+      if (attempt < retries) {
+        await delay(RETRY_DELAYS[attempt] || 4000)
+      }
+    }
+  }
+  throw lastError || new Error('Request failed after retries')
+}
+
 async function apiGet<T>(path: string, params?: Record<string, string>): Promise<ApiResponse<T>> {
   try {
     const headers = await getAuthHeaders()
@@ -39,7 +79,7 @@ async function apiGet<T>(path: string, params?: Record<string, string>): Promise
       Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
     }
 
-    const response = await fetch(url.toString(), { method: 'GET', headers })
+    const response = await fetchWithRetry(url.toString(), { method: 'GET', headers })
     const data = await response.json()
 
     if (!response.ok) {
@@ -55,7 +95,7 @@ async function apiGet<T>(path: string, params?: Record<string, string>): Promise
 async function apiPost<T>(path: string, body: Record<string, any>): Promise<ApiResponse<T>> {
   try {
     const headers = await getAuthHeaders()
-    const response = await fetch(`${API_BASE_URL}/api${path}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
@@ -75,7 +115,7 @@ async function apiPost<T>(path: string, body: Record<string, any>): Promise<ApiR
 async function apiPut<T>(path: string, body: Record<string, any>): Promise<ApiResponse<T>> {
   try {
     const headers = await getAuthHeaders()
-    const response = await fetch(`${API_BASE_URL}/api${path}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify(body),
@@ -95,7 +135,7 @@ async function apiPut<T>(path: string, body: Record<string, any>): Promise<ApiRe
 async function apiDelete<T>(path: string): Promise<ApiResponse<T>> {
   try {
     const headers = await getAuthHeaders()
-    const response = await fetch(`${API_BASE_URL}/api${path}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
       method: 'DELETE',
       headers,
     })
