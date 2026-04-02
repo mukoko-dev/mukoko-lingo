@@ -12,7 +12,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABAS
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('[supabase] Missing credentials: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set')
+  console.error('[mukoko][db] Missing credentials: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set')
 }
 
 /**

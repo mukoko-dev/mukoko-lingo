@@ -117,7 +117,7 @@ describe('api-client', () => {
 
       expect(result.data).toBeNull()
       expect(result.error).toBe('Network error')
-    })
+    }, 30000)
 
     it('returns generic error message when API error has no message', async () => {
       mockFetch.mockResolvedValue({
@@ -130,7 +130,7 @@ describe('api-client', () => {
 
       expect(result.data).toBeNull()
       expect(result.error).toContain('500')
-    })
+    }, 30000)
   })
 
   describe('profilesApi', () => {

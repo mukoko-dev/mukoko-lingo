@@ -23,6 +23,24 @@ export interface ModerationResult {
   reason?: string
 }
 
+// Prompt injection detection patterns
+const PROMPT_INJECTION_PATTERNS = [
+  /ignore\s+(all\s+)?previous\s+instructions/i,
+  /ignore\s+(all\s+)?above\s+instructions/i,
+  /disregard\s+(all\s+)?previous/i,
+  /forget\s+(all\s+)?previous/i,
+  /you\s+are\s+now\s+/i,
+  /new\s+instructions?\s*:/i,
+  /system\s*prompt\s*:/i,
+  /\bact\s+as\s+/i,
+  /pretend\s+(you\s+are|to\s+be)/i,
+  /reveal\s+(your|the)\s+(system|initial)\s+prompt/i,
+  /what\s+(is|are)\s+your\s+(system|initial)\s+instructions/i,
+  /repeat\s+(your|the)\s+(system|initial)\s+prompt/i,
+  /output\s+(your|the)\s+instructions/i,
+  /\]\s*\}\s*\{/,  // JSON injection attempt
+]
+
 // Core guardrail rules applied locally (no API needed)
 const LOCAL_GUARDRAILS = [
   {
@@ -50,6 +68,19 @@ const LOCAL_GUARDRAILS = [
  * Check content against local guardrails (fast, no API call)
  */
 function checkLocalGuardrails(content: string): ModerationResult | null {
+  // Check for prompt injection attempts first
+  for (const pattern of PROMPT_INJECTION_PATTERNS) {
+    if (pattern.test(content)) {
+      return {
+        flagged: true,
+        categories: ['off_topic'],
+        severity: 'critical',
+        confidence: 0.9,
+        reason: 'Message appears to contain instruction manipulation. Let\'s keep our conversation focused on language learning!',
+      }
+    }
+  }
+
   const lowerContent = content.toLowerCase()
 
   for (const guardrail of LOCAL_GUARDRAILS) {

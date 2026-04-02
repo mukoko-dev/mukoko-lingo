@@ -11,7 +11,7 @@ const STYTCH_PROJECT_ID = process.env.STYTCH_PROJECT_ID || process.env.EXPO_PUBL
 const STYTCH_SECRET = process.env.STYTCH_SECRET || ''
 
 if (!STYTCH_PROJECT_ID || !STYTCH_SECRET) {
-  console.error('[auth] Missing Stytch credentials: STYTCH_PROJECT_ID and STYTCH_SECRET must be set in environment variables')
+  console.error('[mukoko][auth] Missing Stytch credentials: STYTCH_PROJECT_ID and STYTCH_SECRET must be set')
 }
 
 const stytchClient = new stytch.Client({
@@ -65,7 +65,7 @@ export async function authenticateRequest(req: VercelRequest): Promise<Authentic
         .single()
 
       if (error) {
-        console.error('[auth] Failed to create person:', error.message)
+        console.error('[mukoko][auth] Failed to create person:', error.message)
         return null
       }
       person = created
@@ -77,7 +77,9 @@ export async function authenticateRequest(req: VercelRequest): Promise<Authentic
       email: person.email,
       role: person.role || 'user',
     }
-  } catch {
+  } catch (error: any) {
+    const message = error?.error_message || error?.message || 'Auth validation failed'
+    console.error(`[mukoko][auth] Session validation failed: ${message}`)
     return null
   }
 }

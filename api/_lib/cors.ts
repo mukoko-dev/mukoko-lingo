@@ -16,7 +16,7 @@ const ALLOWED_ORIGINS = [
 
 export function setCorsHeaders(req: VercelRequest, res: VercelResponse) {
   const origin = req.headers.origin || ''
-  if (ALLOWED_ORIGINS.includes(origin) || origin.endsWith('.vercel.app')) {
+  if (ALLOWED_ORIGINS.includes(origin) || origin === 'https://mukoko-lingo.vercel.app') {
     res.setHeader('Access-Control-Allow-Origin', origin)
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
