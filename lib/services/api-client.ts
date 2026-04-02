@@ -22,6 +22,7 @@ interface ApiResponse<T> {
 
 const MAX_RETRIES = 3
 const RETRY_DELAYS = [1000, 2000, 4000] // exponential backoff: 1s, 2s, 4s
+const REQUEST_TIMEOUT_MS = 15000 // 15 second timeout per request
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getSessionToken()
@@ -55,7 +56,10 @@ async function fetchWithRetry(
   let lastError: any
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const response = await fetch(url, options)
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+      const response = await fetch(url, { ...options, signal: controller.signal })
+      clearTimeout(timer)
       if (response.ok || !shouldRetry(null, response) || attempt === retries) {
         return response
       }
