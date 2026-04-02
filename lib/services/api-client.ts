@@ -448,6 +448,25 @@ export const enrollmentsApi = {
 }
 
 // =============================================================================
+// API Key Management (Org Admin Self-Service)
+// =============================================================================
+
+export const apiKeysApi = {
+  /** List API keys created by current user */
+  listApiKeys: () => apiGet<any[]>('/admin/api-keys'),
+
+  /** Create a new API key (returns plain key only once) */
+  createApiKey: (data: { name: string; organization_id: string; scopes?: string[]; expires_in_days?: number }) =>
+    apiPost<any>('/admin/api-keys', data),
+
+  /** Update API key (name, scopes, active status) */
+  updateApiKey: (id: string, data: Record<string, any>) => apiPut<any>(`/admin/api-keys/${id}`, data),
+
+  /** Revoke an API key */
+  revokeApiKey: (id: string) => apiDelete<any>(`/admin/api-keys/${id}`),
+}
+
+// =============================================================================
 // OneRoster Sync Operations
 // =============================================================================
 
