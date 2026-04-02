@@ -1,7 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
+import { createLogger } from '../_lib/logger'
 import { requireAdmin } from '../_lib/auth-middleware'
 import supabase, { supabaseIdentity } from '../_lib/supabase'
+
+const log = createLogger('admin-stats')
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -45,6 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })
+    log.error('Failed to fetch stats', error.message)
     return res.status(500).json({ error: error.message || 'Internal server error' })
   }
 }

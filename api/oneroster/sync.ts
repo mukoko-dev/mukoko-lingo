@@ -16,8 +16,11 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
+import { createLogger } from '../_lib/logger'
 import { requireAdmin } from '../_lib/auth-middleware'
 import supabase, { supabaseIdentity } from '../_lib/supabase'
+
+const log = createLogger('oneroster')
 
 const ONEROSTER_ROLE_MAP: Record<string, string> = {
   teacher: 'teacher',
@@ -248,6 +251,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
+    log.info(`Sync complete: ${stats.classes_synced} classes, ${stats.users_synced} users, ${stats.enrollments_synced} enrollments`)
+
     return res.status(200).json({
       data: {
         ...stats,
@@ -259,6 +264,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })
+    log.error('Sync failed', error.message)
     return res.status(500).json({ error: error.message || 'OneRoster sync failed' })
   }
 }
