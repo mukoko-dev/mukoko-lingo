@@ -163,24 +163,9 @@ export const profilesApi = {
   /** Get current user's profile */
   getMyProfile: () => apiGet<any>('/profiles/me'),
 
-  /** Get a profile by ID (admin) */
-  getProfile: (id: string) => apiGet<any>(`/profiles/${id}`),
-
-  /** List all profiles (admin) */
-  listProfiles: (params?: { role?: string; status?: string }) =>
-    apiGet<any[]>('/profiles', params as Record<string, string>),
-
-  /** Update a profile */
-  updateProfile: (id: string, data: Record<string, any>) =>
-    apiPut<any>(`/profiles/${id}`, data),
-
-  /** Update user role (admin) */
-  updateRole: (id: string, role: string) =>
-    apiPut<any>(`/admin/users/${id}/role`, { role }),
-
-  /** Suspend/activate user (admin) */
-  updateUserStatus: (id: string, status: string) =>
-    apiPut<any>(`/admin/users/${id}/status`, { status }),
+  /** Update own profile */
+  updateMyProfile: (data: Record<string, any>) =>
+    apiPut<any>('/profiles/me', data),
 }
 
 // =============================================================================
@@ -194,16 +179,6 @@ export const phrasesApi = {
 
   /** Get single phrase */
   getPhrase: (id: string) => apiGet<any>(`/phrases/${id}`),
-
-  /** Create phrase (admin) */
-  createPhrase: (data: Record<string, any>) => apiPost<any>('/admin/phrases', data),
-
-  /** Update phrase (admin) */
-  updatePhrase: (id: string, data: Record<string, any>) =>
-    apiPut<any>(`/admin/phrases/${id}`, data),
-
-  /** Delete phrase (admin) */
-  deletePhrase: (id: string) => apiDelete<any>(`/admin/phrases/${id}`),
 }
 
 // =============================================================================
@@ -257,14 +232,6 @@ export const skillsApi = {
 
   /** Get user skills */
   getUserSkills: () => apiGet<any[]>('/skills/user'),
-
-  /** Update skill (admin) */
-  updateSkill: (id: string, data: Record<string, any>) =>
-    apiPut<any>(`/admin/skills/${id}`, data),
-
-  /** Toggle skill active status (admin) */
-  toggleSkillActive: (id: string, isActive: boolean) =>
-    apiPut<any>(`/admin/skills/${id}`, { is_active: isActive }),
 }
 
 // =============================================================================
@@ -285,54 +252,6 @@ export const assessmentsApi = {
 
   /** Get user assessment history */
   getUserAssessments: () => apiGet<any[]>('/assessments/user'),
-}
-
-// =============================================================================
-// Learning Standards Operations (Admin)
-// =============================================================================
-
-export const standardsApi = {
-  /** List all standards */
-  listStandards: () => apiGet<any[]>('/admin/standards'),
-
-  /** Update standard */
-  updateStandard: (id: string, data: Record<string, any>) =>
-    apiPut<any>(`/admin/standards/${id}`, data),
-
-  /** Toggle standard active */
-  toggleStandardActive: (id: string, isActive: boolean) =>
-    apiPut<any>(`/admin/standards/${id}`, { is_active: isActive }),
-}
-
-// =============================================================================
-// Moderation Operations (Admin)
-// =============================================================================
-
-export const moderationApi = {
-  /** List moderation alerts */
-  listAlerts: (params?: { status?: string }) =>
-    apiGet<any[]>('/admin/moderation', params as Record<string, string>),
-
-  /** Update alert status */
-  updateAlert: (id: string, data: { status: string; admin_notes?: string }) =>
-    apiPut<any>(`/admin/moderation/${id}`, data),
-}
-
-// =============================================================================
-// Guardrails Operations (Admin)
-// =============================================================================
-
-export const guardrailsApi = {
-  /** List guardrails */
-  listGuardrails: () => apiGet<any[]>('/admin/guardrails'),
-
-  /** Update guardrail */
-  updateGuardrail: (id: string, data: Record<string, any>) =>
-    apiPut<any>(`/admin/guardrails/${id}`, data),
-
-  /** Toggle guardrail active */
-  toggleGuardrailActive: (id: string, isActive: boolean) =>
-    apiPut<any>(`/admin/guardrails/${id}`, { is_active: isActive }),
 }
 
 // =============================================================================
@@ -357,31 +276,7 @@ export const aiApi = {
 }
 
 // =============================================================================
-// Admin Stats Operations
-// =============================================================================
-
-export const adminStatsApi = {
-  /** Get dashboard stats */
-  getStats: () => apiGet<{
-    total_users: number
-    total_admins: number
-    total_phrases: number
-    total_progress_records: number
-    total_bookmarks: number
-    total_views: number
-    active_users: number
-  }>('/admin/stats'),
-
-  /** Get user activity summary */
-  getActivitySummary: () => apiGet<any>('/admin/activity'),
-
-  /** Get popular phrases */
-  getPopularPhrases: (daysBack?: number) =>
-    apiGet<any[]>('/admin/popular-phrases', daysBack ? { days_back: String(daysBack) } : undefined),
-}
-
-// =============================================================================
-// Class Operations (School/Business Model)
+// Class Operations (Teacher/Student)
 // =============================================================================
 
 export const classesApi = {
@@ -437,75 +332,6 @@ export const assignmentsApi = {
     apiPost<any>(`/assignments/${id}/submit`, data),
 }
 
-// =============================================================================
-// Enrollment Operations
-// =============================================================================
-
-export const enrollmentsApi = {
-  /** List organization enrollments */
-  listEnrollments: (params?: { organization_id?: string }) =>
-    apiGet<any[]>('/enrollments', params as Record<string, string>),
-
-  /** Enroll an organization (admin only) */
-  enrollOrganization: (data: { organization_id: string; plan?: string; seat_count?: number }) =>
-    apiPost<any>('/enrollments', data),
-}
-
-// =============================================================================
-// API Key Management (Org Admin Self-Service)
-// =============================================================================
-
-export const apiKeysApi = {
-  /** List API keys created by current user */
-  listApiKeys: () => apiGet<any[]>('/admin/api-keys'),
-
-  /** Create a new API key (returns plain key only once) */
-  createApiKey: (data: { name: string; organization_id: string; scopes?: string[]; expires_in_days?: number }) =>
-    apiPost<any>('/admin/api-keys', data),
-
-  /** Update API key (name, scopes, active status) */
-  updateApiKey: (id: string, data: Record<string, any>) => apiPut<any>(`/admin/api-keys/${id}`, data),
-
-  /** Revoke an API key */
-  revokeApiKey: (id: string) => apiDelete<any>(`/admin/api-keys/${id}`),
-}
-
-// =============================================================================
-// OneRoster Sync Operations
-// =============================================================================
-
-export const oneRosterApi = {
-  /** Sync roster from a OneRoster v1.1 compliant server (admin only) */
-  syncRoster: (data: {
-    oneroster_base_url: string
-    oneroster_token_url?: string
-    client_id: string
-    client_secret: string
-    organization_id: string
-  }) => apiPost<{
-    classes_synced: number
-    users_synced: number
-    enrollments_synced: number
-    total_roster_classes: number
-    total_roster_users: number
-    total_roster_enrollments: number
-  }>('/oneroster/sync', data),
-}
-
-// =============================================================================
-// Analytics Operations (Python-powered)
-// =============================================================================
-
-export const analyticsApi = {
-  /** Get platform overview analytics */
-  getOverview: () => apiGet<any>('/analytics/overview'),
-
-  /** Get learning velocity metrics */
-  getLearningVelocity: () => apiGet<any>('/analytics/learning-velocity'),
-
-  /** Get skill distribution analytics */
-  getSkillDistribution: () => apiGet<any>('/analytics/skill-distribution'),
-
-  /** Get engagement analytics */
-  getEngagement: () => apiGet<any>('/analytics/engagement'),
-}
+// NOTE: Admin operations (stats, standards, moderation, guardrails, analytics,
+// enrollment, OneRoster sync, API keys) live in the Next.js web app.
+// The API routes on Vercel are shared — the web app calls the same endpoints.
