@@ -1,7 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
+import { createLogger } from '../_lib/logger'
 import supabase from '../_lib/supabase'
 import { flattenPhrases } from '../../lib/db/transform-phrase'
+
+const log = createLogger('phrases')
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -30,6 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const flat = flattenPhrases(phrases || [])
     return res.status(200).json({ data: flat, count: flat.length })
   } catch (error: any) {
+    log.error('Failed to fetch phrases', error.message)
     return res.status(500).json({ error: error.message || 'Internal server error' })
   }
 }
