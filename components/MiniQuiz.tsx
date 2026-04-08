@@ -16,6 +16,9 @@ import { generateQuizQuestions, markPhraseLearned } from '@/lib/services/daily-l
 import { updateProgress } from '@/lib/storage/database'
 import { getSkillForCategory } from '@/lib/services/daily-lesson'
 import { updateUserSkill, getUserSkills } from '@/lib/storage/database'
+import { reviewPhrase, mapToQuality } from '@/lib/services/srs'
+import { awardXP } from '@/lib/services/xp'
+import { XPBadge } from '@/components/XPBadge'
 import type { Phrase } from '@/lib/data/phrases-data'
 
 interface QuizQuestion {
@@ -46,6 +49,8 @@ export function MiniQuiz({ phrases, onComplete, onPracticeWithShamwari }: MiniQu
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
   const [justCompletedGoal, setJustCompletedGoal] = useState(false)
+  const [xpPopup, setXpPopup] = useState({ visible: false, amount: 0 })
+  const [totalXPEarned, setTotalXPEarned] = useState(0)
 
   useEffect(() => {
     const q = generateQuizQuestions(phrases, learningLanguage)
@@ -60,11 +65,21 @@ export function MiniQuiz({ phrases, onComplete, onPracticeWithShamwari }: MiniQu
     setSelectedAnswer(answer)
     setIsCorrect(correct)
 
-    if (correct) {
-      setScore(prev => prev + 1)
+    // Update SRS card for this phrase
+    try {
+      const quality = mapToQuality(correct, correct ? 'medium' : 'hard')
+      const srsResult = await reviewPhrase(question.phraseId, quality)
 
-      // Update phrase progress
-      try {
+      if (correct) {
+        setScore(prev => prev + 1)
+
+        // Award XP for correct answer
+        const { xpData } = await awardXP('quiz_correct')
+        const xpGained = srsResult.xpEarned
+        setTotalXPEarned(prev => prev + xpGained)
+        setXpPopup({ visible: true, amount: xpGained })
+
+        // Update phrase progress
         await updateProgress(question.phraseId, 'practiced')
         const result = await markPhraseLearned()
         if (result.justCompleted) {
@@ -79,20 +94,25 @@ export function MiniQuiz({ phrases, onComplete, onPracticeWithShamwari }: MiniQu
           const currentScore = skills[skill]?.score || 0
           await updateUserSkill(skill, Math.min(currentScore + 2, 100))
         }
-      } catch (error) {
-        console.error('Error updating progress:', error)
       }
+    } catch (error) {
+      console.error('Error updating progress:', error)
     }
   }, [selectedAnswer, questions, currentIndex, phrases])
 
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback(async () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(prev => prev + 1)
       setSelectedAnswer(null)
       setIsCorrect(null)
     } else {
       setFinished(true)
-      onComplete(score + (isCorrect ? 0 : 0), questions.length, justCompletedGoal)
+      // Award perfect score bonus if all correct
+      const finalScore = score + (isCorrect ? 1 : 0)
+      if (finalScore === questions.length) {
+        try { await awardXP('quiz_perfect') } catch {}
+      }
+      onComplete(finalScore, questions.length, justCompletedGoal)
     }
   }, [currentIndex, questions.length, score, isCorrect, justCompletedGoal, onComplete])
 
@@ -120,6 +140,9 @@ export function MiniQuiz({ phrases, onComplete, onPracticeWithShamwari }: MiniQu
           <Text style={styles.resultScore}>
             {score} of {questions.length} correct
           </Text>
+          {totalXPEarned > 0 && (
+            <Text style={styles.resultXP}>+{totalXPEarned} XP earned</Text>
+          )}
           <View style={styles.resultBar}>
             <View style={[
               styles.resultBarFill,
@@ -148,6 +171,13 @@ export function MiniQuiz({ phrases, onComplete, onPracticeWithShamwari }: MiniQu
 
   return (
     <View style={styles.container}>
+      {/* XP Popup */}
+      <XPBadge
+        amount={xpPopup.amount}
+        visible={xpPopup.visible}
+        onHidden={() => setXpPopup({ visible: false, amount: 0 })}
+      />
+
       {/* Progress indicator */}
       <View style={styles.progressRow}>
         {questions.map((_, i) => (
@@ -366,6 +396,12 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     resultScore: {
       fontSize: 16,
       color: theme.textSecondary,
+      marginBottom: 4,
+    },
+    resultXP: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.accent[isDark ? 300 : 800],
       marginBottom: 16,
     },
     resultBar: {

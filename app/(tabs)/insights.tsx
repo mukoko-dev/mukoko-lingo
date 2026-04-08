@@ -28,8 +28,12 @@ import {
   getStudyStreak,
 } from '@/lib/storage/database'
 import { getTodayProgress } from '@/lib/services/daily-lesson'
+import { getXPData, getLevelInfo, type XPData, type LevelInfo } from '@/lib/services/xp'
+import { getSRSStats } from '@/lib/services/srs'
 import { phrases } from '@/lib/data/phrases-data'
 import { useLearningLanguage, LEARNING_LANGUAGES } from '@/lib/hooks/useLearningLanguage'
+import { LevelBadge } from '@/components/LevelBadge'
+import { LeaderboardCard } from '@/components/LeaderboardCard'
 
 type ProgressStatus = 'learning' | 'practiced' | 'mastered'
 
@@ -47,6 +51,9 @@ interface ProgressData {
   skills: Record<string, { score: number; lastAssessed: string }>
   streak: number
   dailyGoal: { learned: number; goal: number; completed: boolean }
+  xpData: XPData
+  levelInfo: LevelInfo
+  srsStats: { totalCards: number; dueToday: number; masteredCount: number }
 }
 
 export { RouteErrorBoundary as ErrorBoundary } from '@/components/RouteErrorBoundary'
@@ -63,19 +70,25 @@ export default function ProgressScreen() {
     skills: {},
     streak: 0,
     dailyGoal: { learned: 0, goal: 5, completed: false },
+    xpData: { totalXP: 0, todayXP: 0, todayDate: '', dailyGoal: 50, weeklyXP: 0, weekStartDate: '' },
+    levelInfo: { level: 1, currentXP: 0, xpForCurrentLevel: 0, xpForNextLevel: 100, progressPercent: 0, title: 'Seedling' },
+    srsStats: { totalCards: 0, dueToday: 0, masteredCount: 0 },
   })
   const [refreshing, setRefreshing] = useState(false)
-  const [activeSection, setActiveSection] = useState<'dashboard' | 'phrases'>('dashboard')
+  const [activeSection, setActiveSection] = useState<'dashboard' | 'phrases' | 'community'>('dashboard')
 
   const loadData = useCallback(async () => {
-    const [bookmarkedIds, progress, skills, streak, dailyGoal] = await Promise.all([
+    const [bookmarkedIds, progress, skills, streak, dailyGoal, xpData, srsStats] = await Promise.all([
       getBookmarks(),
       getProgress(),
       getUserSkills(),
       getStudyStreak(),
       getTodayProgress(),
+      getXPData(),
+      getSRSStats(),
     ])
-    setData({ bookmarkedIds, progress, skills, streak, dailyGoal })
+    const levelInfo = getLevelInfo(xpData.totalXP)
+    setData({ bookmarkedIds, progress, skills, streak, dailyGoal, xpData, levelInfo, srsStats })
   }, [])
 
   useEffect(() => {
@@ -153,7 +166,7 @@ export default function ProgressScreen() {
     >
       {/* Section Tabs */}
       <View style={styles.sectionTabs}>
-        {(['dashboard', 'phrases'] as const).map(section => (
+        {(['dashboard', 'phrases', 'community'] as const).map(section => (
           <TouchableOpacity
             key={section}
             style={[styles.sectionTab, activeSection === section && styles.sectionTabActive]}
@@ -163,7 +176,7 @@ export default function ProgressScreen() {
               styles.sectionTabText,
               activeSection === section && styles.sectionTabTextActive,
             ]}>
-              {section === 'dashboard' ? 'Dashboard' : 'Phrases'}
+              {section === 'dashboard' ? 'Dashboard' : section === 'phrases' ? 'Phrases' : 'Community'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -171,6 +184,30 @@ export default function ProgressScreen() {
 
       {activeSection === 'dashboard' && (
         <>
+          {/* XP Level Card */}
+          <View style={{ marginBottom: 16 }}>
+            <LevelBadge
+              levelInfo={data.levelInfo}
+              todayXP={data.xpData.todayXP}
+              dailyGoal={data.xpData.dailyGoal}
+            />
+          </View>
+
+          {/* SRS Review Reminder */}
+          {data.srsStats.dueToday > 0 && (
+            <View style={[styles.dailyGoalCard, { marginBottom: 16, borderColor: Colors.accent[isDark ? 300 : 800] + '40' }]}>
+              <View style={styles.dailyGoalHeader}>
+                <Award size={18} color={Colors.accent[isDark ? 300 : 800]} />
+                <Text style={styles.dailyGoalTitle}>
+                  {data.srsStats.dueToday} phrases due for review
+                </Text>
+              </View>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
+                Spaced repetition keeps your memory sharp
+              </Text>
+            </View>
+          )}
+
           {/* Daily Goal Card */}
           <View style={styles.dailyGoalCard}>
             <View style={styles.dailyGoalHeader}>
@@ -354,6 +391,30 @@ export default function ProgressScreen() {
               </TouchableOpacity>
             </View>
           )}
+        </>
+      )}
+
+      {activeSection === 'community' && (
+        <>
+          {/* Weekly XP Summary */}
+          <View style={[styles.dailyGoalCard, { marginBottom: 16 }]}>
+            <View style={styles.dailyGoalHeader}>
+              <TrendingUp size={18} color={theme.primary} />
+              <Text style={styles.dailyGoalTitle}>This Week</Text>
+            </View>
+            <Text style={{ fontSize: 28, fontWeight: '800', color: theme.text, marginTop: 8 }}>
+              {data.xpData.weeklyXP.toLocaleString()} XP
+            </Text>
+            <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
+              Keep learning to climb the leaderboard
+            </Text>
+          </View>
+
+          {/* Leaderboard */}
+          <LeaderboardCard loading={false} data={null} />
+          <Text style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', marginTop: 12, fontStyle: 'italic' }}>
+            Leaderboard populates as the community grows
+          </Text>
         </>
       )}
     </ScrollView>
