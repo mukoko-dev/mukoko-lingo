@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../../_lib/cors'
 import { requireAdmin } from '../../../_lib/auth-middleware'
-import prisma from '../../../_lib/prisma'
+import { supabaseIdentity } from '../../../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -17,12 +17,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Valid role is required (user or admin)' })
     }
 
-    const profile = await prisma.profile.update({
-      where: { id: id as string },
-      data: { role },
-    })
+    const { data: person, error } = await supabaseIdentity
+      .from('person')
+      .update({ role })
+      .eq('id', id as string)
+      .select()
+      .single()
 
-    return res.status(200).json({ data: profile })
+    if (error) throw new Error(error.message)
+    return res.status(200).json({ data: person })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })

@@ -3,8 +3,8 @@
  * Checks user and AI content against guardrails before allowing through
  */
 
-const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || ''
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
+// AI moderation uses the server-side proxy when available, falls back to local-only
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''
 
 export type ModerationCategory =
   | 'harassment'
@@ -22,6 +22,24 @@ export interface ModerationResult {
   confidence: number
   reason?: string
 }
+
+// Prompt injection detection patterns
+const PROMPT_INJECTION_PATTERNS = [
+  /ignore\s+(all\s+)?previous\s+instructions/i,
+  /ignore\s+(all\s+)?above\s+instructions/i,
+  /disregard\s+(all\s+)?previous/i,
+  /forget\s+(all\s+)?previous/i,
+  /you\s+are\s+now\s+/i,
+  /new\s+instructions?\s*:/i,
+  /system\s*prompt\s*:/i,
+  /\bact\s+as\s+/i,
+  /pretend\s+(you\s+are|to\s+be)/i,
+  /reveal\s+(your|the)\s+(system|initial)\s+prompt/i,
+  /what\s+(is|are)\s+your\s+(system|initial)\s+instructions/i,
+  /repeat\s+(your|the)\s+(system|initial)\s+prompt/i,
+  /output\s+(your|the)\s+instructions/i,
+  /\]\s*\}\s*\{/,  // JSON injection attempt
+]
 
 // Core guardrail rules applied locally (no API needed)
 const LOCAL_GUARDRAILS = [
@@ -50,6 +68,19 @@ const LOCAL_GUARDRAILS = [
  * Check content against local guardrails (fast, no API call)
  */
 function checkLocalGuardrails(content: string): ModerationResult | null {
+  // Check for prompt injection attempts first
+  for (const pattern of PROMPT_INJECTION_PATTERNS) {
+    if (pattern.test(content)) {
+      return {
+        flagged: true,
+        categories: ['off_topic'],
+        severity: 'critical',
+        confidence: 0.9,
+        reason: 'Message appears to contain instruction manipulation. Let\'s keep our conversation focused on language learning!',
+      }
+    }
+  }
+
   const lowerContent = content.toLowerCase()
 
   for (const guardrail of LOCAL_GUARDRAILS) {
@@ -91,31 +122,20 @@ function checkLocalGuardrails(content: string): ModerationResult | null {
  * Check content against AI-based moderation (uses Claude for nuanced checks)
  */
 async function checkAIModeration(content: string): Promise<ModerationResult | null> {
-  if (!ANTHROPIC_API_KEY) return null
+  // AI moderation is handled server-side via the chat proxy.
+  // The local guardrails + prompt injection detection handle client-side checks.
+  if (!API_BASE_URL) return null
 
   try {
-    const response = await fetch(ANTHROPIC_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 256,
-        system: `You are a content moderation system for a language learning app for children and adults.
-Analyze the following message and respond with a JSON object:
-{"flagged": boolean, "categories": string[], "severity": "low"|"medium"|"high"|"critical", "confidence": number}
+    const { getSessionToken } = await import('@/lib/auth/stytch-client')
+    const token = await getSessionToken()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
 
-Categories to check: harassment, hate_speech, sexual_content, violence, self_harm, off_topic
-Only flag content that is clearly inappropriate for a language learning context.
-Do NOT flag: normal language learning questions, cultural discussions, greetings, translation requests.
-Respond with ONLY the JSON object, no other text.`,
-        messages: [
-          { role: 'user', content: `Check this message: "${content}"` },
-        ],
-      }),
+    const response = await fetch(`${API_BASE_URL}/api/ai/moderate`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ content }),
     })
 
     if (!response.ok) return null

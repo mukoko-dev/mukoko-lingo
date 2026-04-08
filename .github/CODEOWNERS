@@ -1,0 +1,18 @@
+# Owners
+* @bryanfawcett
+
+# API routes
+/api/ @bryanfawcett
+
+# Mobile app
+/app/ @bryanfawcett
+/components/ @bryanfawcett
+
+# Web app
+/web/ @bryanfawcett
+
+# Shared libraries
+/lib/ @bryanfawcett
+
+# CI/CD
+/.github/ @bryanfawcett

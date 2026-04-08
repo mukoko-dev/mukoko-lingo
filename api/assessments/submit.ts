@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import prisma from '../_lib/prisma'
+import supabase from '../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -16,42 +16,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Store assessment result
-    const userAssessment = await prisma.userAssessment.create({
-      data: {
-        userId: user.profileId,
-        assessmentId: assessment_id,
-        skillId: skill_id,
+    const { data: userAssessment, error } = await supabase
+      .from('user_assessment')
+      .insert({
+        user_id: user.personId,
+        assessment_id,
+        skill_id,
         answers,
         score,
         passed: !!passed,
-        timeTaken: time_taken,
-      },
-    })
+        time_taken: time_taken || null,
+      })
+      .select()
+      .single()
+
+    if (error) throw new Error(error.message)
 
     // Update user skill if passed
     if (passed) {
-      const assessment = await prisma.assessment.findUnique({
-        where: { id: assessment_id },
-      })
+      const { data: assessment } = await supabase
+        .from('assessment')
+        .select('target_level')
+        .eq('id', assessment_id)
+        .single()
 
       if (assessment) {
-        await prisma.userSkill.upsert({
-          where: {
-            userId_skillId: { userId: user.profileId, skillId: skill_id },
-          },
-          create: {
-            userId: user.profileId,
-            skillId: skill_id,
-            currentLevel: assessment.targetLevel,
-            currentScore: score,
-            levelAchievedAt: new Date(),
-          },
-          update: {
-            currentScore: Math.max(score),
-            ...(score >= 70 && { currentLevel: assessment.targetLevel }),
-            levelAchievedAt: new Date(),
-          },
-        })
+        // Check for existing user_skill
+        const { data: existing } = await supabase
+          .from('user_skill')
+          .select('id, current_score')
+          .eq('user_id', user.personId)
+          .eq('skill_id', skill_id)
+          .single()
+
+        if (existing) {
+          const update: Record<string, any> = {
+            current_score: Math.max(existing.current_score, score),
+            level_achieved_at: new Date().toISOString(),
+          }
+          if (score >= 70) update.current_level = assessment.target_level
+          await supabase.from('user_skill').update(update).eq('id', existing.id)
+        } else {
+          await supabase.from('user_skill').insert({
+            user_id: user.personId,
+            skill_id,
+            current_level: assessment.target_level,
+            current_score: score,
+            level_achieved_at: new Date().toISOString(),
+          })
+        }
       }
     }
 

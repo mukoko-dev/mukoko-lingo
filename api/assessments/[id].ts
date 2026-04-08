@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
-import prisma from '../_lib/prisma'
+import supabase from '../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -9,11 +9,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { id } = req.query
 
   try {
-    const assessment = await prisma.assessment.findUnique({
-      where: { id: id as string },
-      include: { skill: true },
-    })
-    if (!assessment) return res.status(404).json({ error: 'Assessment not found' })
+    const { data: assessment, error } = await supabase
+      .from('assessment')
+      .select('*, skill(*)')
+      .eq('id', id as string)
+      .single()
+
+    if (error || !assessment) return res.status(404).json({ error: 'Assessment not found' })
     return res.status(200).json({ data: assessment })
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Internal server error' })

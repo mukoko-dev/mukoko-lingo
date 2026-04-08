@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { stytchClient } from '../../_lib/auth-middleware'
-import prisma from '../../_lib/prisma'
+import { supabaseIdentity } from '../../_lib/supabase'
 import { SESSION_DURATION_MINUTES } from '../../../lib/stytch/config'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -23,17 +23,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const stytchUserId = response.user.user_id
     const email = response.user.emails?.[0]?.email || ''
     const phone = response.user.phone_numbers?.[0]?.phone_number || phone_number || ''
+    const personEmail = email || `whatsapp_${phone.replace(/\+/g, '')}@mukoko.com`
 
-    // Upsert profile
-    await prisma.profile.upsert({
-      where: { stytchUserId },
-      create: {
-        stytchUserId,
-        email: email || `whatsapp_${phone.replace(/\+/g, '')}@mukoko.com`,
-        displayName: email ? email.split('@')[0] : `User ${phone.slice(-4)}`,
-      },
-      update: { lastActive: new Date() },
-    })
+    // Upsert person in identity.person
+    const { data: existing } = await supabaseIdentity
+      .from('person')
+      .select('id')
+      .eq('email', personEmail)
+      .single()
+
+    if (existing) {
+      await supabaseIdentity.from('person').update({ last_active: new Date().toISOString() }).eq('id', existing.id)
+    } else {
+      await supabaseIdentity.from('person').insert({
+        email: personEmail,
+        display_name: email ? email.split('@')[0] : `User ${phone.slice(-4)}`,
+        role: 'user',
+        status: 'active',
+      })
+    }
 
     return res.status(200).json({
       session_token: response.session_token,

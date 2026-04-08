@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { requireAdmin } from '../../_lib/auth-middleware'
-import prisma from '../../_lib/prisma'
+import supabase from '../../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -11,17 +11,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await requireAdmin(req)
 
     const { status } = req.query
-    const where: any = {}
-    if (status) where.status = status as string
 
-    const alerts = await prisma.moderationAlert.findMany({
-      where,
-      include: {
-        user: { select: { email: true, displayName: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    })
+    let query = supabase
+      .from('moderation_alert')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    if (status) query = query.eq('status', status as string)
+
+    const { data: alerts, error } = await query
+
+    if (error) throw new Error(error.message)
     return res.status(200).json({ data: alerts })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })

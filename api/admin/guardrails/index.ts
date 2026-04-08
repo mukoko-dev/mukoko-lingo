@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { requireAdmin } from '../../_lib/auth-middleware'
-import prisma from '../../_lib/prisma'
+import { supabaseSystem } from '../../_lib/supabase'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -10,9 +10,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await requireAdmin(req)
 
-    const guardrails = await prisma.guardrail.findMany({
-      orderBy: { severity: 'desc' },
-    })
+    const { data: guardrails, error } = await supabaseSystem
+      .from('guardrail')
+      .select('*')
+      .order('severity', { ascending: false })
+
+    if (error) throw new Error(error.message)
     return res.status(200).json({ data: guardrails })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })

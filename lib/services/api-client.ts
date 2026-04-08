@@ -1,7 +1,7 @@
 /**
  * API Client for Mukoko Lingo
- * Handles all data operations via REST API backed by MongoDB.
- * Replaces direct Supabase client queries.
+ * Handles all data operations via REST API backed by Supabase PostgreSQL.
+ * Queries the normalized lingo.* / identity.* / system.* schemas.
  *
  * All requests include the Stytch session token for authentication.
  */
@@ -11,7 +11,7 @@ import { getSessionToken } from '@/lib/auth/stytch-client'
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''
 
 // =============================================================================
-// Core HTTP Client
+// Core HTTP Client with Exponential Backoff Retry
 // =============================================================================
 
 interface ApiResponse<T> {
@@ -19,6 +19,10 @@ interface ApiResponse<T> {
   error: string | null
   count?: number
 }
+
+const MAX_RETRIES = 3
+const RETRY_DELAYS = [1000, 2000, 4000] // exponential backoff: 1s, 2s, 4s
+const REQUEST_TIMEOUT_MS = 15000 // 15 second timeout per request
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getSessionToken()
@@ -31,6 +35,46 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return headers
 }
 
+/**
+ * Determine if a failed request should be retried.
+ * Retries on network errors and 5xx server errors, not on 4xx client errors.
+ */
+function shouldRetry(error: any, response?: Response): boolean {
+  if (!response) return true // network error
+  return response.status >= 500 && response.status < 600
+}
+
+async function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries: number = MAX_RETRIES
+): Promise<Response> {
+  let lastError: any
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+      const response = await fetch(url, { ...options, signal: controller.signal })
+      clearTimeout(timer)
+      if (response.ok || !shouldRetry(null, response) || attempt === retries) {
+        return response
+      }
+      // Server error — retry after delay
+      await delay(RETRY_DELAYS[attempt] || 4000)
+    } catch (error) {
+      lastError = error
+      if (attempt < retries) {
+        await delay(RETRY_DELAYS[attempt] || 4000)
+      }
+    }
+  }
+  throw lastError || new Error('Request failed after retries')
+}
+
 async function apiGet<T>(path: string, params?: Record<string, string>): Promise<ApiResponse<T>> {
   try {
     const headers = await getAuthHeaders()
@@ -39,7 +83,7 @@ async function apiGet<T>(path: string, params?: Record<string, string>): Promise
       Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
     }
 
-    const response = await fetch(url.toString(), { method: 'GET', headers })
+    const response = await fetchWithRetry(url.toString(), { method: 'GET', headers })
     const data = await response.json()
 
     if (!response.ok) {
@@ -55,7 +99,7 @@ async function apiGet<T>(path: string, params?: Record<string, string>): Promise
 async function apiPost<T>(path: string, body: Record<string, any>): Promise<ApiResponse<T>> {
   try {
     const headers = await getAuthHeaders()
-    const response = await fetch(`${API_BASE_URL}/api${path}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
@@ -75,7 +119,7 @@ async function apiPost<T>(path: string, body: Record<string, any>): Promise<ApiR
 async function apiPut<T>(path: string, body: Record<string, any>): Promise<ApiResponse<T>> {
   try {
     const headers = await getAuthHeaders()
-    const response = await fetch(`${API_BASE_URL}/api${path}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify(body),
@@ -95,7 +139,7 @@ async function apiPut<T>(path: string, body: Record<string, any>): Promise<ApiRe
 async function apiDelete<T>(path: string): Promise<ApiResponse<T>> {
   try {
     const headers = await getAuthHeaders()
-    const response = await fetch(`${API_BASE_URL}/api${path}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
       method: 'DELETE',
       headers,
     })
@@ -119,24 +163,9 @@ export const profilesApi = {
   /** Get current user's profile */
   getMyProfile: () => apiGet<any>('/profiles/me'),
 
-  /** Get a profile by ID (admin) */
-  getProfile: (id: string) => apiGet<any>(`/profiles/${id}`),
-
-  /** List all profiles (admin) */
-  listProfiles: (params?: { role?: string; status?: string }) =>
-    apiGet<any[]>('/profiles', params as Record<string, string>),
-
-  /** Update a profile */
-  updateProfile: (id: string, data: Record<string, any>) =>
-    apiPut<any>(`/profiles/${id}`, data),
-
-  /** Update user role (admin) */
-  updateRole: (id: string, role: string) =>
-    apiPut<any>(`/admin/users/${id}/role`, { role }),
-
-  /** Suspend/activate user (admin) */
-  updateUserStatus: (id: string, status: string) =>
-    apiPut<any>(`/admin/users/${id}/status`, { status }),
+  /** Update own profile */
+  updateMyProfile: (data: Record<string, any>) =>
+    apiPut<any>('/profiles/me', data),
 }
 
 // =============================================================================
@@ -150,16 +179,6 @@ export const phrasesApi = {
 
   /** Get single phrase */
   getPhrase: (id: string) => apiGet<any>(`/phrases/${id}`),
-
-  /** Create phrase (admin) */
-  createPhrase: (data: Record<string, any>) => apiPost<any>('/admin/phrases', data),
-
-  /** Update phrase (admin) */
-  updatePhrase: (id: string, data: Record<string, any>) =>
-    apiPut<any>(`/admin/phrases/${id}`, data),
-
-  /** Delete phrase (admin) */
-  deletePhrase: (id: string) => apiDelete<any>(`/admin/phrases/${id}`),
 }
 
 // =============================================================================
@@ -213,14 +232,6 @@ export const skillsApi = {
 
   /** Get user skills */
   getUserSkills: () => apiGet<any[]>('/skills/user'),
-
-  /** Update skill (admin) */
-  updateSkill: (id: string, data: Record<string, any>) =>
-    apiPut<any>(`/admin/skills/${id}`, data),
-
-  /** Toggle skill active status (admin) */
-  toggleSkillActive: (id: string, isActive: boolean) =>
-    apiPut<any>(`/admin/skills/${id}`, { is_active: isActive }),
 }
 
 // =============================================================================
@@ -241,54 +252,6 @@ export const assessmentsApi = {
 
   /** Get user assessment history */
   getUserAssessments: () => apiGet<any[]>('/assessments/user'),
-}
-
-// =============================================================================
-// Learning Standards Operations (Admin)
-// =============================================================================
-
-export const standardsApi = {
-  /** List all standards */
-  listStandards: () => apiGet<any[]>('/admin/standards'),
-
-  /** Update standard */
-  updateStandard: (id: string, data: Record<string, any>) =>
-    apiPut<any>(`/admin/standards/${id}`, data),
-
-  /** Toggle standard active */
-  toggleStandardActive: (id: string, isActive: boolean) =>
-    apiPut<any>(`/admin/standards/${id}`, { is_active: isActive }),
-}
-
-// =============================================================================
-// Moderation Operations (Admin)
-// =============================================================================
-
-export const moderationApi = {
-  /** List moderation alerts */
-  listAlerts: (params?: { status?: string }) =>
-    apiGet<any[]>('/admin/moderation', params as Record<string, string>),
-
-  /** Update alert status */
-  updateAlert: (id: string, data: { status: string; admin_notes?: string }) =>
-    apiPut<any>(`/admin/moderation/${id}`, data),
-}
-
-// =============================================================================
-// Guardrails Operations (Admin)
-// =============================================================================
-
-export const guardrailsApi = {
-  /** List guardrails */
-  listGuardrails: () => apiGet<any[]>('/admin/guardrails'),
-
-  /** Update guardrail */
-  updateGuardrail: (id: string, data: Record<string, any>) =>
-    apiPut<any>(`/admin/guardrails/${id}`, data),
-
-  /** Toggle guardrail active */
-  toggleGuardrailActive: (id: string, isActive: boolean) =>
-    apiPut<any>(`/admin/guardrails/${id}`, { is_active: isActive }),
 }
 
 // =============================================================================
@@ -313,43 +276,62 @@ export const aiApi = {
 }
 
 // =============================================================================
-// Admin Stats Operations
+// Class Operations (Teacher/Student)
 // =============================================================================
 
-export const adminStatsApi = {
-  /** Get dashboard stats */
-  getStats: () => apiGet<{
-    total_users: number
-    total_admins: number
-    total_phrases: number
-    total_progress_records: number
-    total_bookmarks: number
-    total_views: number
-    active_users: number
-  }>('/admin/stats'),
+export const classesApi = {
+  /** List classes the user belongs to */
+  listClasses: (params?: { organization_id?: string }) =>
+    apiGet<any[]>('/classes', params as Record<string, string>),
 
-  /** Get user activity summary */
-  getActivitySummary: () => apiGet<any>('/admin/activity'),
+  /** Get class details with members and assignments */
+  getClass: (id: string) => apiGet<any>(`/classes/${id}`),
 
-  /** Get popular phrases */
-  getPopularPhrases: (daysBack?: number) =>
-    apiGet<any[]>('/admin/popular-phrases', daysBack ? { days_back: String(daysBack) } : undefined),
+  /** Create a new class */
+  createClass: (data: { name: string; organization_id: string; description?: string; language_id?: string }) =>
+    apiPost<any>('/classes', data),
+
+  /** Update class details (teacher only) */
+  updateClass: (id: string, data: Record<string, any>) => apiPut<any>(`/classes/${id}`, data),
+
+  /** Delete class (teacher only) */
+  deleteClass: (id: string) => apiDelete<any>(`/classes/${id}`),
+
+  /** List class members */
+  getMembers: (classId: string) => apiGet<any[]>(`/classes/${classId}/members`),
+
+  /** Add a member to a class */
+  addMember: (classId: string, data: { person_id?: string; email?: string; role?: string }) =>
+    apiPost<any>(`/classes/${classId}/members`, data),
 }
 
 // =============================================================================
-// Analytics Operations (Python-powered)
+// Assignment Operations
 // =============================================================================
 
-export const analyticsApi = {
-  /** Get platform overview analytics */
-  getOverview: () => apiGet<any>('/analytics/overview'),
+export const assignmentsApi = {
+  /** List assignments for a class */
+  listAssignments: (classId: string) =>
+    apiGet<any[]>('/assignments', { class_id: classId }),
 
-  /** Get learning velocity metrics */
-  getLearningVelocity: () => apiGet<any>('/analytics/learning-velocity'),
+  /** Get assignment details with submissions */
+  getAssignment: (id: string) => apiGet<any>(`/assignments/${id}`),
 
-  /** Get skill distribution analytics */
-  getSkillDistribution: () => apiGet<any>('/analytics/skill-distribution'),
+  /** Create assignment (teacher only) */
+  createAssignment: (data: { class_id: string; title: string; description?: string; phrase_ids?: string[]; due_date?: string }) =>
+    apiPost<any>('/assignments', data),
 
-  /** Get engagement analytics */
-  getEngagement: () => apiGet<any>('/analytics/engagement'),
+  /** Update assignment (teacher only) */
+  updateAssignment: (id: string, data: Record<string, any>) => apiPut<any>(`/assignments/${id}`, data),
+
+  /** Delete assignment (teacher only) */
+  deleteAssignment: (id: string) => apiDelete<any>(`/assignments/${id}`),
+
+  /** Submit assignment (student) */
+  submitAssignment: (id: string, data: { answers?: any; score?: number; time_taken?: number }) =>
+    apiPost<any>(`/assignments/${id}/submit`, data),
 }
+
+// NOTE: Admin operations (stats, standards, moderation, guardrails, analytics,
+// enrollment, OneRoster sync, API keys) live in the Next.js web app.
+// The API routes on Vercel are shared — the web app calls the same endpoints.

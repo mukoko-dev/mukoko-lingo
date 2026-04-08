@@ -7,8 +7,9 @@ on:
     branches: [main]
 
 jobs:
+  # ── Mobile App ──────────────────────────────────────────────────────────
   typecheck:
-    name: TypeScript Check
+    name: TypeScript Check (Mobile)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,7 +28,7 @@ jobs:
         run: npx tsc --noEmit
 
   test:
-    name: Run Tests
+    name: Run Tests (Mobile)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -45,8 +46,8 @@ jobs:
       - name: Run tests
         run: npm test -- --ci --coverage
 
-  build-web:
-    name: Build Web (Expo)
+  build-mobile-web:
+    name: Build Mobile Web (Expo)
     runs-on: ubuntu-latest
     needs: [typecheck, test]
     steps:
@@ -68,59 +69,84 @@ jobs:
       - name: Upload web build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: web-build
+          name: mobile-web-build
           path: dist/
           retention-days: 7
 
-  # Mobile builds require EAS credentials - enable when ready
+  # ── Web App (Next.js) ──────────────────────────────────────────────────
+  typecheck-web:
+    name: TypeScript Check (Web)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript check
+        run: npx tsc --noEmit
+
+  build-web:
+    name: Build Web App (Next.js)
+    runs-on: ubuntu-latest
+    needs: [typecheck-web]
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Upload web build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-web-build
+          path: web/.next/
+          retention-days: 7
+
+  # ── Mobile Builds (EAS) — enable when ready ────────────────────────────
   # build-ios:
   #   name: Build iOS (EAS)
   #   runs-on: ubuntu-latest
-  #   needs: typecheck
+  #   needs: [typecheck, test]
   #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with: { node-version: '20', cache: 'npm' }
+  #     - uses: expo/expo-github-action@v8
+  #       with: { eas-version: latest, token: '${{ secrets.EXPO_TOKEN }}' }
+  #     - run: npm ci
+  #     - run: eas build --platform ios --profile preview --non-interactive
   #
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-  #         cache: 'npm'
-  #
-  #     - name: Setup EAS
-  #       uses: expo/expo-github-action@v8
-  #       with:
-  #         eas-version: latest
-  #         token: ${{ secrets.EXPO_TOKEN }}
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Build iOS
-  #       run: eas build --platform ios --profile preview --non-interactive
-
   # build-android:
   #   name: Build Android (EAS)
   #   runs-on: ubuntu-latest
-  #   needs: typecheck
+  #   needs: [typecheck, test]
   #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-  #         cache: 'npm'
-  #
-  #     - name: Setup EAS
-  #       uses: expo/expo-github-action@v8
-  #       with:
-  #         eas-version: latest
-  #         token: ${{ secrets.EXPO_TOKEN }}
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Build Android
-  #       run: eas build --platform android --profile preview --non-interactive
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with: { node-version: '20', cache: 'npm' }
+  #     - uses: expo/expo-github-action@v8
+  #       with: { eas-version: latest, token: '${{ secrets.EXPO_TOKEN }}' }
+  #     - run: npm ci
+  #     - run: eas build --platform android --profile preview --non-interactive
