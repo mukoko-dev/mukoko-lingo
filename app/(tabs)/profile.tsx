@@ -71,6 +71,8 @@ const URLS = {
   ABOUT_PROJECT: 'https://mukoko.com/products/mukoko-lingo',
 }
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/RouteErrorBoundary'
+
 export default function ProfileScreen() {
   const colorScheme = useColorScheme()
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme

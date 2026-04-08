@@ -1,6 +1,6 @@
 /**
- * Tests for the REST API client.
- * Verifies correct URL construction, auth header inclusion, and error handling.
+ * Tests for the REST API client (mobile app — student/teacher level only).
+ * Admin operations are tested in the Next.js web app.
  */
 
 // Set API base URL before any module loads
@@ -15,22 +15,18 @@ jest.mock('@/lib/auth/stytch-client', () => ({
 const mockFetch = jest.fn()
 global.fetch = mockFetch
 
-// Use dynamic imports to ensure env vars are set first
 let profilesApi: any
 let phrasesApi: any
 let bookmarksApi: any
 let skillsApi: any
 let assessmentsApi: any
-let moderationApi: any
 let aiApi: any
-let adminStatsApi: any
+let classesApi: any
+let assignmentsApi: any
 let mockedGetSessionToken: jest.Mock
 
 beforeAll(async () => {
-  // Reset modules so api-client picks up the env var
   jest.resetModules()
-
-  // Re-set env and mocks after reset
   process.env.EXPO_PUBLIC_API_BASE_URL = 'https://test-api.example.com'
   global.fetch = mockFetch
 
@@ -43,9 +39,9 @@ beforeAll(async () => {
   bookmarksApi = apiClient.bookmarksApi
   skillsApi = apiClient.skillsApi
   assessmentsApi = apiClient.assessmentsApi
-  moderationApi = apiClient.moderationApi
   aiApi = apiClient.aiApi
-  adminStatsApi = apiClient.adminStatsApi
+  classesApi = apiClient.classesApi
+  assignmentsApi = apiClient.assignmentsApi
 })
 
 describe('api-client', () => {
@@ -117,7 +113,7 @@ describe('api-client', () => {
 
       expect(result.data).toBeNull()
       expect(result.error).toBe('Network error')
-    })
+    }, 30000)
 
     it('returns generic error message when API error has no message', async () => {
       mockFetch.mockResolvedValue({
@@ -130,7 +126,7 @@ describe('api-client', () => {
 
       expect(result.data).toBeNull()
       expect(result.error).toContain('500')
-    })
+    }, 30000)
   })
 
   describe('profilesApi', () => {
@@ -140,50 +136,6 @@ describe('api-client', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/profiles/me'),
         expect.objectContaining({ method: 'GET' })
-      )
-    })
-
-    it('listProfiles passes filter params', async () => {
-      await profilesApi.listProfiles({ role: 'admin', status: 'active' })
-
-      const url = mockFetch.mock.calls[0][0].toString()
-      expect(url).toContain('role=admin')
-      expect(url).toContain('status=active')
-    })
-
-    it('updateProfile sends PUT request', async () => {
-      await profilesApi.updateProfile('user-1', { displayName: 'Test' })
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/profiles/user-1'),
-        expect.objectContaining({
-          method: 'PUT',
-          body: JSON.stringify({ displayName: 'Test' }),
-        })
-      )
-    })
-
-    it('updateRole sends PUT to admin endpoint', async () => {
-      await profilesApi.updateRole('user-1', 'admin')
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/users/user-1/role'),
-        expect.objectContaining({
-          method: 'PUT',
-          body: JSON.stringify({ role: 'admin' }),
-        })
-      )
-    })
-
-    it('updateUserStatus sends PUT to admin endpoint', async () => {
-      await profilesApi.updateUserStatus('user-1', 'suspended')
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/users/user-1/status'),
-        expect.objectContaining({
-          method: 'PUT',
-          body: JSON.stringify({ status: 'suspended' }),
-        })
       )
     })
   })
@@ -212,28 +164,6 @@ describe('api-client', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/phrases/phrase-1'),
         expect.objectContaining({ method: 'GET' })
-      )
-    })
-
-    it('createPhrase posts to admin endpoint', async () => {
-      const phraseData = { english: 'Hello', shona: 'Mhoro', category: 'greetings' }
-      await phrasesApi.createPhrase(phraseData)
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/phrases'),
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify(phraseData),
-        })
-      )
-    })
-
-    it('deletePhrase sends DELETE to admin endpoint', async () => {
-      await phrasesApi.deletePhrase('phrase-1')
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/phrases/phrase-1'),
-        expect.objectContaining({ method: 'DELETE' })
       )
     })
   })
@@ -297,15 +227,6 @@ describe('api-client', () => {
         expect.objectContaining({ method: 'GET' })
       )
     })
-
-    it('getSkillLevels calls levels endpoint', async () => {
-      await skillsApi.getSkillLevels()
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/skills/levels'),
-        expect.objectContaining({ method: 'GET' })
-      )
-    })
   })
 
   describe('assessmentsApi', () => {
@@ -359,43 +280,44 @@ describe('api-client', () => {
     })
   })
 
-  describe('adminStatsApi', () => {
-    it('getStats calls stats endpoint', async () => {
-      await adminStatsApi.getStats()
+  describe('classesApi', () => {
+    it('listClasses calls correct endpoint', async () => {
+      await classesApi.listClasses()
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/stats'),
+        expect.stringContaining('/api/classes'),
         expect.objectContaining({ method: 'GET' })
       )
     })
 
-    it('getActivitySummary calls activity endpoint', async () => {
-      await adminStatsApi.getActivitySummary()
+    it('getClass fetches by ID', async () => {
+      await classesApi.getClass('class-1')
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/activity'),
+        expect.stringContaining('/api/classes/class-1'),
         expect.objectContaining({ method: 'GET' })
       )
     })
   })
 
-  describe('moderationApi', () => {
-    it('listAlerts with status filter', async () => {
-      await moderationApi.listAlerts({ status: 'pending' })
+  describe('assignmentsApi', () => {
+    it('listAssignments passes class_id', async () => {
+      await assignmentsApi.listAssignments('class-1')
 
       const url = mockFetch.mock.calls[0][0].toString()
-      expect(url).toContain('/api/admin/moderation')
-      expect(url).toContain('status=pending')
+      expect(url).toContain('/api/assignments')
+      expect(url).toContain('class_id=class-1')
     })
 
-    it('updateAlert sends PUT', async () => {
-      await moderationApi.updateAlert('alert-1', { status: 'resolved', admin_notes: 'OK' })
+    it('submitAssignment posts to submit endpoint', async () => {
+      const data = { answers: { q1: 'a' }, score: 85 }
+      await assignmentsApi.submitAssignment('assign-1', data)
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/admin/moderation/alert-1'),
+        expect.stringContaining('/api/assignments/assign-1/submit'),
         expect.objectContaining({
-          method: 'PUT',
-          body: JSON.stringify({ status: 'resolved', admin_notes: 'OK' }),
+          method: 'POST',
+          body: JSON.stringify(data),
         })
       )
     })

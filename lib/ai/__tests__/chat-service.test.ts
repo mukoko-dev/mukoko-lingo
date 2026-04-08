@@ -3,6 +3,11 @@ import { sendMessage, getConversationStarters, ChatMessage } from '../chat-servi
 // Mock fetch
 global.fetch = jest.fn()
 
+// Mock auth client (needed since chat-service now imports it for server proxy)
+jest.mock('@/lib/auth/stytch-client', () => ({
+  getSessionToken: jest.fn().mockResolvedValue('mock-token'),
+}))
+
 // Mock moderation to always pass
 jest.mock('../moderation', () => ({
   moderateContent: jest.fn().mockResolvedValue({ flagged: false, categories: [], severity: 'low', confidence: 1.0 }),
@@ -17,7 +22,7 @@ jest.mock('../skills-aware-prompts', () => ({
 describe('chat-service', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY = ''
+    process.env.EXPO_PUBLIC_API_BASE_URL = ''
   })
 
   describe('sendMessage (simulated mode)', () => {

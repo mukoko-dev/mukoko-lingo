@@ -16,38 +16,44 @@ MAJOR.MINOR.PATCH
 - **MINOR**: New features, backwards-compatible enhancements
 - **PATCH**: Bug fixes, security patches, minor improvements
 
-### Current Version: 3.1.0
+### Current Version: 0.0.1
+
+### Version Locations (must all match)
+
+| File | Field |
+|------|-------|
+| `package.json` | `version` |
+| `web/package.json` | `version` |
+| `app.json` | `expo.version` |
+| `constants/Version.ts` | `APP_VERSION` |
+| `web/app/layout.tsx` | Footer text |
+| `RELEASES.md` | Current Version |
+| `CLAUDE.md` | Project Status |
 
 ## Release Channels
 
 ### Production
 - **Branch**: `main`
 - **Environment**: Vercel Production
-- **URL**: https://lingo.mukoko.com
-- **Database**: MongoDB Atlas Production
+- **URL**: https://lingo.mukoko.com (mobile web), TBD (Next.js web)
+- **Database**: Supabase PostgreSQL (`yqmqdiudhztddiyeerig`)
 - **Auth**: Stytch Production
-
-### Staging (Future)
-- **Branch**: `staging`
-- **Environment**: Vercel Preview
-- **Database**: MongoDB Atlas Staging
-- **Auth**: Stytch Test
 
 ### Development
 - **Branch**: Feature branches
 - **Environment**: Local / Vercel Preview
-- **Database**: MongoDB Atlas Dev or local MongoDB
+- **Database**: Same Supabase project (use with care)
 
 ## Release Process
 
 ### 1. Pre-Release Checklist
 
-- [ ] All tests pass (when implemented)
-- [ ] No TypeScript errors (`npm run build`)
-- [ ] No ESLint errors (`npm run lint`)
+- [ ] All mobile tests pass (`npm test -- --ci`)
+- [ ] No TypeScript errors (`npx tsc --noEmit`)
+- [ ] Web app builds (`cd web && npm run build`)
 - [ ] Security review for sensitive changes
-- [ ] Database migrations tested
-- [ ] Documentation updated (CLAUDE.md, CHANGELOG.md)
+- [ ] Documentation updated (CLAUDE.md, CHANGELOG.md, RELEASES.md)
+- [ ] Version bumped in all locations (see table above)
 - [ ] Mobile compatibility verified
 
 ### 2. Creating a Release
@@ -58,171 +64,65 @@ git checkout main
 git pull origin main
 
 # Create release branch
-git checkout -b release/v2.1.0
+git checkout -b release/v0.1.0
 
-# Update version in package.json
+# Bump version in all locations
 # Update CHANGELOG.md with release notes
 
 # Commit version bump
 git add .
-git commit -m "chore: bump version to 2.1.0"
+git commit -m "chore: bump version to 0.1.0"
 
 # Push and create PR
-git push -u origin release/v2.1.0
+git push -u origin release/v0.1.0
 ```
 
-### 3. Release Notes Template
-
-```markdown
-## [2.1.0] - YYYY-MM-DD
-
-### Added
-- New feature description
-
-### Changed
-- Modified behavior description
-
-### Fixed
-- Bug fix description
-
-### Security
-- Security improvement description
-
-### Deprecated
-- Deprecated feature (if any)
-
-### Removed
-- Removed feature (if any)
-```
-
-### 4. Database Migrations
-
-For releases with database changes:
-
-1. Update `prisma/schema.prisma` with schema changes
-2. Run `npm run prisma:generate` to regenerate the Prisma client
-3. Test locally with `npm run prisma:push`
-4. Schema changes are automatically applied on Vercel deploy via `build:web` script
-
-### 5. Deployment
-
-**Web Deployment (Expo Web)**:
-
-- Build with `npx expo export --platform web`
-- Deploy to Vercel, Netlify, or any static hosting
-- CI/CD workflow handles automatic builds on PRs
-
-**Mobile Deployment (EAS)**:
-
-- Preview builds: `npx eas build --profile preview --platform all`
-- Production builds: `npx eas build --profile production --platform all`
-- OTA updates: `npx eas update --branch production`
-
-**Manual Steps**:
-1. Merge release PR to `main`
-2. Run EAS build for mobile platforms
-3. Verify production functionality
-4. Tag release in GitHub
+### 3. After Merge
 
 ```bash
 # Tag the release
-git tag -a v2.1.0 -m "Release version 2.1.0"
-git push origin v2.1.0
+git tag -a v0.1.0 -m "Release v0.1.0"
+git push origin v0.1.0
+
+# Create GitHub Release from the tag
+gh release create v0.1.0 --title "v0.1.0" --notes "See CHANGELOG.md"
 ```
 
-### 6. Post-Release
+### 4. Deployment
 
-- [ ] Verify production deployment
-- [ ] Monitor error tracking (when implemented)
-- [ ] Update documentation if needed
-- [ ] Announce release (if significant)
+**Mobile Web (Expo)**:
+- Auto-deploys to Vercel on merge to `main`
+- Build: `npx expo export --platform web`
 
-## Hotfix Process
+**Next.js Web App**:
+- Auto-deploys to Vercel on merge to `main`
+- Build: `cd web && npm run build`
 
-For urgent production fixes:
-
-```bash
-# Create hotfix branch from main
-git checkout main
-git pull origin main
-git checkout -b hotfix/critical-bug-fix
-
-# Make fix, commit, push
-git add .
-git commit -m "fix: critical bug description"
-git push -u origin hotfix/critical-bug-fix
-
-# Create PR, get review, merge immediately
-# Tag as patch release (e.g., v2.0.1)
-```
-
-## Mobile App Releases
-
-### Expo/React Native
-
-The mobile app uses Expo for development and deployment:
-
-**Development**:
-```bash
-npx expo start
-```
-
-**Preview Build**:
-```bash
-npx eas build --profile preview --platform all
-```
-
-**Production Build**:
-```bash
-npx eas build --profile production --platform all
-```
-
-**OTA Updates**:
-```bash
-npx eas update --branch production
-```
-
-### App Store Submissions
-
-For iOS App Store and Google Play releases:
-
-1. Update version in `app.json`
-2. Create production build via EAS
-3. Submit to respective stores
-4. Monitor review process
-5. Coordinate with backend release if needed
+**Mobile Native (EAS)**:
+- Preview: `npx eas build --profile preview --platform all`
+- Production: `npx eas build --profile production --platform all`
+- OTA updates: `npx eas update --branch production`
 
 ## Version History
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 3.1.0 | Feb 2026 | Stytch Auth, WhatsApp OTP, automated schema deploy |
-| 3.0.0 | Dec 2025 | AI-first skills-based architecture |
-| 2.0.0 | Nov 2025 | Layout standardization, sidebar navigation |
-| 1.0.0 | Oct 2025 | Initial release with core learning features |
+| 0.0.1 | Apr 2026 | Initial release: Supabase migration, Next.js web app, school model, OneRoster, security hardening |
 
-## Release Schedule
+## Hotfix Process
 
-- **Major releases**: As needed for significant features
-- **Minor releases**: Monthly or bi-weekly
-- **Patch releases**: As needed for bug fixes
-- **Security patches**: Immediate deployment
-
-## Rollback Procedure
-
-If a release causes issues:
-
-1. **Vercel Rollback**: Use Vercel dashboard to redeploy previous version
-2. **Database Rollback**: Have rollback SQL scripts ready for migrations
-3. **Communication**: Notify users if service is affected
-4. **Investigation**: Determine root cause before re-releasing
+```bash
+git checkout main && git pull
+git checkout -b hotfix/description
+# Fix, commit, push, PR, merge
+# Tag as patch (e.g., v0.0.2)
+```
 
 ## Contact
 
-For release-related questions:
 - Engineering: dev@mukoko.com
-- Security issues: security@mukoko.com
+- Security: security@mukoko.com
 
 ---
 
-Last updated: February 2026
+Last updated: April 2026

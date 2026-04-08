@@ -1,15 +1,17 @@
 /**
  * AI Chat Service for React Native
- * Handles communication with Anthropic Claude API for Shamwari AI tutor
+ * Handles communication with Shamwari AI tutor via server-side proxy.
+ *
+ * The Anthropic API key is server-side only. The client sends messages
+ * to /api/ai/chat which proxies to Claude with rate limiting and
+ * circuit breaker protection.
  */
 
 import { buildSkillsAwarePrompt } from './skills-aware-prompts'
 import { moderateContent, getModerationMessage } from './moderation'
+import { getSessionToken } from '@/lib/auth/stytch-client'
 
-// Anthropic API configuration
-const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || ''
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
-const AI_MODEL = 'claude-haiku-4-5-20251001'
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''
 
 export interface ChatMessage {
   id: string
@@ -24,7 +26,7 @@ export interface ChatResponse {
 }
 
 /**
- * Send a message to the AI tutor via Anthropic Claude API
+ * Send a message to the AI tutor via server-side proxy
  */
 export async function sendMessage(
   messages: ChatMessage[],
@@ -47,65 +49,73 @@ export async function sendMessage(
     // Build skills-aware system prompt
     const systemPrompt = await buildSkillsAwarePrompt(conversationType, language)
 
-    // If no API key configured, use simulated response
-    if (!ANTHROPIC_API_KEY) {
-      console.warn('[chat-service] No EXPO_PUBLIC_ANTHROPIC_API_KEY set, using simulated responses')
+    // If no API URL configured, use simulated response (offline/demo mode)
+    if (!API_BASE_URL) {
+      console.warn('[mukoko][chat] No API_BASE_URL set, using simulated responses')
       return simulateResponse(messages[messages.length - 1]?.content || '')
     }
 
-    // Format messages for Anthropic API (filter out system messages, keep user/assistant)
+    // Format messages for the API proxy (filter out system messages)
     const apiMessages = messages
       .filter(m => m.role === 'user' || m.role === 'assistant')
       .map(m => ({ role: m.role, content: m.content }))
 
-    const response = await fetch(ANTHROPIC_API_URL, {
+    // Get auth token
+    const token = await getSessionToken()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    // Call server-side proxy (API key is server-side only)
+    const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
+      headers,
       body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 1024,
-        system: systemPrompt,
         messages: apiMessages,
+        system_prompt: systemPrompt,
+        max_tokens: 1024,
       }),
     })
 
     if (!response.ok) {
-      const errorBody = await response.text()
-      console.error('[chat-service] API error:', response.status, errorBody)
-      throw new Error(`Anthropic API error: ${response.status}`)
+      const errorData = await response.json().catch(() => ({}))
+      const errorMsg = errorData.error || `Server error: ${response.status}`
+      console.error(`[mukoko][chat] API error: ${response.status} ${errorMsg}`)
+
+      if (response.status === 429) {
+        return {
+          message: "I need a quick break! You've been learning hard. Please try again in a few minutes.",
+          error: 'rate_limited',
+        }
+      }
+      if (response.status === 503) {
+        return {
+          message: "I'm having a brief nap. Please try again in a moment!",
+          error: 'service_unavailable',
+        }
+      }
+      throw new Error(errorMsg)
     }
 
     const data = await response.json()
-
-    // Extract text from Anthropic's response format
-    const content = data.content?.[0]?.text || ''
+    const content = data.data?.message || ''
 
     if (!content) {
-      throw new Error('Empty response from Anthropic API')
+      throw new Error('Empty response from AI service')
     }
 
     return { message: content }
   } catch (error) {
-    console.error('[chat-service] Error:', error)
+    console.error('[mukoko][chat] Error:', error)
 
-    // If API call fails, fall back to simulated response
-    if (ANTHROPIC_API_KEY) {
-      return {
-        message: "I'm having trouble connecting right now. Please check your internet connection and try again!",
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }
+    return {
+      message: "I'm having trouble connecting right now. Please check your internet connection and try again!",
+      error: error instanceof Error ? error.message : 'Unknown error',
     }
-
-    return simulateResponse(messages[messages.length - 1]?.content || '')
   }
 }
 
 /**
- * Simulate AI response for offline/demo mode (when no API key is set)
+ * Simulate AI response for offline/demo mode (when no API is available)
  */
 function simulateResponse(userMessage: string): ChatResponse {
   const lowerMessage = userMessage.toLowerCase()

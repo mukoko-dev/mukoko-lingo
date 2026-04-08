@@ -1,17 +1,17 @@
 /**
  * Auth Middleware for Vercel API Routes
- * Validates Stytch session tokens and provides user context.
+ * Validates Stytch session tokens and maps users to identity.person.
  */
 
 import * as stytch from 'stytch'
-import prisma from './prisma'
+import { supabaseIdentity } from './supabase'
 import type { VercelRequest } from '@vercel/node'
 
 const STYTCH_PROJECT_ID = process.env.STYTCH_PROJECT_ID || process.env.EXPO_PUBLIC_STYTCH_PROJECT_ID || ''
 const STYTCH_SECRET = process.env.STYTCH_SECRET || ''
 
 if (!STYTCH_PROJECT_ID || !STYTCH_SECRET) {
-  console.error('[auth] Missing Stytch credentials: STYTCH_PROJECT_ID and STYTCH_SECRET must be set in environment variables')
+  console.error('[mukoko][auth] Missing Stytch credentials: STYTCH_PROJECT_ID and STYTCH_SECRET must be set')
 }
 
 const stytchClient = new stytch.Client({
@@ -21,7 +21,7 @@ const stytchClient = new stytch.Client({
 
 export interface AuthenticatedUser {
   stytchUserId: string
-  profileId: string
+  personId: string
   email: string
   role: string
 }
@@ -44,28 +44,42 @@ export async function authenticateRequest(req: VercelRequest): Promise<Authentic
     const stytchUserId = response.session.user_id
     const email = response.user.emails?.[0]?.email || ''
 
-    // Find or create profile in MongoDB
-    let profile = await prisma.profile.findUnique({
-      where: { stytchUserId },
-    })
+    // Find or create person in identity.person
+    let { data: person } = await supabaseIdentity
+      .from('person')
+      .select('id, email, role, status')
+      .eq('email', email)
+      .single()
 
-    if (!profile) {
-      profile = await prisma.profile.create({
-        data: {
-          stytchUserId,
+    if (!person) {
+      const displayName = response.user.name?.first_name || email.split('@')[0]
+      const { data: created, error } = await supabaseIdentity
+        .from('person')
+        .insert({
           email,
-          displayName: response.user.name?.first_name || email.split('@')[0],
-        },
-      })
+          display_name: displayName,
+          role: 'user',
+          status: 'active',
+        })
+        .select('id, email, role, status')
+        .single()
+
+      if (error) {
+        console.error('[mukoko][auth] Failed to create person:', error.message)
+        return null
+      }
+      person = created
     }
 
     return {
       stytchUserId,
-      profileId: profile.id,
-      email: profile.email,
-      role: profile.role,
+      personId: person.id,
+      email: person.email,
+      role: person.role || 'user',
     }
-  } catch {
+  } catch (error: any) {
+    const message = error?.error_message || error?.message || 'Auth validation failed'
+    console.error(`[mukoko][auth] Session validation failed: ${message}`)
     return null
   }
 }

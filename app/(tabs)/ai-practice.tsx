@@ -27,6 +27,8 @@ interface Message {
   timestamp: Date
 }
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/RouteErrorBoundary'
+
 export default function AIPracticeScreen() {
   const colorScheme = useColorScheme()
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme

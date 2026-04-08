@@ -21,6 +21,8 @@ import { DailyLessonCard } from '@/components/DailyLessonCard'
 import { MiniQuiz } from '@/components/MiniQuiz'
 import { CelebrationCard } from '@/components/CelebrationCard'
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/RouteErrorBoundary'
+
 type LearnView = 'lesson' | 'browse'
 
 export default function LearnScreen() {
