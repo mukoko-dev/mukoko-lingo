@@ -62,17 +62,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       expires_at: response.session?.expires_at,
     })
   } catch (error: any) {
+    console.error('[mukoko][auth] Login failed:', error.error_message || error.message)
     const errorType = error.error_type || ''
     let message: string
-    if (errorType === 'unauthorized_credentials') {
+    let status: number
+    if (errorType === 'configuration_error') {
+      message = 'Authentication service is temporarily unavailable.'
+      status = 500
+    } else if (errorType === 'unauthorized_credentials') {
       message = 'Incorrect email or password. Please try again.'
+      status = 401
     } else if (errorType === 'user_not_found' || errorType.includes('not_found')) {
       message = 'No account found with this email. Please sign up first.'
+      status = 401
     } else if (errorType === 'no_password_set') {
       message = 'This account uses passwordless login. Try signing in with email code or magic link instead.'
+      status = 401
     } else {
       message = error.error_message || error.message || 'Login failed. Please try again.'
+      status = error.status_code || 500
     }
-    return res.status(401).json({ error: message })
+    return res.status(status).json({ error: message })
   }
 }

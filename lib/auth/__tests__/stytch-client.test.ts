@@ -4,6 +4,9 @@
  * handles errors, and manages session persistence.
  */
 
+// Set API_BASE_URL before module import so apiCall validation passes
+process.env.EXPO_PUBLIC_API_BASE_URL = 'https://test-api.mukoko.com'
+
 // Mock fetch globally
 const mockFetch = jest.fn()
 global.fetch = mockFetch
@@ -340,9 +343,7 @@ describe('stytch-client', () => {
       const result = await signInWithOtp('test@example.com')
 
       expect(result.error).toBeTruthy()
-      // In test env, API_BASE_URL is empty so we get the config error
-      // In production with a valid URL, network errors return "Unable to reach the server"
-      expect(result.error?.message).toMatch(/API|server/)
+      expect(result.error?.message).toContain('Unable to reach the server')
     })
 
     it('handles non-JSON server responses gracefully', async () => {
