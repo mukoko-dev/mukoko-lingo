@@ -6,6 +6,16 @@
 const mockDailyLessons: Record<string, string[]> = {}
 const mockGoalProgress: Record<string, { learned: number }> = {}
 
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(() => Promise.resolve(null)),
+  setItem: jest.fn(() => Promise.resolve()),
+  removeItem: jest.fn(() => Promise.resolve()),
+}))
+
+jest.mock('../srs', () => ({
+  getDueCards: jest.fn(() => Promise.resolve([])),
+}))
+
 jest.mock('@/lib/storage/database', () => ({
   getProgress: jest.fn(() => Promise.resolve({})),
   getUserSkills: jest.fn(() => Promise.resolve({})),

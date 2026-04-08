@@ -286,6 +286,466 @@ export const assessmentQuestions: AssessmentQuestion[] = [
     explanation: '"Ngicela usizo" means "I ask for help" - a polite way to request assistance in Ndebele.',
     language: 'ndebele',
   },
+
+  // ==========================================
+  // VOCABULARY - Elementary
+  // ==========================================
+  {
+    id: 'vocab-e-1',
+    skill: 'vocabulary',
+    level: 'elementary',
+    type: 'multiple_choice',
+    question: 'What does "Mvura" mean in Shona?',
+    options: ['Fire', 'Wind', 'Water/Rain', 'Earth'],
+    correctAnswer: 'Water/Rain',
+    explanation: '"Mvura" means water or rain in Shona — a vital word in everyday conversation.',
+    language: 'shona',
+  },
+  {
+    id: 'vocab-e-2',
+    skill: 'vocabulary',
+    level: 'elementary',
+    type: 'translation',
+    question: 'How do you say "food" in Ndebele?',
+    options: ['Amanzi', 'Ukudla', 'Indlu', 'Umsebenzi'],
+    correctAnswer: 'Ukudla',
+    explanation: '"Ukudla" means food in Ndebele.',
+    language: 'ndebele',
+  },
+  {
+    id: 'vocab-e-3',
+    skill: 'vocabulary',
+    level: 'elementary',
+    type: 'multiple_choice',
+    question: 'What does "Rafiki" mean in Swahili?',
+    options: ['Teacher', 'Friend', 'Brother', 'Child'],
+    correctAnswer: 'Friend',
+    explanation: '"Rafiki" means friend in Swahili — also the name of the wise baboon in The Lion King.',
+    language: 'swahili',
+  },
+  {
+    id: 'vocab-e-4',
+    skill: 'vocabulary',
+    level: 'elementary',
+    type: 'translation',
+    question: 'How do you say "family" in Shona?',
+    options: ['Mhuri', 'Imba', 'Shamwari', 'Musha'],
+    correctAnswer: 'Mhuri',
+    explanation: '"Mhuri" means family in Shona — central to Zimbabwean culture.',
+    language: 'shona',
+  },
+  {
+    id: 'vocab-e-5',
+    skill: 'vocabulary',
+    level: 'elementary',
+    type: 'multiple_choice',
+    question: 'What does "钱" (qián) mean in Chinese?',
+    options: ['Time', 'Money', 'Book', 'Food'],
+    correctAnswer: 'Money',
+    explanation: '"钱" (qián) means money in Chinese.',
+    language: 'chinese',
+  },
+
+  // ==========================================
+  // VOCABULARY - Advanced
+  // ==========================================
+  {
+    id: 'vocab-a-1',
+    skill: 'vocabulary',
+    level: 'advanced',
+    type: 'translation',
+    question: 'What is the Shona word for "perseverance" or "endurance"?',
+    options: ['Kushanda', 'Kutsungirira', 'Kufara', 'Kubuda'],
+    correctAnswer: 'Kutsungirira',
+    explanation: '"Kutsungirira" means to persevere or endure — a deeply valued concept in Shona culture.',
+    language: 'shona',
+  },
+  {
+    id: 'vocab-a-2',
+    skill: 'vocabulary',
+    level: 'advanced',
+    type: 'multiple_choice',
+    question: 'What does "Ubumnandi" express in Ndebele?',
+    options: ['Sadness', 'Sweetness/Enjoyment', 'Anger', 'Tiredness'],
+    correctAnswer: 'Sweetness/Enjoyment',
+    explanation: '"Ubumnandi" conveys sweetness, deliciousness, or enjoyment in Ndebele.',
+    language: 'ndebele',
+  },
+  {
+    id: 'vocab-a-3',
+    skill: 'vocabulary',
+    level: 'advanced',
+    type: 'translation',
+    question: 'How do you say "community gathering" in Swahili?',
+    options: ['Mkutano', 'Baraza', 'Shule', 'Soko'],
+    correctAnswer: 'Baraza',
+    explanation: '"Baraza" refers to a community council or public meeting place in Swahili culture.',
+    language: 'swahili',
+  },
+
+  // ==========================================
+  // GRAMMAR - Elementary
+  // ==========================================
+  {
+    id: 'gram-e-1',
+    skill: 'grammar',
+    level: 'elementary',
+    type: 'fill_blank',
+    question: 'Complete: "___ unani?" (Who are you with?) in Shona.',
+    options: ['Uri', 'Ndiri', 'Vari', 'Tiri'],
+    correctAnswer: 'Uri',
+    explanation: '"Uri" is the second person singular subject prefix "you are" in Shona.',
+    language: 'shona',
+  },
+  {
+    id: 'gram-e-2',
+    skill: 'grammar',
+    level: 'elementary',
+    type: 'multiple_choice',
+    question: 'In Ndebele, which prefix makes a verb negative? "Angifuni" (I don\'t want)',
+    options: ['A-', 'Angi-', 'Si-', 'Ka-'],
+    correctAnswer: 'Angi-',
+    explanation: '"Angi-" is the first person singular negative prefix in Ndebele.',
+    language: 'ndebele',
+  },
+  {
+    id: 'gram-e-3',
+    skill: 'grammar',
+    level: 'elementary',
+    type: 'fill_blank',
+    question: 'Complete the Swahili sentence: "Mimi ___ mwalimu" (I am a teacher).',
+    options: ['ni', 'si', 'ana', 'una'],
+    correctAnswer: 'ni',
+    explanation: '"Ni" is the copula "am/is" in Swahili for first person.',
+    language: 'swahili',
+  },
+
+  // ==========================================
+  // GRAMMAR - Intermediate
+  // ==========================================
+  {
+    id: 'gram-i-2',
+    skill: 'grammar',
+    level: 'intermediate',
+    type: 'multiple_choice',
+    question: 'In Shona, how do you form the past tense of "kuenda" (to go)?',
+    options: ['Ndaenda', 'Ndinoenda', 'Ndichaenda', 'Ndirienda'],
+    correctAnswer: 'Ndaenda',
+    explanation: '"Nda-" is the past tense prefix. "Ndaenda" = "I went".',
+    language: 'shona',
+  },
+  {
+    id: 'gram-i-3',
+    skill: 'grammar',
+    level: 'intermediate',
+    type: 'fill_blank',
+    question: 'Complete: "Abantwana ___ dlala" (The children are playing) in Ndebele.',
+    options: ['ba', 'ba-ya', 'u', 'si'],
+    correctAnswer: 'ba-ya',
+    explanation: '"Ba-ya-" is the present continuous for third person plural in Ndebele.',
+    language: 'ndebele',
+  },
+  {
+    id: 'gram-i-4',
+    skill: 'grammar',
+    level: 'intermediate',
+    type: 'multiple_choice',
+    question: 'In Chinese, which particle marks a completed action?',
+    options: ['的 (de)', '了 (le)', '吗 (ma)', '在 (zài)'],
+    correctAnswer: '了 (le)',
+    explanation: '"了" (le) is the aspect particle that indicates a completed action in Chinese.',
+    language: 'chinese',
+  },
+
+  // ==========================================
+  // GRAMMAR - Advanced
+  // ==========================================
+  {
+    id: 'gram-a-1',
+    skill: 'grammar',
+    level: 'advanced',
+    type: 'multiple_choice',
+    question: 'In Shona, what is the difference between "Ndiri kudya" and "Ndinodya"?',
+    options: [
+      'No difference',
+      'Progressive (eating now) vs. Habitual (I eat)',
+      'Past vs. Future',
+      'Formal vs. Informal',
+    ],
+    correctAnswer: 'Progressive (eating now) vs. Habitual (I eat)',
+    explanation: '"Ndiri kudya" = I am eating (right now). "Ndinodya" = I eat (regularly/habitually).',
+    language: 'shona',
+  },
+  {
+    id: 'gram-a-2',
+    skill: 'grammar',
+    level: 'advanced',
+    type: 'fill_blank',
+    question: 'Complete the Swahili relative clause: "Mtu ___ anasoma" (The person who is reading).',
+    options: ['ambaye', 'kwa', 'na', 'ya'],
+    correctAnswer: 'ambaye',
+    explanation: '"Ambaye" is the relative pronoun for animate singular nouns in Swahili.',
+    language: 'swahili',
+  },
+
+  // ==========================================
+  // PRONUNCIATION - Elementary
+  // ==========================================
+  {
+    id: 'pron-e-1',
+    skill: 'pronunciation',
+    level: 'elementary',
+    type: 'multiple_choice',
+    question: 'In Ndebele, how is the "q" in "iqanda" (egg) pronounced?',
+    options: ['Like English "k"', 'A palatal click', 'Like English "q"', 'Silent'],
+    correctAnswer: 'A palatal click',
+    explanation: '"q" in Ndebele is a palatal click, made by pulling the tongue off the hard palate.',
+    language: 'ndebele',
+  },
+  {
+    id: 'pron-e-2',
+    skill: 'pronunciation',
+    level: 'elementary',
+    type: 'multiple_choice',
+    question: 'In Shona, the "mh" in "mhoro" is pronounced as:',
+    options: ['Silent "m", just "horo"', 'A breathy nasal "m"', 'Like English "m"', 'Like "f"'],
+    correctAnswer: 'A breathy nasal "m"',
+    explanation: '"mh" in Shona is a breathy (aspirated) nasal, produced with a puff of air after the "m".',
+    language: 'shona',
+  },
+
+  // ==========================================
+  // PRONUNCIATION - Intermediate
+  // ==========================================
+  {
+    id: 'pron-i-1',
+    skill: 'pronunciation',
+    level: 'intermediate',
+    type: 'multiple_choice',
+    question: 'In Chinese, the tone of "mā" (妈, mother) vs "mǎ" (马, horse) differs by:',
+    options: ['Volume', 'Pitch contour (flat vs. dipping)', 'Speed', 'Nasality'],
+    correctAnswer: 'Pitch contour (flat vs. dipping)',
+    explanation: '"mā" (1st tone) is high and flat. "mǎ" (3rd tone) dips down then rises.',
+    language: 'chinese',
+  },
+  {
+    id: 'pron-i-2',
+    skill: 'pronunciation',
+    level: 'intermediate',
+    type: 'multiple_choice',
+    question: 'Ndebele has three types of clicks: dental (c), palatal (q), and:',
+    options: ['Velar (k)', 'Lateral (x)', 'Glottal (h)', 'Bilabial (p)'],
+    correctAnswer: 'Lateral (x)',
+    explanation: 'The three Ndebele clicks are: dental "c", palatal "q", and lateral "x" (tongue pulled from the side).',
+    language: 'ndebele',
+  },
+
+  // ==========================================
+  // PRONUNCIATION - Advanced
+  // ==========================================
+  {
+    id: 'pron-a-1',
+    skill: 'pronunciation',
+    level: 'advanced',
+    type: 'multiple_choice',
+    question: 'In Shona, what distinguishes "svika" (arrive) from "zvika" in pronunciation?',
+    options: [
+      'They sound the same',
+      '"sv" is a whistled fricative, "zv" is its voiced counterpart',
+      '"sv" is louder',
+      'Only the tone differs',
+    ],
+    correctAnswer: '"sv" is a whistled fricative, "zv" is its voiced counterpart',
+    explanation: 'Shona\'s whistled fricatives are unique: "sv" is voiceless and "zv" is voiced, both produced with lip rounding.',
+    language: 'shona',
+  },
+
+  // ==========================================
+  // COMPREHENSION - Elementary
+  // ==========================================
+  {
+    id: 'comp-e-1',
+    skill: 'comprehension',
+    level: 'elementary',
+    type: 'multiple_choice',
+    question: 'If a Shona speaker says "Ndinoda mvura", what do they want?',
+    options: ['Food', 'Help', 'Water', 'Money'],
+    correctAnswer: 'Water',
+    explanation: '"Ndinoda mvura" = "I want water". "Ndinoda" = I want, "mvura" = water.',
+    language: 'shona',
+  },
+  {
+    id: 'comp-e-2',
+    skill: 'comprehension',
+    level: 'elementary',
+    type: 'multiple_choice',
+    question: 'In Ndebele, "Ngiyahamba" means:',
+    options: ['I am eating', 'I am going/leaving', 'I am sleeping', 'I am coming'],
+    correctAnswer: 'I am going/leaving',
+    explanation: '"Ngiyahamba" = "I am going". "Ngi-" = I, "-ya-" = progressive, "-hamba" = go.',
+    language: 'ndebele',
+  },
+
+  // ==========================================
+  // COMPREHENSION - Intermediate
+  // ==========================================
+  {
+    id: 'comp-i-1',
+    skill: 'comprehension',
+    level: 'intermediate',
+    type: 'multiple_choice',
+    question: 'A sign reads "Musatsvaga mvura pano". What does it mean?',
+    options: ['Water available here', 'Do not look for water here', 'Clean water only', 'Water for sale'],
+    correctAnswer: 'Do not look for water here',
+    explanation: '"Musatsvaga" = do not search/look for. "Mvura" = water. "Pano" = here.',
+    language: 'shona',
+  },
+  {
+    id: 'comp-i-2',
+    skill: 'comprehension',
+    level: 'intermediate',
+    type: 'multiple_choice',
+    question: 'In Swahili, "Duka limefungwa" means:',
+    options: ['The shop is open', 'The shop is closed', 'The shop is big', 'The shop is new'],
+    correctAnswer: 'The shop is closed',
+    explanation: '"Duka" = shop, "limefungwa" = has been closed (passive perfect tense).',
+    language: 'swahili',
+  },
+  {
+    id: 'comp-i-3',
+    skill: 'comprehension',
+    level: 'intermediate',
+    type: 'multiple_choice',
+    question: 'Someone says "请问，洗手间在哪里？" (Qǐng wèn, xǐshǒujiān zài nǎlǐ?). They are asking:',
+    options: ['What time is it?', 'Where is the bathroom?', 'How much does it cost?', 'Where is the station?'],
+    correctAnswer: 'Where is the bathroom?',
+    explanation: '"请问" = excuse me, "洗手间" = bathroom, "在哪里" = where is it.',
+    language: 'chinese',
+  },
+
+  // ==========================================
+  // COMPREHENSION - Advanced
+  // ==========================================
+  {
+    id: 'comp-a-1',
+    skill: 'comprehension',
+    level: 'advanced',
+    type: 'multiple_choice',
+    question: 'A proverb says "Chara chimwe hachitswanyi inda". What lesson does it teach?',
+    options: [
+      'Be patient with children',
+      'One finger cannot crush a louse (teamwork is needed)',
+      'A bird in hand is worth two in the bush',
+      'Early to bed, early to rise',
+    ],
+    correctAnswer: 'One finger cannot crush a louse (teamwork is needed)',
+    explanation: 'This Shona proverb emphasizes Ubuntu — working together achieves what one person cannot.',
+    language: 'shona',
+  },
+
+  // ==========================================
+  // CONVERSATION - Elementary
+  // ==========================================
+  {
+    id: 'conv-e-1',
+    skill: 'conversation',
+    level: 'elementary',
+    type: 'multiple_choice',
+    question: 'At a Shona market, how do you ask "How much is this?"',
+    options: ['Chii ichi?', 'Imarii?', 'Ndeipi?', 'Ndinoda chii?'],
+    correctAnswer: 'Imarii?',
+    explanation: '"Imarii?" means "How much is it?" — essential for market interactions.',
+    language: 'shona',
+  },
+  {
+    id: 'conv-e-2',
+    skill: 'conversation',
+    level: 'elementary',
+    type: 'translation',
+    question: 'How do you say "I don\'t understand" in Ndebele?',
+    options: ['Angizwa', 'Angazi', 'Angivumi', 'Angifuni'],
+    correctAnswer: 'Angizwa',
+    explanation: '"Angizwa" = "I don\'t hear/understand". Used when you need something repeated.',
+    language: 'ndebele',
+  },
+
+  // ==========================================
+  // CONVERSATION - Intermediate
+  // ==========================================
+  {
+    id: 'conv-i-1',
+    skill: 'conversation',
+    level: 'intermediate',
+    type: 'multiple_choice',
+    question: 'In Shona, how do you politely refuse an offer?',
+    options: [
+      'Aiwa! (No!)',
+      'Maita basa, asi handidi (Thank you, but I don\'t want)',
+      'Siyana neni (Leave me alone)',
+      'Handina mari (I have no money)',
+    ],
+    correctAnswer: 'Maita basa, asi handidi (Thank you, but I don\'t want)',
+    explanation: 'Expressing gratitude before declining is the polite way to refuse in Shona culture.',
+    language: 'shona',
+  },
+  {
+    id: 'conv-i-2',
+    skill: 'conversation',
+    level: 'intermediate',
+    type: 'multiple_choice',
+    question: 'When greeting an elder in Ndebele, what should you do?',
+    options: [
+      'Wave casually',
+      'Use "Sawubona" and clap hands as a sign of respect',
+      'Just nod',
+      'Say "Hey"',
+    ],
+    correctAnswer: 'Use "Sawubona" and clap hands as a sign of respect',
+    explanation: 'Greeting elders with respect (clapping, kneeling) is fundamental in Ndebele culture.',
+    language: 'ndebele',
+  },
+  {
+    id: 'conv-i-3',
+    skill: 'conversation',
+    level: 'intermediate',
+    type: 'multiple_choice',
+    question: 'In Swahili, "Pole sana" is used to express:',
+    options: ['Congratulations', 'Sympathy/Sorry for your trouble', 'Excitement', 'Agreement'],
+    correctAnswer: 'Sympathy/Sorry for your trouble',
+    explanation: '"Pole sana" = "Very sorry" — used to express empathy, not personal apology.',
+    language: 'swahili',
+  },
+
+  // ==========================================
+  // CONVERSATION - Advanced
+  // ==========================================
+  {
+    id: 'conv-a-1',
+    skill: 'conversation',
+    level: 'advanced',
+    type: 'multiple_choice',
+    question: 'In Shona, "Zvinhu zvinonetsa" is best translated as:',
+    options: [
+      'Things are difficult/complicated',
+      'Things are expensive',
+      'Things are beautiful',
+      'Things are changing',
+    ],
+    correctAnswer: 'Things are difficult/complicated',
+    explanation: '"Zvinonetsa" means "they are difficult/troublesome" — commonly used to discuss life challenges.',
+    language: 'shona',
+  },
+  {
+    id: 'conv-a-2',
+    skill: 'conversation',
+    level: 'advanced',
+    type: 'multiple_choice',
+    question: 'When someone says "生意兴隆" (shēngyì xīnglóng) to a shopkeeper, they are wishing:',
+    options: ['Good health', 'Safe travels', 'Prosperous business', 'Happy birthday'],
+    correctAnswer: 'Prosperous business',
+    explanation: '"生意兴隆" is a well-wish meaning "May your business prosper" — common in Chinese culture.',
+    language: 'chinese',
+  },
 ]
 
 /**
