@@ -20,7 +20,7 @@ const STYTCH_PUBLIC_TOKEN = process.env.EXPO_PUBLIC_STYTCH_PUBLIC_TOKEN || ''
 const PASSWORD_RESET_REDIRECT_URL =
   process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL ||
   process.env.NEXT_PUBLIC_PASSWORD_RESET_REDIRECT_URL ||
-  'mukokolingo://reset-password'
+  'mukokolingo://auth/callback'
 const MAGIC_LINK_REDIRECT_URL =
   process.env.EXPO_PUBLIC_MAGIC_LINK_REDIRECT_URL ||
   'mukokolingo://'
