@@ -29,8 +29,6 @@ jest.mock('react-native', () => ({
 }))
 
 import {
-  signInWithEmail,
-  signUpWithEmail,
   signInWithOtp,
   verifyOtp,
   signInWithWhatsApp,
@@ -187,82 +185,6 @@ describe('stytch-client', () => {
   })
 
   // ==========================================================================
-  // Email/Password Flow
-  // ==========================================================================
-  describe('signInWithEmail', () => {
-    it('sends email and password, returns session', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          session_token: 'session-pw-123',
-          session_jwt: 'jwt-pw-123',
-          user: {
-            user_id: 'user-pw-123',
-            email: 'test@example.com',
-            created_at: '2026-01-01',
-            status: 'active',
-          },
-          expires_at: '2026-02-18T00:00:00Z',
-        }),
-      })
-
-      const result = await signInWithEmail('test@example.com', 'Password123')
-
-      expect(result.error).toBeNull()
-      expect(result.data?.session?.session_token).toBe('session-pw-123')
-      expect(result.data?.user?.email).toBe('test@example.com')
-    })
-
-    it('returns error for wrong password', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        json: () => Promise.resolve({ error: 'Incorrect password' }),
-      })
-
-      const result = await signInWithEmail('test@example.com', 'wrong')
-
-      expect(result.error).toBeTruthy()
-      expect(result.data).toBeNull()
-    })
-  })
-
-  describe('signUpWithEmail', () => {
-    it('creates account and returns session', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          session_token: 'session-new-123',
-          session_jwt: 'jwt-new-123',
-          user: {
-            user_id: 'user-new-123',
-            email: 'new@example.com',
-            created_at: '2026-01-01',
-            status: 'active',
-          },
-          expires_at: '2026-02-18T00:00:00Z',
-        }),
-      })
-
-      const result = await signUpWithEmail('new@example.com', 'StrongPass123')
-
-      expect(result.error).toBeNull()
-      expect(result.data?.session?.session_token).toBe('session-new-123')
-    })
-
-    it('returns error for duplicate email', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        json: () => Promise.resolve({ error: 'A user with this email already exists' }),
-      })
-
-      const result = await signUpWithEmail('existing@example.com', 'Password123')
-
-      expect(result.error).toBeTruthy()
-      expect(result.error?.message).toContain('already exists')
-    })
-  })
-
-  // ==========================================================================
   // Magic Link Flow
   // ==========================================================================
   describe('signInWithMagicLink', () => {
@@ -380,7 +302,7 @@ describe('stytch-client', () => {
         json: () => Promise.resolve({}),
       })
 
-      const result = await signInWithEmail('test@example.com', 'pass')
+      const result = await signInWithOtp('test@example.com')
 
       expect(result.error).toBeTruthy()
       expect(result.error?.message).toContain('500')

@@ -258,20 +258,6 @@ function RootLayoutNav({ hasCompletedOnboarding }: { hasCompletedOnboarding: boo
             presentation: 'modal',
           }}
         />
-        <Stack.Screen
-          name="auth/forgot-password"
-          options={{
-            headerShown: false,
-            presentation: 'modal',
-          }}
-        />
-        <Stack.Screen
-          name="auth/reset-password"
-          options={{
-            headerShown: false,
-            presentation: 'modal',
-          }}
-        />
         <Stack.Screen name="about/index" options={{ headerShown: false }} />
         <Stack.Screen name="features/index" options={{ headerShown: false }} />
         <Stack.Screen name="why/index" options={{ headerShown: false }} />

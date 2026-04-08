@@ -15,7 +15,6 @@
 export const STYTCH_TEMPLATES = {
   LOGIN: process.env.STYTCH_TEMPLATE_LOGIN || undefined,
   SIGNUP: process.env.STYTCH_TEMPLATE_SIGNUP || undefined,
-  RESET_PASSWORD: process.env.STYTCH_TEMPLATE_RESET_PASSWORD || undefined,
   OTP: process.env.STYTCH_TEMPLATE_OTP || undefined,
 }
 
