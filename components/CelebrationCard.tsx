@@ -17,6 +17,7 @@ interface CelebrationCardProps {
   score?: number
   total?: number
   streak?: number
+  xpEarned?: number
   onContinue?: () => void
   onPracticeWithShamwari?: () => void
   onDismiss?: () => void
@@ -27,6 +28,7 @@ export function CelebrationCard({
   score,
   total,
   streak,
+  xpEarned,
   onContinue,
   onPracticeWithShamwari,
   onDismiss,
@@ -109,6 +111,14 @@ export function CelebrationCard({
       <Text style={styles.title}>{message.title}</Text>
       <Text style={styles.subtitle}>{message.subtitle}</Text>
 
+      {/* XP earned badge */}
+      {xpEarned !== undefined && xpEarned > 0 && (
+        <View style={styles.xpBadge}>
+          <Star size={16} color={Colors.accent[isDark ? 300 : 800]} />
+          <Text style={styles.xpText}>+{xpEarned} XP earned</Text>
+        </View>
+      )}
+
       {/* Streak badge */}
       {streak !== undefined && streak > 0 && type !== 'streak' && (
         <View style={styles.streakBadge}>
@@ -188,6 +198,21 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       lineHeight: 22,
       marginBottom: 16,
       maxWidth: 300,
+    },
+    xpBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: isDark ? Colors.accent[300] + '20' : Colors.accent[800] + '12',
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      marginBottom: 8,
+    },
+    xpText: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.accent[isDark ? 300 : 800],
     },
     streakBadge: {
       flexDirection: 'row',
