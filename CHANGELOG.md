@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.0.1] — 2026-04-08
 
-### Supabase Migration & Platform Architecture
+### Initial Release: Supabase Migration & Platform Architecture
 
 Major migration from MongoDB/Prisma to Supabase PostgreSQL with normalized schemas, plus Next.js web app, school/business model, and registry compliance.
 

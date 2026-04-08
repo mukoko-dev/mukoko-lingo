@@ -669,7 +669,7 @@ When creating new completion summaries, migration docs, or work records:
 
 ## Project Status
 
-**Current Version**: 3.1.0 (February 2026)
+**Current Version**: 0.0.1 (April 2026)
 **Framework**: Expo SDK 54 / React Native 0.81 / React 19
 **Backend**: Supabase PostgreSQL + Prisma 6 + Stytch 13 + Vercel Serverless
 **AI**: Anthropic Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
