@@ -94,7 +94,8 @@ EXPO_PUBLIC_API_BASE_URL=https://your-api-domain.vercel.app
 
 # Anthropic Claude API Key (for mobile AI tutor)
 # Model: claude-haiku-4-5-20251001
-EXPO_PUBLIC_ANTHROPIC_API_KEY=your_anthropic_api_key_here
+# Anthropic API Key is SERVER-SIDE ONLY (proxied via /api/ai/chat)
+# ANTHROPIC_API_KEY=your_anthropic_api_key_here
 
 # Vercel AI Gateway (for web API routes)
 AI_GATEWAY_API_KEY=your_api_key_here
@@ -182,7 +183,7 @@ nyuchi-lingo/
 │   │   ├── stats.ts              # Dashboard statistics
 │   │   ├── activity.ts           # Activity logs
 │   │   └── popular-phrases.ts    # Most viewed phrases
-│   └── analytics/                # Python analytics (MongoDB aggregation)
+│   └── analytics/                # Python analytics (PostgreSQL aggregation — migration pending)
 │       ├── _helpers.py           # Shared DB + auth utilities
 │       ├── overview.py           # Growth rates, user funnel, trends
 │       ├── learning-velocity.py  # Learning speed metrics
@@ -230,8 +231,10 @@ nyuchi-lingo/
 ├── constants/
 │   └── Colors.ts                 # Five African Minerals brand palette
 │
-├── prisma/
-│   └── schema.prisma             # Legacy reference (migrated to Supabase)
+├── web/                          # Next.js web app (browser experience)
+│   ├── app/                      # Next.js App Router pages
+│   ├── components/               # Web components (L1-L5 architecture)
+│   └── lib/                      # Web-specific utilities + full API client
 │
 ├── assets/                       # App icons, splash screens, images
 ├── public/                       # Static web assets
@@ -351,7 +354,7 @@ nyuchi-lingo/
 **Philosophy**: Mukoko Lingo is an AI-first application. The AI tutor reads user proficiency for every interaction to provide adaptive, personalized teaching.
 
 **Mobile AI (Direct Anthropic API)**:
-- **API Key**: `EXPO_PUBLIC_ANTHROPIC_API_KEY` environment variable
+- **API Key**: `ANTHROPIC_API_KEY` (server-side only, proxied via `/api/ai/chat`)
 - **Model**: `claude-haiku-4-5-20251001`
 - **Implementation**: `lib/ai/chat-service.ts` - Direct `fetch()` to Anthropic Messages API
 - **Fallback**: Simulated responses when no API key is set (demo/offline mode)
@@ -418,7 +421,7 @@ nyuchi-lingo/
 
 **Admin Features**:
 - Admin access check in `app/admin/_layout.tsx`
-- All data fetched from MongoDB via API (no hardcoded data)
+- All data fetched from Supabase via API (no hardcoded data)
 - Pull-to-refresh on admin screens
 - Confirmation dialogs for destructive actions
 
@@ -440,7 +443,7 @@ nyuchi-lingo/
 - `skill-distribution.py` - Skill proficiency distribution
 - `engagement.py` - User engagement metrics
 - `_helpers.py` - Shared DB connection + admin verification
-- Uses pymongo directly for MongoDB aggregation pipelines
+- Uses pymongo for aggregation pipelines (migration to psycopg2 pending)
 - All require admin authentication
 
 ## Design System & Colors
@@ -563,14 +566,14 @@ import { getUserSkills } from '@/lib/storage/database'
 ## Common Workflows
 
 ### Adding a New Phrase Category
-1. Update `phrases` collection data via admin UI or Prisma Studio
-2. Categories are stored as strings on the `Phrase` model, no schema change needed
-3. Client-side filtering handles new categories automatically
+1. Use the admin web app to create/edit phrases
+2. Phrase metadata in `lingo.phrase`, translations in `lingo.translation`
+3. Adding a new language = INSERT translation rows (no schema change)
 
 ### Adding a New API Route
 1. Create file in `api/[feature]/` following Vercel serverless function pattern
 2. Import auth middleware: `import { requireAuth, requireAdmin } from '../_lib/auth-middleware'`
-3. Import Prisma: `import prisma from '../_lib/prisma'`
+3. Import Supabase: `import supabase from '../_lib/supabase'`
 4. Handle CORS if needed: `import { cors } from '../_lib/cors'`
 5. Add corresponding method to `lib/services/api-client.ts`
 
@@ -611,7 +614,7 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 ### Performance Notes
 - Phrases limited to 100-200 per query
 - Client-side filtering for categories/search
-- Python analytics use MongoDB aggregation pipelines for complex queries
+- Python analytics use aggregation pipelines (migration from MongoDB pending)
 - AI chat uses direct API calls (no streaming on mobile)
 
 ### Technical Debt
@@ -625,12 +628,8 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 1. Configure environment variables (see Environment Setup above)
 2. Start dev server: `npx expo start`
 3. Sign up for a test account via the auth screen
-4. To test admin features, update your user role in MongoDB:
-   ```bash
-   npx prisma studio
-   # Find your profile and set role to 'admin'
-   ```
-5. Test AI features in the Shamwari tab (requires `EXPO_PUBLIC_ANTHROPIC_API_KEY`, falls back to simulated mode without it)
+4. To test admin features, set your role to 'admin' in `identity.person` via the Supabase dashboard
+5. Test AI features in the Shamwari tab (requires `ANTHROPIC_API_KEY` server-side, falls back to simulated mode without it)
 6. Check moderation queue in admin → moderation
 7. Test theme switching (light/dark/system)
 
@@ -652,8 +651,8 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 
 ### Scripts (`/scripts/`):
 - **[scripts/migrations-README.md](scripts/migrations-README.md)** - Database migration guide
-- **[scripts/MIGRATION_SUMMARY.md](scripts/MIGRATION_SUMMARY.md)** - MongoDB migration details
-- **[scripts/DATABASE_SCHEMA_REVIEW.md](scripts/DATABASE_SCHEMA_REVIEW.md)** - Prisma schema documentation
+- **[scripts/MIGRATION_SUMMARY.md](scripts/MIGRATION_SUMMARY.md)** - Migration history
+- **[scripts/DATABASE_SCHEMA_REVIEW.md](scripts/DATABASE_SCHEMA_REVIEW.md)** - Database schema documentation
 - `scripts/028_seed_standards_guardrails.sql` - Database seed data
 - `scripts/apply-migrations.sh` - Migration runner
 - `scripts/apply-critical-fixes.sh` - Critical fix runner
@@ -671,15 +670,15 @@ When creating new completion summaries, migration docs, or work records:
 
 **Current Version**: 0.0.1 (April 2026)
 **Framework**: Expo SDK 54 / React Native 0.81 / React 19
-**Backend**: Supabase PostgreSQL + Prisma 6 + Stytch 13 + Vercel Serverless
+**Backend**: Supabase PostgreSQL + Stytch 13 + Vercel Serverless
 **AI**: Anthropic Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
 **Status**: Active development
 **Parent Company**: Nyuchi Africa (nyuchi.com)
 
 **Architecture Highlights**:
-- Skills-based learning system fully modeled in database (18 Prisma models)
+- Skills-based learning system fully modeled in Supabase (20 tables across 3 schemas)
 - Adaptive AI tutor reads user proficiency for every interaction
 - Multi-platform: single codebase for web, iOS, and Android
-- Python analytics for advanced MongoDB aggregation queries
+- Python analytics for advanced data aggregation (migration pending)
 - Comprehensive admin dashboard (8 sections)
 - Content moderation with both local guardrails and AI-based review
