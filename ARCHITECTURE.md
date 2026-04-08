@@ -32,19 +32,10 @@ L1 (Primitives) → imports nothing from app layers
 ```
 components/
 ├── ui/                  # L1: Primitives (shared, platform-agnostic)
-│   ├── Button.tsx
-│   ├── Card.tsx
-│   ├── Text.tsx
-│   └── Input.tsx
+│   └── Button.tsx
 ├── lingo/               # L2: Domain composites
-│   ├── PhraseCard.tsx
-│   ├── SkillBadge.tsx
-│   ├── LanguageSelector.tsx
-│   └── StreakCounter.tsx
-├── screens/             # L3: Page orchestrators
-│   ├── PhraseGrid.tsx
-│   ├── AssessmentFlow.tsx
-│   └── ChatWindow.tsx
+│   └── PhraseCard.tsx
+├── screens/             # L3: Page orchestrators (to be built)
 ├── RouteErrorBoundary.tsx    # L4
 └── SectionErrorBoundary.tsx  # L4
 
