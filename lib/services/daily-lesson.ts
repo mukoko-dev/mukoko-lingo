@@ -7,8 +7,10 @@ import {
   getDailyGoalProgress,
   updateDailyGoalProgress,
 } from '@/lib/storage/database'
+import { getDueCards, type SRSCard } from './srs'
 
 const DAILY_GOAL = 5
+const SRS_REVIEW_SLOTS = 2 // Reserve 2 of the 5 daily slots for SRS reviews
 
 // Map phrase categories to skill areas
 const CATEGORY_SKILL_MAP: Record<string, string> = {
@@ -49,9 +51,13 @@ export async function getTodaysLesson(): Promise<Phrase[]> {
     return phrases.filter(p => existing.includes(p.id))
   }
 
-  // Generate a new lesson
+  // Generate a new lesson mixing SRS reviews with new content
   const progress = await getProgress()
   const skills = await getUserSkills()
+
+  // Get SRS due cards first — these take priority
+  const dueCards = await getDueCards()
+  const dueIds = new Set(dueCards.map((c: SRSCard) => c.phraseId))
 
   // Find weakest skills to prioritize
   const skillScores = Object.entries(skills).map(([name, data]) => ({ name, score: data.score }))
@@ -76,10 +82,23 @@ export async function getTodaysLesson(): Promise<Phrase[]> {
     return weakSkills.includes(skill)
   })
 
-  // Build lesson: prioritize weak skills, then unpracticed, then any unmastered
+  // Build lesson: SRS reviews first, then new content
   const selected: Phrase[] = []
   const usedIds = new Set<string>()
   const usedCategories = new Set<string>()
+
+  // Step 1: Add SRS due reviews (up to SRS_REVIEW_SLOTS)
+  const srsReviews = dueCards.slice(0, SRS_REVIEW_SLOTS)
+  for (const card of srsReviews) {
+    const phrase = phrases.find(p => p.id === card.phraseId)
+    if (phrase) {
+      selected.push(phrase)
+      usedIds.add(phrase.id)
+      usedCategories.add(phrase.category)
+    }
+  }
+
+  const newSlots = DAILY_GOAL - selected.length
 
   // Helper to add phrases while maintaining variety
   const addPhrases = (pool: Phrase[], max: number) => {
@@ -97,10 +116,11 @@ export async function getTodaysLesson(): Promise<Phrase[]> {
     }
   }
 
+  // Step 2: Fill remaining slots with new content
   // Priority order: weak skills → not practiced → any unmastered → any
-  addPhrases(fromWeakSkills.filter(p => !progress[p.id]), DAILY_GOAL)
-  addPhrases(notPracticed, DAILY_GOAL)
-  addPhrases(unmastered, DAILY_GOAL)
+  addPhrases(fromWeakSkills.filter(p => !progress[p.id] && !dueIds.has(p.id)), DAILY_GOAL)
+  addPhrases(notPracticed.filter(p => !dueIds.has(p.id)), DAILY_GOAL)
+  addPhrases(unmastered.filter(p => !dueIds.has(p.id)), DAILY_GOAL)
   if (selected.length < DAILY_GOAL) {
     addPhrases(phrases, DAILY_GOAL)
   }
