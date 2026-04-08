@@ -17,10 +17,6 @@ import { Platform } from 'react-native'
 // Stytch configuration
 const STYTCH_PROJECT_ID = process.env.EXPO_PUBLIC_STYTCH_PROJECT_ID || ''
 const STYTCH_PUBLIC_TOKEN = process.env.EXPO_PUBLIC_STYTCH_PUBLIC_TOKEN || ''
-const PASSWORD_RESET_REDIRECT_URL =
-  process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL ||
-  process.env.NEXT_PUBLIC_PASSWORD_RESET_REDIRECT_URL ||
-  'mukokolingo://auth/callback'
 const MAGIC_LINK_REDIRECT_URL =
   process.env.EXPO_PUBLIC_MAGIC_LINK_REDIRECT_URL ||
   'mukokolingo://'
@@ -164,55 +160,6 @@ async function clearPersistedSession(): Promise<void> {
 // =============================================================================
 // Auth Functions (Public API - drop-in replacement for Supabase auth)
 // =============================================================================
-
-/**
- * Sign in with email and password
- */
-export async function signInWithEmail(email: string, password: string): Promise<AuthResult> {
-  try {
-    const data = await apiCall('/login', { email, password })
-    const session: StytchSession = {
-      session_token: data.session_token,
-      session_jwt: data.session_jwt,
-      user: data.user,
-      expires_at: data.expires_at,
-    }
-    await persistSession(session)
-    notifyAuthStateChange('SIGNED_IN', session)
-    return { data: { user: data.user, session }, error: null }
-  } catch (error: any) {
-    return { data: null, error }
-  }
-}
-
-/**
- * Sign up with email and password
- */
-export async function signUpWithEmail(email: string, password: string): Promise<AuthResult> {
-  try {
-    const data = await apiCall('/register', { email, password })
-    const session: StytchSession | null = data.session_token
-      ? {
-          session_token: data.session_token,
-          session_jwt: data.session_jwt,
-          user: data.user,
-          expires_at: data.expires_at,
-        }
-      : null
-
-    if (session) {
-      await persistSession(session)
-      notifyAuthStateChange('SIGNED_IN', session)
-    }
-
-    return {
-      data: { user: data.user, session },
-      error: null,
-    }
-  } catch (error: any) {
-    return { data: null, error }
-  }
-}
 
 /**
  * Send OTP code to email (works for both sign-in and sign-up)
@@ -411,42 +358,6 @@ export async function getSession(): Promise<{ session: StytchSession | null; err
     }
   } catch (error: any) {
     return { session: null, error }
-  }
-}
-
-/**
- * Request password reset email
- */
-export async function resetPasswordForEmail(email: string): Promise<AuthResult> {
-  try {
-    await apiCall('/password/reset-request', {
-      email,
-      redirect_url: PASSWORD_RESET_REDIRECT_URL,
-    })
-    return { data: { user: null, session: null }, error: null }
-  } catch (error: any) {
-    return { data: null, error }
-  }
-}
-
-/**
- * Update password (requires active session)
- */
-export async function updatePassword(newPassword: string): Promise<AuthResult> {
-  try {
-    const sessionToken = await SecureStorageAdapter.getItem(SESSION_TOKEN_KEY)
-    if (!sessionToken) {
-      throw new Error('No active session. Please sign in first.')
-    }
-
-    const data = await apiCall('/password/update', {
-      session_token: sessionToken,
-      new_password: newPassword,
-    })
-
-    return { data: { user: data.user, session: null }, error: null }
-  } catch (error: any) {
-    return { data: null, error }
   }
 }
 
