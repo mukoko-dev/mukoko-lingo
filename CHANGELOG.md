@@ -9,9 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### UX Overhaul - Learning Loop & Tab Restructure
+### Supabase Migration & Platform Architecture
 
-Major UX overhaul addressing 7 core issues with app identity and learning experience.
+Major migration from MongoDB/Prisma to Supabase PostgreSQL with normalized schemas, plus Next.js web app, school/business model, and registry compliance.
+
+### Added
+- **Supabase PostgreSQL** — All API routes wired to `lingo.*` / `identity.*` / `system.*` schemas
+- **Next.js Web App** — Full browser experience at `/web` with learning + admin dashboard
+- **School/Business Model** — Classes, memberships, assignments, submissions API endpoints
+- **OneRoster v1.1 Sync** — Pull rosters from Clever, ClassLink, PowerSchool
+- **Org API Key Management** — Self-service API key create/list/revoke
+- **Server-Side AI Proxy** — Anthropic API key moved server-side with circuit breaker (3 failures/5min) and rate limiting (30 req/hr)
+- **Prompt Injection Detection** — 14 patterns catch instruction manipulation before AI
+- **Error Boundaries** — Route-level and section-level error boundaries on all tab screens
+- **Structured Logging** — `[mukoko][module]` prefix across API routes
+- **Retry with Backoff** — API client retries 3x with 1s/2s/4s delays on 5xx/network errors
+- **Request Timeouts** — 15s AbortController timeout on all fetch calls
+- **Five African Minerals Tailwind** — Full color palette (cobalt, tanzanite, malachite, gold, terracotta)
+- **5-Layer Architecture** — L1 primitives → L2 domain → L3 orchestrators → L4 boundaries → L5 pages
+- **GitHub Templates** — CONTRIBUTING, CODE_OF_CONDUCT, issue templates, PR template, CODEOWNERS
+
+### Changed
+- **Database** — MongoDB Atlas + Prisma → Supabase PostgreSQL (3 schemas, 20 tables)
+- **Phrase Storage** — Flat columns → normalized `phrase` + `translation` (1 row per language per phrase)
+- **Auth Identity** — MongoDB Profile (ObjectId) → `identity.person` (UUID)
+- **Bookmarks** — Separate collection → `phrase_progress.bookmarked` flag
+- **AI Conversations** — Added `shamwari_conversation_id` and `scylladb_message_id` fields
+- **CORS** — Restricted from wildcard `*.vercel.app` to exact production domain
+- **Mobile App** — Stripped admin features (moved to web app)
+
+### Removed
+- **MongoDB Atlas** — All MongoDB dependencies removed
+- **Prisma ORM** — Schema and client removed (replaced by Supabase JS)
+- **NativeWind/Tailwind** — Removed from mobile app (belongs in web app only)
+- **Admin screens** — 10 admin screens moved to Next.js web app
+- **Client-side API key** — `EXPO_PUBLIC_ANTHROPIC_API_KEY` removed (now server-side)
+
+---
+
+## [3.1.0] — UX Overhaul
 
 ### Added
 - **Daily Lessons** - Smart phrase selection system (5 phrases/day) prioritizing weak skills and unmastered content
