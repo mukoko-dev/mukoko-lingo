@@ -17,7 +17,6 @@ import { Platform } from 'react-native'
 // Stytch configuration
 const STYTCH_PROJECT_ID = process.env.EXPO_PUBLIC_STYTCH_PROJECT_ID || ''
 const STYTCH_PUBLIC_TOKEN = process.env.EXPO_PUBLIC_STYTCH_PUBLIC_TOKEN || ''
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''
 const PASSWORD_RESET_REDIRECT_URL =
   process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL ||
   process.env.NEXT_PUBLIC_PASSWORD_RESET_REDIRECT_URL ||
@@ -25,6 +24,11 @@ const PASSWORD_RESET_REDIRECT_URL =
 const MAGIC_LINK_REDIRECT_URL =
   process.env.EXPO_PUBLIC_MAGIC_LINK_REDIRECT_URL ||
   'mukokolingo://'
+
+// Read lazily so env can be set after module load (tests, dynamic config)
+function getApiBaseUrl(): string {
+  return process.env.EXPO_PUBLIC_API_BASE_URL || ''
+}
 
 // Check if we're running in a browser/client environment
 const isClient = typeof window !== 'undefined'
@@ -103,7 +107,12 @@ let _currentSession: StytchSession | null = null
 // =============================================================================
 
 async function apiCall(endpoint: string, body: Record<string, any>): Promise<any> {
-  const url = `${API_BASE_URL}/api/auth${endpoint}`
+  const apiBase = getApiBaseUrl()
+  if (!apiBase) {
+    throw new Error('App not configured: missing API URL. Please set EXPO_PUBLIC_API_BASE_URL.')
+  }
+
+  const url = `${apiBase}/api/auth${endpoint}`
 
   let response: Response
   try {
@@ -116,9 +125,6 @@ async function apiCall(endpoint: string, body: Record<string, any>): Promise<any
     })
   } catch (networkError: any) {
     // Network-level failure (DNS, connection refused, CORS, offline)
-    if (!API_BASE_URL) {
-      throw new Error('App not configured: missing API URL. Please set EXPO_PUBLIC_API_BASE_URL.')
-    }
     throw new Error('Unable to reach the server. Please check your internet connection and try again.')
   }
 
@@ -130,7 +136,9 @@ async function apiCall(endpoint: string, body: Record<string, any>): Promise<any
   }
 
   if (!response.ok) {
-    throw new Error(data.error || data.message || `Auth request failed (${response.status})`)
+    const err = new Error(data.error || data.message || `Auth request failed (${response.status})`)
+    ;(err as any).statusCode = response.status
+    throw err
   }
 
   return data
@@ -371,17 +379,35 @@ export async function getSession(): Promise<{ session: StytchSession | null; err
 
     // Validate session with server
     try {
-      const data = await apiCall('/session/validate', { session_token: sessionToken })
-      session.user = data.user || user
-      session.expires_at = data.expires_at || ''
-      // Update stored user in case it changed
-      await SecureStorageAdapter.setItem(USER_KEY, JSON.stringify(session.user))
+      const url = `${getApiBaseUrl()}/api/auth/session/validate`
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_token: sessionToken }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        session.user = data.user || user
+        session.expires_at = data.expires_at || ''
+        await SecureStorageAdapter.setItem(USER_KEY, JSON.stringify(session.user))
+        return { session, error: null }
+      }
+
+      if (response.status === 401) {
+        // Session genuinely expired or invalid — clear local state
+        await clearPersistedSession()
+        notifyAuthStateChange('TOKEN_REFRESHED', null)
+        return { session: null, error: null }
+      }
+
+      // Server error (5xx) — keep the local session, don't log out
+      console.warn(`[mukoko][auth] Session validation returned ${response.status}, keeping local session`)
       return { session, error: null }
     } catch {
-      // Session expired or invalid
-      await clearPersistedSession()
-      notifyAuthStateChange('TOKEN_REFRESHED', null)
-      return { session: null, error: null }
+      // Network error — keep the local session, don't log out
+      console.warn('[mukoko][auth] Session validation network error, keeping local session')
+      return { session, error: null }
     }
   } catch (error: any) {
     return { session: null, error }
@@ -451,5 +477,5 @@ export async function getSessionToken(): Promise<string | null> {
  * Check if Stytch is configured
  */
 export function isAuthConfigured(): boolean {
-  return !!(API_BASE_URL)
+  return !!getApiBaseUrl()
 }

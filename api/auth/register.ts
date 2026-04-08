@@ -48,7 +48,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       expires_at: response.session?.expires_at,
     })
   } catch (error: any) {
+    console.error('[mukoko][auth] Registration failed:', error.error_message || error.message)
     const errorType = error.error_type || ''
+    if (errorType === 'configuration_error') {
+      return res.status(500).json({ error: 'Authentication service is temporarily unavailable.' })
+    }
     if (errorType === 'duplicate_email' || errorType.includes('already_exists') || (error.error_message || '').includes('already exists')) {
       return res.status(409).json({ error: 'An account with this email already exists. Try signing in instead.' })
     }
@@ -56,6 +60,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: error.error_message || 'Password does not meet requirements. Use at least 8 characters with uppercase, lowercase, and a number.' })
     }
     const message = error.error_message || error.message || 'Registration failed. Please try again.'
-    return res.status(400).json({ error: message })
+    return res.status(error.status_code || 500).json({ error: message })
   }
 }

@@ -23,14 +23,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Reset password using existing session context
     await stytchClient.passwords.strengthCheck({ password: new_password })
 
-    // Use the existing_password flow is not available since we don't have the old password
-    // Instead, we'll use the password reset with token flow by sending a reset email
-    // For a simpler approach, we authenticate the session and create a new password
-    await stytchClient.passwords.email.resetStart({
+    // Send a password reset email so the user can set a new password via link
+    const resetParams: Record<string, any> = {
       email,
       reset_password_redirect_url: STYTCH_REDIRECTS.MOBILE,
-      reset_password_template_id: STYTCH_TEMPLATES.RESET_PASSWORD,
-    })
+    }
+    if (STYTCH_TEMPLATES.RESET_PASSWORD) {
+      resetParams.reset_password_template_id = STYTCH_TEMPLATES.RESET_PASSWORD
+    }
+    await stytchClient.passwords.email.resetStart(resetParams as any)
 
     return res.status(200).json({
       success: true,
@@ -41,6 +42,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     })
   } catch (error: any) {
-    return res.status(400).json({ error: error.error_message || 'Failed to update password' })
+    console.error('[mukoko][auth] Password update failed:', error.error_message || error.message)
+    if (error.error_type === 'configuration_error') {
+      return res.status(500).json({ error: 'Authentication service is temporarily unavailable.' })
+    }
+    return res.status(error.status_code || 400).json({ error: error.error_message || 'Failed to update password' })
   }
 }

@@ -23,6 +23,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await stytchClient.passwords.email.resetStart(resetParams as any)
     return res.status(200).json({ success: true, message: 'Password reset email sent' })
   } catch (error: any) {
+    console.error('[mukoko][auth] Password reset failed:', error.error_message || error.message)
+    // If template ID is invalid, retry without it
+    if ((error.error_type || '').includes('template') || (error.error_message || '').includes('template')) {
+      try {
+        await stytchClient.passwords.email.resetStart({
+          email,
+          reset_password_redirect_url: redirect_url || STYTCH_REDIRECTS.MOBILE,
+        } as any)
+        return res.status(200).json({ success: true, message: 'Password reset email sent' })
+      } catch {
+        // Fall through to generic response
+      }
+    }
+    if (error.error_type === 'configuration_error') {
+      return res.status(500).json({ error: 'Authentication service is temporarily unavailable.' })
+    }
     // Don't reveal whether the email exists
     return res.status(200).json({ success: true, message: 'If that email exists, a reset link was sent' })
   }
