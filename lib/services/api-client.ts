@@ -7,6 +7,7 @@
  */
 
 import { getSessionToken } from '@/lib/auth/stytch-client'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''
 
@@ -23,6 +24,37 @@ interface ApiResponse<T> {
 const MAX_RETRIES = 3
 const RETRY_DELAYS = [1000, 2000, 4000] // exponential backoff: 1s, 2s, 4s
 const REQUEST_TIMEOUT_MS = 15000 // 15 second timeout per request
+
+// ---------------------------------------------------------------------------
+// Offline-mode guard
+// ---------------------------------------------------------------------------
+
+const OFFLINE_MODE_KEY = '@mukoko_offline_mode'
+
+/**
+ * Quick synchronous-ish check for offline mode. Reads from AsyncStorage.
+ * Returns true when the user has explicitly opted in to offline mode.
+ */
+async function checkOfflineMode(): Promise<boolean> {
+  try {
+    const value = await AsyncStorage.getItem(OFFLINE_MODE_KEY)
+    return value === 'true'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * When offline mode is active, write-operations (POST/PUT/DELETE) are
+ * silently skipped and return a sentinel response. GET operations also
+ * return null so callers fall back to local data.
+ */
+function offlineResponse<T>(method: string): ApiResponse<T> {
+  return {
+    data: null,
+    error: `Offline mode is active — ${method} request skipped`,
+  }
+}
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getSessionToken()
@@ -77,6 +109,8 @@ async function fetchWithRetry(
 
 async function apiGet<T>(path: string, params?: Record<string, string>): Promise<ApiResponse<T>> {
   try {
+    if (await checkOfflineMode()) return offlineResponse<T>('GET')
+
     const headers = await getAuthHeaders()
     const url = new URL(`${API_BASE_URL}/api${path}`)
     if (params) {
@@ -98,6 +132,13 @@ async function apiGet<T>(path: string, params?: Record<string, string>): Promise
 
 async function apiPost<T>(path: string, body: Record<string, any>): Promise<ApiResponse<T>> {
   try {
+    if (await checkOfflineMode()) {
+      // Queue the write for later sync
+      const { enqueueSyncOperation } = await import('./offline')
+      await enqueueSyncOperation('POST', path, body)
+      return offlineResponse<T>('POST')
+    }
+
     const headers = await getAuthHeaders()
     const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
       method: 'POST',
@@ -118,6 +159,12 @@ async function apiPost<T>(path: string, body: Record<string, any>): Promise<ApiR
 
 async function apiPut<T>(path: string, body: Record<string, any>): Promise<ApiResponse<T>> {
   try {
+    if (await checkOfflineMode()) {
+      const { enqueueSyncOperation } = await import('./offline')
+      await enqueueSyncOperation('PUT', path, body)
+      return offlineResponse<T>('PUT')
+    }
+
     const headers = await getAuthHeaders()
     const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
       method: 'PUT',
@@ -138,6 +185,12 @@ async function apiPut<T>(path: string, body: Record<string, any>): Promise<ApiRe
 
 async function apiDelete<T>(path: string): Promise<ApiResponse<T>> {
   try {
+    if (await checkOfflineMode()) {
+      const { enqueueSyncOperation } = await import('./offline')
+      await enqueueSyncOperation('DELETE', path)
+      return offlineResponse<T>('DELETE')
+    }
+
     const headers = await getAuthHeaders()
     const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
       method: 'DELETE',
@@ -330,6 +383,24 @@ export const assignmentsApi = {
   /** Submit assignment (student) */
   submitAssignment: (id: string, data: { answers?: any; score?: number; time_taken?: number }) =>
     apiPost<any>(`/assignments/${id}/submit`, data),
+}
+
+// =============================================================================
+// Admin Phrase Operations
+// =============================================================================
+
+export const adminPhrasesApi = {
+  /** Create a new phrase (admin only) */
+  createPhrase: (data: Record<string, any>) =>
+    apiPost<any>('/admin/phrases', data),
+
+  /** Update an existing phrase (admin only) */
+  updatePhrase: (id: string, data: Record<string, any>) =>
+    apiPut<any>(`/admin/phrases/${id}`, data),
+
+  /** Delete a phrase (admin only) */
+  deletePhrase: (id: string) =>
+    apiDelete<any>(`/admin/phrases/${id}`),
 }
 
 // NOTE: Admin operations (stats, standards, moderation, guardrails, analytics,

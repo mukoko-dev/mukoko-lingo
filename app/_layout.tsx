@@ -263,6 +263,7 @@ function RootLayoutNav({ hasCompletedOnboarding }: { hasCompletedOnboarding: boo
         <Stack.Screen name="why/index" options={{ headerShown: false }} />
         <Stack.Screen name="legal/privacy" options={{ headerShown: false }} />
         <Stack.Screen name="legal/terms" options={{ headerShown: false }} />
+        <Stack.Screen name="admin" options={{ headerShown: false }} />
       </Stack>
     </NavigationThemeProvider>
   )

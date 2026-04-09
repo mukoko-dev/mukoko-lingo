@@ -6,6 +6,13 @@
 // Set API base URL before any module loads
 process.env.EXPO_PUBLIC_API_BASE_URL = 'https://test-api.example.com'
 
+// Mock AsyncStorage (used by offline mode check)
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn().mockResolvedValue(null),
+  setItem: jest.fn().mockResolvedValue(undefined),
+  removeItem: jest.fn().mockResolvedValue(undefined),
+}))
+
 // Mock auth module
 jest.mock('@/lib/auth/stytch-client', () => ({
   getSessionToken: jest.fn(),
