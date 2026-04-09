@@ -38,6 +38,14 @@ import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { getCurrentUser, signOut } from '@/lib/auth/stytch-client'
 import { getStudyStreak, getStudySessions, getBookmarks, getProgress } from '@/lib/storage/database'
 import { useLearningLanguage, LEARNING_LANGUAGES, LearningLanguage } from '@/lib/hooks/useLearningLanguage'
+import {
+  isNotificationsEnabled,
+  setNotificationsEnabled,
+} from '@/lib/services/notifications'
+import {
+  isOfflineMode as getOfflineMode,
+  setOfflineMode as persistOfflineMode,
+} from '@/lib/services/offline'
 
 type UILanguage = 'en' | 'sn' | 'nd' | 'sw' | 'zh'
 type ThemePreference = 'light' | 'dark' | 'system'
@@ -118,12 +126,16 @@ export default function ProfileScreen() {
 
   const loadPreferences = async () => {
     try {
-      const [savedLanguage, savedTheme] = await Promise.all([
+      const [savedLanguage, savedTheme, notifEnabled, offlineEnabled] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEYS.UI_LANGUAGE),
         AsyncStorage.getItem(STORAGE_KEYS.THEME_PREFERENCE),
+        isNotificationsEnabled(),
+        getOfflineMode(),
       ])
       if (savedLanguage) setUILanguage(savedLanguage as UILanguage)
       if (savedTheme) setThemePreference(savedTheme as ThemePreference)
+      setNotifications(notifEnabled)
+      setOfflineMode(offlineEnabled)
     } catch (error) {
       console.error('Error loading preferences:', error)
     }
@@ -152,6 +164,35 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error('Error saving theme preference:', error)
+    }
+  }
+
+  const handleNotificationsToggle = async (enabled: boolean) => {
+    setNotifications(enabled)
+    try {
+      await setNotificationsEnabled(enabled, streak)
+    } catch (error) {
+      console.error('Error toggling notifications:', error)
+      // Revert on failure
+      setNotifications(!enabled)
+      Alert.alert('Error', 'Failed to update notification settings. Please try again.')
+    }
+  }
+
+  const handleOfflineModeToggle = async (enabled: boolean) => {
+    setOfflineMode(enabled)
+    try {
+      await persistOfflineMode(enabled)
+      if (enabled) {
+        Alert.alert(
+          'Offline Mode Enabled',
+          'Your phrases and learning data have been cached for offline use.'
+        )
+      }
+    } catch (error) {
+      console.error('Error toggling offline mode:', error)
+      setOfflineMode(!enabled)
+      Alert.alert('Error', 'Failed to update offline mode. Please try again.')
     }
   }
 
@@ -302,7 +343,7 @@ export default function ProfileScreen() {
           </View>
           <Switch
             value={notifications}
-            onValueChange={setNotifications}
+            onValueChange={handleNotificationsToggle}
             trackColor={{ false: theme.border, true: theme.primary }}
             thumbColor="#ffffff"
           />
@@ -320,7 +361,7 @@ export default function ProfileScreen() {
           </View>
           <Switch
             value={offlineMode}
-            onValueChange={setOfflineMode}
+            onValueChange={handleOfflineModeToggle}
             trackColor={{ false: theme.border, true: theme.primary }}
             thumbColor="#ffffff"
           />
