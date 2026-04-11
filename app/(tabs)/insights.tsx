@@ -30,6 +30,7 @@ import {
 import { getTodayProgress } from '@/lib/services/daily-lesson'
 import { getXPData, getLevelInfo, type XPData, type LevelInfo } from '@/lib/services/xp'
 import { getSRSStats } from '@/lib/services/srs'
+import { leaderboardApi, type LeaderboardResponse } from '@/lib/services/api-client'
 import { phrases } from '@/lib/data/phrases-data'
 import { useLearningLanguage, LEARNING_LANGUAGES } from '@/lib/hooks/useLearningLanguage'
 import { LevelBadge } from '@/components/LevelBadge'
@@ -76,6 +77,8 @@ export default function ProgressScreen() {
   })
   const [refreshing, setRefreshing] = useState(false)
   const [activeSection, setActiveSection] = useState<'dashboard' | 'phrases' | 'community'>('dashboard')
+  const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null)
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false)
 
   const loadData = useCallback(async () => {
     const [bookmarkedIds, progress, skills, streak, dailyGoal, xpData, srsStats] = await Promise.all([
@@ -90,6 +93,25 @@ export default function ProgressScreen() {
     const levelInfo = getLevelInfo(xpData.totalXP)
     setData({ bookmarkedIds, progress, skills, streak, dailyGoal, xpData, levelInfo, srsStats })
   }, [])
+
+  const loadLeaderboard = useCallback(async () => {
+    setLeaderboardLoading(true)
+    try {
+      const { data: lbData } = await leaderboardApi.getWeekly(20)
+      setLeaderboard(lbData)
+    } catch {
+      setLeaderboard(null)
+    } finally {
+      setLeaderboardLoading(false)
+    }
+  }, [])
+
+  // Load leaderboard only when user navigates to community tab
+  useEffect(() => {
+    if (activeSection === 'community' && !leaderboard && !leaderboardLoading) {
+      loadLeaderboard()
+    }
+  }, [activeSection, leaderboard, leaderboardLoading, loadLeaderboard])
 
   useEffect(() => {
     loadData()
@@ -411,10 +433,12 @@ export default function ProgressScreen() {
           </View>
 
           {/* Leaderboard */}
-          <LeaderboardCard loading={false} data={null} />
-          <Text style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', marginTop: 12, fontStyle: 'italic' }}>
-            Leaderboard populates as the community grows
-          </Text>
+          <LeaderboardCard loading={leaderboardLoading} data={leaderboard} />
+          {!leaderboardLoading && !leaderboard && (
+            <Text style={{ fontSize: 12, color: theme.textMuted, textAlign: 'center', marginTop: 12, fontStyle: 'italic' }}>
+              Leaderboard populates as the community grows
+            </Text>
+          )}
         </>
       )}
     </ScrollView>
