@@ -41,7 +41,7 @@ export default function WelcomeScreen() {
   const isDesktop = width >= 1024
 
   const STATS = [
-    { value: '200+', label: t.essentialPhrases || 'Essential Phrases' },
+    { value: '100+', label: t.essentialPhrases || 'Essential Phrases' },
     { value: '4', label: t.languages || 'Languages' },
     { value: 'AI', label: t.poweredTutor || 'Powered Tutor' },
     { value: 'Free', label: t.freeToStart || 'To Start' },
@@ -62,7 +62,7 @@ export default function WelcomeScreen() {
     },
     {
       icon: BookOpen,
-      title: t.featPhrases || '200+ Essential Phrases',
+      title: t.featPhrases || '100+ Essential Phrases',
       description: t.featPhrasesDesc || 'Real-world vocabulary across multiple contexts',
       color: theme.accent,
     },

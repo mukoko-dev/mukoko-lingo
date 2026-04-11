@@ -403,6 +403,31 @@ export const adminPhrasesApi = {
     apiDelete<any>(`/admin/phrases/${id}`),
 }
 
+// =============================================================================
+// Community Leaderboard
+// =============================================================================
+
+export interface LeaderboardEntry {
+  rank: number
+  displayName: string
+  weeklyXP: number
+  phrasesStudied: number
+  isCurrentUser: boolean
+}
+
+export interface LeaderboardResponse {
+  leaderboard: LeaderboardEntry[]
+  currentUserRank: { rank: number; weeklyXP: number } | null
+  period: string
+  totalParticipants: number
+}
+
+export const leaderboardApi = {
+  /** Get weekly XP leaderboard */
+  getWeekly: (limit = 20) =>
+    apiGet<LeaderboardResponse>('/leaderboard', { limit: String(limit) }),
+}
+
 // NOTE: Admin operations (stats, standards, moderation, guardrails, analytics,
 // enrollment, OneRoster sync, API keys) live in the Next.js web app.
 // The API routes on Vercel are shared — the web app calls the same endpoints.

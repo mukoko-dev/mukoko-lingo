@@ -37,7 +37,9 @@ import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { getCurrentUser, signOut } from '@/lib/auth/stytch-client'
 import { getStudyStreak, getStudySessions, getBookmarks, getProgress } from '@/lib/storage/database'
+import { getXPData, getLevelInfo, type LevelInfo } from '@/lib/services/xp'
 import { useLearningLanguage, LEARNING_LANGUAGES, LearningLanguage } from '@/lib/hooks/useLearningLanguage'
+import { LevelBadge } from '@/components/LevelBadge'
 import {
   isNotificationsEnabled,
   setNotificationsEnabled,
@@ -91,6 +93,9 @@ export default function ProfileScreen() {
   const [sessionsCount, setSessions] = useState(0)
   const [bookmarksCount, setBookmarksCount] = useState(0)
   const [masteredCount, setMasteredCount] = useState(0)
+  const [levelInfo, setLevelInfo] = useState<LevelInfo | null>(null)
+  const [todayXP, setTodayXP] = useState(0)
+  const [dailyXPGoal, setDailyXPGoal] = useState(50)
   const [uiLanguage, setUILanguage] = useState<UILanguage>('en')
   const [themePreference, setThemePreference] = useState<ThemePreference>('system')
   const [notifications, setNotifications] = useState(true)
@@ -110,18 +115,22 @@ export default function ProfileScreen() {
   }, [])
 
   const loadData = async () => {
-    const [currentUser, studyStreak, sessions, bookmarks, progress] = await Promise.all([
+    const [currentUser, studyStreak, sessions, bookmarks, progress, xpData] = await Promise.all([
       getCurrentUser(),
       getStudyStreak(),
       getStudySessions(),
       getBookmarks(),
       getProgress(),
+      getXPData(),
     ])
     setUser(currentUser)
     setStreak(studyStreak)
     setSessions(sessions.length)
     setBookmarksCount(bookmarks.length)
     setMasteredCount(Object.values(progress).filter(p => p.status === 'mastered').length)
+    setLevelInfo(getLevelInfo(xpData.totalXP))
+    setTodayXP(xpData.todayXP)
+    setDailyXPGoal(xpData.dailyGoal)
   }
 
   const loadPreferences = async () => {
@@ -288,6 +297,17 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </View>
+
+      {/* Level Badge */}
+      {levelInfo && (
+        <View style={styles.levelSection}>
+          <LevelBadge
+            levelInfo={levelInfo}
+            todayXP={todayXP}
+            dailyGoal={dailyXPGoal}
+          />
+        </View>
+      )}
 
       {/* Settings Sections */}
       <View style={styles.section}>
@@ -678,6 +698,9 @@ const createStyles = (theme: typeof lightTheme) =>
       fontSize: 12,
       color: theme.textMuted,
       marginTop: 4,
+    },
+    levelSection: {
+      marginBottom: 24,
     },
     section: {
       marginBottom: 24,
