@@ -1,16 +1,31 @@
 /**
  * Content Stats Service
  *
- * Queries Supabase data API directly from the client (PostgREST).
- * No Vercel serverless function in between — keeps the app light.
+ * Fetches counts from Supabase in this priority order:
  *
- * Falls back to bundled static data when offline or Supabase
- * is unreachable, honoring the local-first architecture principle.
+ *   1. `content-stats` Supabase Edge Function (cached, cheap, fast)
+ *   2. Direct PostgREST queries via `supabasePublic.schema('lingo')`
+ *   3. Bundled static data (offline fallback, local-first principle)
+ *
+ * No Vercel serverless function in between — keeps the Expo bundle
+ * light and moves custom logic to Supabase Edge Functions.
  */
 
 import { supabasePublic, isSupabasePublicConfigured } from '@/lib/db/supabase-client'
 import { phrases as staticPhrases, categories as staticCategories } from '@/lib/data/phrases-data'
 import { LEARNING_LANGUAGES } from '@/lib/hooks/useLearningLanguage'
+
+const SUPABASE_URL =
+  process.env.EXPO_PUBLIC_SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  ''
+
+const SUPABASE_PUBLISHABLE_KEY =
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  ''
 
 export interface ContentStats {
   totalPhrases: number
@@ -78,38 +93,82 @@ function staticCategoryFallback(): CategoryWithCount[] {
     .sort((a, b) => b.count - a.count)
 }
 
+interface EdgeStatsResponse {
+  total_phrases: number
+  total_categories: number
+  total_languages: number
+  categories?: Array<{ id: string; name: string; icon: string; description: string; count: number }>
+}
+
+/**
+ * Try the `content-stats` Supabase Edge Function first. Returns null
+ * when the function isn't reachable or Supabase isn't configured.
+ */
+async function fetchFromEdge(): Promise<EdgeStatsResponse | null> {
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) return null
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/content-stats`, {
+      method: 'GET',
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+      },
+    })
+    if (!response.ok) return null
+    return (await response.json()) as EdgeStatsResponse
+  } catch {
+    return null
+  }
+}
+
 /**
  * Get aggregate content stats for landing pages and dashboards.
- * Queries Supabase directly; falls back to bundled data when unreachable.
+ *
+ * Priority order:
+ *   1. `content-stats` Supabase Edge Function
+ *   2. Direct PostgREST via `supabasePublic.schema('lingo')`
+ *   3. Bundled static data (offline fallback)
  */
 export async function getContentStats(): Promise<ContentStats> {
+  // 1. Edge function (fastest, pre-aggregated server-side)
+  const edge = await fetchFromEdge()
+  if (edge && edge.total_phrases > 0) {
+    return {
+      totalPhrases: edge.total_phrases,
+      totalCategories: edge.total_categories,
+      totalLanguages: edge.total_languages || LEARNING_LANGUAGES.length,
+      fromLive: true,
+    }
+  }
+
+  // 2. Direct PostgREST
   if (!isSupabasePublicConfigured()) {
     return staticFallback()
   }
 
   try {
+    const lingo = supabasePublic.schema('lingo' as any)
     const [phraseResult, categoryResult, languageResult] = await Promise.all([
-      supabasePublic.from('phrase').select('id', { count: 'exact', head: true }),
-      supabasePublic.from('phrase').select('category'),
-      supabasePublic.from('translation').select('language_id'),
+      lingo.from('phrase').select('id', { count: 'exact', head: true }),
+      lingo.from('phrase').select('category'),
+      lingo.from('translation').select('language_id'),
     ])
 
     if (phraseResult.error) throw phraseResult.error
 
     const categorySet = new Set<string>()
-    for (const row of categoryResult.data || []) {
+    for (const row of (categoryResult.data || []) as Array<{ category: string | null }>) {
       if (row.category) categorySet.add(row.category)
     }
 
     const languageSet = new Set<string>()
-    for (const row of languageResult.data || []) {
+    for (const row of (languageResult.data || []) as Array<{ language_id: string | null }>) {
       if (row.language_id) languageSet.add(row.language_id)
     }
 
     const totalPhrases = phraseResult.count || 0
 
-    // If the DB is empty (no seeds yet), prefer the bundled counts so the
-    // landing page doesn't show zeros to new installs.
     if (totalPhrases === 0) {
       return staticFallback()
     }
@@ -127,19 +186,30 @@ export async function getContentStats(): Promise<ContentStats> {
 
 /**
  * Get categories with phrase counts from the database.
- * Falls back to bundled category counts when unreachable.
+ *
+ * Priority: edge function → direct PostgREST → bundled fallback.
  */
 export async function getCategoriesWithCounts(): Promise<CategoryWithCount[]> {
+  // 1. Edge function already returns categories with metadata baked in
+  const edge = await fetchFromEdge()
+  if (edge?.categories && edge.categories.length > 0) {
+    return edge.categories.map(c => ({ ...c, fromLive: true }))
+  }
+
+  // 2. Direct PostgREST
   if (!isSupabasePublicConfigured()) {
     return staticCategoryFallback()
   }
 
   try {
-    const { data, error } = await supabasePublic.from('phrase').select('category')
+    const { data, error } = await supabasePublic
+      .schema('lingo' as any)
+      .from('phrase')
+      .select('category')
     if (error) throw error
 
     const counts: Record<string, number> = {}
-    for (const row of data || []) {
+    for (const row of (data || []) as Array<{ category: string | null }>) {
       if (row.category) counts[row.category] = (counts[row.category] || 0) + 1
     }
 
