@@ -225,6 +225,20 @@ export const profilesApi = {
 // Phrase Operations
 // =============================================================================
 
+export interface PhraseStats {
+  total_phrases: number
+  total_categories: number
+  total_languages: number
+}
+
+export interface CategoryWithCount {
+  id: string
+  name: string
+  icon: string
+  description: string
+  count: number
+}
+
 export const phrasesApi = {
   /** List phrases with optional filters */
   listPhrases: (params?: { category?: string; difficulty?: string; skill_id?: string }) =>
@@ -232,6 +246,14 @@ export const phrasesApi = {
 
   /** Get single phrase */
   getPhrase: (id: string) => apiGet<any>(`/phrases/${id}`),
+
+  /** Get aggregate phrase stats for landing pages */
+  getStats: () => apiGet<PhraseStats>('/phrases/stats'),
+}
+
+export const categoriesApi = {
+  /** List all categories with phrase counts, sourced from the database */
+  listCategories: () => apiGet<CategoryWithCount[]>('/categories'),
 }
 
 // =============================================================================
