@@ -1,0 +1,46 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main, feature/*]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly scan on Mondays at 06:00 UTC
+    - cron: '0 6 * * 1'
+
+jobs:
+  analyze:
+    name: CodeQL Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      # Autobuild handles Node/TS projects automatically. We skip installing
+      # full deps to avoid native build steps that aren't needed for static
+      # analysis — CodeQL reads source directly.
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
