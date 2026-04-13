@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [methodId, setMethodId] = useState('')
@@ -58,7 +60,7 @@ export default function LoginPage() {
       }
 
       localStorage.setItem('stytch_session_token', data.session_token)
-      window.location.href = '/learn'
+      router.push('/learn')
     } catch {
       setError('Network error. Please try again.')
     } finally {
