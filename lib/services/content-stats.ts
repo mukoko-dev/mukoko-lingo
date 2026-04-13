@@ -4,11 +4,13 @@
  * Fetches counts from Supabase in this priority order:
  *
  *   1. `content-stats` Supabase Edge Function (cached, cheap, fast)
- *   2. Direct PostgREST queries via `supabasePublic.schema('lingo')`
- *   3. Bundled static data (offline fallback, local-first principle)
+ *   2. `/api/stats` Vercel serverless function (server-side, no client env vars needed)
+ *   3. Direct PostgREST queries via `supabasePublic.schema('lingo')`
+ *   4. Bundled static data (offline fallback, local-first principle)
  *
- * No Vercel serverless function in between — keeps the Expo bundle
- * light and moves custom logic to Supabase Edge Functions.
+ * The `/api/stats` step ensures the landing page always shows live DB
+ * counts even when the Supabase EXPO_PUBLIC_ env vars aren't baked into
+ * the web bundle at build time.
  */
 
 import { supabasePublic, isSupabasePublicConfigured } from '@/lib/db/supabase-client'
@@ -123,12 +125,30 @@ async function fetchFromEdge(): Promise<EdgeStatsResponse | null> {
 }
 
 /**
+ * Try the public `/api/stats` Vercel serverless endpoint. Runs server-side
+ * so it uses SUPABASE_URL (not an EXPO_PUBLIC_ var) and always has DB access.
+ * On web the URL is relative (`/api/stats`); on native it requires
+ * EXPO_PUBLIC_API_BASE_URL to be set.
+ */
+async function fetchFromApi(): Promise<EdgeStatsResponse | null> {
+  const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL || ''
+  try {
+    const response = await fetch(`${apiBase}/api/stats`, { method: 'GET' })
+    if (!response.ok) return null
+    return (await response.json()) as EdgeStatsResponse
+  } catch {
+    return null
+  }
+}
+
+/**
  * Get aggregate content stats for landing pages and dashboards.
  *
  * Priority order:
  *   1. `content-stats` Supabase Edge Function
- *   2. Direct PostgREST via `supabasePublic.schema('lingo')`
- *   3. Bundled static data (offline fallback)
+ *   2. `/api/stats` Vercel serverless (server-side DB access, no build-time env vars)
+ *   3. Direct PostgREST via `supabasePublic.schema('lingo')`
+ *   4. Bundled static data (offline fallback)
  */
 export async function getContentStats(): Promise<ContentStats> {
   // 1. Edge function (fastest, pre-aggregated server-side)
@@ -142,7 +162,18 @@ export async function getContentStats(): Promise<ContentStats> {
     }
   }
 
-  // 2. Direct PostgREST
+  // 2. Vercel serverless — server-side DB access, works without EXPO_PUBLIC_ vars
+  const api = await fetchFromApi()
+  if (api && api.total_phrases > 0) {
+    return {
+      totalPhrases: api.total_phrases,
+      totalCategories: api.total_categories,
+      totalLanguages: api.total_languages || LEARNING_LANGUAGES.length,
+      fromLive: true,
+    }
+  }
+
+  // 3. Direct PostgREST
   if (!isSupabasePublicConfigured()) {
     return staticFallback()
   }

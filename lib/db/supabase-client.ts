@@ -35,11 +35,19 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
 
 /**
  * Public client for the `lingo` schema — read-only via RLS.
+ *
+ * Falls back to placeholder values when env vars are not set so that
+ * `createClient` never throws at module-init time. Use
+ * `isSupabasePublicConfigured()` before making actual queries.
  */
-export const supabasePublic = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  db: { schema: 'lingo' },
-  auth: { persistSession: false },
-})
+export const supabasePublic = createClient(
+  SUPABASE_URL || 'https://not-configured.supabase.co',
+  SUPABASE_PUBLISHABLE_KEY || 'not-configured',
+  {
+    db: { schema: 'lingo' },
+    auth: { persistSession: false },
+  }
+)
 
 /**
  * Whether the client-side Supabase connection is configured.
