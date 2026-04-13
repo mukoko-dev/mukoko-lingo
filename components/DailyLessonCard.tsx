@@ -14,6 +14,8 @@ import { useLearningLanguage } from '@/lib/hooks/useLearningLanguage'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { FlashCard } from '@/components/FlashCard'
 import { getTodaysLesson, getTodayProgress } from '@/lib/services/daily-lesson'
+import { awardXP } from '@/lib/services/xp'
+import { getDueCount } from '@/lib/services/srs'
 import type { Phrase } from '@/lib/data/phrases-data'
 
 interface DailyLessonCardProps {
@@ -32,6 +34,7 @@ export function DailyLessonCard({ onStartQuiz, onPhrasePress }: DailyLessonCardP
   const [viewedIds, setViewedIds] = useState<Set<string>>(new Set())
   const [dailyProgress, setDailyProgress] = useState({ learned: 0, goal: 5, completed: false })
   const [loading, setLoading] = useState(true)
+  const [dueReviewCount, setDueReviewCount] = useState(0)
 
   useEffect(() => {
     loadLesson()
@@ -39,12 +42,14 @@ export function DailyLessonCard({ onStartQuiz, onPhrasePress }: DailyLessonCardP
 
   const loadLesson = async () => {
     try {
-      const [phrases, progress] = await Promise.all([
+      const [phrases, progress, dueCount] = await Promise.all([
         getTodaysLesson(),
         getTodayProgress(),
+        getDueCount(),
       ])
       setLessonPhrases(phrases)
       setDailyProgress(progress)
+      setDueReviewCount(dueCount)
     } catch (error) {
       console.error('Error loading daily lesson:', error)
     } finally {
@@ -55,7 +60,11 @@ export function DailyLessonCard({ onStartQuiz, onPhrasePress }: DailyLessonCardP
   const handleView = useCallback((phraseId: string) => {
     setViewedIds(prev => {
       const next = new Set(prev)
-      next.add(phraseId)
+      if (!next.has(phraseId)) {
+        next.add(phraseId)
+        // Award XP for viewing a new flash card
+        awardXP('phrase_learned').catch(() => {})
+      }
       return next
     })
   }, [])
@@ -91,6 +100,7 @@ export function DailyLessonCard({ onStartQuiz, onPhrasePress }: DailyLessonCardP
             <Text style={styles.title}>Today's Lesson</Text>
             <Text style={styles.subtitle}>
               {dailyProgress.learned} of {dailyProgress.goal} phrases
+              {dueReviewCount > 0 ? ` · ${dueReviewCount} to review` : ''}
             </Text>
           </View>
         </View>

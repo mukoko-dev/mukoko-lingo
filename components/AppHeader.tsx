@@ -139,7 +139,7 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
 
   const handleAdmin = () => {
     setMenuOpen(false)
-    router.push('/admin/overview')
+    router.push('/admin/phrases')
   }
 
   const handleLogout = () => {

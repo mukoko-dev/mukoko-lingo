@@ -57,6 +57,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       expires_at: response.session?.expires_at,
     })
   } catch (error: any) {
-    return res.status(401).json({ error: error.error_message || 'Invalid or expired code' })
+    console.error('[mukoko][auth] WhatsApp verify failed:', error.error_message || error.message)
+    if (error.error_type === 'configuration_error') {
+      return res.status(500).json({ error: 'Authentication service is temporarily unavailable.' })
+    }
+    return res.status(error.status_code || 401).json({ error: error.error_message || 'Invalid or expired code' })
   }
 }

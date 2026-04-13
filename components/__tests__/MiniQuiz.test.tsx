@@ -47,6 +47,15 @@ jest.mock('@/lib/storage/database', () => ({
   getUserSkills: jest.fn(() => Promise.resolve({})),
 }))
 
+jest.mock('@/lib/services/srs', () => ({
+  reviewPhrase: jest.fn(() => Promise.resolve({ card: {}, xpEarned: 10, wasCorrect: true })),
+  mapToQuality: jest.fn(() => 4),
+}))
+
+jest.mock('@/lib/services/xp', () => ({
+  awardXP: jest.fn(() => Promise.resolve({ xpData: { totalXP: 10 }, levelInfo: {}, dailyGoalJustCompleted: false, leveledUp: false })),
+}))
+
 const mockPhrases: any[] = [
   {
     id: 'p1',

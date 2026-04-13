@@ -37,7 +37,17 @@ import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { getCurrentUser, signOut } from '@/lib/auth/stytch-client'
 import { getStudyStreak, getStudySessions, getBookmarks, getProgress } from '@/lib/storage/database'
+import { getXPData, getLevelInfo, type LevelInfo } from '@/lib/services/xp'
 import { useLearningLanguage, LEARNING_LANGUAGES, LearningLanguage } from '@/lib/hooks/useLearningLanguage'
+import { LevelBadge } from '@/components/LevelBadge'
+import {
+  isNotificationsEnabled,
+  setNotificationsEnabled,
+} from '@/lib/services/notifications'
+import {
+  isOfflineMode as getOfflineMode,
+  setOfflineMode as persistOfflineMode,
+} from '@/lib/services/offline'
 
 type UILanguage = 'en' | 'sn' | 'nd' | 'sw' | 'zh'
 type ThemePreference = 'light' | 'dark' | 'system'
@@ -83,6 +93,9 @@ export default function ProfileScreen() {
   const [sessionsCount, setSessions] = useState(0)
   const [bookmarksCount, setBookmarksCount] = useState(0)
   const [masteredCount, setMasteredCount] = useState(0)
+  const [levelInfo, setLevelInfo] = useState<LevelInfo | null>(null)
+  const [todayXP, setTodayXP] = useState(0)
+  const [dailyXPGoal, setDailyXPGoal] = useState(50)
   const [uiLanguage, setUILanguage] = useState<UILanguage>('en')
   const [themePreference, setThemePreference] = useState<ThemePreference>('system')
   const [notifications, setNotifications] = useState(true)
@@ -102,28 +115,36 @@ export default function ProfileScreen() {
   }, [])
 
   const loadData = async () => {
-    const [currentUser, studyStreak, sessions, bookmarks, progress] = await Promise.all([
+    const [currentUser, studyStreak, sessions, bookmarks, progress, xpData] = await Promise.all([
       getCurrentUser(),
       getStudyStreak(),
       getStudySessions(),
       getBookmarks(),
       getProgress(),
+      getXPData(),
     ])
     setUser(currentUser)
     setStreak(studyStreak)
     setSessions(sessions.length)
     setBookmarksCount(bookmarks.length)
     setMasteredCount(Object.values(progress).filter(p => p.status === 'mastered').length)
+    setLevelInfo(getLevelInfo(xpData.totalXP))
+    setTodayXP(xpData.todayXP)
+    setDailyXPGoal(xpData.dailyGoal)
   }
 
   const loadPreferences = async () => {
     try {
-      const [savedLanguage, savedTheme] = await Promise.all([
+      const [savedLanguage, savedTheme, notifEnabled, offlineEnabled] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEYS.UI_LANGUAGE),
         AsyncStorage.getItem(STORAGE_KEYS.THEME_PREFERENCE),
+        isNotificationsEnabled(),
+        getOfflineMode(),
       ])
       if (savedLanguage) setUILanguage(savedLanguage as UILanguage)
       if (savedTheme) setThemePreference(savedTheme as ThemePreference)
+      setNotifications(notifEnabled)
+      setOfflineMode(offlineEnabled)
     } catch (error) {
       console.error('Error loading preferences:', error)
     }
@@ -152,6 +173,35 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error('Error saving theme preference:', error)
+    }
+  }
+
+  const handleNotificationsToggle = async (enabled: boolean) => {
+    setNotifications(enabled)
+    try {
+      await setNotificationsEnabled(enabled, streak)
+    } catch (error) {
+      console.error('Error toggling notifications:', error)
+      // Revert on failure
+      setNotifications(!enabled)
+      Alert.alert('Error', 'Failed to update notification settings. Please try again.')
+    }
+  }
+
+  const handleOfflineModeToggle = async (enabled: boolean) => {
+    setOfflineMode(enabled)
+    try {
+      await persistOfflineMode(enabled)
+      if (enabled) {
+        Alert.alert(
+          'Offline Mode Enabled',
+          'Your phrases and learning data have been cached for offline use.'
+        )
+      }
+    } catch (error) {
+      console.error('Error toggling offline mode:', error)
+      setOfflineMode(!enabled)
+      Alert.alert('Error', 'Failed to update offline mode. Please try again.')
     }
   }
 
@@ -248,6 +298,17 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      {/* Level Badge */}
+      {levelInfo && (
+        <View style={styles.levelSection}>
+          <LevelBadge
+            levelInfo={levelInfo}
+            todayXP={todayXP}
+            dailyGoal={dailyXPGoal}
+          />
+        </View>
+      )}
+
       {/* Settings Sections */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Preferences</Text>
@@ -302,7 +363,7 @@ export default function ProfileScreen() {
           </View>
           <Switch
             value={notifications}
-            onValueChange={setNotifications}
+            onValueChange={handleNotificationsToggle}
             trackColor={{ false: theme.border, true: theme.primary }}
             thumbColor="#ffffff"
           />
@@ -320,7 +381,7 @@ export default function ProfileScreen() {
           </View>
           <Switch
             value={offlineMode}
-            onValueChange={setOfflineMode}
+            onValueChange={handleOfflineModeToggle}
             trackColor={{ false: theme.border, true: theme.primary }}
             thumbColor="#ffffff"
           />
@@ -637,6 +698,9 @@ const createStyles = (theme: typeof lightTheme) =>
       fontSize: 12,
       color: theme.textMuted,
       marginTop: 4,
+    },
+    levelSection: {
+      marginBottom: 24,
     },
     section: {
       marginBottom: 24,

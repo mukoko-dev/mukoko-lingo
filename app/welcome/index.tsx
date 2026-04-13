@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import {
   StyleSheet,
   View,
@@ -27,6 +28,7 @@ import { useTheme } from '@/lib/hooks/useTheme'
 import { useUILanguage } from '@/lib/hooks/useUILanguage'
 import { lightTheme, darkTheme } from '@/constants/Colors'
 import { AppHeader } from '@/components/AppHeader'
+import { getContentStats, type ContentStats } from '@/lib/services/content-stats'
 
 const ONBOARDING_KEY = '@mukoko_onboarding_complete'
 
@@ -40,9 +42,29 @@ export default function WelcomeScreen() {
   const isTablet = width >= 768
   const isDesktop = width >= 1024
 
+  // Live counts from Supabase data API — with a bundled offline fallback
+  // so the landing page never shows placeholder text.
+  const [stats, setStats] = useState<ContentStats | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    getContentStats().then(result => {
+      if (!cancelled) setStats(result)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  // Round phrase count down to the nearest 10 for a cleaner display
+  // (e.g. 128 → 120+). Falls back to bundled seed count on first paint.
+  const totalPhrases = stats?.totalPhrases ?? 0
+  const totalLanguages = stats?.totalLanguages ?? 0
+  const phraseCountDisplay = totalPhrases >= 10
+    ? `${Math.floor(totalPhrases / 10) * 10}+`
+    : totalPhrases > 0 ? `${totalPhrases}` : '—'
+
   const STATS = [
-    { value: '200+', label: t.essentialPhrases || 'Essential Phrases' },
-    { value: '4', label: t.languages || 'Languages' },
+    { value: phraseCountDisplay, label: t.essentialPhrases || 'Essential Phrases' },
+    { value: totalLanguages > 0 ? `${totalLanguages}` : '—', label: t.languages || 'Languages' },
     { value: 'AI', label: t.poweredTutor || 'Powered Tutor' },
     { value: 'Free', label: t.freeToStart || 'To Start' },
   ]
@@ -62,7 +84,7 @@ export default function WelcomeScreen() {
     },
     {
       icon: BookOpen,
-      title: t.featPhrases || '200+ Essential Phrases',
+      title: t.featPhrases || (totalPhrases > 0 ? `${phraseCountDisplay} Essential Phrases` : 'Essential Phrases'),
       description: t.featPhrasesDesc || 'Real-world vocabulary across multiple contexts',
       color: theme.accent,
     },

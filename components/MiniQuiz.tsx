@@ -16,6 +16,9 @@ import { generateQuizQuestions, markPhraseLearned } from '@/lib/services/daily-l
 import { updateProgress } from '@/lib/storage/database'
 import { getSkillForCategory } from '@/lib/services/daily-lesson'
 import { updateUserSkill, getUserSkills } from '@/lib/storage/database'
+import { reviewPhrase } from '@/lib/services/srs'
+import { awardXP } from '@/lib/services/xp'
+import { XPBadge } from '@/components/XPBadge'
 import type { Phrase } from '@/lib/data/phrases-data'
 
 interface QuizQuestion {
@@ -46,6 +49,9 @@ export function MiniQuiz({ phrases, onComplete, onPracticeWithShamwari }: MiniQu
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
   const [justCompletedGoal, setJustCompletedGoal] = useState(false)
+  const [xpPopup, setXpPopup] = useState({ visible: false, amount: 0 })
+  const [totalXPEarned, setTotalXPEarned] = useState(0)
+  const [qualityRated, setQualityRated] = useState(false)
 
   useEffect(() => {
     const q = generateQuizQuestions(phrases, learningLanguage)
@@ -59,42 +65,77 @@ export function MiniQuiz({ phrases, onComplete, onPracticeWithShamwari }: MiniQu
     const correct = answer === question.correctAnswer
     setSelectedAnswer(answer)
     setIsCorrect(correct)
+    setQualityRated(false)
 
-    if (correct) {
+    // Incorrect answers get auto-rated as quality 1 (Again) — the user
+    // didn't know it, no need to ask. Correct answers wait for the user
+    // to self-rate difficulty via the quality buttons.
+    if (!correct) {
+      try {
+        await reviewPhrase(question.phraseId, 1)
+      } catch (error) {
+        console.error('Error updating SRS on incorrect:', error)
+      }
+      setQualityRated(true)
+    }
+  }, [selectedAnswer, questions, currentIndex])
+
+  /**
+   * User self-rates how well they knew the answer (SRS quality rating).
+   * Quality 3 = Hard, 4 = Good, 5 = Easy (only shown on correct answers).
+   */
+  const handleQualityRating = useCallback(async (quality: 3 | 4 | 5) => {
+    if (qualityRated) return
+    setQualityRated(true)
+    const question = questions[currentIndex]
+
+    try {
+      const srsResult = await reviewPhrase(question.phraseId, quality)
       setScore(prev => prev + 1)
 
-      // Update phrase progress
-      try {
-        await updateProgress(question.phraseId, 'practiced')
-        const result = await markPhraseLearned()
-        if (result.justCompleted) {
-          setJustCompletedGoal(true)
-        }
+      // Award XP — base quiz_correct plus SRS quality bonus
+      await awardXP('quiz_correct')
+      setTotalXPEarned(prev => prev + srsResult.xpEarned)
+      setXpPopup({ visible: true, amount: srsResult.xpEarned })
 
-        // Update skill score
-        const phrase = phrases.find(p => p.id === question.phraseId)
-        if (phrase) {
-          const skill = getSkillForCategory(phrase.category)
-          const skills = await getUserSkills()
-          const currentScore = skills[skill]?.score || 0
-          await updateUserSkill(skill, Math.min(currentScore + 2, 100))
-        }
-      } catch (error) {
-        console.error('Error updating progress:', error)
+      // Update phrase progress — promote to 'mastered' when user rates Easy
+      // on a phrase they already had practiced
+      const newStatus = quality === 5 ? 'mastered' : 'practiced'
+      await updateProgress(question.phraseId, newStatus)
+      const result = await markPhraseLearned()
+      if (result.justCompleted) {
+        setJustCompletedGoal(true)
       }
-    }
-  }, [selectedAnswer, questions, currentIndex, phrases])
 
-  const handleNext = useCallback(() => {
+      // Update skill score — Easy gives +3, Good +2, Hard +1
+      const phrase = phrases.find(p => p.id === question.phraseId)
+      if (phrase) {
+        const skill = getSkillForCategory(phrase.category)
+        const skills = await getUserSkills()
+        const currentScore = skills[skill]?.score || 0
+        const delta = quality === 5 ? 3 : quality === 4 ? 2 : 1
+        await updateUserSkill(skill, Math.min(currentScore + delta, 100))
+      }
+    } catch (error) {
+      console.error('Error updating progress:', error)
+    }
+  }, [qualityRated, questions, currentIndex, phrases])
+
+  const handleNext = useCallback(async () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(prev => prev + 1)
       setSelectedAnswer(null)
       setIsCorrect(null)
+      setQualityRated(false)
     } else {
       setFinished(true)
-      onComplete(score + (isCorrect ? 0 : 0), questions.length, justCompletedGoal)
+      // Award perfect score bonus if all correct
+      if (score === questions.length) {
+        try { await awardXP('quiz_perfect') } catch {}
+      }
+      onComplete(score, questions.length, justCompletedGoal)
     }
-  }, [currentIndex, questions.length, score, isCorrect, justCompletedGoal, onComplete])
+  }, [currentIndex, questions.length, score, justCompletedGoal, onComplete])
 
   const styles = createStyles(theme, isDark, isTablet)
 
@@ -120,6 +161,9 @@ export function MiniQuiz({ phrases, onComplete, onPracticeWithShamwari }: MiniQu
           <Text style={styles.resultScore}>
             {score} of {questions.length} correct
           </Text>
+          {totalXPEarned > 0 && (
+            <Text style={styles.resultXP}>+{totalXPEarned} XP earned</Text>
+          )}
           <View style={styles.resultBar}>
             <View style={[
               styles.resultBarFill,
@@ -148,6 +192,13 @@ export function MiniQuiz({ phrases, onComplete, onPracticeWithShamwari }: MiniQu
 
   return (
     <View style={styles.container}>
+      {/* XP Popup */}
+      <XPBadge
+        amount={xpPopup.amount}
+        visible={xpPopup.visible}
+        onHidden={() => setXpPopup({ visible: false, amount: 0 })}
+      />
+
       {/* Progress indicator */}
       <View style={styles.progressRow}>
         {questions.map((_, i) => (
@@ -205,21 +256,55 @@ export function MiniQuiz({ phrases, onComplete, onPracticeWithShamwari }: MiniQu
         })}
       </View>
 
-      {/* Next button */}
+      {/* Feedback */}
       {selectedAnswer !== null && (
+        <Text style={[styles.feedback, isCorrect ? styles.feedbackCorrect : styles.feedbackWrong]}>
+          {isCorrect ? 'Correct!' : `The answer is: ${question.correctAnswer}`}
+        </Text>
+      )}
+
+      {/* SRS Quality Rating — shown only on correct answer, before Next */}
+      {selectedAnswer !== null && isCorrect && !qualityRated && (
+        <View style={styles.qualityContainer}>
+          <Text style={styles.qualityPrompt}>How well did you know it?</Text>
+          <View style={styles.qualityButtons}>
+            <TouchableOpacity
+              style={[styles.qualityButton, styles.qualityHard]}
+              onPress={() => handleQualityRating(3)}
+            >
+              <Text style={[styles.qualityButtonText, styles.qualityHardText]}>Hard</Text>
+              <Text style={styles.qualitySubText}>Show sooner</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.qualityButton, styles.qualityGood]}
+              onPress={() => handleQualityRating(4)}
+            >
+              <Text style={[styles.qualityButtonText, styles.qualityGoodText]}>Good</Text>
+              <Text style={styles.qualitySubText}>Keep pace</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.qualityButton, styles.qualityEasy]}
+              onPress={() => handleQualityRating(5)}
+            >
+              <Text style={[styles.qualityButtonText, styles.qualityEasyText]}>Easy</Text>
+              <Text style={styles.qualitySubText}>Show later</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.qualityHint}>
+            Your rating helps Shamwari show the right phrases at the right time.
+          </Text>
+        </View>
+      )}
+
+      {/* Next button — only shown after user has rated quality (correct)
+          or immediately for incorrect answers */}
+      {selectedAnswer !== null && qualityRated && (
         <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
           <Text style={styles.nextButtonText}>
             {currentIndex < questions.length - 1 ? 'Next' : 'See Results'}
           </Text>
           <ArrowRight size={18} color="#ffffff" />
         </TouchableOpacity>
-      )}
-
-      {/* Feedback */}
-      {selectedAnswer !== null && (
-        <Text style={[styles.feedback, isCorrect ? styles.feedbackCorrect : styles.feedbackWrong]}>
-          {isCorrect ? 'Correct!' : `The answer is: ${question.correctAnswer}`}
-        </Text>
       )}
     </View>
   )
@@ -344,6 +429,73 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     feedbackWrong: {
       color: Colors.semanticError,
     },
+    // SRS Quality Rating
+    qualityContainer: {
+      marginTop: 12,
+      marginBottom: 8,
+      alignItems: 'center',
+    },
+    qualityPrompt: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.text,
+      marginBottom: 10,
+      textAlign: 'center',
+    },
+    qualityButtons: {
+      flexDirection: 'row',
+      gap: 10,
+      width: '100%',
+      marginBottom: 8,
+    },
+    qualityButton: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 8,
+      borderRadius: 12,
+      borderWidth: 1.5,
+    },
+    qualityHard: {
+      borderColor: Colors.semanticError,
+      backgroundColor: isDark ? Colors.semanticError + '15' : '#fef2f2',
+    },
+    qualityGood: {
+      borderColor: theme.primary,
+      backgroundColor: isDark ? Colors.primary[400] + '15' : Colors.primary[600] + '08',
+    },
+    qualityEasy: {
+      borderColor: Colors.success[500],
+      backgroundColor: isDark ? Colors.success[500] + '15' : Colors.success[50],
+    },
+    qualityButtonText: {
+      fontSize: 15,
+      fontWeight: '700',
+    },
+    qualityHardText: {
+      color: Colors.semanticError,
+    },
+    qualityGoodText: {
+      color: theme.primary,
+    },
+    qualityEasyText: {
+      color: Colors.success[500],
+    },
+    qualitySubText: {
+      fontSize: 10,
+      color: theme.textMuted,
+      marginTop: 2,
+      fontWeight: '500',
+    },
+    qualityHint: {
+      fontSize: 11,
+      color: theme.textMuted,
+      fontStyle: 'italic',
+      marginTop: 6,
+      textAlign: 'center',
+      maxWidth: 280,
+    },
     // Results
     resultCard: {
       backgroundColor: theme.card,
@@ -366,6 +518,12 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     resultScore: {
       fontSize: 16,
       color: theme.textSecondary,
+      marginBottom: 4,
+    },
+    resultXP: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: Colors.accent[isDark ? 300 : 800],
       marginBottom: 16,
     },
     resultBar: {
