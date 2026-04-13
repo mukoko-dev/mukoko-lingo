@@ -16,9 +16,6 @@ import {
 import { useRouter, Stack } from 'expo-router'
 import {
   Mail,
-  Lock,
-  Eye,
-  EyeOff,
   ArrowRight,
   ArrowLeft,
   Cloud,
@@ -35,18 +32,15 @@ import {
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme } from '@/constants/Colors'
 import {
-  signInWithEmail,
-  signUpWithEmail,
   signInWithOtp,
   verifyOtp,
   signInWithMagicLink,
   signInWithWhatsApp,
   verifyWhatsAppOtp,
-  signOut,
 } from '@/lib/auth/stytch-client'
 
-type AuthMethod = 'otp' | 'magic-link' | 'password' | 'whatsapp'
-type AuthStep = 'email' | 'verify-otp' | 'magic-link-sent' | 'password-form' | 'whatsapp-phone' | 'verify-whatsapp'
+type AuthMethod = 'otp' | 'magic-link' | 'whatsapp'
+type AuthStep = 'email' | 'verify-otp' | 'magic-link-sent' | 'whatsapp-phone' | 'verify-whatsapp'
 
 export default function AuthScreen() {
   const router = useRouter()
@@ -56,10 +50,6 @@ export default function AuthScreen() {
   const [authMethod, setAuthMethod] = useState<AuthMethod>('otp')
   const [authStep, setAuthStep] = useState<AuthStep>('email')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
@@ -95,23 +85,6 @@ export default function AuthScreen() {
   const validateEmail = (value: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(value)
-  }
-
-  // Password validation for sign up
-  const validatePassword = (pw: string): string | null => {
-    if (pw.length < 8) {
-      return 'Password must be at least 8 characters'
-    }
-    if (!/[A-Z]/.test(pw)) {
-      return 'Password must contain at least one uppercase letter'
-    }
-    if (!/[a-z]/.test(pw)) {
-      return 'Password must contain at least one lowercase letter'
-    }
-    if (!/[0-9]/.test(pw)) {
-      return 'Password must contain at least one number'
-    }
-    return null
   }
 
   // Handle sending OTP code
@@ -197,73 +170,6 @@ export default function AuthScreen() {
     } catch (error: any) {
       showError(error.message || 'Failed to send magic link')
       setStatusMessage('')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Handle password auth (existing flow)
-  const handlePasswordAuth = async () => {
-    clearError()
-    if (!email || !password) {
-      showError('Please fill in all fields')
-      return
-    }
-
-    if (!validateEmail(email)) {
-      showError('Please enter a valid email address')
-      return
-    }
-
-    if (isSignUp) {
-      const passwordError = validatePassword(password)
-      if (passwordError) {
-        showError(passwordError)
-        return
-      }
-      if (password !== confirmPassword) {
-        showError('Passwords do not match')
-        return
-      }
-    }
-
-    setLoading(true)
-    setStatusMessage(isSignUp ? 'Creating account...' : 'Signing in...')
-
-    try {
-      if (isSignUp) {
-        const { data, error } = await signUpWithEmail(email, password)
-        if (error) throw error
-
-        if (data?.user && !data?.session) {
-          setLoading(false)
-          setStatusMessage('Check your email! We sent a verification link to activate your account.')
-        } else if (data?.session) {
-          setStatusMessage('Account created! Redirecting...')
-          await new Promise(resolve => setTimeout(resolve, 500))
-          router.replace('/(tabs)')
-        } else {
-          throw new Error('Account creation failed. Please try again.')
-        }
-      } else {
-        const { data, error } = await signInWithEmail(email, password)
-        if (error) throw error
-
-        if (!data?.session) {
-          throw new Error('Sign in failed. Please check your credentials.')
-        }
-
-        if (data.user && data.user.status === 'pending') {
-          await signOut()
-          throw new Error('Please verify your email before signing in. Check your inbox.')
-        }
-
-        setStatusMessage('Success! Redirecting...')
-        await new Promise(resolve => setTimeout(resolve, 500))
-        router.replace('/(tabs)')
-      }
-    } catch (error: any) {
-      showError(error.message || 'Authentication failed')
     } finally {
       setLoading(false)
     }
@@ -364,7 +270,7 @@ export default function AuthScreen() {
       setOtpCode(['', '', '', '', '', ''])
       setOtpMethodId('')
       setStatusMessage('')
-    } else if (authStep === 'verify-otp' || authStep === 'magic-link-sent' || authStep === 'password-form' || authStep === 'whatsapp-phone') {
+    } else if (authStep === 'verify-otp' || authStep === 'magic-link-sent' || authStep === 'whatsapp-phone') {
       setAuthStep('email')
       setOtpCode(['', '', '', '', '', ''])
       setOtpMethodId('')
@@ -382,9 +288,7 @@ export default function AuthScreen() {
   const handleMethodSelect = (method: AuthMethod) => {
     setAuthMethod(method)
     setShowMoreOptions(false)
-    if (method === 'password') {
-      setAuthStep('password-form')
-    } else if (method === 'whatsapp') {
+    if (method === 'whatsapp') {
       setAuthStep('whatsapp-phone')
     }
   }
@@ -399,8 +303,6 @@ export default function AuthScreen() {
       }
     } else if (authStep === 'verify-otp') {
       handleVerifyOtp()
-    } else if (authStep === 'password-form') {
-      handlePasswordAuth()
     }
   }
 
@@ -522,22 +424,6 @@ export default function AuthScreen() {
             </TouchableOpacity>
           )}
 
-          {authMethod !== 'password' && (
-            <TouchableOpacity
-              style={styles.methodOption}
-              onPress={() => handleMethodSelect('password')}
-            >
-              <View style={[styles.methodIconContainer, { backgroundColor: theme.primary + '20' }]}>
-                <Lock size={18} color={theme.primary} />
-              </View>
-              <View style={styles.methodOptionTextContainer}>
-                <Text style={styles.methodOptionTitle}>Password</Text>
-                <Text style={styles.methodOptionDescription}>
-                  Sign in or sign up with email and password
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
         </View>
       )}
     </>
@@ -635,116 +521,6 @@ export default function AuthScreen() {
         }}
       >
         <Text style={styles.switchMethodText}>Use a code instead</Text>
-      </TouchableOpacity>
-    </>
-  )
-
-  const renderPasswordForm = () => (
-    <>
-      <Text style={styles.cardTitle}>
-        {isSignUp ? 'Create Account' : 'Sign In'}
-      </Text>
-
-      {/* Email Input */}
-      <View style={styles.inputContainer}>
-        <Mail size={20} color={theme.textMuted} style={styles.inputIcon} />
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Email address"
-          placeholderTextColor={theme.textMuted}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-        />
-      </View>
-
-      {/* Password Input */}
-      <View style={styles.inputContainer}>
-        <Lock size={20} color={theme.textMuted} style={styles.inputIcon} />
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Password"
-          placeholderTextColor={theme.textMuted}
-          secureTextEntry={!showPassword}
-          autoComplete="password"
-        />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          {showPassword ? (
-            <EyeOff size={20} color={theme.textMuted} />
-          ) : (
-            <Eye size={20} color={theme.textMuted} />
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {/* Confirm Password (Sign Up only) */}
-      {isSignUp && (
-        <View style={styles.inputContainer}>
-          <Lock size={20} color={theme.textMuted} style={styles.inputIcon} />
-          <TextInput
-            style={styles.input}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="Confirm password"
-            placeholderTextColor={theme.textMuted}
-            secureTextEntry={!showPassword}
-          />
-        </View>
-      )}
-
-      {/* Forgot Password (Sign In only) */}
-      {!isSignUp && (
-        <TouchableOpacity
-          style={styles.forgotPasswordButton}
-          onPress={() => router.push('/auth/forgot-password' as any)}
-        >
-          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Submit Button */}
-      <TouchableOpacity
-        style={styles.submitButton}
-        onPress={handlePasswordAuth}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#ffffff" />
-        ) : (
-          <>
-            <Text style={styles.submitButtonText}>
-              {isSignUp ? 'Create Account' : 'Sign In'}
-            </Text>
-            <ArrowRight size={20} color="#ffffff" />
-          </>
-        )}
-      </TouchableOpacity>
-
-      {/* Toggle Sign In / Sign Up */}
-      <TouchableOpacity
-        style={styles.toggleButton}
-        onPress={() => setIsSignUp(!isSignUp)}
-      >
-        <Text style={styles.toggleText}>
-          {isSignUp
-            ? 'Already have an account? Sign in'
-            : "Don't have an account? Sign up"}
-        </Text>
-      </TouchableOpacity>
-
-      {/* Switch to passwordless */}
-      <TouchableOpacity
-        style={styles.switchMethodButton}
-        onPress={() => {
-          setAuthMethod('otp')
-          setAuthStep('email')
-        }}
-      >
-        <Text style={styles.switchMethodText}>Use passwordless sign-in instead</Text>
       </TouchableOpacity>
     </>
   )
@@ -912,7 +688,6 @@ export default function AuthScreen() {
               {authStep === 'email' && renderEmailStep()}
               {authStep === 'verify-otp' && renderOtpVerifyStep()}
               {authStep === 'magic-link-sent' && renderMagicLinkSentStep()}
-              {authStep === 'password-form' && renderPasswordForm()}
               {authStep === 'whatsapp-phone' && renderWhatsAppPhoneStep()}
               {authStep === 'verify-whatsapp' && renderWhatsAppVerifyStep()}
             </View>
@@ -1199,23 +974,6 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean, isDark: boole
       color: theme.textMuted,
       fontSize: 14,
       textDecorationLine: 'underline',
-    },
-    forgotPasswordButton: {
-      alignSelf: 'flex-end',
-      marginTop: -8,
-      marginBottom: 8,
-    },
-    forgotPasswordText: {
-      color: theme.primary,
-      fontSize: 14,
-    },
-    toggleButton: {
-      alignItems: 'center',
-      marginTop: 16,
-    },
-    toggleText: {
-      color: theme.primary,
-      fontSize: 15,
     },
     skipButton: {
       alignItems: 'center',

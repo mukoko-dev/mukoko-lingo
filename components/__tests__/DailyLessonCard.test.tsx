@@ -27,6 +27,14 @@ jest.mock('lucide-react-native', () => ({
   Check: () => null,
 }))
 
+jest.mock('@/lib/services/xp', () => ({
+  awardXP: jest.fn(() => Promise.resolve({ xpData: { totalXP: 10 }, levelInfo: {}, dailyGoalJustCompleted: false, leveledUp: false })),
+}))
+
+jest.mock('@/lib/services/srs', () => ({
+  getDueCount: jest.fn(() => Promise.resolve(0)),
+}))
+
 jest.mock('@/lib/services/daily-lesson', () => ({
   getTodaysLesson: jest.fn(() => Promise.resolve([
     {

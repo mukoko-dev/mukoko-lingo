@@ -10,13 +10,29 @@ import type { VercelRequest } from '@vercel/node'
 const STYTCH_PROJECT_ID = process.env.STYTCH_PROJECT_ID || process.env.EXPO_PUBLIC_STYTCH_PROJECT_ID || ''
 const STYTCH_SECRET = process.env.STYTCH_SECRET || ''
 
-if (!STYTCH_PROJECT_ID || !STYTCH_SECRET) {
-  console.error('[mukoko][auth] Missing Stytch credentials: STYTCH_PROJECT_ID and STYTCH_SECRET must be set')
+let _stytchClient: stytch.Client | null = null
+
+function getStytchClient(): stytch.Client {
+  if (_stytchClient) return _stytchClient
+  if (!STYTCH_PROJECT_ID || !STYTCH_SECRET) {
+    const err: any = new Error('Authentication service is not configured. Please set STYTCH_PROJECT_ID and STYTCH_SECRET environment variables.')
+    err.status_code = 500
+    err.error_type = 'configuration_error'
+    err.error_message = err.message
+    throw err
+  }
+  _stytchClient = new stytch.Client({
+    project_id: STYTCH_PROJECT_ID,
+    secret: STYTCH_SECRET,
+  })
+  return _stytchClient
 }
 
-const stytchClient = new stytch.Client({
-  project_id: STYTCH_PROJECT_ID,
-  secret: STYTCH_SECRET,
+// Lazy accessor — throws a clear error if credentials are missing
+const stytchClient = new Proxy({} as stytch.Client, {
+  get(_, prop) {
+    return (getStytchClient() as any)[prop]
+  },
 })
 
 export interface AuthenticatedUser {

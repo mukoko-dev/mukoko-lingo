@@ -16,7 +16,6 @@ import { authenticateMagicLink } from '@/lib/auth/stytch-client'
  *
  * Handles Stytch token exchange for:
  * - Magic link authentication (web + mobile deep links)
- * - Password reset callbacks
  *
  * URL pattern: /auth/callback?token=<stytch_token>&stytch_token_type=<type>
  */
@@ -41,12 +40,6 @@ export default function AuthCallbackScreen() {
       }
 
       try {
-        if (stytch_token_type === 'reset_password') {
-          // Password reset flow - redirect to reset password screen with token
-          router.replace({ pathname: '/auth/reset-password', params: { token } })
-          return
-        }
-
         // Magic link authentication
         const { data, error } = await authenticateMagicLink(token)
 
