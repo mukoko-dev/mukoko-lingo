@@ -6,7 +6,7 @@ Learn Shona, Ndebele, Chinese, and English with AI-powered tutoring by Shamwari.
 
 Built with Expo SDK 54 / React Native, Next.js, Supabase PostgreSQL, Stytch Auth, Vercel Serverless, and Anthropic Claude.
 
-**Parent Company**: [Nyuchi Africa](https://nyuchi.com) | **Registry**: [registry.mukoko.com](https://registry.mukoko.com)
+**Parent Company**: [Nyuchi Africa](https://nyuchi.com) | **Division**: [Mukoko Africa](https://mukoko.com) | **Registry**: [design.nyuchi.com](https://design.nyuchi.com)
 
 ## Quick Start
 
