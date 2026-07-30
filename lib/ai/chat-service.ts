@@ -9,7 +9,7 @@
 
 import { buildSkillsAwarePrompt } from './skills-aware-prompts'
 import { moderateContent, getModerationMessage } from './moderation'
-import { getSessionToken } from '@/lib/auth/stytch-client'
+import { getSessionToken } from '@/lib/auth/workos-client'
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''
 

@@ -6,7 +6,7 @@
  * All requests include the Stytch session token for authentication.
  */
 
-import { getSessionToken } from '@/lib/auth/stytch-client'
+import { getSessionToken } from '@/lib/auth/workos-client'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''

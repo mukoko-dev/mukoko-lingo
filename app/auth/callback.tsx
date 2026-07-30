@@ -9,46 +9,43 @@ import { useRouter, Stack, useLocalSearchParams } from 'expo-router'
 
 import { useTheme } from '@/lib/hooks/useTheme'
 import { lightTheme, darkTheme } from '@/constants/Colors'
-import { authenticateMagicLink } from '@/lib/auth/stytch-client'
+import { handleAuthCallback } from '@/lib/auth/workos-client'
 
 /**
  * Auth Callback Page
  *
- * Handles Stytch token exchange for:
- * - Magic link authentication (web + mobile deep links)
+ * Fallback handler for the WorkOS AuthKit redirect when it arrives as a
+ * cold-start deep link rather than resolving `openAuthSessionAsync`
+ * directly (e.g. the in-app browser sheet was dismissed by the OS).
  *
- * URL pattern: /auth/callback?token=<stytch_token>&stytch_token_type=<type>
+ * URL pattern: /auth/callback?code=<authorization_code>&state=<state>
  */
 export default function AuthCallbackScreen() {
   const router = useRouter()
   const { isDark } = useTheme()
   const theme = isDark ? darkTheme : lightTheme
-  const params = useLocalSearchParams<{ token?: string; stytch_token_type?: string }>()
+  const params = useLocalSearchParams<{ code?: string; state?: string; error?: string; error_description?: string }>()
 
   const [status, setStatus] = useState<'loading' | 'error'>('loading')
   const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     const handleCallback = async () => {
-      const { token, stytch_token_type } = params
-
-      if (!token) {
+      const { code } = params
+      if (!code) {
         setStatus('error')
-        setErrorMessage('No authentication token found. Please try signing in again.')
+        setErrorMessage('No authorization code found. Please try signing in again.')
         setTimeout(() => router.replace('/auth'), 3000)
         return
       }
 
       try {
-        // Magic link authentication
-        const { data, error } = await authenticateMagicLink(token)
+        const query = new URLSearchParams(params as Record<string, string>).toString()
+        const { data, error } = await handleAuthCallback(`mukokolingo://auth/callback?${query}`)
 
-        if (error) {
-          throw error
-        }
+        if (error) throw error
 
         if (data?.session) {
-          // Authentication successful - redirect to main app
           router.replace('/(tabs)')
         } else {
           throw new Error('Authentication failed. Please try again.')
@@ -61,7 +58,7 @@ export default function AuthCallbackScreen() {
     }
 
     handleCallback()
-  }, [params.token])
+  }, [params.code])
 
   const styles = createStyles(theme)
 

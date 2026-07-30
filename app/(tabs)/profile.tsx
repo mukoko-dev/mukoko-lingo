@@ -35,7 +35,7 @@ import {
 
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { getCurrentUser, signOut } from '@/lib/auth/stytch-client'
+import { getCurrentUser, signOut } from '@/lib/auth/workos-client'
 import { getStudyStreak, getStudySessions, getBookmarks, getProgress } from '@/lib/storage/database'
 import { getXPData, getLevelInfo, type LevelInfo } from '@/lib/services/xp'
 import { useLearningLanguage, LEARNING_LANGUAGES, LearningLanguage } from '@/lib/hooks/useLearningLanguage'
