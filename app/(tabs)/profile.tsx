@@ -167,7 +167,7 @@ export default function ProfileScreen() {
       await AsyncStorage.setItem(STORAGE_KEYS.THEME_PREFERENCE, preference)
       // Apply theme change
       if (preference === 'system') {
-        Appearance.setColorScheme(null)
+        Appearance.setColorScheme('unspecified')
       } else {
         Appearance.setColorScheme(preference)
       }

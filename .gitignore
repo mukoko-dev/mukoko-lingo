@@ -48,6 +48,7 @@ coverage/
 web/.next/
 web/out/
 web/node_modules/
+web/next-env.d.ts
 
 # Vercel
 .vercel

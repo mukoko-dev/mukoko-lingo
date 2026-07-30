@@ -18,7 +18,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [themeMode, setThemeModeState] = useState<ThemeMode>('system')
-  const [systemColorScheme, setSystemColorScheme] = useState<ColorSchemeName>(Appearance.getColorScheme())
+  const [systemColorScheme, setSystemColorScheme] = useState<ColorSchemeName>(Appearance.getColorScheme() ?? 'light')
 
   // Load saved theme preference on mount
   useEffect(() => {
@@ -38,7 +38,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Listen for system theme changes
   useEffect(() => {
     const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-      setSystemColorScheme(colorScheme)
+      setSystemColorScheme(colorScheme ?? 'light')
     })
     return () => subscription?.remove()
   }, [])
@@ -79,7 +79,7 @@ export function useTheme(): ThemeContextType {
   const context = useContext(ThemeContext)
   if (context === undefined) {
     // Fallback for when used outside provider (shouldn't happen in normal use)
-    const systemScheme = Appearance.getColorScheme()
+    const systemScheme = Appearance.getColorScheme() ?? 'light'
     return {
       colorScheme: systemScheme,
       themeMode: 'system',
