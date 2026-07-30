@@ -4,7 +4,7 @@ import { sendMessage, getConversationStarters, ChatMessage } from '../chat-servi
 global.fetch = jest.fn()
 
 // Mock auth client (needed since chat-service now imports it for server proxy)
-jest.mock('@/lib/auth/stytch-client', () => ({
+jest.mock('@/lib/auth/workos-client', () => ({
   getSessionToken: jest.fn().mockResolvedValue('mock-token'),
 }))
 

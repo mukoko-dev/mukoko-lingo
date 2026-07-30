@@ -40,7 +40,7 @@ import { MukokoIcon } from '@/components/MukokoIcon'
 import { useTheme } from '@/lib/hooks/useTheme'
 import { useUILanguage, UI_LANGUAGES } from '@/lib/hooks/useUILanguage'
 import { Colors, lightTheme, darkTheme } from '@/constants/Colors'
-import { getCurrentUser } from '@/lib/auth/stytch-client'
+import { getCurrentUser } from '@/lib/auth/workos-client'
 import { profilesApi } from '@/lib/services/api-client'
 import type { UILanguage } from '@/lib/data/translations'
 
