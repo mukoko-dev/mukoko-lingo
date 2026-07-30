@@ -3,7 +3,7 @@
  * Handles all data operations via REST API backed by Supabase PostgreSQL.
  * Queries the normalized lingo.* / identity.* / system.* schemas.
  *
- * All requests include the Stytch session token for authentication.
+ * All requests include the WorkOS access token for authentication.
  */
 
 import { getSessionToken } from '@/lib/auth/workos-client'

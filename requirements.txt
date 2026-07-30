@@ -1,2 +1,2 @@
 pymongo>=4.6.0
-stytch>=9.0.0
+PyJWT[crypto]>=2.8.0

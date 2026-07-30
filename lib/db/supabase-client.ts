@@ -6,7 +6,7 @@
  * **publishable key** (new Supabase API keys — the legacy anon/service
  * role keys are deprecated).
  *
- * For writes that require authentication, use the Stytch session token
+ * For writes that require authentication, use the WorkOS access token
  * with a dedicated API route. For custom server-side logic, use
  * Supabase Edge Functions — this keeps the Expo bundle light.
  */

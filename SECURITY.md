@@ -30,16 +30,16 @@ We will acknowledge receipt within 48 hours and provide a detailed response with
 
 ### Authentication
 
-- **Stytch**: All authentication handled by Stytch with industry-standard security
-- **Methods**: Email/password, OTP (email & WhatsApp), magic links
-- **Session Management**: Stytch session tokens stored via SecureStore (native) or AsyncStorage (web)
-- **Server Validation**: All API routes validate sessions via `requireAuth()` middleware
+- **WorkOS AuthKit**: All authentication handled by WorkOS's hosted sign-in page
+- **Flow**: PKCE authorization-code exchange (email/password, magic auth, social — whatever the AuthKit environment has enabled)
+- **Session Management**: Access/refresh tokens stored via SecureStore (native) or AsyncStorage (web)
+- **Server Validation**: Access tokens verified locally against WorkOS's JWKS (`jose`), all API routes gated via `requireAuth()` middleware
 - **Identity**: Users mapped to `identity.person` (UUID) in Supabase PostgreSQL
 
 ### Authorization
 
 - **Role-Based Access Control (RBAC)**: Users have `user` or `admin` roles on `identity.person`
-- **Server-Side Admin Check**: `requireAdmin()` validates both Stytch session and admin role
+- **Server-Side Admin Check**: `requireAdmin()` validates both the WorkOS access token and admin role
 - **Class-Level Roles**: Teachers and students have scoped access within classes
 - **API Route Protection**: All admin routes enforce `requireAdmin()` before processing
 
@@ -77,11 +77,10 @@ Required environment variables (never commit actual values):
 ```
 SUPABASE_URL=                    # Supabase project URL
 SUPABASE_SERVICE_ROLE_KEY=       # Supabase service role key (server-side)
-STYTCH_PROJECT_ID=               # Stytch project ID (server-side)
-STYTCH_SECRET=                   # Stytch secret key (server-side, never expose)
+WORKOS_API_KEY=                  # WorkOS API key (server-side, never expose)
+WORKOS_CLIENT_ID=                # WorkOS Client ID (server-side)
 ANTHROPIC_API_KEY=               # Anthropic key (server-side only)
-EXPO_PUBLIC_STYTCH_PROJECT_ID=   # Stytch project ID (client-side)
-EXPO_PUBLIC_STYTCH_PUBLIC_TOKEN= # Stytch public token (safe for client)
+EXPO_PUBLIC_WORKOS_CLIENT_ID=    # WorkOS Client ID (safe for client)
 EXPO_PUBLIC_API_BASE_URL=        # API base URL
 ```
 
@@ -104,8 +103,8 @@ Implemented via `vercel.json`:
 
 ### Access Control Pattern
 
-1. Client sends request with Stytch session token in `Authorization` header
-2. API middleware validates token with Stytch SDK
+1. Client sends request with a WorkOS access token in the `Authorization` header
+2. API middleware verifies the token's signature/expiry against WorkOS's JWKS, then resolves the user via `workos.userManagement.getUser()`
 3. Middleware resolves `identity.person` by email, returns `personId` (UUID)
 4. All queries scoped to `personId`
 5. Admin routes verify `person.role === 'admin'`
