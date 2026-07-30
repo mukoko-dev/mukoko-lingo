@@ -10,8 +10,9 @@ from pymongo import MongoClient
 # MongoDB connection singleton
 _client = None
 
-# Stytch client singleton
-_stytch_client = None
+# WorkOS JWKS client singleton (verifies access tokens locally, no network
+# round trip per request beyond the JWKS key fetch, which PyJWKClient caches)
+_workos_jwks_client = None
 
 # CORS allowed origins (must match api/_lib/cors.ts)
 ALLOWED_ORIGINS = [
@@ -44,22 +45,24 @@ def get_db():
     return _client["mukoko-lingo"]
 
 
-def _get_stytch_client():
-    """Get Stytch client (singleton)."""
-    global _stytch_client
-    if _stytch_client is None:
-        import stytch
-        project_id = os.environ.get("STYTCH_PROJECT_ID", os.environ.get("EXPO_PUBLIC_STYTCH_PROJECT_ID", ""))
-        secret = os.environ.get("STYTCH_SECRET", "")
-        _stytch_client = stytch.Client(project_id=project_id, secret=secret)
-    return _stytch_client
+def _get_workos_jwks_client():
+    """Get the WorkOS JWKS client (singleton)."""
+    global _workos_jwks_client
+    if _workos_jwks_client is None:
+        import jwt
+        client_id = os.environ.get("WORKOS_CLIENT_ID", os.environ.get("EXPO_PUBLIC_WORKOS_CLIENT_ID", ""))
+        jwks_url = f"https://api.workos.com/sso/jwks/{client_id}"
+        _workos_jwks_client = jwt.PyJWKClient(jwks_url)
+    return _workos_jwks_client
 
 
 def verify_admin(headers):
     """
-    Validate Stytch session token and check admin role.
+    Validate a WorkOS access token and check admin role.
     Returns profile dict or None.
     """
+    import jwt
+
     auth_header = headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
         return None
@@ -69,12 +72,15 @@ def verify_admin(headers):
         return None
 
     try:
-        client = _get_stytch_client()
-        resp = client.sessions.authenticate(session_token=token)
-        stytch_user_id = resp.session.user_id
+        jwks_client = _get_workos_jwks_client()
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        payload = jwt.decode(token, signing_key.key, algorithms=["RS256"])
+        workos_user_id = payload.get("sub")
+        if not workos_user_id:
+            return None
 
         db = get_db()
-        profile = db.profiles.find_one({"stytch_user_id": stytch_user_id})
+        profile = db.profiles.find_one({"workos_user_id": workos_user_id})
 
         if not profile or profile.get("role") != "admin":
             return None

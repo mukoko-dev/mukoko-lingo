@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Changed
+- **Auth: Stytch → WorkOS AuthKit** — Replaced Stytch (email OTP, WhatsApp OTP, magic links) with WorkOS AuthKit's hosted sign-in page via the PKCE authorization-code flow. `api/_lib/auth-middleware.ts` now verifies access tokens locally against WorkOS's JWKS instead of round-tripping to the auth provider on every request. WhatsApp OTP has no WorkOS equivalent and was dropped.
+- **Dependencies** — Updated all packages across `root` and `web/`: Expo SDK 54 → 57, Next.js 15 → 16, Tailwind CSS 3 → 4. Held back `jest`/`@types/jest` (jest-expo still requires Jest 29) and `@testing-library/react-native` (v14 switches to async `render()`/`renderHook()`, which would require rewriting every test file).
+
+---
+
 ## [0.0.1] — 2026-04-08
 
 ### Initial Release: Supabase Migration & Platform Architecture

@@ -4,7 +4,7 @@
 
 Learn Shona, Ndebele, Chinese, and English with AI-powered tutoring by Shamwari.
 
-Built with Expo SDK 54 / React Native, Next.js, Supabase PostgreSQL, Stytch Auth, Vercel Serverless, and Anthropic Claude.
+Built with Expo SDK 57 / React Native, Next.js, Supabase PostgreSQL, WorkOS AuthKit, Vercel Serverless, and Anthropic Claude.
 
 **Parent Company**: [Nyuchi Africa](https://nyuchi.com) | **Registry**: [registry.mukoko.com](https://registry.mukoko.com)
 
@@ -29,7 +29,7 @@ cd web && npm install && npm run dev
 Copy `.env.example` to `.env.local` and fill in:
 
 - `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` — Supabase PostgreSQL
-- `STYTCH_PROJECT_ID` / `STYTCH_SECRET` — Stytch auth credentials
+- `WORKOS_API_KEY` / `WORKOS_CLIENT_ID` — WorkOS AuthKit credentials
 - `ANTHROPIC_API_KEY` — Anthropic Claude API key (server-side only)
 - `EXPO_PUBLIC_API_BASE_URL` — Vercel API base URL
 
@@ -74,7 +74,7 @@ Both apps call the same API routes. The web app includes all learner features pl
 | Routing | Expo Router 6 (mobile) / Next.js App Router (web) |
 | Backend | Vercel Serverless Functions (TypeScript + Python) |
 | Database | Supabase PostgreSQL (lingo / identity / system schemas) |
-| Auth | Stytch SDK 13 (email/password, OTP, magic links, WhatsApp) |
+| Auth | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow) |
 | AI | Anthropic Claude Haiku 4.5 (server-side proxy with circuit breaker) |
 | Testing | Jest 29 + jest-expo (18 suites, 226 tests) |
 | CI/CD | GitHub Actions (typecheck → test → build-web) |
