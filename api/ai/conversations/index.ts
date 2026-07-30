@@ -1,29 +1,29 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { requireAuth } from '../../_lib/auth-middleware'
-import supabase from '../../_lib/supabase'
-import { LANG_CODE_MAP } from '../../../lib/db/transform-phrase'
+import { aiConversations } from '../../_lib/mongo'
+import { LANG_CODE_MAP } from '../../../lib/db/phrase-shape'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
 
   try {
     const user = await requireAuth(req)
+    const col = await aiConversations()
 
     if (req.method === 'GET') {
-      const { data: conversations, error } = await supabase
-        .from('ai_conversation')
-        .select('*')
-        .eq('user_id', user.personId)
-        .order('updated_at', { ascending: false })
+      const conversations = await col
+        .find({ user_id: user.personId })
+        .sort({ updated_at: -1 })
         .limit(50)
+        .toArray()
 
-      if (error) throw new Error(error.message)
-      return res.status(200).json({ data: conversations })
+      const data = conversations.map((c: any) => ({ ...c, id: String(c._id) }))
+      return res.status(200).json({ data })
     }
 
     if (req.method === 'POST') {
-      const { type, language, title, class_id, shamwari_conversation_id } = req.body || {}
+      const { type, language, title, class_id } = req.body || {}
       if (!type || !language) {
         return res.status(400).json({ error: 'type and language are required' })
       }
@@ -31,21 +31,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Map language name to code if needed (e.g. 'english' → 'en')
       const langCode = LANG_CODE_MAP[language.toLowerCase()] || language
 
-      const { data: conversation, error } = await supabase
-        .from('ai_conversation')
-        .insert({
+      const now = new Date()
+      const insertResult = await col.insertOne({
+        user_id: user.personId,
+        type,
+        language_id: langCode,
+        title: title || `${type} - ${language}`,
+        class_id: class_id || null,
+        messages: [],
+        updated_at: now,
+        created_at: now,
+      } as any)
+
+      return res.status(201).json({
+        data: {
+          id: String(insertResult.insertedId),
           user_id: user.personId,
           type,
           language_id: langCode,
           title: title || `${type} - ${language}`,
           class_id: class_id || null,
-          shamwari_conversation_id: shamwari_conversation_id || null,
-        })
-        .select()
-        .single()
-
-      if (error) throw new Error(error.message)
-      return res.status(201).json({ data: conversation })
+          messages: [],
+          updated_at: now,
+          created_at: now,
+        },
+      })
     }
 
     return res.status(405).json({ error: 'Method not allowed' })

@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { ObjectId } from 'mongodb'
 import { handleCors } from '../../_lib/cors'
 import { requireAdmin } from '../../_lib/auth-middleware'
-import supabase from '../../_lib/supabase'
+import { skills } from '../../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -11,6 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     await requireAdmin(req)
+    if (!ObjectId.isValid(id as string)) return res.status(404).json({ error: 'Skill not found' })
 
     const update: Record<string, any> = {}
     if (req.body.display_name !== undefined) update.display_name = req.body.display_name
@@ -19,15 +21,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.body.sort_order !== undefined) update.sort_order = req.body.sort_order
     if (req.body.is_active !== undefined) update.is_active = req.body.is_active
 
-    const { data: skill, error } = await supabase
-      .from('skill')
-      .update(update)
-      .eq('id', id as string)
-      .select()
-      .single()
+    const col = await skills()
+    const skill = await col.findOneAndUpdate(
+      { _id: new ObjectId(id as string) } as any,
+      { $set: update },
+      { returnDocument: 'after' }
+    )
 
-    if (error) throw new Error(error.message)
-    return res.status(200).json({ data: skill })
+    if (!skill) return res.status(404).json({ error: 'Skill not found' })
+    return res.status(200).json({ data: { ...skill, id: String(skill._id) } })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })

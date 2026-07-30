@@ -5,14 +5,13 @@
  * send targeted push notifications in the future.
  *
  * Body: { push_token: string, platform: "ios" | "android" | "web" }
- *
- * The token and platform are persisted on the identity.person row.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import { supabaseIdentity } from '../_lib/supabase'
+import { profiles } from '../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -33,39 +32,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const validPlatforms = ['ios', 'android', 'web']
     const normalizedPlatform = validPlatforms.includes(platform) ? platform : 'unknown'
 
-    const { error } = await supabaseIdentity
-      .from('person')
-      .update({
-        push_token,
-        push_token_platform: normalizedPlatform,
-        push_token_updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.personId)
-
-    if (error) {
-      // If the columns don't exist yet, fall back to a JSONB metadata approach
-      // by storing in a known column. This is resilient to schema drift.
-      console.warn(
-        '[notifications] Direct column update failed, trying metadata approach:',
-        error.message
-      )
-
-      const { error: metaError } = await supabaseIdentity
-        .from('person')
-        .update({
-          metadata: {
-            push_token,
-            push_token_platform: normalizedPlatform,
-            push_token_updated_at: new Date().toISOString(),
-          },
-        })
-        .eq('id', user.personId)
-
-      if (metaError) {
-        console.error('[notifications] Failed to store push token:', metaError.message)
-        return res.status(500).json({ error: 'Failed to store push token' })
+    const col = await profiles()
+    await col.updateOne(
+      { _id: new ObjectId(user.personId) } as any,
+      {
+        $set: {
+          push_token,
+          push_token_platform: normalizedPlatform,
+          push_token_updated_at: new Date(),
+        },
       }
-    }
+    )
 
     return res.status(200).json({
       data: { registered: true, platform: normalizedPlatform },

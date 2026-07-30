@@ -1,6 +1,6 @@
 /**
  * Categories API — returns distinct categories with phrase counts.
- * Source of truth: lingo.phrase.category column in Supabase.
+ * Source of truth: the `category` field on the `phrases` MongoDB collection.
  *
  * GET /api/categories
  * Returns: [{ id, name, count }]

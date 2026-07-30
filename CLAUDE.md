@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Mukoko Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) with both web and mobile (Expo/React Native) applications, powered by Supabase PostgreSQL, WorkOS AuthKit, Vercel Serverless Functions, and Anthropic Claude.
+**Mukoko Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) with both web and mobile (Expo/React Native) applications, powered by MongoDB, WorkOS AuthKit, Vercel Serverless Functions, and Anthropic Claude.
 
 **Parent Company**: Nyuchi Africa (nyuchi.com)
 
@@ -57,9 +57,9 @@ npm run build:ios        # Build iOS via EAS
 npm run build:android    # Build Android via EAS
 npm run build:all        # Build all platforms via EAS
 
-# Database (Supabase PostgreSQL)
-# Schema managed via Supabase dashboard/migrations
-# Schemas: lingo (learning data), identity (users), system (guardrails)
+# Database (MongoDB)
+# Schemaless; indexes managed via scripts/create-indexes.ts
+# Key collections: profiles, phrases, phrase_progress, skills, classes, guardrails
 
 # Testing
 npm test                 # Run all tests (Jest + jest-expo)
@@ -75,10 +75,8 @@ npx tsc --noEmit         # TypeScript type checking
 **Required Environment Variables** (see `.env.example` for full template):
 
 ```bash
-# Supabase PostgreSQL
-SUPABASE_URL=https://yqmqdiudhztddiyeerig.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-SUPABASE_ANON_KEY=your-supabase-anon-key
+# MongoDB
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/mukoko-lingo
 
 # WorkOS AuthKit (server-side only - NEVER expose to client)
 WORKOS_API_KEY=sk_test_your-workos-api-key
@@ -107,7 +105,7 @@ AI_GATEWAY_API_KEY=your_api_key_here
 ### Local Development
 
 1. Copy `.env.example` to `.env.local`
-2. Fill in your Supabase project URL and service role key
+2. Fill in your MongoDB connection string
 3. Fill in your WorkOS API key and Client ID from https://dashboard.workos.com
 4. Run `npx expo start` to start the dev server
 
@@ -155,7 +153,7 @@ nyuchi-lingo/
 ├── api/                          # Vercel Serverless Functions (backend)
 │   ├── _lib/                     # Shared middleware
 │   │   ├── auth-middleware.ts    # WorkOS access-token validation + admin check
-│   │   ├── supabase.ts           # Supabase client (lingo/identity/system)
+│   │   ├── mongo.ts              # Mongo client + collection accessors re-export shim
 │   │   └── cors.ts               # CORS configuration
 │   ├── auth/                     # Auth endpoints (login, register, OTP, magic links, WhatsApp)
 │   ├── phrases/                  # Phrase CRUD
@@ -191,8 +189,10 @@ nyuchi-lingo/
 │   ├── auth/
 │   │   └── workos-client.ts      # WorkOS AuthKit client (PKCE hosted sign-in)
 │   ├── db/
-│   │   ├── supabase.ts           # Supabase client (multi-schema)
-│   │   └── transform-phrase.ts   # Flatten normalized translations
+│   │   ├── mongo.ts              # MongoDB client singleton
+│   │   ├── collections.ts        # Typed per-collection accessors
+│   │   ├── types.ts              # Collection document interfaces
+│   │   └── phrase-shape.ts       # Flat phrase ↔ API camelCase shape mapping
 │   ├── data/
 │   │   ├── phrases-data.ts       # 200+ phrases in 4 languages
 │   │   ├── assessment-questions.ts # Question bank across 5 skills
@@ -247,7 +247,7 @@ nyuchi-lingo/
 | Styling | NativeWind (Tailwind CSS for React Native) |
 | Routing | Expo Router 6 (file-based routing) |
 | Backend | Vercel Serverless Functions (TypeScript + Python) |
-| Database | Supabase PostgreSQL (lingo/identity/system schemas) |
+| Database | MongoDB (database `mukoko-lingo`) |
 | Auth | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow) |
 | AI | Anthropic Claude Haiku 4.5 (direct API + Vercel AI Gateway) |
 | Testing | Jest 29 + jest-expo + React Testing Library |
@@ -270,8 +270,8 @@ nyuchi-lingo/
 **Flow**: Client opens the AuthKit hosted URL → WorkOS redirects back with an
 authorization code → client exchanges it (with its PKCE verifier) for an
 access/refresh token pair via `/api/auth/callback` → subsequent API requests
-send the access token as a `Bearer` header → identity.person auto-created if
-new user
+send the access token as a `Bearer` header → a `profiles` document is
+auto-created (keyed on `workos_user_id`) if new user
 
 **Auth API Routes** (`api/auth/`):
 - `authorize.ts` - builds the AuthKit hosted sign-in URL + PKCE verifier
@@ -285,33 +285,29 @@ new user
 - `api/_lib/auth-middleware.ts` - Server-side auth validation + admin checks
 - `lib/services/api-client.ts` - REST API client with auth headers
 
-### Database Schema (Supabase PostgreSQL)
+### Database Schema (MongoDB)
 
-**Schema Location**: Supabase dashboard — 3 schemas: `lingo` (18 tables), `identity` (1 table), `system` (1 table). Phrases normalized: `lingo.phrase` + `lingo.translation` (1 row per language per phrase).
+**Database**: `mukoko-lingo`, accessed via `lib/db/mongo.ts` (client singleton) and `lib/db/collections.ts` (typed per-collection accessors). Schemaless — indexes are created via `scripts/create-indexes.ts`.
 
 **User & Authentication**:
-- `profiles` - User profiles matched to WorkOS users by email, with role (`user`/`admin`), status, preferences, streaks
+- `profiles` - User profiles keyed on the stable WorkOS `workos_user_id` (not email, which can change), with role (`user`/`admin`), status, preferences, streaks
 
 **Phrase Learning**:
-- `phrases` - 200+ phrases with English, Shona, Ndebele, and Chinese translations + pronunciations. Mapped to skills via `skillId` and `requiredProficiency`
+- `phrases` - 200+ phrases, one flat document per phrase carrying all language fields directly (`english`, `shona`, `ndebele`, `swahili`, `chinese` + nested `pronunciation`/`context`). Mapped to skills via `skill_id` and `required_proficiency`. Seeded from `lib/data/phrases-data.ts` via `scripts/seed-phrases.ts`
 - `phrase_progress` - Learning status tracking (`learning`/`practiced`/`mastered`)
-- `bookmarks` - User-saved phrases for review
+- `bookmarks` - User-saved phrases for review (its own collection, not a flag on `phrase_progress`)
 - `phrase_views` - View tracking analytics
 - `study_sessions` - Daily study session metrics
 
 **Skills-Based Learning**:
-- `skills` - 5 core skills (pronunciation, vocabulary, grammar, comprehension, conversation) with i18n display names
-- `skill_levels` - 5 proficiency levels per skill (beginner → fluent) with min score thresholds
+- `skills` - 5 core skills (pronunciation, vocabulary, grammar, comprehension, conversation) with i18n display names, plus an embedded `levels` array (5 proficiency levels, beginner → fluent)
 - `user_skills` - Current user proficiency per skill (score 0-100, read by AI tutor)
 - `assessments` - Assessment templates (diagnostic/formative/summative) with questions JSON
 - `user_assessments` - User test results with answers, score, pass/fail
 - `learning_standards` - AI tutor configuration by proficiency level
 
 **AI & Moderation**:
-- `ai_conversations` - Chat sessions with type and language
-- `ai_messages` - Individual messages with moderation flags
-- `ai_generated_phrases` - AI-created practice phrases with moderation status
-- `ai_recommendations` - AI-suggested phrases based on proficiency
+- `ai_conversations` - Chat sessions with type and language, messages embedded directly (capped ~200/conversation)
 - `moderation_alerts` - Flagged content for admin review (pending/reviewed/resolved)
 - `guardrails` - Content moderation rules (6 categories: content/behavior/safety)
 
@@ -421,7 +417,7 @@ new user
 
 **Admin Features**:
 - Admin access check in `app/admin/_layout.tsx`
-- All data fetched from Supabase via API (no hardcoded data)
+- All data fetched from MongoDB via API (no hardcoded data)
 - Pull-to-refresh on admin screens
 - Confirmation dialogs for destructive actions
 
@@ -509,15 +505,14 @@ const { data: userSkills } = await skillsApi.getUserSkills()
 ### Server-Side (Vercel API Routes)
 
 ```typescript
-// In api/ serverless functions - use Supabase client
-import supabase from '../_lib/supabase'
+// In api/ serverless functions - use the Mongo collection accessors
+import { phrases } from '../_lib/mongo'
 import { requireAuth, requireAdmin } from '../_lib/auth-middleware'
 
-const user = await requireAuth(req)      // Returns AuthenticatedUser with personId (UUID)
+const user = await requireAuth(req)      // Returns AuthenticatedUser with personId (Mongo _id string)
 const admin = await requireAdmin(req)    // Also checks admin role
-const { data: phrases } = await supabase.from('phrase')
-  .select('*, translations:translation(*)')
-  .eq('category', 'greetings')
+const col = await phrases()
+const data = await col.find({ category: 'greetings' }).toArray()
 ```
 
 ### Local Storage (Mobile)
@@ -531,7 +526,7 @@ import { getUserSkills } from '@/lib/storage/database'
 
 ## Database Schema Management
 
-**Schema Management**: Via Supabase dashboard and SQL migrations. Three schemas: `lingo`, `identity`, `system`.
+**Schema Management**: MongoDB is schemaless; indexes are created via `scripts/create-indexes.ts`.
 
 ## Testing Infrastructure
 
@@ -561,8 +556,6 @@ import { getUserSkills } from '@/lib/storage/database'
 
 **Triggers**: Push to `main` or `feature/*`, Pull requests to `main`
 
-**Note**: The build-web job still references Supabase environment variables from the migration period. These are unused but not yet cleaned up.
-
 ## Common Workflows
 
 ### Adding a New Phrase Category
@@ -573,7 +566,7 @@ import { getUserSkills } from '@/lib/storage/database'
 ### Adding a New API Route
 1. Create file in `api/[feature]/` following Vercel serverless function pattern
 2. Import auth middleware: `import { requireAuth, requireAdmin } from '../_lib/auth-middleware'`
-3. Import Supabase: `import supabase from '../_lib/supabase'`
+3. Import Mongo collections: `import { phrases } from '../_lib/mongo'`
 4. Handle CORS if needed: `import { cors } from '../_lib/cors'`
 5. Add corresponding method to `lib/services/api-client.ts`
 
@@ -614,11 +607,10 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 ### Performance Notes
 - Phrases limited to 100-200 per query
 - Client-side filtering for categories/search
-- Python analytics use aggregation pipelines (migration from MongoDB pending)
+- Python analytics use MongoDB aggregation pipelines (same database the TypeScript API writes to)
 - AI chat uses direct API calls (no streaming on mobile)
 
 ### Technical Debt
-- CI build-web job still references Supabase environment variables
 - Component library is minimal (basic themed components only)
 - Limited error boundaries
 - No dedicated web layout components (sidebar, etc.)
@@ -628,7 +620,7 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 1. Configure environment variables (see Environment Setup above)
 2. Start dev server: `npx expo start`
 3. Sign up for a test account via the auth screen
-4. To test admin features, set your role to 'admin' in `identity.person` via the Supabase dashboard
+4. To test admin features, set your role to 'admin' in the `profiles` MongoDB collection
 5. Test AI features in the Shamwari tab (requires `ANTHROPIC_API_KEY` server-side, falls back to simulated mode without it)
 6. Check moderation queue in admin → moderation
 7. Test theme switching (light/dark/system)
@@ -670,15 +662,15 @@ When creating new completion summaries, migration docs, or work records:
 
 **Current Version**: 0.0.1 (April 2026)
 **Framework**: Expo SDK 54 / React Native 0.81 / React 19
-**Backend**: Supabase PostgreSQL + WorkOS AuthKit + Vercel Serverless
+**Backend**: MongoDB + WorkOS AuthKit + Vercel Serverless
 **AI**: Anthropic Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
 **Status**: Active development
 **Parent Company**: Nyuchi Africa (nyuchi.com)
 
 **Architecture Highlights**:
-- Skills-based learning system fully modeled in Supabase (20 tables across 3 schemas)
+- Skills-based learning system fully modeled in MongoDB collections
 - Adaptive AI tutor reads user proficiency for every interaction
 - Multi-platform: single codebase for web, iOS, and Android
-- Python analytics for advanced data aggregation (migration pending)
+- Python analytics and the TypeScript API share the same MongoDB database
 - Comprehensive admin dashboard (8 sections)
 - Content moderation with both local guardrails and AI-based review

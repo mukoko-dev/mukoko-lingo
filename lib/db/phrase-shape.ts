@@ -6,6 +6,22 @@
 
 import type { Phrase } from './types'
 
+/** Language code → flat field name mapping */
+export const LANG_MAP: Record<string, string> = {
+  en: 'english',
+  sn: 'shona',
+  nd: 'ndebele',
+  zh: 'chinese',
+}
+
+/** Reverse: flat field name → language code */
+export const LANG_CODE_MAP: Record<string, string> = {
+  english: 'en',
+  shona: 'sn',
+  ndebele: 'nd',
+  chinese: 'zh',
+}
+
 export interface ApiPhrase {
   id: string
   category: string

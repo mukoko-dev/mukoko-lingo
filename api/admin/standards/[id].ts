@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { ObjectId } from 'mongodb'
 import { handleCors } from '../../_lib/cors'
 import { requireAdmin } from '../../_lib/auth-middleware'
-import supabase from '../../_lib/supabase'
+import { learningStandards } from '../../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -11,6 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     await requireAdmin(req)
+    if (!ObjectId.isValid(id as string)) return res.status(404).json({ error: 'Standard not found' })
 
     const update: Record<string, any> = {}
     if (req.body.title !== undefined) update.title = req.body.title
@@ -23,15 +25,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.body.example_phrases !== undefined) update.example_phrases = req.body.example_phrases
     if (req.body.is_active !== undefined) update.is_active = req.body.is_active
 
-    const { data: standard, error } = await supabase
-      .from('learning_standard')
-      .update(update)
-      .eq('id', id as string)
-      .select()
-      .single()
+    const col = await learningStandards()
+    const standard = await col.findOneAndUpdate(
+      { _id: new ObjectId(id as string) } as any,
+      { $set: update },
+      { returnDocument: 'after' }
+    )
 
-    if (error) throw new Error(error.message)
-    return res.status(200).json({ data: standard })
+    if (!standard) return res.status(404).json({ error: 'Standard not found' })
+    return res.status(200).json({ data: { ...standard, id: String(standard._id) } })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })
