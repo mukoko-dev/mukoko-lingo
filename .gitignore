@@ -55,3 +55,4 @@ web/next-env.d.ts
 
 # EAS
 .easignore
+.env*
