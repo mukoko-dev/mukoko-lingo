@@ -1,23 +1,20 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import { supabaseIdentity } from '../_lib/supabase'
+import { profiles } from '../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
 
   try {
     const user = await requireAuth(req)
+    const col = await profiles()
 
     if (req.method === 'GET') {
-      const { data: person, error } = await supabaseIdentity
-        .from('person')
-        .select('*')
-        .eq('id', user.personId)
-        .single()
-
-      if (error) throw new Error(error.message)
-      return res.status(200).json({ data: person })
+      const person = await col.findOne({ _id: new ObjectId(user.personId) } as any)
+      if (!person) return res.status(404).json({ error: 'Profile not found' })
+      return res.status(200).json({ data: { ...person, id: String(person._id) } })
     }
 
     if (req.method === 'PUT') {
@@ -27,15 +24,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (req.body.learning_goal !== undefined) update.learning_goal = req.body.learning_goal
       if (req.body.daily_goal !== undefined) update.daily_goal = req.body.daily_goal
 
-      const { data: person, error } = await supabaseIdentity
-        .from('person')
-        .update(update)
-        .eq('id', user.personId)
-        .select()
-        .single()
-
-      if (error) throw new Error(error.message)
-      return res.status(200).json({ data: person })
+      const person = await col.findOneAndUpdate(
+        { _id: new ObjectId(user.personId) } as any,
+        { $set: update },
+        { returnDocument: 'after' }
+      )
+      if (!person) return res.status(404).json({ error: 'Profile not found' })
+      return res.status(200).json({ data: { ...person, id: String(person._id) } })
     }
 
     return res.status(405).json({ error: 'Method not allowed' })
