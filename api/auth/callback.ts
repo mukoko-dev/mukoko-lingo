@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { workos, WORKOS_CLIENT_ID } from '../_lib/auth-middleware'
-import { supabaseIdentity } from '../_lib/supabase'
+import { profiles } from '../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -19,23 +19,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       codeVerifier: code_verifier,
     })
 
-    // Upsert person in identity.person
-    const { data: existing } = await supabaseIdentity
-      .from('person')
-      .select('id')
-      .eq('email', user.email)
-      .single()
-
-    if (existing) {
-      await supabaseIdentity.from('person').update({ last_active: new Date().toISOString() }).eq('id', existing.id)
-    } else {
-      await supabaseIdentity.from('person').insert({
-        email: user.email,
-        display_name: user.firstName || user.email.split('@')[0],
-        role: 'user',
-        status: 'active',
-      })
-    }
+    // Upsert profile, keyed on the stable workos_user_id
+    const col = await profiles()
+    await col.findOneAndUpdate(
+      { workos_user_id: user.id },
+      {
+        $set: { last_active: new Date() },
+        $setOnInsert: {
+          workos_user_id: user.id,
+          email: user.email,
+          display_name: user.firstName || user.email.split('@')[0],
+          role: 'user',
+          status: 'active',
+          created_at: new Date(),
+        },
+      },
+      { upsert: true }
+    )
 
     return res.status(200).json({
       access_token: accessToken,

@@ -5,7 +5,7 @@
 
 import { WorkOS } from '@workos-inc/node'
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from 'jose'
-import { supabaseIdentity } from './supabase'
+import { profiles } from './mongo'
 import type { VercelRequest } from '@vercel/node'
 
 const WORKOS_API_KEY = process.env.WORKOS_API_KEY || ''
@@ -71,36 +71,32 @@ export async function authenticateRequest(req: VercelRequest): Promise<Authentic
     const workosUser = await workos.userManagement.getUser(workosUserId)
     const email = workosUser.email
 
-    // Find or create person in identity.person
-    let { data: person } = await supabaseIdentity
-      .from('person')
-      .select('id, email, role, status')
-      .eq('email', email)
-      .single()
-
-    if (!person) {
-      const displayName = workosUser.firstName || email.split('@')[0]
-      const { data: created, error } = await supabaseIdentity
-        .from('person')
-        .insert({
+    // Find or create the profile, keyed on the stable workos_user_id (not
+    // email, which can change) — atomic upsert, no separate select-then-insert.
+    const col = await profiles()
+    const person = await col.findOneAndUpdate(
+      { workos_user_id: workosUserId },
+      {
+        $setOnInsert: {
+          workos_user_id: workosUserId,
           email,
-          display_name: displayName,
+          display_name: workosUser.firstName || email.split('@')[0],
           role: 'user',
           status: 'active',
-        })
-        .select('id, email, role, status')
-        .single()
+          created_at: new Date(),
+        },
+      },
+      { upsert: true, returnDocument: 'after' }
+    )
 
-      if (error) {
-        console.error('[mukoko][auth] Failed to create person:', error.message)
-        return null
-      }
-      person = created
+    if (!person) {
+      console.error('[mukoko][auth] Failed to find or create profile')
+      return null
     }
 
     return {
       workosUserId,
-      personId: person.id,
+      personId: String(person._id),
       email: person.email,
       role: person.role || 'user',
     }

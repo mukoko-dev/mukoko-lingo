@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { requireAdmin } from '../_lib/auth-middleware'
-import { supabaseIdentity } from '../_lib/supabase'
+import { profiles } from '../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -12,19 +12,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { role, status } = req.query
 
-    let query = supabaseIdentity
-      .from('person')
-      .select('*')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false })
+    const filter: Record<string, any> = { deleted_at: null }
+    if (role) filter.role = role
+    if (status) filter.status = status
 
-    if (role) query = query.eq('role', role as string)
-    if (status) query = query.eq('status', status as string)
+    const col = await profiles()
+    const persons = await col.find(filter).sort({ created_at: -1 }).toArray()
 
-    const { data: persons, error } = await query
-
-    if (error) throw new Error(error.message)
-    return res.status(200).json({ data: persons, count: (persons || []).length })
+    const data = persons.map((p: any) => ({ ...p, id: String(p._id) }))
+    return res.status(200).json({ data, count: data.length })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })
