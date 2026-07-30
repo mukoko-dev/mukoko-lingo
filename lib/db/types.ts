@@ -5,11 +5,54 @@
  * routes that previously lived in Supabase's `lingo`/`system` schemas.
  */
 
-export interface Profile {
+/**
+ * identity.persons — the shared, ecosystem-wide user record (Nyuchi
+ * platform, `identity` database). Owned by the identity domain, not Lingo;
+ * `_id` is a UUID string (used as the OIDC `sub` claim), not an ObjectId.
+ * Lingo upserts into this collection on sign-in but never invents its own
+ * parallel user table — see `LingoProfile` below for Lingo-specific fields.
+ */
+export interface Person {
+  _id: string
+  _schemaVersion: 'v3.1'
+  email: string | null
+  emailVerified: boolean
+  phoneNumber?: string | null
+  phoneNumberVerified: boolean
+  givenName?: string | null
+  familyName?: string | null
+  additionalName?: string | null
+  name?: string | null
+  nickname?: string | null
+  preferredUsername?: string | null
+  picture?: string | null
+  locale?: string | null
+  zoneinfo?: string | null
+  gender?: string | null
+  birthdate?: Date | null
+  workosUserId?: string | null
+  stytchUserId?: string | null
+  isActive: boolean
+  lastSeenAt?: Date | null
+  createdAt: Date
+  updatedAt: Date
+  bundu?: {
+    familyMembership?: Record<string, unknown>
+    defaultFamilyEntityId?: string
+    verificationTier?: number
+    preferredLanguages?: string[]
+  }
+}
+
+/**
+ * Lingo-local extension of a person — fields the shared `identity.persons`
+ * schema has no room for (app role, learning preferences, push tokens).
+ * Keyed on `person_id` (identity.persons._id). Lives in Lingo's own
+ * `mukoko-lingo` database, collection `learner_profiles`.
+ */
+export interface LingoProfile {
   _id?: any
-  workos_user_id: string
-  email: string
-  display_name: string
+  person_id: string
   role: 'user' | 'admin'
   status: 'active' | 'inactive' | 'banned' | 'pending'
   created_at: Date

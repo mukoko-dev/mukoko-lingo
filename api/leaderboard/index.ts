@@ -8,10 +8,10 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { authenticateRequest } from '../_lib/auth-middleware'
-import { studySessions, profiles } from '../_lib/mongo'
+import { studySessions } from '../_lib/mongo'
+import { getDisplayNames } from '../../lib/db/identity'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -52,16 +52,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const rankings = allRankings.slice(0, limit)
 
     // Get display names for the top users
-    const personIds = rankings.map((r) => r.personId).filter(ObjectId.isValid)
-    const profilesCol = await profiles()
-    const people = personIds.length > 0
-      ? await profilesCol.find({ _id: { $in: personIds.map((id) => new ObjectId(id)) } } as any).toArray()
-      : []
-
-    const nameMap: Record<string, string> = {}
-    for (const p of people) {
-      nameMap[String(p._id)] = p.display_name || 'Learner'
-    }
+    const personIds = rankings.map((r) => r.personId)
+    const nameMap = await getDisplayNames(personIds)
 
     const leaderboard = rankings.map((r, index) => ({
       rank: index + 1,

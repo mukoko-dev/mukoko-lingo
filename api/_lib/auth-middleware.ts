@@ -5,7 +5,7 @@
 
 import { WorkOS } from '@workos-inc/node'
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from 'jose'
-import { profiles } from './mongo'
+import { findOrCreatePersonFromWorkOS } from '../../lib/db/identity'
 import type { VercelRequest } from '@vercel/node'
 
 const WORKOS_API_KEY = process.env.WORKOS_API_KEY || ''
@@ -69,36 +69,22 @@ export async function authenticateRequest(req: VercelRequest): Promise<Authentic
 
     // Access tokens don't carry email, so resolve the user's profile from WorkOS
     const workosUser = await workos.userManagement.getUser(workosUserId)
-    const email = workosUser.email
 
-    // Find or create the profile, keyed on the stable workos_user_id (not
-    // email, which can change) — atomic upsert, no separate select-then-insert.
-    const col = await profiles()
-    const person = await col.findOneAndUpdate(
-      { workos_user_id: workosUserId },
-      {
-        $setOnInsert: {
-          workos_user_id: workosUserId,
-          email,
-          display_name: workosUser.firstName || email.split('@')[0],
-          role: 'user',
-          status: 'active',
-          created_at: new Date(),
-        },
-      },
-      { upsert: true, returnDocument: 'after' }
-    )
-
-    if (!person) {
-      console.error('[mukoko][auth] Failed to find or create profile')
-      return null
-    }
+    // Find or create the identity.persons record, keyed on the stable
+    // WorkOS user id (not email, which can change) — atomic upsert against
+    // the shared ecosystem identity collection, not a Lingo-local table.
+    const profile = await findOrCreatePersonFromWorkOS({
+      id: workosUserId,
+      email: workosUser.email,
+      firstName: workosUser.firstName,
+      lastName: workosUser.lastName,
+    })
 
     return {
       workosUserId,
-      personId: String(person._id),
-      email: person.email,
-      role: person.role || 'user',
+      personId: profile.id,
+      email: profile.email || workosUser.email,
+      role: profile.role,
     }
   } catch (error: any) {
     const message = error?.error_message || error?.message || 'Auth validation failed'

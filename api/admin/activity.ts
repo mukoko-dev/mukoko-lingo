@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { requireAdmin } from '../_lib/auth-middleware'
-import { profiles, studySessions, moderationAlerts } from '../_lib/mongo'
+import { studySessions, moderationAlerts } from '../_lib/mongo'
+import { recentMergedProfiles } from '../../lib/db/identity'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -14,26 +15,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     const sinceDateStr = thirtyDaysAgo.toISOString().split('T')[0]
 
-    const [profilesCol, sessionsCol, alertsCol] = await Promise.all([
-      profiles(),
-      studySessions(),
-      moderationAlerts(),
-    ])
+    const [sessionsCol, alertsCol] = await Promise.all([studySessions(), moderationAlerts()])
 
     const [recentUsers, recentSessions, recentAlerts] = await Promise.all([
-      profilesCol
-        .find({ created_at: { $gte: thirtyDaysAgo } })
-        .project({ email: 1, display_name: 1, created_at: 1, role: 1 })
-        .sort({ created_at: -1 })
-        .limit(20)
-        .toArray(),
+      recentMergedProfiles(thirtyDaysAgo, 20),
       sessionsCol.find({ session_date: { $gte: sinceDateStr } }).sort({ session_date: -1 }).limit(50).toArray(),
       alertsCol.find({ created_at: { $gte: thirtyDaysAgo } }).sort({ created_at: -1 }).limit(20).toArray(),
     ])
 
     return res.status(200).json({
       data: {
-        recent_users: recentUsers.map((u: any) => ({ ...u, id: String(u._id) })),
+        recent_users: recentUsers,
         recent_sessions: recentSessions.map((s: any) => ({ ...s, id: String(s._id) })),
         recent_alerts: recentAlerts.map((a: any) => ({ ...a, id: String(a._id) })),
       },

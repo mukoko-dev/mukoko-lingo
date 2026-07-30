@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { workos, WORKOS_CLIENT_ID } from '../_lib/auth-middleware'
-import { profiles } from '../_lib/mongo'
+import { findOrCreatePersonFromWorkOS } from '../../lib/db/identity'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -19,23 +19,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       codeVerifier: code_verifier,
     })
 
-    // Upsert profile, keyed on the stable workos_user_id
-    const col = await profiles()
-    await col.findOneAndUpdate(
-      { workos_user_id: user.id },
-      {
-        $set: { last_active: new Date() },
-        $setOnInsert: {
-          workos_user_id: user.id,
-          email: user.email,
-          display_name: user.firstName || user.email.split('@')[0],
-          role: 'user',
-          status: 'active',
-          created_at: new Date(),
-        },
-      },
-      { upsert: true }
-    )
+    // Find or create the identity.persons record, keyed on the stable
+    // WorkOS user id — same shared upsert auth-middleware uses per-request.
+    await findOrCreatePersonFromWorkOS({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    })
 
     return res.status(200).json({
       access_token: accessToken,

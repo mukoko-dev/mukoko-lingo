@@ -59,7 +59,7 @@ npm run build:all        # Build all platforms via EAS
 
 # Database (MongoDB)
 # Schemaless; indexes managed via scripts/create-indexes.ts
-# Key collections: profiles, phrases, phrase_progress, skills, classes, guardrails
+# Key collections: identity.persons (shared), learner_profiles, phrases, phrase_progress, skills, classes, guardrails
 
 # Testing
 npm test                 # Run all tests (Jest + jest-expo)
@@ -270,8 +270,8 @@ nyuchi-lingo/
 **Flow**: Client opens the AuthKit hosted URL → WorkOS redirects back with an
 authorization code → client exchanges it (with its PKCE verifier) for an
 access/refresh token pair via `/api/auth/callback` → subsequent API requests
-send the access token as a `Bearer` header → a `profiles` document is
-auto-created (keyed on `workos_user_id`) if new user
+send the access token as a `Bearer` header → an `identity.persons` document is
+found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 
 **Auth API Routes** (`api/auth/`):
 - `authorize.ts` - builds the AuthKit hosted sign-in URL + PKCE verifier
@@ -287,10 +287,12 @@ auto-created (keyed on `workos_user_id`) if new user
 
 ### Database Schema (MongoDB)
 
-**Database**: `mukoko-lingo`, accessed via `lib/db/mongo.ts` (client singleton) and `lib/db/collections.ts` (typed per-collection accessors). Schemaless — indexes are created via `scripts/create-indexes.ts`.
+**Database**: Lingo's own operational data lives in `mukoko-lingo`, accessed via `lib/db/mongo.ts` (client singleton, `getDb(name?)`) and `lib/db/collections.ts` (typed per-collection accessors). Schemaless — indexes are created via `scripts/create-indexes.ts`. The MongoDB cluster is **shared across the Nyuchi ecosystem** — `identity`, `entity`, `lingo`, `engagement`, etc. are sibling databases on the same cluster, each owned by a different domain/app. Lingo must never invent its own parallel user table; it reads/writes the shared `identity` database for user identity (see below).
 
-**User & Authentication**:
-- `profiles` - User profiles keyed on the stable WorkOS `workos_user_id` (not email, which can change), with role (`user`/`admin`), status, preferences, streaks
+**User & Authentication** — split across two databases, merged at the API layer (`lib/db/identity.ts`):
+- `identity.persons` (shared, ecosystem-wide, **not Lingo-owned**) — the real user record: UUID string `_id` (used as the OIDC `sub` claim), OIDC standard claims (`email`, `givenName`, `familyName`, `name`, `locale`, etc.), `workosUserId` mapping to WorkOS. Other Nyuchi apps (identity, entity, ubuntu, etc.) read and write this same collection.
+- `mukoko-lingo.learner_profiles` (Lingo-local) — the extension fields the shared schema has no room for: `role` (`user`/`admin`), `status`, `preferred_ui_language`, `learning_goal`, `daily_goal`, push token, streaks. Keyed on `person_id` (== `identity.persons._id`).
+- `lib/db/identity.ts` exports the only sanctioned way to touch either collection: `findOrCreatePersonFromWorkOS`, `getMergedProfile`, `updateLingoProfile`, `listMergedProfiles`, etc. — all API routes go through these rather than querying `persons()`/`lingoProfiles()` directly, so the two collections never drift out of sync.
 
 **Phrase Learning**:
 - `phrases` - 200+ phrases, one flat document per phrase carrying all language fields directly (`english`, `shona`, `ndebele`, `swahili`, `chinese` + nested `pronunciation`/`context`). Mapped to skills via `skill_id` and `required_proficiency`. Seeded from `lib/data/phrases-data.ts` via `scripts/seed-phrases.ts`
@@ -620,7 +622,7 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 1. Configure environment variables (see Environment Setup above)
 2. Start dev server: `npx expo start`
 3. Sign up for a test account via the auth screen
-4. To test admin features, set your role to 'admin' in the `profiles` MongoDB collection
+4. To test admin features, set your role to 'admin' in the `learner_profiles` MongoDB collection (not `identity.persons` — that's the shared ecosystem record)
 5. Test AI features in the Shamwari tab (requires `ANTHROPIC_API_KEY` server-side, falls back to simulated mode without it)
 6. Check moderation queue in admin → moderation
 7. Test theme switching (light/dark/system)

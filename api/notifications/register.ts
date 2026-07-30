@@ -8,10 +8,9 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import { profiles } from '../_lib/mongo'
+import { updateLingoProfile } from '../../lib/db/identity'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -32,17 +31,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const validPlatforms = ['ios', 'android', 'web']
     const normalizedPlatform = validPlatforms.includes(platform) ? platform : 'unknown'
 
-    const col = await profiles()
-    await col.updateOne(
-      { _id: new ObjectId(user.personId) } as any,
-      {
-        $set: {
-          push_token,
-          push_token_platform: normalizedPlatform,
-          push_token_updated_at: new Date(),
-        },
-      }
-    )
+    await updateLingoProfile(user.personId, {
+      push_token,
+      push_token_platform: normalizedPlatform,
+      push_token_updated_at: new Date(),
+    })
 
     return res.status(200).json({
       data: { registered: true, platform: normalizedPlatform },
