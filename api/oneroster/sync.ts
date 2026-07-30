@@ -18,7 +18,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { createLogger } from '../_lib/logger'
 import { requireAdmin } from '../_lib/auth-middleware'
-import supabase, { supabaseIdentity } from '../_lib/supabase'
+import { profiles, classes, classMemberships } from '../_lib/mongo'
 
 const log = createLogger('oneroster')
 
@@ -167,62 +167,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const stats = { classes_synced: 0, users_synced: 0, enrollments_synced: 0 }
 
-    // Step 5: Upsert users into identity.person
-    const userIdMap = new Map<string, string>() // oneroster sourcedId → person.id
+    const profilesCol = await profiles()
+    const classesCol = await classes()
+    const membershipsCol = await classMemberships()
+
+    // Step 5: Upsert users into the profiles collection
+    const userIdMap = new Map<string, string>() // oneroster sourcedId → person id
     for (const u of rosterUsers) {
       const email = u.email || `${u.username || u.sourcedId}@oneroster.local`
-      const { data: existing } = await supabaseIdentity
-        .from('person')
-        .select('id')
-        .eq('email', email)
-        .single()
+      const existing = await profilesCol.findOne({ email })
 
       if (existing) {
-        userIdMap.set(u.sourcedId, existing.id)
+        userIdMap.set(u.sourcedId, String(existing._id))
       } else {
-        const { data: created } = await supabaseIdentity
-          .from('person')
-          .insert({
-            email,
-            display_name: `${u.givenName || ''} ${u.familyName || ''}`.trim() || email.split('@')[0],
-            role: 'user',
-            status: 'active',
-          })
-          .select('id')
-          .single()
-        if (created) {
-          userIdMap.set(u.sourcedId, created.id)
-          stats.users_synced++
-        }
+        const result = await profilesCol.insertOne({
+          email,
+          display_name: `${u.givenName || ''} ${u.familyName || ''}`.trim() || email.split('@')[0],
+          role: 'user',
+          status: 'active',
+          created_at: new Date(),
+        } as any)
+        userIdMap.set(u.sourcedId, String(result.insertedId))
+        stats.users_synced++
       }
     }
 
     // Step 6: Upsert classes
-    const classIdMap = new Map<string, string>() // oneroster sourcedId → class.id
+    const classIdMap = new Map<string, string>() // oneroster sourcedId → class id
     for (const c of rosterClasses) {
-      const { data: existing } = await supabase
-        .from('class')
-        .select('id')
-        .eq('oneroster_sourced_id', c.sourcedId)
-        .single()
+      const existing = await classesCol.findOne({ oneroster_sourced_id: c.sourcedId })
 
       if (existing) {
-        classIdMap.set(c.sourcedId, existing.id)
+        classIdMap.set(c.sourcedId, String(existing._id))
       } else {
-        const { data: created } = await supabase
-          .from('class')
-          .insert({
-            name: c.title || c.sourcedId,
-            description: c.classType || null,
-            organization_id,
-            oneroster_sourced_id: c.sourcedId,
-          })
-          .select('id')
-          .single()
-        if (created) {
-          classIdMap.set(c.sourcedId, created.id)
-          stats.classes_synced++
-        }
+        const result = await classesCol.insertOne({
+          name: c.title || c.sourcedId,
+          description: c.classType || null,
+          organization_id,
+          oneroster_sourced_id: c.sourcedId,
+          status: 'active',
+          created_at: new Date(),
+        } as any)
+        classIdMap.set(c.sourcedId, String(result.insertedId))
+        stats.classes_synced++
       }
     }
 
@@ -234,19 +221,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const role = ONEROSTER_ROLE_MAP[e.role?.toLowerCase()] || 'student'
 
-      const { data: existing } = await supabase
-        .from('class_membership')
-        .select('id')
-        .eq('class_id', classId)
-        .eq('person_id', personId)
-        .single()
+      const existing = await membershipsCol.findOne({ class_id: classId, person_id: personId })
 
       if (!existing) {
-        await supabase.from('class_membership').insert({
+        await membershipsCol.insertOne({
           class_id: classId,
           person_id: personId,
           role,
-        })
+          joined_at: new Date(),
+        } as any)
         stats.enrollments_synced++
       }
     }

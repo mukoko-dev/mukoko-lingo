@@ -8,10 +8,10 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import crypto from 'crypto'
 import { handleCors } from '../../_lib/cors'
 import { requireAuth } from '../../_lib/auth-middleware'
-import supabase from '../../_lib/supabase'
-import crypto from 'crypto'
+import { apiKeys, classMemberships } from '../../_lib/mongo'
 
 function generateApiKey(): string {
   const prefix = 'mk_live_'
@@ -31,29 +31,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Verify org admin or platform admin
     if (user.role !== 'admin') {
-      // Check if user is an org admin (teacher role in any class with an org)
-      const { data: memberships } = await supabase
-        .from('class_membership')
-        .select('class:class(organization_id)')
-        .eq('person_id', user.personId)
-        .eq('role', 'teacher')
-        .limit(1)
+      const membershipsCol = await classMemberships()
+      const membership = await membershipsCol.findOne({ person_id: user.personId, role: 'teacher' })
 
-      if (!memberships || memberships.length === 0) {
+      if (!membership) {
         return res.status(403).json({ error: 'Org admin or platform admin role required' })
       }
     }
 
-    if (req.method === 'GET') {
-      // List API keys (show only masked versions)
-      const { data: keys, error } = await supabase
-        .from('api_key')
-        .select('id, name, organization_id, key_prefix, scopes, last_used_at, created_at, expires_at, is_active')
-        .eq('created_by', user.personId)
-        .order('created_at', { ascending: false })
+    const col = await apiKeys()
 
-      if (error) throw new Error(error.message)
-      return res.status(200).json({ data: keys })
+    if (req.method === 'GET') {
+      const keys = await col
+        .find({ created_by: user.personId })
+        .project({ name: 1, organization_id: 1, key_prefix: 1, scopes: 1, last_used_at: 1, created_at: 1, expires_at: 1, is_active: 1 })
+        .sort({ created_at: -1 })
+        .toArray()
+
+      return res.status(200).json({ data: keys.map((k: any) => ({ ...k, id: String(k._id) })) })
     }
 
     if (req.method === 'POST') {
@@ -66,31 +61,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const hashedKey = hashApiKey(plainKey)
       const keyPrefix = plainKey.substring(0, 12) + '...'
 
-      const expiresAt = expires_in_days
-        ? new Date(Date.now() + expires_in_days * 24 * 60 * 60 * 1000).toISOString()
-        : null
+      const expiresAt = expires_in_days ? new Date(Date.now() + expires_in_days * 24 * 60 * 60 * 1000) : null
 
-      const { data: apiKey, error } = await supabase
-        .from('api_key')
-        .insert({
-          name,
-          organization_id,
-          key_hash: hashedKey,
-          key_prefix: keyPrefix,
-          scopes: scopes || ['read'],
-          created_by: user.personId,
-          expires_at: expiresAt,
-          is_active: true,
-        })
-        .select('id, name, organization_id, key_prefix, scopes, created_at, expires_at')
-        .single()
+      const doc = {
+        name,
+        organization_id,
+        key_hash: hashedKey,
+        key_prefix: keyPrefix,
+        scopes: scopes || ['read'],
+        created_by: user.personId,
+        expires_at: expiresAt,
+        is_active: true,
+        created_at: new Date(),
+      }
 
-      if (error) throw new Error(error.message)
+      const result = await col.insertOne(doc as any)
 
       // Return the plain key only once — it's stored hashed
       return res.status(201).json({
         data: {
-          ...apiKey,
+          id: String(result.insertedId),
+          name: doc.name,
+          organization_id: doc.organization_id,
+          key_prefix: doc.key_prefix,
+          scopes: doc.scopes,
+          created_at: doc.created_at,
+          expires_at: doc.expires_at,
           key: plainKey,
         },
         warning: 'Save this API key — it will not be shown again.',

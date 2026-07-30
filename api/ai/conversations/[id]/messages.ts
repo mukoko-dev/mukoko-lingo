@@ -1,7 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { ObjectId } from 'mongodb'
 import { handleCors } from '../../../_lib/cors'
 import { requireAuth } from '../../../_lib/auth-middleware'
-import supabase from '../../../_lib/supabase'
+import { aiConversations } from '../../../_lib/mongo'
+
+// Cap embedded messages per conversation to stay well under the 16MB BSON
+// document limit — a tutoring chat session is naturally bounded anyway.
+const MAX_MESSAGES = 200
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -10,54 +15,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const user = await requireAuth(req)
+    if (!ObjectId.isValid(id as string)) return res.status(404).json({ error: 'Conversation not found' })
 
-    // Verify conversation ownership
-    const { data: conversation } = await supabase
-      .from('ai_conversation')
-      .select('id')
-      .eq('id', id as string)
-      .eq('user_id', user.personId)
-      .single()
+    const col = await aiConversations()
+    const conversation = await col.findOne({ _id: new ObjectId(id as string), user_id: user.personId } as any)
 
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' })
     }
 
     if (req.method === 'GET') {
-      const { data: messages, error } = await supabase
-        .from('ai_message')
-        .select('*')
-        .eq('conversation_id', id as string)
-        .order('created_at', { ascending: true })
-
-      if (error) throw new Error(error.message)
-      return res.status(200).json({ data: messages })
+      return res.status(200).json({ data: conversation.messages || [] })
     }
 
     if (req.method === 'POST') {
-      const { role, content, scylladb_message_id } = req.body || {}
+      const { role, content } = req.body || {}
       if (!role || !content) {
         return res.status(400).json({ error: 'role and content are required' })
       }
 
-      const { data: message, error } = await supabase
-        .from('ai_message')
-        .insert({
-          conversation_id: id as string,
-          role,
-          content,
-          scylladb_message_id: scylladb_message_id || null,
-        })
-        .select()
-        .single()
+      const message = { role, content, created_at: new Date() }
+      const now = new Date()
 
-      if (error) throw new Error(error.message)
-
-      // Update conversation timestamp
-      await supabase
-        .from('ai_conversation')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', id as string)
+      await col.updateOne({ _id: new ObjectId(id as string) } as any, {
+        $push: { messages: { $each: [message], $slice: -MAX_MESSAGES } },
+        $set: { updated_at: now },
+      } as any)
 
       return res.status(201).json({ data: message })
     }

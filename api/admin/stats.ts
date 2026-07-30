@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { createLogger } from '../_lib/logger'
 import { requireAdmin } from '../_lib/auth-middleware'
-import supabase, { supabaseIdentity } from '../_lib/supabase'
+import { profiles, phrases, phraseProgress, bookmarks, phraseViews } from '../_lib/mongo'
 
 const log = createLogger('admin-stats')
 
@@ -16,33 +16,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-    const [
-      { count: totalUsers },
-      { count: totalAdmins },
-      { count: totalPhrases },
-      { count: totalProgress },
-      { count: totalBookmarks },
-      { count: totalViews },
-      { count: activeUsers },
-    ] = await Promise.all([
-      supabaseIdentity.from('person').select('*', { count: 'exact', head: true }).is('deleted_at', null),
-      supabaseIdentity.from('person').select('*', { count: 'exact', head: true }).eq('role', 'admin').is('deleted_at', null),
-      supabase.from('phrase').select('*', { count: 'exact', head: true }),
-      supabase.from('phrase_progress').select('*', { count: 'exact', head: true }),
-      supabase.from('phrase_progress').select('*', { count: 'exact', head: true }).eq('bookmarked', true),
-      supabase.from('phrase_view').select('*', { count: 'exact', head: true }),
-      supabaseIdentity.from('person').select('*', { count: 'exact', head: true }).gte('last_active', sevenDaysAgo.toISOString()).is('deleted_at', null),
+    const [profilesCol, phrasesCol, progressCol, bookmarksCol, viewsCol] = await Promise.all([
+      profiles(),
+      phrases(),
+      phraseProgress(),
+      bookmarks(),
+      phraseViews(),
     ])
+
+    const [totalUsers, totalAdmins, totalPhrases, totalProgress, totalBookmarks, totalViews, activeUsers] =
+      await Promise.all([
+        profilesCol.countDocuments({ deleted_at: null }),
+        profilesCol.countDocuments({ role: 'admin', deleted_at: null }),
+        phrasesCol.countDocuments(),
+        progressCol.countDocuments(),
+        bookmarksCol.countDocuments(),
+        viewsCol.countDocuments(),
+        profilesCol.countDocuments({ last_active: { $gte: sevenDaysAgo }, deleted_at: null }),
+      ])
 
     return res.status(200).json({
       data: {
-        total_users: totalUsers || 0,
-        total_admins: totalAdmins || 0,
-        total_phrases: totalPhrases || 0,
-        total_progress_records: totalProgress || 0,
-        total_bookmarks: totalBookmarks || 0,
-        total_views: totalViews || 0,
-        active_users: activeUsers || 0,
+        total_users: totalUsers,
+        total_admins: totalAdmins,
+        total_phrases: totalPhrases,
+        total_progress_records: totalProgress,
+        total_bookmarks: totalBookmarks,
+        total_views: totalViews,
+        active_users: activeUsers,
       },
     })
   } catch (error: any) {

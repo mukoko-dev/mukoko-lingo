@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { ObjectId } from 'mongodb'
 import { handleCors } from '../../../_lib/cors'
 import { requireAdmin } from '../../../_lib/auth-middleware'
-import { supabaseIdentity } from '../../../_lib/supabase'
+import { profiles } from '../../../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -11,21 +12,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     await requireAdmin(req)
+    if (!ObjectId.isValid(id as string)) return res.status(404).json({ error: 'Profile not found' })
 
     const { role } = req.body || {}
     if (!role || !['user', 'admin'].includes(role)) {
       return res.status(400).json({ error: 'Valid role is required (user or admin)' })
     }
 
-    const { data: person, error } = await supabaseIdentity
-      .from('person')
-      .update({ role })
-      .eq('id', id as string)
-      .select()
-      .single()
+    const col = await profiles()
+    const person = await col.findOneAndUpdate(
+      { _id: new ObjectId(id as string) } as any,
+      { $set: { role } },
+      { returnDocument: 'after' }
+    )
 
-    if (error) throw new Error(error.message)
-    return res.status(200).json({ data: person })
+    if (!person) return res.status(404).json({ error: 'Profile not found' })
+    return res.status(200).json({ data: { ...person, id: String(person._id) } })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })

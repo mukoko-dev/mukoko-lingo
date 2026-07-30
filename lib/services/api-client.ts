@@ -1,6 +1,6 @@
 /**
  * API Client for Mukoko Lingo
- * Handles all data operations via REST API backed by Supabase PostgreSQL.
+ * Handles all data operations via REST API backed by MongoDB.
  * Queries the normalized lingo.* / identity.* / system.* schemas.
  *
  * All requests include the WorkOS access token for authentication.

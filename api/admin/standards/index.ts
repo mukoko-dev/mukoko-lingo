@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { requireAdmin } from '../../_lib/auth-middleware'
-import supabase from '../../_lib/supabase'
+import { learningStandards } from '../../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -10,13 +10,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await requireAdmin(req)
 
-    const { data: standards, error } = await supabase
-      .from('learning_standard')
-      .select('*')
-      .order('level_order', { ascending: true })
+    const col = await learningStandards()
+    const standards = await col.find({}).sort({ level_order: 1 }).toArray()
 
-    if (error) throw new Error(error.message)
-    return res.status(200).json({ data: standards })
+    return res.status(200).json({ data: standards.map((s: any) => ({ ...s, id: String(s._id) })) })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })
