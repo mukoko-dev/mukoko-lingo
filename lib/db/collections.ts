@@ -7,7 +7,8 @@
 
 import { getDb } from './mongo'
 import type {
-  Profile,
+  Person,
+  LingoProfile,
   Phrase,
   PhraseProgress,
   Bookmark,
@@ -32,7 +33,10 @@ import type {
   Guardrail,
 } from './types'
 
-export const profiles = async () => (await getDb()).collection<Profile>('profiles')
+/** identity.persons — shared ecosystem user record, not Lingo-owned. */
+export const persons = async () => (await getDb('identity')).collection<Person>('persons')
+/** Lingo-local extension of a person (role, learning prefs, push tokens). */
+export const lingoProfiles = async () => (await getDb()).collection<LingoProfile>('learner_profiles')
 export const phrases = async () => (await getDb()).collection<Phrase>('phrases')
 export const phraseProgress = async () => (await getDb()).collection<PhraseProgress>('phrase_progress')
 export const bookmarks = async () => (await getDb()).collection<Bookmark>('bookmarks')

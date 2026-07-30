@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import { studySessions, profiles } from '../_lib/mongo'
+import { studySessions } from '../_lib/mongo'
+import { updateLingoProfile } from '../../lib/db/identity'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -40,11 +40,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         { upsert: true, returnDocument: 'after' }
       )
 
-      const profilesCol = await profiles()
-      await profilesCol.updateOne(
-        { _id: new ObjectId(user.personId) } as any,
-        { $set: { last_study_date: new Date().toISOString(), last_active: new Date() } }
-      )
+      await updateLingoProfile(user.personId, {
+        last_study_date: new Date().toISOString(),
+        last_active: new Date(),
+      })
 
       return res.status(200).json({ data: { ...result, id: String(result!._id) } })
     }

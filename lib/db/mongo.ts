@@ -30,7 +30,7 @@ async function getClient(): Promise<MongoClient> {
   return _client
 }
 
-export async function getDb(): Promise<Db> {
+export async function getDb(name: string = DB_NAME): Promise<Db> {
   const client = await getClient()
-  return client.db(DB_NAME)
+  return client.db(name)
 }

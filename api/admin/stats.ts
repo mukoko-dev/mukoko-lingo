@@ -2,7 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { createLogger } from '../_lib/logger'
 import { requireAdmin } from '../_lib/auth-middleware'
-import { profiles, phrases, phraseProgress, bookmarks, phraseViews } from '../_lib/mongo'
+import { phrases, phraseProgress, bookmarks, phraseViews } from '../_lib/mongo'
+import { countLingoProfiles } from '../../lib/db/identity'
 
 const log = createLogger('admin-stats')
 
@@ -16,8 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-    const [profilesCol, phrasesCol, progressCol, bookmarksCol, viewsCol] = await Promise.all([
-      profiles(),
+    const [phrasesCol, progressCol, bookmarksCol, viewsCol] = await Promise.all([
       phrases(),
       phraseProgress(),
       bookmarks(),
@@ -26,13 +26,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const [totalUsers, totalAdmins, totalPhrases, totalProgress, totalBookmarks, totalViews, activeUsers] =
       await Promise.all([
-        profilesCol.countDocuments({ deleted_at: null }),
-        profilesCol.countDocuments({ role: 'admin', deleted_at: null }),
+        countLingoProfiles(),
+        countLingoProfiles({ role: 'admin' }),
         phrasesCol.countDocuments(),
         progressCol.countDocuments(),
         bookmarksCol.countDocuments(),
         viewsCol.countDocuments(),
-        profilesCol.countDocuments({ last_active: { $gte: sevenDaysAgo }, deleted_at: null }),
+        countLingoProfiles({ last_active: { $gte: sevenDaysAgo } }),
       ])
 
     return res.status(200).json({

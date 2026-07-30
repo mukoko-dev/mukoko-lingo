@@ -18,7 +18,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { createLogger } from '../_lib/logger'
 import { requireAdmin } from '../_lib/auth-middleware'
-import { profiles, classes, classMemberships } from '../_lib/mongo'
+import { classes, classMemberships } from '../_lib/mongo'
+import { findOrCreatePersonByEmail } from '../../lib/db/identity'
 
 const log = createLogger('oneroster')
 
@@ -167,29 +168,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const stats = { classes_synced: 0, users_synced: 0, enrollments_synced: 0 }
 
-    const profilesCol = await profiles()
     const classesCol = await classes()
     const membershipsCol = await classMemberships()
 
-    // Step 5: Upsert users into the profiles collection
+    // Step 5: Upsert users into identity.persons
     const userIdMap = new Map<string, string>() // oneroster sourcedId → person id
     for (const u of rosterUsers) {
       const email = u.email || `${u.username || u.sourcedId}@oneroster.local`
-      const existing = await profilesCol.findOne({ email })
-
-      if (existing) {
-        userIdMap.set(u.sourcedId, String(existing._id))
-      } else {
-        const result = await profilesCol.insertOne({
-          email,
-          display_name: `${u.givenName || ''} ${u.familyName || ''}`.trim() || email.split('@')[0],
-          role: 'user',
-          status: 'active',
-          created_at: new Date(),
-        } as any)
-        userIdMap.set(u.sourcedId, String(result.insertedId))
-        stats.users_synced++
-      }
+      const { id: personId, created } = await findOrCreatePersonByEmail({
+        email,
+        givenName: u.givenName,
+        familyName: u.familyName,
+      })
+      userIdMap.set(u.sourcedId, personId)
+      if (created) stats.users_synced++
     }
 
     // Step 6: Upsert classes

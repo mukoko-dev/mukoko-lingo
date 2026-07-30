@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { requireAuth } from '../../_lib/auth-middleware'
-import { classMemberships, profiles } from '../../_lib/mongo'
+import { classMemberships } from '../../_lib/mongo'
+import { findPersonIdByEmail } from '../../../lib/db/identity'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -32,10 +33,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       let resolvedPersonId = person_id
       if (!resolvedPersonId && email) {
-        const profilesCol = await profiles()
-        const person = await profilesCol.findOne({ email })
-        if (!person) return res.status(404).json({ error: 'User not found' })
-        resolvedPersonId = String(person._id)
+        resolvedPersonId = await findPersonIdByEmail(email)
+        if (!resolvedPersonId) return res.status(404).json({ error: 'User not found' })
       }
 
       if (!resolvedPersonId) {
