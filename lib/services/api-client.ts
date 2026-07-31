@@ -1,12 +1,12 @@
 /**
  * API Client for Mukoko Lingo
- * Handles all data operations via REST API backed by Supabase PostgreSQL.
+ * Handles all data operations via REST API backed by MongoDB.
  * Queries the normalized lingo.* / identity.* / system.* schemas.
  *
- * All requests include the Stytch session token for authentication.
+ * All requests include the WorkOS access token for authentication.
  */
 
-import { getSessionToken } from '@/lib/auth/stytch-client'
+import { getSessionToken } from '@/lib/auth/workos-client'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''

@@ -1,0 +1,41 @@
+/**
+ * MongoDB Client Singleton
+ * Server-side only — used by API routes / Vercel serverless functions.
+ *
+ * Cached across warm Vercel invocations the same way the Python analytics
+ * scripts cache their MongoClient (api/analytics/_helpers.py's `_client`
+ * global) — but promise-cached here since `MongoClient.connect()` is async
+ * and two concurrent cold-start requests must not race into creating two
+ * separate clients/pools.
+ */
+
+import { MongoClient, type Db } from 'mongodb'
+
+const MONGODB_URI = process.env.MONGODB_URI || ''
+// The shared Nyuchi cluster's real Lingo database — never 'mukoko-lingo',
+// which was an invented, never-populated database from the original
+// Supabase migration. `lingo` already holds the real, ecosystem-shared
+// phrases/languages/scenarios/standards content; Lingo-local operational
+// collections (bookmarks, progress, profiles, etc.) live here too.
+const DB_NAME = 'lingo'
+
+if (!MONGODB_URI) {
+  console.error('[mukoko][db] Missing credentials: MONGODB_URI must be set')
+}
+
+let _client: MongoClient | null = null
+let _clientPromise: Promise<MongoClient> | null = null
+
+async function getClient(): Promise<MongoClient> {
+  if (_client) return _client
+  if (!_clientPromise) {
+    _clientPromise = new MongoClient(MONGODB_URI, { appName: 'mukoko-api' }).connect()
+  }
+  _client = await _clientPromise
+  return _client
+}
+
+export async function getDb(name: string = DB_NAME): Promise<Db> {
+  const client = await getClient()
+  return client.db(name)
+}

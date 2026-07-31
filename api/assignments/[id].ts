@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import supabase from '../_lib/supabase'
+import { assignments, classMemberships, assignmentSubmissions } from '../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -10,49 +11,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const user = await requireAuth(req)
+    if (!ObjectId.isValid(id as string)) return res.status(404).json({ error: 'Assignment not found' })
 
-    // Get assignment and verify class membership
-    const { data: assignment } = await supabase
-      .from('assignment')
-      .select('*, class_id')
-      .eq('id', id as string)
-      .single()
+    const assignmentsCol = await assignments()
+    const membershipsCol = await classMemberships()
 
+    const assignment = await assignmentsCol.findOne({ _id: new ObjectId(id as string) } as any)
     if (!assignment) return res.status(404).json({ error: 'Assignment not found' })
 
-    const { data: membership } = await supabase
-      .from('class_membership')
-      .select('role')
-      .eq('class_id', assignment.class_id)
-      .eq('person_id', user.personId)
-      .single()
-
+    const membership = await membershipsCol.findOne({ class_id: assignment.class_id, person_id: user.personId })
     if (!membership) return res.status(403).json({ error: 'Not a member of this class' })
 
     if (req.method === 'GET') {
-      // Include submissions if teacher
-      let query = supabase
-        .from('assignment')
-        .select('*')
-        .eq('id', id as string)
-        .single()
+      const submissionsCol = await assignmentSubmissions()
+      const filter: Record<string, any> = { assignment_id: id as string }
+      if (membership.role !== 'teacher') filter.person_id = user.personId
 
-      const { data, error } = await query
-      if (error) throw new Error(error.message)
+      const submissions = await submissionsCol.find(filter).toArray()
 
-      // If teacher, include all submissions; if student, include only own
-      let submissionQuery = supabase
-        .from('assignment_submission')
-        .select('*')
-        .eq('assignment_id', id as string)
-
-      if (membership.role !== 'teacher') {
-        submissionQuery = submissionQuery.eq('person_id', user.personId)
-      }
-
-      const { data: submissions } = await submissionQuery
-
-      return res.status(200).json({ data: { ...data, submissions: submissions || [] } })
+      return res.status(200).json({
+        data: {
+          ...assignment,
+          id: String(assignment._id),
+          submissions: submissions.map((s: any) => ({ ...s, id: String(s._id) })),
+        },
+      })
     }
 
     if (req.method === 'PUT') {
@@ -67,15 +50,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (req.body.due_date !== undefined) update.due_date = req.body.due_date
       if (req.body.status !== undefined) update.status = req.body.status
 
-      const { data: updated, error } = await supabase
-        .from('assignment')
-        .update(update)
-        .eq('id', id as string)
-        .select()
-        .single()
+      const updated = await assignmentsCol.findOneAndUpdate(
+        { _id: new ObjectId(id as string) } as any,
+        { $set: update },
+        { returnDocument: 'after' }
+      )
 
-      if (error) throw new Error(error.message)
-      return res.status(200).json({ data: updated })
+      if (!updated) return res.status(404).json({ error: 'Assignment not found' })
+      return res.status(200).json({ data: { ...updated, id: String(updated._id) } })
     }
 
     if (req.method === 'DELETE') {
@@ -83,8 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(403).json({ error: 'Only teachers can delete assignments' })
       }
 
-      const { error } = await supabase.from('assignment').delete().eq('id', id as string)
-      if (error) throw new Error(error.message)
+      await assignmentsCol.deleteOne({ _id: new ObjectId(id as string) } as any)
       return res.status(200).json({ data: { success: true } })
     }
 

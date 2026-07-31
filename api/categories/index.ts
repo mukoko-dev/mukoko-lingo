@@ -1,6 +1,6 @@
 /**
  * Categories API — returns distinct categories with phrase counts.
- * Source of truth: lingo.phrase.category column in Supabase.
+ * Source of truth: the `category` field on the `phrases` MongoDB collection.
  *
  * GET /api/categories
  * Returns: [{ id, name, count }]
@@ -9,7 +9,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { createLogger } from '../_lib/logger'
-import supabase from '../_lib/supabase'
+import { phrases } from '../_lib/mongo'
 
 const log = createLogger('categories')
 
@@ -41,18 +41,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const { data: rows, error } = await supabase
-      .from('phrase')
-      .select('category')
-      .limit(10000)
+    const col = await phrases()
+    const rows = await col.aggregate([{ $group: { _id: '$category', count: { $sum: 1 } } }]).toArray()
 
-    if (error) throw new Error(error.message)
-
-    // Aggregate counts by category
     const counts: Record<string, number> = {}
-    for (const row of rows || []) {
-      if (!row.category) continue
-      counts[row.category] = (counts[row.category] || 0) + 1
+    for (const row of rows) {
+      if (!row._id) continue
+      counts[row._id] = row.count
     }
 
     const categories = Object.entries(counts)

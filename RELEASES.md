@@ -36,13 +36,13 @@ MAJOR.MINOR.PATCH
 - **Branch**: `main`
 - **Environment**: Vercel Production
 - **URL**: https://lingo.mukoko.com (mobile web), TBD (Next.js web)
-- **Database**: Supabase PostgreSQL (`yqmqdiudhztddiyeerig`)
-- **Auth**: Stytch Production
+- **Database**: MongoDB (database `mukoko-lingo`)
+- **Auth**: WorkOS AuthKit (Production environment)
 
 ### Development
 - **Branch**: Feature branches
 - **Environment**: Local / Vercel Preview
-- **Database**: Same Supabase project (use with care)
+- **Database**: Same MongoDB database (use with care)
 
 ## Release Process
 

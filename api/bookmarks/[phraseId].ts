@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import supabase from '../_lib/supabase'
+import { bookmarks } from '../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -12,14 +12,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await requireAuth(req)
 
     if (req.method === 'DELETE') {
-      // Set bookmarked=false on phrase_progress
-      const { error } = await supabase
-        .from('phrase_progress')
-        .update({ bookmarked: false })
-        .eq('user_id', user.personId)
-        .eq('phrase_id', phraseId as string)
-
-      if (error) throw new Error(error.message)
+      const col = await bookmarks()
+      await col.deleteOne({ user_id: user.personId, phrase_id: phraseId as string })
       return res.status(200).json({ data: { success: true } })
     }
 

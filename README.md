@@ -4,7 +4,7 @@
 
 Learn Shona, Ndebele, Chinese, and English with AI-powered tutoring by Shamwari.
 
-Built with Expo SDK 54 / React Native, Next.js, Supabase PostgreSQL, Stytch Auth, Vercel Serverless, and Anthropic Claude.
+Built with Expo SDK 57 / React Native, Next.js, MongoDB, WorkOS AuthKit, Vercel Serverless, and Anthropic Claude.
 
 **Parent Company**: [Nyuchi Africa](https://nyuchi.com) | **Registry**: [registry.mukoko.com](https://registry.mukoko.com)
 
@@ -28,8 +28,8 @@ cd web && npm install && npm run dev
 
 Copy `.env.example` to `.env.local` and fill in:
 
-- `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` — Supabase PostgreSQL
-- `STYTCH_PROJECT_ID` / `STYTCH_SECRET` — Stytch auth credentials
+- `MONGODB_URI` — MongoDB connection string
+- `WORKOS_API_KEY` / `WORKOS_CLIENT_ID` — WorkOS AuthKit credentials
 - `ANTHROPIC_API_KEY` — Anthropic Claude API key (server-side only)
 - `EXPO_PUBLIC_API_BASE_URL` — Vercel API base URL
 
@@ -73,8 +73,8 @@ Both apps call the same API routes. The web app includes all learner features pl
 | Web Frontend | Next.js 15 / Tailwind CSS / Five African Minerals |
 | Routing | Expo Router 6 (mobile) / Next.js App Router (web) |
 | Backend | Vercel Serverless Functions (TypeScript + Python) |
-| Database | Supabase PostgreSQL (lingo / identity / system schemas) |
-| Auth | Stytch SDK 13 (email/password, OTP, magic links, WhatsApp) |
+| Database | MongoDB (database `mukoko-lingo`) |
+| Auth | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow) |
 | AI | Anthropic Claude Haiku 4.5 (server-side proxy with circuit breaker) |
 | Testing | Jest 29 + jest-expo (18 suites, 226 tests) |
 | CI/CD | GitHub Actions (typecheck → test → build-web) |
@@ -102,15 +102,19 @@ npx tsc --noEmit            # TypeScript type check
 
 ## Database Schema
 
-Three Supabase PostgreSQL schemas:
+MongoDB, database `mukoko-lingo`, key collections:
 
-| Schema | Tables | Purpose |
-|--------|--------|---------|
-| `lingo` | 18 | Phrases, translations, progress, skills, classes, assignments, AI conversations |
-| `identity` | 1 | User profiles (person) |
-| `system` | 1 | Content moderation guardrails |
+| Collection | Purpose |
+|------------|---------|
+| `profiles` | User profiles, keyed on the WorkOS `workos_user_id` |
+| `phrases` | Flat multi-language phrase documents (english/shona/ndebele/swahili/chinese) |
+| `phrase_progress`, `bookmarks`, `phrase_views` | Per-user learning activity |
+| `skills`, `user_skills`, `assessments`, `user_assessments`, `learning_standards` | Skills-based progression |
+| `classes`, `class_memberships`, `assignments`, `assignment_submissions`, `organization_enrollments`, `api_keys` | Schools/orgs |
+| `ai_conversations` | Shamwari chat sessions, with messages embedded per conversation |
+| `guardrails`, `moderation_alerts` | Content moderation |
 
-Phrases are normalized: `lingo.phrase` (metadata) + `lingo.translation` (1 row per language per phrase). Adding a new language is just `INSERT` — no schema change.
+Phrases carry all language fields directly on one document — adding a new language is just adding a field, no schema change.
 
 ## CI/CD Pipeline
 

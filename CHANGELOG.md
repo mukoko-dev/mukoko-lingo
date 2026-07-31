@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Changed
+- **Database: Supabase PostgreSQL → MongoDB** — Reverted the data layer back to MongoDB (the platform's original database before the 0.0.1 Supabase migration). All API routes now read/write MongoDB collections via `lib/db/mongo.ts` / `lib/db/collections.ts` instead of `@supabase/supabase-js`. Phrases collapse from a normalized `phrase`+`translation` join into one flat document per phrase (matching the pre-Supabase shape already used by `lib/data/phrases-data.ts`); `ai_conversations` now embed their messages; hand-rolled "select-then-insert" upserts (phrase progress, user skills, SRS cards, assignment submissions) became atomic `findOneAndUpdate`/`bulkWrite` upserts. Fixed two latent bugs surfaced during the port: the auth lookup now keys profiles on the stable WorkOS `workos_user_id` instead of email, and the leaderboard query's `user_id`/`person_id` field-name inconsistency was standardized on `user_id`.
+- **Auth: Stytch → WorkOS AuthKit** — Replaced Stytch (email OTP, WhatsApp OTP, magic links) with WorkOS AuthKit's hosted sign-in page via the PKCE authorization-code flow. `api/_lib/auth-middleware.ts` now verifies access tokens locally against WorkOS's JWKS instead of round-tripping to the auth provider on every request. WhatsApp OTP has no WorkOS equivalent and was dropped.
+- **Dependencies** — Updated all packages across `root` and `web/`: Expo SDK 54 → 57, Next.js 15 → 16, Tailwind CSS 3 → 4. Held back `jest`/`@types/jest` (jest-expo still requires Jest 29) and `@testing-library/react-native` (v14 switches to async `render()`/`renderHook()`, which would require rewriting every test file).
+
+---
+
 ## [0.0.1] — 2026-04-08
 
 ### Initial Release: Supabase Migration & Platform Architecture

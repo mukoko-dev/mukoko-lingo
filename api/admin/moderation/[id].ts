@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { ObjectId } from 'mongodb'
 import { handleCors } from '../../_lib/cors'
 import { requireAdmin } from '../../_lib/auth-middleware'
-import supabase from '../../_lib/supabase'
+import { moderationAlerts } from '../../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -11,6 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const admin = await requireAdmin(req)
+    if (!ObjectId.isValid(id as string)) return res.status(404).json({ error: 'Alert not found' })
 
     const { status, admin_notes } = req.body || {}
     if (!status) return res.status(400).json({ error: 'status is required' })
@@ -20,20 +22,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (status === 'reviewed') {
       update.reviewed_by = admin.personId
-      update.reviewed_at = new Date().toISOString()
+      update.reviewed_at = new Date()
     } else if (status === 'resolved') {
       update.resolved_by = admin.personId
     }
 
-    const { data: alert, error } = await supabase
-      .from('moderation_alert')
-      .update(update)
-      .eq('id', id as string)
-      .select()
-      .single()
+    const col = await moderationAlerts()
+    const alert = await col.findOneAndUpdate(
+      { _id: new ObjectId(id as string) } as any,
+      { $set: update },
+      { returnDocument: 'after' }
+    )
 
-    if (error) throw new Error(error.message)
-    return res.status(200).json({ data: alert })
+    if (!alert) return res.status(404).json({ error: 'Alert not found' })
+    return res.status(200).json({ data: { ...alert, id: String(alert._id) } })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })

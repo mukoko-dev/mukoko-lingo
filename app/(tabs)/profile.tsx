@@ -35,7 +35,7 @@ import {
 
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { getCurrentUser, signOut } from '@/lib/auth/stytch-client'
+import { getCurrentUser, signOut } from '@/lib/auth/workos-client'
 import { getStudyStreak, getStudySessions, getBookmarks, getProgress } from '@/lib/storage/database'
 import { getXPData, getLevelInfo, type LevelInfo } from '@/lib/services/xp'
 import { useLearningLanguage, LEARNING_LANGUAGES, LearningLanguage } from '@/lib/hooks/useLearningLanguage'
@@ -167,7 +167,7 @@ export default function ProfileScreen() {
       await AsyncStorage.setItem(STORAGE_KEYS.THEME_PREFERENCE, preference)
       // Apply theme change
       if (preference === 'system') {
-        Appearance.setColorScheme(null)
+        Appearance.setColorScheme('unspecified')
       } else {
         Appearance.setColorScheme(preference)
       }

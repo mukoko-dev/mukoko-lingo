@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import supabase from '../_lib/supabase'
+import { userAssessments, assessments, userSkills } from '../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -15,60 +16,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
-    // Store assessment result
-    const { data: userAssessment, error } = await supabase
-      .from('user_assessment')
-      .insert({
-        user_id: user.personId,
-        assessment_id,
-        skill_id,
-        answers,
-        score,
-        passed: !!passed,
-        time_taken: time_taken || null,
-      })
-      .select()
-      .single()
+    const userAssessmentsCol = await userAssessments()
+    const now = new Date()
+    const insertResult = await userAssessmentsCol.insertOne({
+      user_id: user.personId,
+      assessment_id,
+      skill_id,
+      answers,
+      score,
+      passed: !!passed,
+      time_taken: time_taken || null,
+      completed_at: now,
+    } as any)
 
-    if (error) throw new Error(error.message)
-
-    // Update user skill if passed
     if (passed) {
-      const { data: assessment } = await supabase
-        .from('assessment')
-        .select('target_level')
-        .eq('id', assessment_id)
-        .single()
+      const assessmentsCol = await assessments()
+      const assessment = ObjectId.isValid(assessment_id)
+        ? await assessmentsCol.findOne({ _id: new ObjectId(assessment_id) } as any)
+        : null
 
       if (assessment) {
-        // Check for existing user_skill
-        const { data: existing } = await supabase
-          .from('user_skill')
-          .select('id, current_score')
-          .eq('user_id', user.personId)
-          .eq('skill_id', skill_id)
-          .single()
+        const userSkillsCol = await userSkills()
+        const existing = await userSkillsCol.findOne({ user_id: user.personId, skill_id })
 
-        if (existing) {
-          const update: Record<string, any> = {
-            current_score: Math.max(existing.current_score, score),
-            level_achieved_at: new Date().toISOString(),
-          }
-          if (score >= 70) update.current_level = assessment.target_level
-          await supabase.from('user_skill').update(update).eq('id', existing.id)
-        } else {
-          await supabase.from('user_skill').insert({
-            user_id: user.personId,
-            skill_id,
-            current_level: assessment.target_level,
-            current_score: score,
-            level_achieved_at: new Date().toISOString(),
-          })
+        const update: Record<string, any> = {
+          current_score: Math.max(existing?.current_score || 0, score),
+          level_achieved_at: now,
         }
+        if (score >= 70) update.current_level = assessment.target_level
+
+        await userSkillsCol.findOneAndUpdate(
+          { user_id: user.personId, skill_id },
+          { $set: update, $setOnInsert: { user_id: user.personId, skill_id } },
+          { upsert: true }
+        )
       }
     }
 
-    return res.status(201).json({ data: userAssessment })
+    return res.status(201).json({ data: { id: String(insertResult.insertedId), user_id: user.personId, assessment_id, skill_id, answers, score, passed: !!passed, time_taken, completed_at: now } })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     return res.status(500).json({ error: error.message || 'Internal server error' })
