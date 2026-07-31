@@ -47,8 +47,8 @@ export interface Person {
 /**
  * Lingo-local extension of a person — fields the shared `identity.persons`
  * schema has no room for (app role, learning preferences, push tokens).
- * Keyed on `person_id` (identity.persons._id). Lives in Lingo's own
- * `mukoko-lingo` database, collection `learner_profiles`.
+ * Keyed on `person_id` (identity.persons._id). Lives in the shared `lingo`
+ * database, collection `learner_profiles`.
  */
 export interface LingoProfile {
   _id?: any
