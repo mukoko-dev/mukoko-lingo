@@ -12,7 +12,12 @@
 import { MongoClient, type Db } from 'mongodb'
 
 const MONGODB_URI = process.env.MONGODB_URI || ''
-const DB_NAME = 'mukoko-lingo'
+// The shared Nyuchi cluster's real Lingo database — never 'mukoko-lingo',
+// which was an invented, never-populated database from the original
+// Supabase migration. `lingo` already holds the real, ecosystem-shared
+// phrases/languages/scenarios/standards content; Lingo-local operational
+// collections (bookmarks, progress, profiles, etc.) live here too.
+const DB_NAME = 'lingo'
 
 if (!MONGODB_URI) {
   console.error('[mukoko][db] Missing credentials: MONGODB_URI must be set')

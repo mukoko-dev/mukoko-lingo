@@ -76,7 +76,7 @@ npx tsc --noEmit         # TypeScript type checking
 
 ```bash
 # MongoDB
-MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/mukoko-lingo
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/lingo
 
 # WorkOS AuthKit (server-side only - NEVER expose to client)
 WORKOS_API_KEY=sk_test_your-workos-api-key
@@ -247,7 +247,7 @@ nyuchi-lingo/
 | Styling | NativeWind (Tailwind CSS for React Native) |
 | Routing | Expo Router 6 (file-based routing) |
 | Backend | Vercel Serverless Functions (TypeScript + Python) |
-| Database | MongoDB (database `mukoko-lingo`) |
+| Database | MongoDB (database `lingo` — shared with the rest of the Nyuchi ecosystem) |
 | Auth | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow) |
 | AI | Anthropic Claude Haiku 4.5 (direct API + Vercel AI Gateway) |
 | Testing | Jest 29 + jest-expo + React Testing Library |
@@ -287,11 +287,11 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 
 ### Database Schema (MongoDB)
 
-**Database**: Lingo's own operational data lives in `mukoko-lingo`, accessed via `lib/db/mongo.ts` (client singleton, `getDb(name?)`) and `lib/db/collections.ts` (typed per-collection accessors). Schemaless — indexes are created via `scripts/create-indexes.ts`. The MongoDB cluster is **shared across the Nyuchi ecosystem** — `identity`, `entity`, `lingo`, `engagement`, etc. are sibling databases on the same cluster, each owned by a different domain/app. Lingo must never invent its own parallel user table; it reads/writes the shared `identity` database for user identity (see below).
+**Database**: `lingo` — the real, shared Nyuchi ecosystem database, accessed via `lib/db/mongo.ts` (client singleton, `getDb(name?)`, `DB_NAME = 'lingo'`) and `lib/db/collections.ts` (typed per-collection accessors). Schemaless — indexes are created via `scripts/create-indexes.ts`. **Never `mukoko-lingo`** — that was an invented, never-populated database from the original Supabase migration; `lingo` already holds the real, ecosystem-curated `phrases`/`languages`/`scenarios`/`standards`/`learningStandards` content (see `docs/ECOSYSTEM_DATA_MIGRATION.md`), and Lingo's own operational collections (bookmarks, progress, profiles, etc.) live there too. The MongoDB cluster is **shared across the Nyuchi ecosystem** — `identity`, `entity`, `lingo`, `engagement`, etc. are sibling databases on the same cluster, each owned by a different domain/app. Lingo must never invent its own parallel user table; it reads/writes the shared `identity` database for user identity (see below).
 
 **User & Authentication** — split across two databases, merged at the API layer (`lib/db/identity.ts`):
 - `identity.persons` (shared, ecosystem-wide, **not Lingo-owned**) — the real user record: UUID string `_id` (used as the OIDC `sub` claim), OIDC standard claims (`email`, `givenName`, `familyName`, `name`, `locale`, etc.), `workosUserId` mapping to WorkOS. Other Nyuchi apps (identity, entity, ubuntu, etc.) read and write this same collection.
-- `mukoko-lingo.learner_profiles` (Lingo-local) — the extension fields the shared schema has no room for: `role` (`user`/`admin`), `status`, `preferred_ui_language`, `learning_goal`, `daily_goal`, push token, streaks. Keyed on `person_id` (== `identity.persons._id`).
+- `lingo.learner_profiles` (Lingo-local) — the extension fields the shared schema has no room for: `role` (`user`/`admin`), `status`, `preferred_ui_language`, `learning_goal`, `daily_goal`, push token, streaks. Keyed on `person_id` (== `identity.persons._id`).
 - `lib/db/identity.ts` exports the only sanctioned way to touch either collection: `findOrCreatePersonFromWorkOS`, `getMergedProfile`, `updateLingoProfile`, `listMergedProfiles`, etc. — all API routes go through these rather than querying `persons()`/`lingoProfiles()` directly, so the two collections never drift out of sync.
 
 **Phrase Learning**:
