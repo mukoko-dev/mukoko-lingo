@@ -30,7 +30,7 @@ import type {
   OrganizationEnrollment,
   ApiKey,
   StudySession,
-  Guardrail,
+  SharedGuardrail,
 } from './types'
 
 /** identity.persons — shared ecosystem user record, not Lingo-owned. */
@@ -58,6 +58,7 @@ export const assignmentSubmissions = async () => (await getDb()).collection<Assi
 export const organizationEnrollments = async () => (await getDb()).collection<OrganizationEnrollment>('organization_enrollments')
 export const apiKeys = async () => (await getDb()).collection<ApiKey>('api_keys')
 export const studySessions = async () => (await getDb()).collection<StudySession>('study_sessions')
-export const guardrails = async () => (await getDb()).collection<Guardrail>('guardrails')
+/** shamwari.guardrails — shared ecosystem moderation policy, not Lingo-owned. */
+export const sharedGuardrails = async () => (await getDb('shamwari')).collection<SharedGuardrail>('guardrails')
 
 export { getDb }
