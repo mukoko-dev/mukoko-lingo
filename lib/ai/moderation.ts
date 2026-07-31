@@ -127,7 +127,7 @@ async function checkAIModeration(content: string): Promise<ModerationResult | nu
   if (!API_BASE_URL) return null
 
   try {
-    const { getSessionToken } = await import('@/lib/auth/stytch-client')
+    const { getSessionToken } = await import('@/lib/auth/workos-client')
     const token = await getSessionToken()
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (token) headers['Authorization'] = `Bearer ${token}`

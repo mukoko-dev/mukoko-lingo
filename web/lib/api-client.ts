@@ -15,7 +15,7 @@ interface ApiResponse<T> {
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   // Web app uses cookie-based or localStorage session tokens
-  const token = typeof window !== 'undefined' ? localStorage.getItem('stytch_session_token') : null
+  const token = typeof window !== 'undefined' ? localStorage.getItem('workos_access_token') : null
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
   return headers

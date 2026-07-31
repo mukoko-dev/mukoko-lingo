@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Mukoko Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) with both web and mobile (Expo/React Native) applications, powered by Supabase PostgreSQL, Stytch Auth, Vercel Serverless Functions, and Anthropic Claude.
+**Mukoko Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) with both web and mobile (Expo/React Native) applications, powered by MongoDB, WorkOS AuthKit, Vercel Serverless Functions, and Anthropic Claude.
 
 **Parent Company**: Nyuchi Africa (nyuchi.com)
 
@@ -57,9 +57,9 @@ npm run build:ios        # Build iOS via EAS
 npm run build:android    # Build Android via EAS
 npm run build:all        # Build all platforms via EAS
 
-# Database (Supabase PostgreSQL)
-# Schema managed via Supabase dashboard/migrations
-# Schemas: lingo (learning data), identity (users), system (guardrails)
+# Database (MongoDB)
+# Schemaless; indexes managed via scripts/create-indexes.ts
+# Key collections: identity.persons (shared), learner_profiles, phrases, phrase_progress, skills, classes, guardrails
 
 # Testing
 npm test                 # Run all tests (Jest + jest-expo)
@@ -75,19 +75,20 @@ npx tsc --noEmit         # TypeScript type checking
 **Required Environment Variables** (see `.env.example` for full template):
 
 ```bash
-# Supabase PostgreSQL
-SUPABASE_URL=https://yqmqdiudhztddiyeerig.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-SUPABASE_ANON_KEY=your-supabase-anon-key
+# MongoDB
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/lingo
 
-# Stytch Authentication (server-side only - NEVER expose to client)
-STYTCH_PROJECT_ID=project-test-...
-STYTCH_SECRET=your-stytch-secret-key
-STYTCH_PUBLIC_TOKEN=public-token-test-...
+# WorkOS AuthKit (server-side only - NEVER expose to client)
+WORKOS_API_KEY=sk_test_your-workos-api-key
+WORKOS_CLIENT_ID=client_your-workos-client-id
 
-# Stytch (client-side - exposed to mobile app)
-EXPO_PUBLIC_STYTCH_PROJECT_ID=project-test-...
-EXPO_PUBLIC_STYTCH_PUBLIC_TOKEN=public-token-test-...
+# WorkOS redirect URIs (registered in the WorkOS dashboard)
+WORKOS_REDIRECT_URI_WEB=https://lingo.mukoko.com/auth/callback
+WORKOS_REDIRECT_URI_MOBILE=mukokolingo://auth/callback
+
+# WorkOS (client-side - Client ID is not secret)
+EXPO_PUBLIC_WORKOS_CLIENT_ID=client_your-workos-client-id
+EXPO_PUBLIC_WORKOS_REDIRECT_URI=mukokolingo://auth/callback
 
 # API Base URL (Vercel serverless functions)
 EXPO_PUBLIC_API_BASE_URL=https://your-api-domain.vercel.app
@@ -99,23 +100,13 @@ EXPO_PUBLIC_API_BASE_URL=https://your-api-domain.vercel.app
 
 # Vercel AI Gateway (for web API routes)
 AI_GATEWAY_API_KEY=your_api_key_here
-
-# Optional: Custom Stytch email template IDs (omit to use Stytch defaults)
-STYTCH_TEMPLATE_LOGIN=mukoko_lingo_login
-STYTCH_TEMPLATE_SIGNUP=mukoko_lingo_signup
-STYTCH_TEMPLATE_OTP=mukoko_lingo_otp
-STYTCH_TEMPLATE_RESET_PASSWORD=mukoko_lingo_reset_password
-
-# Optional: Redirect URLs
-EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL=mukokolingo://reset-password
-EXPO_PUBLIC_MAGIC_LINK_REDIRECT_URL=mukokolingo://auth/callback
 ```
 
 ### Local Development
 
 1. Copy `.env.example` to `.env.local`
-2. Fill in your Supabase project URL and service role key
-3. Fill in your Stytch project credentials from https://stytch.com/dashboard
+2. Fill in your MongoDB connection string
+3. Fill in your WorkOS API key and Client ID from https://dashboard.workos.com
 4. Run `npx expo start` to start the dev server
 
 ## Directory Structure
@@ -161,8 +152,8 @@ nyuchi-lingo/
 │
 ├── api/                          # Vercel Serverless Functions (backend)
 │   ├── _lib/                     # Shared middleware
-│   │   ├── auth-middleware.ts    # Stytch session validation + admin check
-│   │   ├── supabase.ts           # Supabase client (lingo/identity/system)
+│   │   ├── auth-middleware.ts    # WorkOS access-token validation + admin check
+│   │   ├── mongo.ts              # Mongo client + collection accessors re-export shim
 │   │   └── cors.ts               # CORS configuration
 │   ├── auth/                     # Auth endpoints (login, register, OTP, magic links, WhatsApp)
 │   ├── phrases/                  # Phrase CRUD
@@ -196,10 +187,12 @@ nyuchi-lingo/
 │   │   ├── skills-aware-prompts.ts # Adaptive prompts based on proficiency
 │   │   └── moderation.ts         # Content moderation (local + AI)
 │   ├── auth/
-│   │   └── stytch-client.ts      # Stytch auth (email, OTP, magic links, WhatsApp)
+│   │   └── workos-client.ts      # WorkOS AuthKit client (PKCE hosted sign-in)
 │   ├── db/
-│   │   ├── supabase.ts           # Supabase client (multi-schema)
-│   │   └── transform-phrase.ts   # Flatten normalized translations
+│   │   ├── mongo.ts              # MongoDB client singleton
+│   │   ├── collections.ts        # Typed per-collection accessors
+│   │   ├── types.ts              # Collection document interfaces
+│   │   └── phrase-shape.ts       # Flat phrase ↔ API camelCase shape mapping
 │   ├── data/
 │   │   ├── phrases-data.ts       # 200+ phrases in 4 languages
 │   │   ├── assessment-questions.ts # Question bank across 5 skills
@@ -209,13 +202,13 @@ nyuchi-lingo/
 │   │   ├── useLearningLanguage.tsx # Learning language state (AsyncStorage)
 │   │   └── useTheme.tsx          # Theme management (light/dark/system)
 │   ├── services/
-│   │   └── api-client.ts         # REST API client with Stytch Bearer token
+│   │   └── api-client.ts         # REST API client with WorkOS Bearer token
 │   ├── storage/
 │   │   ├── database.d.ts         # Platform-agnostic storage interface
 │   │   ├── database.web.ts       # AsyncStorage implementation (web)
 │   │   └── database.native.ts    # SQLite implementation (iOS/Android)
-│   ├── stytch/
-│   │   └── config.ts             # Stytch SDK configuration
+│   ├── workos/
+│   │   └── config.ts             # WorkOS AuthKit redirect URI configuration
 │   └── types/
 │       └── skills.ts             # Skills system TypeScript definitions
 │
@@ -250,12 +243,12 @@ nyuchi-lingo/
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Expo SDK 54 / React Native 0.81 / React 19 (web + iOS + Android) |
+| Frontend | Expo SDK 57 / React Native 0.86 / React 19 (web + iOS + Android) |
 | Styling | NativeWind (Tailwind CSS for React Native) |
 | Routing | Expo Router 6 (file-based routing) |
 | Backend | Vercel Serverless Functions (TypeScript + Python) |
-| Database | Supabase PostgreSQL (lingo/identity/system schemas) |
-| Auth | Stytch SDK 13 (email/password, OTP, magic links, WhatsApp) |
+| Database | MongoDB (database `lingo` — shared with the rest of the Nyuchi ecosystem) |
+| Auth | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow) |
 | AI | Anthropic Claude Haiku 4.5 (direct API + Vercel AI Gateway) |
 | Testing | Jest 29 + jest-expo + React Testing Library |
 | CI/CD | GitHub Actions (typecheck → test → build-web) |
@@ -263,59 +256,64 @@ nyuchi-lingo/
 ### Authentication System
 
 **Architecture:**
-- **Stytch** for authentication (email/password, OTP via email & WhatsApp, magic links)
-  - Client: `lib/auth/stytch-client.ts` - Mobile/web auth with secure storage
+- **WorkOS AuthKit** hosted sign-in page (email/password, magic auth, social —
+  whatever the AuthKit environment has enabled) via the PKCE
+  authorization-code flow
+  - Client: `lib/auth/workos-client.ts` - drives the flow via
+    `expo-web-browser`'s `openAuthSessionAsync`, persists tokens with secure
+    storage
   - Server: `api/_lib/auth-middleware.ts` - Vercel API auth middleware
-  - Session tokens stored via SecureStore (native) or AsyncStorage (web)
-- **Vercel Serverless Functions** - Backend validates sessions with Stytch SDK
+  - Access/refresh tokens stored via SecureStore (native) or AsyncStorage (web)
+- **Vercel Serverless Functions** - access tokens verified locally against
+  WorkOS's JWKS (`jose`), no per-request round trip for signature/expiry checks
 
-**Flow**: Client stores Stytch session token → API requests include `Bearer` token → Server validates with Stytch SDK → identity.person auto-created if new user
+**Flow**: Client opens the AuthKit hosted URL → WorkOS redirects back with an
+authorization code → client exchanges it (with its PKCE verifier) for an
+access/refresh token pair via `/api/auth/callback` → subsequent API requests
+send the access token as a `Bearer` header → an `identity.persons` document is
+found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 
 **Auth API Routes** (`api/auth/`):
-- `login.ts`, `register.ts`, `logout.ts` - Core auth
-- `session/validate.ts` - Session validation
-- `otp/send.ts`, `otp/verify.ts` - Email OTP
-- `whatsapp/send.ts`, `whatsapp/verify.ts` - WhatsApp OTP
-- `magic-link/send.ts`, `magic-link/authenticate.ts` - Magic links
-- `password/reset-request.ts`, `password/update.ts` - Password recovery
+- `authorize.ts` - builds the AuthKit hosted sign-in URL + PKCE verifier
+- `callback.ts` - exchanges the authorization code for tokens
+- `refresh.ts` - exchanges a refresh token for a new access token
+- `session/validate.ts` - validates an access token
+- `logout.ts` - best-effort session revocation
 
 **Key Files**:
-- `lib/auth/stytch-client.ts` - Client-side auth (355 lines)
-- `api/_lib/auth-middleware.ts` - Server-side auth validation + admin checks (95 lines)
-- `lib/hooks/useAdmin.ts` - `useAdmin()` client-side hook
-- `lib/services/api-client.ts` - REST API client with auth headers (355 lines)
+- `lib/auth/workos-client.ts` - Client-side auth
+- `api/_lib/auth-middleware.ts` - Server-side auth validation + admin checks
+- `lib/services/api-client.ts` - REST API client with auth headers
 
-### Database Schema (Supabase PostgreSQL)
+### Database Schema (MongoDB)
 
-**Schema Location**: Supabase dashboard — 3 schemas: `lingo` (18 tables), `identity` (1 table), `system` (1 table). Phrases normalized: `lingo.phrase` + `lingo.translation` (1 row per language per phrase).
+**Database**: `lingo` — the real, shared Nyuchi ecosystem database, accessed via `lib/db/mongo.ts` (client singleton, `getDb(name?)`, `DB_NAME = 'lingo'`) and `lib/db/collections.ts` (typed per-collection accessors). Schemaless — indexes are created via `scripts/create-indexes.ts`. **Never `mukoko-lingo`** — that was an invented, never-populated database from the original Supabase migration; `lingo` already holds the real, ecosystem-curated `phrases`/`languages`/`scenarios`/`standards`/`learningStandards` content (see `docs/ECOSYSTEM_DATA_MIGRATION.md`), and Lingo's own operational collections (bookmarks, progress, profiles, etc.) live there too. The MongoDB cluster is **shared across the Nyuchi ecosystem** — `identity`, `entity`, `lingo`, `engagement`, etc. are sibling databases on the same cluster, each owned by a different domain/app. Lingo must never invent its own parallel user table; it reads/writes the shared `identity` database for user identity (see below).
 
-**User & Authentication**:
-- `profiles` - User profiles linked to Stytch via `stytch_user_id`, with role (`user`/`admin`), status, preferences, streaks
+**User & Authentication** — split across two databases, merged at the API layer (`lib/db/identity.ts`):
+- `identity.persons` (shared, ecosystem-wide, **not Lingo-owned**) — the real user record: UUID string `_id` (used as the OIDC `sub` claim), OIDC standard claims (`email`, `givenName`, `familyName`, `name`, `locale`, etc.), `workosUserId` mapping to WorkOS. Other Nyuchi apps (identity, entity, ubuntu, etc.) read and write this same collection.
+- `lingo.learner_profiles` (Lingo-local) — the extension fields the shared schema has no room for: `role` (`user`/`admin`), `status`, `preferred_ui_language`, `learning_goal`, `daily_goal`, push token, streaks. Keyed on `person_id` (== `identity.persons._id`).
+- `lib/db/identity.ts` exports the only sanctioned way to touch either collection: `findOrCreatePersonFromWorkOS`, `getMergedProfile`, `updateLingoProfile`, `listMergedProfiles`, etc. — all API routes go through these rather than querying `persons()`/`lingoProfiles()` directly, so the two collections never drift out of sync.
 
 **Phrase Learning**:
-- `phrases` - 200+ phrases with English, Shona, Ndebele, and Chinese translations + pronunciations. Mapped to skills via `skillId` and `requiredProficiency`
+- `phrases` - 200+ phrases, one flat document per phrase carrying all language fields directly (`english`, `shona`, `ndebele`, `swahili`, `chinese` + nested `pronunciation`/`context`). Mapped to skills via `skill_id` and `required_proficiency`. Seeded from `lib/data/phrases-data.ts` via `scripts/seed-phrases.ts`
 - `phrase_progress` - Learning status tracking (`learning`/`practiced`/`mastered`)
-- `bookmarks` - User-saved phrases for review
+- `bookmarks` - User-saved phrases for review (its own collection, not a flag on `phrase_progress`)
 - `phrase_views` - View tracking analytics
 - `study_sessions` - Daily study session metrics
 
 **Skills-Based Learning**:
-- `skills` - 5 core skills (pronunciation, vocabulary, grammar, comprehension, conversation) with i18n display names
-- `skill_levels` - 5 proficiency levels per skill (beginner → fluent) with min score thresholds
+- `skills` - 5 core skills (pronunciation, vocabulary, grammar, comprehension, conversation) with i18n display names, plus an embedded `levels` array (5 proficiency levels, beginner → fluent)
 - `user_skills` - Current user proficiency per skill (score 0-100, read by AI tutor)
 - `assessments` - Assessment templates (diagnostic/formative/summative) with questions JSON
 - `user_assessments` - User test results with answers, score, pass/fail
 - `learning_standards` - AI tutor configuration by proficiency level
 
 **AI & Moderation**:
-- `ai_conversations` - Chat sessions with type and language
-- `ai_messages` - Individual messages with moderation flags
-- `ai_generated_phrases` - AI-created practice phrases with moderation status
-- `ai_recommendations` - AI-suggested phrases based on proficiency
+- `ai_conversations` - Chat sessions with type and language, messages embedded directly (capped ~200/conversation)
 - `moderation_alerts` - Flagged content for admin review (pending/reviewed/resolved)
 - `guardrails` - Content moderation rules (6 categories: content/behavior/safety)
 
-**Access Control**: API routes enforce auth via Stytch session validation. Admin routes check `profile.role === 'admin'` in `requireAdmin()` middleware.
+**Access Control**: API routes enforce auth via WorkOS access-token validation. Admin routes check `profile.role === 'admin'` in `requireAdmin()` middleware.
 
 ### Skills-Based Learning System
 
@@ -406,7 +404,7 @@ nyuchi-lingo/
 ### Admin System
 
 **Access Control**:
-- Server-side: `requireAdmin()` from `api/_lib/auth-middleware.ts` validates Stytch session + admin role
+- Server-side: `requireAdmin()` from `api/_lib/auth-middleware.ts` validates the WorkOS access token + admin role
 - Client-side: `useAdmin()` hook from `lib/hooks/useAdmin.ts` checks role via profiles API
 
 **Admin Routes** (`app/admin/`):
@@ -421,7 +419,7 @@ nyuchi-lingo/
 
 **Admin Features**:
 - Admin access check in `app/admin/_layout.tsx`
-- All data fetched from Supabase via API (no hardcoded data)
+- All data fetched from MongoDB via API (no hardcoded data)
 - Pull-to-refresh on admin screens
 - Confirmation dialogs for destructive actions
 
@@ -491,7 +489,7 @@ See [BRANDING.md](BRANDING.md) for complete brand guidelines.
 
 ### API Client (All data flows through REST API)
 
-All client-side data operations go through `lib/services/api-client.ts` which automatically includes the Stytch Bearer token:
+All client-side data operations go through `lib/services/api-client.ts` which automatically includes the WorkOS Bearer token:
 
 ```typescript
 import { phrasesApi, bookmarksApi, profilesApi, skillsApi, assessmentsApi } from '@/lib/services/api-client'
@@ -509,15 +507,14 @@ const { data: userSkills } = await skillsApi.getUserSkills()
 ### Server-Side (Vercel API Routes)
 
 ```typescript
-// In api/ serverless functions - use Supabase client
-import supabase from '../_lib/supabase'
+// In api/ serverless functions - use the Mongo collection accessors
+import { phrases } from '../_lib/mongo'
 import { requireAuth, requireAdmin } from '../_lib/auth-middleware'
 
-const user = await requireAuth(req)      // Returns AuthenticatedUser with personId (UUID)
+const user = await requireAuth(req)      // Returns AuthenticatedUser with personId (Mongo _id string)
 const admin = await requireAdmin(req)    // Also checks admin role
-const { data: phrases } = await supabase.from('phrase')
-  .select('*, translations:translation(*)')
-  .eq('category', 'greetings')
+const col = await phrases()
+const data = await col.find({ category: 'greetings' }).toArray()
 ```
 
 ### Local Storage (Mobile)
@@ -531,7 +528,7 @@ import { getUserSkills } from '@/lib/storage/database'
 
 ## Database Schema Management
 
-**Schema Management**: Via Supabase dashboard and SQL migrations. Three schemas: `lingo`, `identity`, `system`.
+**Schema Management**: MongoDB is schemaless; indexes are created via `scripts/create-indexes.ts`.
 
 ## Testing Infrastructure
 
@@ -542,7 +539,7 @@ import { getUserSkills } from '@/lib/storage/database'
 **Test Suites** (8 suites, 107+ tests):
 - `lib/ai/__tests__/chat-service.test.ts` - AI chat simulation + moderation integration
 - `lib/ai/__tests__/moderation.test.ts` - Content moderation (local + AI)
-- `lib/auth/__tests__/stytch-client.test.ts` - Stytch auth flow tests
+- `lib/auth/__tests__/workos-client.test.ts` - WorkOS AuthKit flow tests
 - `lib/data/__tests__/phrases-data.test.ts` - Phrase data integrity validation
 - `lib/data/__tests__/assessment-questions.test.ts` - Question bank validation
 - `lib/data/__tests__/translations.test.ts` - Translation completeness
@@ -561,8 +558,6 @@ import { getUserSkills } from '@/lib/storage/database'
 
 **Triggers**: Push to `main` or `feature/*`, Pull requests to `main`
 
-**Note**: The build-web job still references Supabase environment variables from the migration period. These are unused but not yet cleaned up.
-
 ## Common Workflows
 
 ### Adding a New Phrase Category
@@ -573,7 +568,7 @@ import { getUserSkills } from '@/lib/storage/database'
 ### Adding a New API Route
 1. Create file in `api/[feature]/` following Vercel serverless function pattern
 2. Import auth middleware: `import { requireAuth, requireAdmin } from '../_lib/auth-middleware'`
-3. Import Supabase: `import supabase from '../_lib/supabase'`
+3. Import Mongo collections: `import { phrases } from '../_lib/mongo'`
 4. Handle CORS if needed: `import { cors } from '../_lib/cors'`
 5. Add corresponding method to `lib/services/api-client.ts`
 
@@ -599,7 +594,7 @@ import { getUserSkills } from '@/lib/storage/database'
 ## Special Considerations
 
 ### Authentication Security
-Authentication is handled by Stytch. Session tokens are stored in SecureStore (native) or AsyncStorage (web). All API routes validate sessions via the Stytch SDK on the server side. Profiles are auto-created on first API call if the Stytch user doesn't have one.
+Authentication is handled by WorkOS AuthKit. Access/refresh tokens are stored in SecureStore (native) or AsyncStorage (web). All API routes validate the access token locally against WorkOS's JWKS on the server side. Profiles are auto-created on first API call if the WorkOS user doesn't have one.
 
 ### Phrase Languages
 The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chinese. Each has corresponding pronunciation and context fields. Swahili is supported by the AI tutor in conversation but does not have a dedicated column in the phrases schema.
@@ -614,11 +609,10 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 ### Performance Notes
 - Phrases limited to 100-200 per query
 - Client-side filtering for categories/search
-- Python analytics use aggregation pipelines (migration from MongoDB pending)
+- Python analytics use MongoDB aggregation pipelines (same database the TypeScript API writes to)
 - AI chat uses direct API calls (no streaming on mobile)
 
 ### Technical Debt
-- CI build-web job still references Supabase environment variables
 - Component library is minimal (basic themed components only)
 - Limited error boundaries
 - No dedicated web layout components (sidebar, etc.)
@@ -628,7 +622,7 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 1. Configure environment variables (see Environment Setup above)
 2. Start dev server: `npx expo start`
 3. Sign up for a test account via the auth screen
-4. To test admin features, set your role to 'admin' in `identity.person` via the Supabase dashboard
+4. To test admin features, set your role to 'admin' in the `learner_profiles` MongoDB collection (not `identity.persons` — that's the shared ecosystem record)
 5. Test AI features in the Shamwari tab (requires `ANTHROPIC_API_KEY` server-side, falls back to simulated mode without it)
 6. Check moderation queue in admin → moderation
 7. Test theme switching (light/dark/system)
@@ -641,12 +635,12 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 - **CLAUDE.md** - Developer guide (this file)
 - **README.md** - Project overview and quick start
 - **BRANDING.md** - Brand guidelines, colors, typography
-- **SECURITY.md** - Security architecture, Stytch auth
+- **SECURITY.md** - Security architecture, WorkOS AuthKit
 - **CHANGELOG.md** - Version history
 - **RELEASES.md** - Release management and versioning
 
 ### Technical Documentation (`/docs/`):
-- **[docs/EMAIL_TEMPLATES.md](docs/EMAIL_TEMPLATES.md)** - Stytch email template configuration
+- **[docs/EMAIL_TEMPLATES.md](docs/EMAIL_TEMPLATES.md)** - Branded email templates (stale — predates both the Stytch and WorkOS integrations; email templates now live in the WorkOS AuthKit dashboard)
 - **[docs/TEST_COVERAGE_ANALYSIS.md](docs/TEST_COVERAGE_ANALYSIS.md)** - Test suite analysis
 
 ### Scripts (`/scripts/`):
@@ -670,15 +664,15 @@ When creating new completion summaries, migration docs, or work records:
 
 **Current Version**: 0.0.1 (April 2026)
 **Framework**: Expo SDK 54 / React Native 0.81 / React 19
-**Backend**: Supabase PostgreSQL + Stytch 13 + Vercel Serverless
+**Backend**: MongoDB + WorkOS AuthKit + Vercel Serverless
 **AI**: Anthropic Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
 **Status**: Active development
 **Parent Company**: Nyuchi Africa (nyuchi.com)
 
 **Architecture Highlights**:
-- Skills-based learning system fully modeled in Supabase (20 tables across 3 schemas)
+- Skills-based learning system fully modeled in MongoDB collections
 - Adaptive AI tutor reads user proficiency for every interaction
 - Multi-platform: single codebase for web, iOS, and Android
-- Python analytics for advanced data aggregation (migration pending)
+- Python analytics and the TypeScript API share the same MongoDB database
 - Comprehensive admin dashboard (8 sections)
 - Content moderation with both local guardrails and AI-based review

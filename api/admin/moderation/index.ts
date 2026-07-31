@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../_lib/cors'
 import { requireAdmin } from '../../_lib/auth-middleware'
-import supabase from '../../_lib/supabase'
+import { moderationAlerts } from '../../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -11,19 +11,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await requireAdmin(req)
 
     const { status } = req.query
+    const filter: Record<string, any> = {}
+    if (status) filter.status = status
 
-    let query = supabase
-      .from('moderation_alert')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100)
+    const col = await moderationAlerts()
+    const alerts = await col.find(filter).sort({ created_at: -1 }).limit(100).toArray()
 
-    if (status) query = query.eq('status', status as string)
-
-    const { data: alerts, error } = await query
-
-    if (error) throw new Error(error.message)
-    return res.status(200).json({ data: alerts })
+    return res.status(200).json({ data: alerts.map((a: any) => ({ ...a, id: String(a._id) })) })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })

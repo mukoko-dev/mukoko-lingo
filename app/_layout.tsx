@@ -1,5 +1,5 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
-import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native'
+import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from 'expo-router'
 import { useFonts } from 'expo-font'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
@@ -17,16 +17,16 @@ import { lightTheme, darkTheme } from '@/constants/Colors'
 import {
   onAuthStateChange,
   getSession,
-  authenticateMagicLink,
+  handleAuthCallback,
   isAuthConfigured,
-  type StytchSession,
-} from '@/lib/auth/stytch-client'
+  type WorkOSSession,
+} from '@/lib/auth/workos-client'
 
 // Auth context for global auth state
 type AuthContextType = {
   isAuthenticated: boolean
   isLoading: boolean
-  session: StytchSession | null
+  session: WorkOSSession | null
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -113,7 +113,7 @@ export default function RootLayout() {
     checkOnboarding()
   }, [])
 
-  // Initialize auth state and listen for changes (Stytch)
+  // Initialize auth state and listen for changes (WorkOS AuthKit)
   useEffect(() => {
     const initAuth = async () => {
       if (!isAuthConfigured()) {
@@ -150,7 +150,10 @@ export default function RootLayout() {
     }
   }, [])
 
-  // Handle deep links for magic link auth on native platforms
+  // Handle deep links for the WorkOS AuthKit redirect on native platforms.
+  // This is a fallback for when the OS hands the redirect back via a
+  // cold-start deep link instead of resolving openAuthSessionAsync directly
+  // (app/auth/callback.tsx handles the same URL when routed through there).
   useEffect(() => {
     if (Platform.OS === 'web') return
 
@@ -158,26 +161,15 @@ export default function RootLayout() {
       const url = event.url
       if (!url) return
 
-      // Extract token from deep link for Stytch magic link
-      // Format: mukokolingo://[path]?token=...&stytch_token_type=magic_links
+      // Format: mukokolingo://auth/callback?code=...&state=...
       try {
         const urlObj = new URL(url)
-        const token = urlObj.searchParams.get('token')
-        const tokenType = urlObj.searchParams.get('stytch_token_type')
-
-        if (token && tokenType === 'magic_links') {
-          await authenticateMagicLink(token)
+        const code = urlObj.searchParams.get('code')
+        if (code) {
+          await handleAuthCallback(url)
         }
       } catch {
-        // Also handle hash-based tokens for backwards compatibility
-        const hashIndex = url.indexOf('#')
-        if (hashIndex !== -1) {
-          const hashParams = new URLSearchParams(url.substring(hashIndex + 1))
-          const token = hashParams.get('token')
-          if (token) {
-            await authenticateMagicLink(token)
-          }
-        }
+        // Malformed URL — nothing to do
       }
     }
 

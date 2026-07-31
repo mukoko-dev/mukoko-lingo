@@ -14,7 +14,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }))
 
 // Mock auth module
-jest.mock('@/lib/auth/stytch-client', () => ({
+jest.mock('@/lib/auth/workos-client', () => ({
   getSessionToken: jest.fn(),
 }))
 
@@ -37,7 +37,7 @@ beforeAll(async () => {
   process.env.EXPO_PUBLIC_API_BASE_URL = 'https://test-api.example.com'
   global.fetch = mockFetch
 
-  const authModule = require('@/lib/auth/stytch-client')
+  const authModule = require('@/lib/auth/workos-client')
   mockedGetSessionToken = authModule.getSessionToken
 
   const apiClient = require('../api-client')

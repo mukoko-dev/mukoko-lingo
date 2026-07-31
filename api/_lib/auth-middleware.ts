@@ -1,49 +1,56 @@
 /**
  * Auth Middleware for Vercel API Routes
- * Validates Stytch session tokens and maps users to identity.person.
+ * Validates WorkOS AuthKit access tokens and maps users to identity.person.
  */
 
-import * as stytch from 'stytch'
-import { supabaseIdentity } from './supabase'
+import { WorkOS } from '@workos-inc/node'
+import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from 'jose'
+import { findOrCreatePersonFromWorkOS } from '../../lib/db/identity'
 import type { VercelRequest } from '@vercel/node'
 
-const STYTCH_PROJECT_ID = process.env.STYTCH_PROJECT_ID || process.env.EXPO_PUBLIC_STYTCH_PROJECT_ID || ''
-const STYTCH_SECRET = process.env.STYTCH_SECRET || ''
+const WORKOS_API_KEY = process.env.WORKOS_API_KEY || ''
+const WORKOS_CLIENT_ID = process.env.WORKOS_CLIENT_ID || process.env.EXPO_PUBLIC_WORKOS_CLIENT_ID || ''
 
-let _stytchClient: stytch.Client | null = null
+let _workos: WorkOS | null = null
 
-function getStytchClient(): stytch.Client {
-  if (_stytchClient) return _stytchClient
-  if (!STYTCH_PROJECT_ID || !STYTCH_SECRET) {
-    const err: any = new Error('Authentication service is not configured. Please set STYTCH_PROJECT_ID and STYTCH_SECRET environment variables.')
+function getWorkOSClient(): WorkOS {
+  if (_workos) return _workos
+  if (!WORKOS_API_KEY || !WORKOS_CLIENT_ID) {
+    const err: any = new Error('Authentication service is not configured. Please set WORKOS_API_KEY and WORKOS_CLIENT_ID environment variables.')
     err.status_code = 500
     err.error_type = 'configuration_error'
     err.error_message = err.message
     throw err
   }
-  _stytchClient = new stytch.Client({
-    project_id: STYTCH_PROJECT_ID,
-    secret: STYTCH_SECRET,
-  })
-  return _stytchClient
+  _workos = new WorkOS(WORKOS_API_KEY, { clientId: WORKOS_CLIENT_ID })
+  return _workos
 }
 
 // Lazy accessor — throws a clear error if credentials are missing
-const stytchClient = new Proxy({} as stytch.Client, {
+const workos = new Proxy({} as WorkOS, {
   get(_, prop) {
-    return (getStytchClient() as any)[prop]
+    return (getWorkOSClient() as any)[prop]
   },
 })
 
+let _jwks: JWTVerifyGetKey | null = null
+
+function getJwks(): JWTVerifyGetKey {
+  if (_jwks) return _jwks
+  const client = getWorkOSClient()
+  _jwks = createRemoteJWKSet(new URL(client.userManagement.getJwksUrl(WORKOS_CLIENT_ID)))
+  return _jwks
+}
+
 export interface AuthenticatedUser {
-  stytchUserId: string
+  workosUserId: string
   personId: string
   email: string
   role: string
 }
 
 /**
- * Extract and validate the session token from the request
+ * Extract and validate the WorkOS access token from the request
  */
 export async function authenticateRequest(req: VercelRequest): Promise<AuthenticatedUser | null> {
   const authHeader = req.headers.authorization
@@ -51,51 +58,37 @@ export async function authenticateRequest(req: VercelRequest): Promise<Authentic
     return null
   }
 
-  const sessionToken = authHeader.slice(7)
-  if (!sessionToken) return null
+  const accessToken = authHeader.slice(7)
+  if (!accessToken) return null
 
   try {
-    // Validate the session token with Stytch
-    const response = await stytchClient.sessions.authenticate({ session_token: sessionToken })
-    const stytchUserId = response.session.user_id
-    const email = response.user.emails?.[0]?.email || ''
+    // Verify the access token's signature and expiry locally against WorkOS's JWKS
+    const { payload } = await jwtVerify(accessToken, getJwks())
+    const workosUserId = payload.sub
+    if (!workosUserId) return null
 
-    // Find or create person in identity.person
-    let { data: person } = await supabaseIdentity
-      .from('person')
-      .select('id, email, role, status')
-      .eq('email', email)
-      .single()
+    // Access tokens don't carry email, so resolve the user's profile from WorkOS
+    const workosUser = await workos.userManagement.getUser(workosUserId)
 
-    if (!person) {
-      const displayName = response.user.name?.first_name || email.split('@')[0]
-      const { data: created, error } = await supabaseIdentity
-        .from('person')
-        .insert({
-          email,
-          display_name: displayName,
-          role: 'user',
-          status: 'active',
-        })
-        .select('id, email, role, status')
-        .single()
-
-      if (error) {
-        console.error('[mukoko][auth] Failed to create person:', error.message)
-        return null
-      }
-      person = created
-    }
+    // Find or create the identity.persons record, keyed on the stable
+    // WorkOS user id (not email, which can change) — atomic upsert against
+    // the shared ecosystem identity collection, not a Lingo-local table.
+    const profile = await findOrCreatePersonFromWorkOS({
+      id: workosUserId,
+      email: workosUser.email,
+      firstName: workosUser.firstName,
+      lastName: workosUser.lastName,
+    })
 
     return {
-      stytchUserId,
-      personId: person.id,
-      email: person.email,
-      role: person.role || 'user',
+      workosUserId,
+      personId: profile.id,
+      email: profile.email || workosUser.email,
+      role: profile.role,
     }
   } catch (error: any) {
     const message = error?.error_message || error?.message || 'Auth validation failed'
-    console.error(`[mukoko][auth] Session validation failed: ${message}`)
+    console.error(`[mukoko][auth] Access token validation failed: ${message}`)
     return null
   }
 }
@@ -122,4 +115,4 @@ export async function requireAdmin(req: VercelRequest): Promise<AuthenticatedUse
   return user
 }
 
-export { stytchClient }
+export { workos, WORKOS_CLIENT_ID }

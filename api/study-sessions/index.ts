@@ -1,24 +1,23 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
-import supabase from '../_lib/supabase'
-import { supabaseIdentity } from '../_lib/supabase'
+import { studySessions } from '../_lib/mongo'
+import { updateLingoProfile } from '../../lib/db/identity'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
 
   try {
     const user = await requireAuth(req)
+    const col = await studySessions()
 
     if (req.method === 'GET') {
-      const { data: sessions, error } = await supabase
-        .from('study_session')
-        .select('*')
-        .eq('user_id', user.personId)
-        .order('session_date', { ascending: false })
+      const sessions = await col
+        .find({ user_id: user.personId })
+        .sort({ session_date: -1 })
         .limit(30)
+        .toArray()
 
-      if (error) throw new Error(error.message)
       return res.status(200).json({ data: sessions })
     }
 
@@ -27,54 +26,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const today = new Date()
       today.setHours(0, 0, 0, 0)
-      const todayIso = today.toISOString()
+      const todaySessionDate = today.toISOString().split('T')[0]
 
-      // Check for existing session today
-      const { data: existing } = await supabase
-        .from('study_session')
-        .select('id, phrases_studied, time_spent_minutes')
-        .eq('user_id', user.personId)
-        .eq('session_date', todayIso)
-        .single()
-
-      let result
-      if (existing) {
-        const { data, error } = await supabase
-          .from('study_session')
-          .update({
-            phrases_studied: existing.phrases_studied + (phrases_studied || 0),
-            time_spent_minutes: existing.time_spent_minutes + (time_spent_minutes || 0),
-          })
-          .eq('id', existing.id)
-          .select()
-          .single()
-        if (error) throw new Error(error.message)
-        result = data
-      } else {
-        const { data, error } = await supabase
-          .from('study_session')
-          .insert({
-            user_id: user.personId,
-            session_date: todayIso,
+      const result = await col.findOneAndUpdate(
+        { user_id: user.personId, session_date: todaySessionDate },
+        {
+          $inc: {
             phrases_studied: phrases_studied || 0,
             time_spent_minutes: time_spent_minutes || 0,
-          })
-          .select()
-          .single()
-        if (error) throw new Error(error.message)
-        result = data
-      }
+          },
+          $setOnInsert: { user_id: user.personId, session_date: todaySessionDate, created_at: new Date() },
+        },
+        { upsert: true, returnDocument: 'after' }
+      )
 
-      // Update last study date on identity.person
-      await supabaseIdentity
-        .from('person')
-        .update({
-          last_study_date: new Date().toISOString(),
-          last_active: new Date().toISOString(),
-        })
-        .eq('id', user.personId)
+      await updateLingoProfile(user.personId, {
+        last_study_date: new Date().toISOString(),
+        last_active: new Date(),
+      })
 
-      return res.status(200).json({ data: result })
+      return res.status(200).json({ data: { ...result, id: String(result!._id) } })
     }
 
     return res.status(405).json({ error: 'Method not allowed' })

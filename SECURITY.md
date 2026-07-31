@@ -30,23 +30,23 @@ We will acknowledge receipt within 48 hours and provide a detailed response with
 
 ### Authentication
 
-- **Stytch**: All authentication handled by Stytch with industry-standard security
-- **Methods**: Email/password, OTP (email & WhatsApp), magic links
-- **Session Management**: Stytch session tokens stored via SecureStore (native) or AsyncStorage (web)
-- **Server Validation**: All API routes validate sessions via `requireAuth()` middleware
-- **Identity**: Users mapped to `identity.person` (UUID) in Supabase PostgreSQL
+- **WorkOS AuthKit**: All authentication handled by WorkOS's hosted sign-in page
+- **Flow**: PKCE authorization-code exchange (email/password, magic auth, social — whatever the AuthKit environment has enabled)
+- **Session Management**: Access/refresh tokens stored via SecureStore (native) or AsyncStorage (web)
+- **Server Validation**: Access tokens verified locally against WorkOS's JWKS (`jose`), all API routes gated via `requireAuth()` middleware
+- **Identity**: Users mapped to a document in the `profiles` MongoDB collection, keyed on the WorkOS `workos_user_id`
 
 ### Authorization
 
 - **Role-Based Access Control (RBAC)**: Users have `user` or `admin` roles on `identity.person`
-- **Server-Side Admin Check**: `requireAdmin()` validates both Stytch session and admin role
+- **Server-Side Admin Check**: `requireAdmin()` validates both the WorkOS access token and admin role
 - **Class-Level Roles**: Teachers and students have scoped access within classes
 - **API Route Protection**: All admin routes enforce `requireAdmin()` before processing
 
 ### Data Protection
 
-- **Supabase PostgreSQL**: Database with encryption at rest and in transit, Row-Level Security capable
-- **Parameterized Queries**: All database operations use Supabase JS client (no raw SQL interpolation)
+- **MongoDB**: Database with encryption at rest and in transit (Atlas managed)
+- **Parameterized Queries**: All database operations use the MongoDB driver's query objects (no string-built queries)
 - **Input Validation**: All user inputs validated in API routes before database operations
 - **No Direct Client Access**: All data flows through authenticated Vercel serverless API routes
 - **API Keys**: Organization API keys SHA-256 hashed at rest, plain key shown only once on creation
@@ -75,13 +75,11 @@ We will acknowledge receipt within 48 hours and provide a detailed response with
 Required environment variables (never commit actual values):
 
 ```
-SUPABASE_URL=                    # Supabase project URL
-SUPABASE_SERVICE_ROLE_KEY=       # Supabase service role key (server-side)
-STYTCH_PROJECT_ID=               # Stytch project ID (server-side)
-STYTCH_SECRET=                   # Stytch secret key (server-side, never expose)
+MONGODB_URI=                     # MongoDB connection string
+WORKOS_API_KEY=                  # WorkOS API key (server-side, never expose)
+WORKOS_CLIENT_ID=                # WorkOS Client ID (server-side)
 ANTHROPIC_API_KEY=               # Anthropic key (server-side only)
-EXPO_PUBLIC_STYTCH_PROJECT_ID=   # Stytch project ID (client-side)
-EXPO_PUBLIC_STYTCH_PUBLIC_TOKEN= # Stytch public token (safe for client)
+EXPO_PUBLIC_WORKOS_CLIENT_ID=    # WorkOS Client ID (safe for client)
 EXPO_PUBLIC_API_BASE_URL=        # API base URL
 ```
 
@@ -94,18 +92,18 @@ Implemented via `vercel.json`:
 
 ## Database Security
 
-### Supabase PostgreSQL
+### MongoDB
 
-- **Three Schemas**: `lingo` (learning data), `identity` (users), `system` (guardrails)
-- **Encryption at Rest**: AES-256 via Supabase managed PostgreSQL
+- **Collections**: profiles, phrases, phrase_progress, bookmarks, skills, assessments, classes, and more (see README)
+- **Encryption at Rest**: AES-256 via MongoDB Atlas
 - **Encryption in Transit**: TLS for all connections
 - **Service Role Key**: Server-side only, never exposed to client
-- **Normalized Data**: Phrase translations in separate table (no SQL injection via language columns)
+- **Flexible Schema**: Phrases carry all language fields directly on one document
 
 ### Access Control Pattern
 
-1. Client sends request with Stytch session token in `Authorization` header
-2. API middleware validates token with Stytch SDK
+1. Client sends request with a WorkOS access token in the `Authorization` header
+2. API middleware verifies the token's signature/expiry against WorkOS's JWKS, then resolves the user via `workos.userManagement.getUser()`
 3. Middleware resolves `identity.person` by email, returns `personId` (UUID)
 4. All queries scoped to `personId`
 5. Admin routes verify `person.role === 'admin'`
@@ -145,7 +143,7 @@ Implemented via `vercel.json`:
 - **GDPR-friendly**: Users can request data export and deletion
 - **Minimal Data Collection**: Only data necessary for learning functionality
 - **No Third-Party Tracking**: No advertising or tracking pixels
-- **Data Localization**: Supabase hosted in EU (eu-west-2)
+- **Data Localization**: MongoDB Atlas region per deployment configuration
 - **Technology Sovereignty**: No SSPL/proprietary database dependencies
 
 ---

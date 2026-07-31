@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { createLogger } from '../_lib/logger'
-import supabase from '../_lib/supabase'
-import { flattenPhrases } from '../../lib/db/transform-phrase'
+import { phrases } from '../_lib/mongo'
+import { toApiPhrases } from '../../lib/db/phrase-shape'
 
 const log = createLogger('phrases')
 
@@ -11,27 +11,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const { category, difficulty, content_type } = req.query
+    const { category, difficulty, content_type, skill_id } = req.query
 
-    let query = supabase
-      .from('phrase')
-      .select(`
-        id, category, content_type, difficulty, skill_id, required_proficiency, created_at,
-        translations:translation(language_id, text, pronunciation, context)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(200)
+    const filter: Record<string, any> = {}
+    if (category) filter.category = category
+    if (difficulty) filter.difficulty = difficulty
+    if (content_type) filter.content_type = content_type
+    if (skill_id) filter.skill_id = skill_id
 
-    if (category) query = query.eq('category', category as string)
-    if (difficulty) query = query.eq('difficulty', difficulty as string)
-    if (content_type) query = query.eq('content_type', content_type as string)
+    const col = await phrases()
+    const docs = await col.find(filter).sort({ created_at: -1 }).limit(200).toArray()
 
-    const { data: phrases, error } = await query
-
-    if (error) throw new Error(error.message)
-
-    const flat = flattenPhrases(phrases || [])
-    return res.status(200).json({ data: flat, count: flat.length })
+    const data = toApiPhrases(docs as any)
+    return res.status(200).json({ data, count: data.length })
   } catch (error: any) {
     log.error('Failed to fetch phrases', error.message)
     return res.status(500).json({ error: error.message || 'Internal server error' })

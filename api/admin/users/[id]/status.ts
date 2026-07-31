@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../../../_lib/cors'
 import { requireAdmin } from '../../../_lib/auth-middleware'
-import { supabaseIdentity } from '../../../_lib/supabase'
+import { updateLingoProfile } from '../../../../lib/db/identity'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -17,15 +17,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Valid status is required' })
     }
 
-    const { data: person, error } = await supabaseIdentity
-      .from('person')
-      .update({ status })
-      .eq('id', id as string)
-      .select()
-      .single()
-
-    if (error) throw new Error(error.message)
-    return res.status(200).json({ data: person })
+    const profile = await updateLingoProfile(id as string, { status })
+    if (!profile) return res.status(404).json({ error: 'Profile not found' })
+    return res.status(200).json({ data: profile })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })

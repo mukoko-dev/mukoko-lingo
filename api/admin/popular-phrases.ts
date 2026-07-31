@@ -1,8 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { requireAdmin } from '../_lib/auth-middleware'
-import supabase from '../_lib/supabase'
-import { flattenPhrases } from '../../lib/db/transform-phrase'
+import { phraseViews, bookmarks, phrases } from '../_lib/mongo'
+import { toApiPhrase } from '../../lib/db/phrase-shape'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -11,26 +12,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await requireAdmin(req)
 
-    // Use phrase_stats_cache for popular phrases (Doris domain cache)
-    const { data: stats, error } = await supabase
-      .from('phrase_stats_cache')
-      .select(`
-        phrase_id, view_count, bookmark_count,
-        phrase:phrase(
-          id, category, content_type, difficulty, skill_id, required_proficiency, created_at,
-          translations:translation(language_id, text, pronunciation, context)
-        )
-      `)
-      .order('view_count', { ascending: false })
-      .limit(20)
+    const viewsCol = await phraseViews()
+    const bookmarksCol = await bookmarks()
+    const phrasesCol = await phrases()
 
-    if (error) throw new Error(error.message)
+    const [viewCounts, bookmarkCounts] = await Promise.all([
+      viewsCol.aggregate([{ $group: { _id: '$phrase_id', count: { $sum: 1 } } }]).toArray(),
+      bookmarksCol.aggregate([{ $group: { _id: '$phrase_id', count: { $sum: 1 } } }]).toArray(),
+    ])
 
-    const results = (stats || []).map((s: any) => ({
-      ...flattenPhrases([s.phrase])[0],
-      view_count: s.view_count,
-      bookmark_count: s.bookmark_count,
-    }))
+    const bookmarkCountById = new Map(bookmarkCounts.map((b: any) => [b._id, b.count]))
+    const top20 = viewCounts
+      .sort((a: any, b: any) => b.count - a.count)
+      .slice(0, 20)
+
+    const phraseIds = top20.map((v: any) => v._id).filter(ObjectId.isValid)
+    const phraseDocs = await phrasesCol.find({ _id: { $in: phraseIds.map((id: string) => new ObjectId(id)) } } as any).toArray()
+    const phraseById = new Map(phraseDocs.map((p: any) => [String(p._id), p]))
+
+    const results = top20
+      .filter((v: any) => phraseById.has(v._id))
+      .map((v: any) => ({
+        ...toApiPhrase(phraseById.get(v._id)),
+        view_count: v.count,
+        bookmark_count: bookmarkCountById.get(v._id) || 0,
+      }))
 
     return res.status(200).json({ data: results })
   } catch (error: any) {
