@@ -321,15 +321,25 @@ export interface StudySession {
   created_at?: Date
 }
 
-export interface Guardrail {
-  _id?: any
-  name: string
-  description?: string
+/**
+ * shamwari.guardrails — the shared, ecosystem-wide AI moderation policy,
+ * not Lingo-owned. Lingo's own `guardrails` collection was already
+ * migrated here at the platform level (every doc still carries
+ * `mukoko.sourceProject: "lingo"`) — this is a read mirror of that
+ * migration, not a new collection. `isCore` guardrails are platform-wide
+ * and cannot be disabled by individual apps.
+ */
+export interface SharedGuardrail {
+  _id: string
+  _schemaVersion: 'v3.1'
   category: string
-  rule_type: string
-  patterns?: string[]
-  keywords?: string[]
-  ai_instructions?: string
-  is_active: boolean
-  severity: number
+  name: string
+  description: string
+  severity: 'critical' | 'high' | 'medium' | 'low'
+  isEnabled: boolean
+  isCore: boolean
+  promptGuidance?: string | null
+  appliesTo: string[]
+  createdAt: Date
+  updatedAt: Date
 }
