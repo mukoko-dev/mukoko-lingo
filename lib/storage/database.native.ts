@@ -1,6 +1,9 @@
 import * as SQLite from 'expo-sqlite'
 import { Phrase } from '../data/phrases-data'
 
+// Daily lesson operations - use AsyncStorage for simplicity (small data)
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
 // Native uses SQLite for storage
 
 let db: SQLite.SQLiteDatabase | null = null
@@ -202,7 +205,7 @@ export async function recordStudySession(phrasesPracticed: number, durationMinut
   )
 }
 
-export async function getStudySessions(): Promise<Array<{ date: string; phrasesPracticed: number; durationMinutes: number }>> {
+export async function getStudySessions(): Promise<{ date: string; phrasesPracticed: number; durationMinutes: number }[]> {
   if (!db) await initDatabase()
   const rows = await db!.getAllAsync<any>(
     'SELECT * FROM study_sessions ORDER BY date DESC LIMIT 30'
@@ -239,9 +242,6 @@ export async function getStudyStreak(): Promise<number> {
 
   return streak
 }
-
-// Daily lesson operations - use AsyncStorage for simplicity (small data)
-import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const DAILY_LESSON_KEY = 'dailyLesson_'
 const DAILY_GOAL_KEY = 'dailyGoal_'

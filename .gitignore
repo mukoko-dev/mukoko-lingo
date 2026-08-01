@@ -59,3 +59,10 @@ web/next-env.d.ts
 # EAS
 .easignore
 .env*
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.venv-ci-test/

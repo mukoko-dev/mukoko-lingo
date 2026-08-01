@@ -2,12 +2,6 @@
  * Tests for Spaced Repetition System (SM-2 Algorithm)
  */
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(() => Promise.resolve(null)),
-  setItem: jest.fn(() => Promise.resolve()),
-  removeItem: jest.fn(() => Promise.resolve()),
-}))
-
 import {
   calculateNextReview,
   createNewCard,
@@ -16,6 +10,12 @@ import {
   type SRSCard,
   type ReviewQuality,
 } from '../srs'
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(() => Promise.resolve(null)),
+  setItem: jest.fn(() => Promise.resolve()),
+  removeItem: jest.fn(() => Promise.resolve()),
+}))
 
 describe('SRS - SM-2 Algorithm', () => {
   const baseCard: SRSCard = {

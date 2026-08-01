@@ -134,18 +134,18 @@ export interface UserAssessment {
 export interface AITutorContext {
   user_id: string
   overall_proficiency: ProficiencyLevel
-  skills: Array<{
+  skills: {
     skill_name: SkillName
     current_level: ProficiencyLevel
     current_score: number
     needs_improvement: boolean
-  }>
-  recent_assessments: Array<{
+  }[]
+  recent_assessments: {
     skill_name: SkillName
     score: number
     passed: boolean
     completed_at: string
-  }>
+  }[]
   learning_preferences?: {
     preferred_language: string
     learning_pace: 'slow' | 'moderate' | 'fast'
@@ -170,13 +170,13 @@ export interface SkillsDashboardSummary {
   user_id: string
   overall_proficiency: ProficiencyLevel
   overall_score: number
-  skills: Array<{
+  skills: {
     skill: Skill
     user_skill: UserSkill
     level_info: SkillLevel
     progress_to_next: number
     recommended_actions: string[]
-  }>
+  }[]
   total_practice_time: number
   assessments_completed: number
   assessments_passed: number

@@ -160,13 +160,13 @@ export async function markPhraseLearned(): Promise<{ learned: number; goal: numb
 export function generateQuizQuestions(
   lessonPhrases: Phrase[],
   language: 'shona' | 'ndebele' | 'swahili' | 'chinese'
-): Array<{
+): {
   id: string
   english: string
   correctAnswer: string
   options: string[]
   phraseId: string
-}> {
+}[] {
   // Get all phrases for wrong answers
   const allTranslations = phrases.map(p => p[language]).filter(Boolean)
 

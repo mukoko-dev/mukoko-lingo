@@ -83,7 +83,7 @@ export async function recordStudySession(phrasesPracticed: number, durationMinut
   await AsyncStorage.setItem('studySessions', JSON.stringify(sessions))
 }
 
-export async function getStudySessions(): Promise<Array<{ date: string; phrasesPracticed: number; durationMinutes: number }>> {
+export async function getStudySessions(): Promise<{ date: string; phrasesPracticed: number; durationMinutes: number }[]> {
   const data = await AsyncStorage.getItem('studySessions')
   return data ? JSON.parse(data) : []
 }
