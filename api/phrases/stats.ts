@@ -13,8 +13,6 @@ import { phrases } from '../_lib/mongo'
 
 const log = createLogger('phrase-stats')
 
-const LANGUAGE_FIELDS = ['english', 'shona', 'ndebele', 'swahili', 'chinese']
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
@@ -22,21 +20,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const col = await phrases()
 
-    const [totalPhrases, categories] = await Promise.all([
-      col.countDocuments(),
-      col.distinct('category'),
+    const [totalPhrases, categories, languageTags] = await Promise.all([
+      col.countDocuments({ isActive: true }),
+      col.distinct('category', { isActive: true }),
+      col.distinct('translations.languageTag', { isActive: true }),
     ])
-
-    // Count how many of the known language fields actually have real content
-    const languageCounts = await Promise.all(
-      LANGUAGE_FIELDS.map((field) => col.countDocuments({ [field]: { $exists: true, $ne: '' } }))
-    )
-    const totalLanguages = languageCounts.filter((count) => count > 0).length
 
     return res.status(200).json({
       total_phrases: totalPhrases,
       total_categories: categories.filter(Boolean).length,
-      total_languages: totalLanguages,
+      total_languages: languageTags.filter(Boolean).length,
     })
   } catch (error: any) {
     log.error('Failed to fetch phrase stats', error.message)

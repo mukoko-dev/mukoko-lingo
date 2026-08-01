@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { phrases } from '../_lib/mongo'
 import { toApiPhrase } from '../../lib/db/phrase-shape'
@@ -11,13 +10,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { id } = req.query
 
   try {
-    if (!ObjectId.isValid(id as string)) return res.status(404).json({ error: 'Phrase not found' })
-
     const col = await phrases()
-    const phrase = await col.findOne({ _id: new ObjectId(id as string) } as any)
+    const phrase = await col.findOne({ _id: id as string })
 
     if (!phrase) return res.status(404).json({ error: 'Phrase not found' })
-    return res.status(200).json({ data: toApiPhrase(phrase as any) })
+    return res.status(200).json({ data: toApiPhrase(phrase) })
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Internal server error' })
   }

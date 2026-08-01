@@ -11,18 +11,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const { category, difficulty, content_type, skill_id } = req.query
+    const { category, difficulty, tag, scenario_id } = req.query
 
-    const filter: Record<string, any> = {}
+    const filter: Record<string, any> = { isActive: true }
     if (category) filter.category = category
     if (difficulty) filter.difficulty = difficulty
-    if (content_type) filter.content_type = content_type
-    if (skill_id) filter.skill_id = skill_id
+    if (tag) filter.tags = tag
+    if (scenario_id) filter.scenarioIds = scenario_id
 
     const col = await phrases()
-    const docs = await col.find(filter).sort({ created_at: -1 }).limit(200).toArray()
+    const docs = await col.find(filter).sort({ createdAt: -1 }).limit(200).toArray()
 
-    const data = toApiPhrases(docs as any)
+    const data = toApiPhrases(docs)
     return res.status(200).json({ data, count: data.length })
   } catch (error: any) {
     log.error('Failed to fetch phrases', error.message)

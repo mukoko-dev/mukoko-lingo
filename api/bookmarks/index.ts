@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
 import { bookmarks, phrases } from '../_lib/mongo'
@@ -15,10 +14,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'GET') {
       const rows = await col.find({ user_id: user.personId }).sort({ created_at: -1 }).toArray()
 
-      const phraseIds = rows.map((r: any) => r.phrase_id).filter(ObjectId.isValid)
+      const phraseIds = rows.map((r: any) => r.phrase_id).filter(Boolean)
       const phrasesCol = await phrases()
-      const phraseDocs = await phrasesCol.find({ _id: { $in: phraseIds.map((id) => new ObjectId(id)) } } as any).toArray()
-      const phraseById = new Map(phraseDocs.map((p: any) => [String(p._id), toApiPhrase(p)]))
+      const phraseDocs = await phrasesCol.find({ _id: { $in: phraseIds } }).toArray()
+      const phraseById = new Map(phraseDocs.map((p) => [p._id, toApiPhrase(p)]))
 
       const data = rows.map((r: any) => ({
         id: String(r._id),

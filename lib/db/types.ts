@@ -67,37 +67,43 @@ export interface LingoProfile {
   last_study_date?: string
 }
 
-export interface PhrasePronunciation {
-  english: string
-  shona: string
-  ndebele: string
-  swahili?: string
-  chinese: string
+export interface PhraseTranslation {
+  languageTag: string
+  text: string
+  pronunciation?: string | null
+  context?: string | null
 }
 
-export interface PhraseContext {
-  en: string
-  sn: string
-  nd: string
-  sw?: string
-  zh: string
-}
-
+/**
+ * lingo.phrases — the shared, ecosystem-wide content collection, not
+ * Lingo-invented. Real schema: `translations[]` keyed by BCP-47 tag, not
+ * flat per-language fields. `_id` is a UUID string, never an ObjectId.
+ * `creatorEntityId` must reference the real "Mukoko Lingo" product entity
+ * (entity.entities, slug `mukoko-lingo`) for anything Lingo authors.
+ */
 export interface Phrase {
-  _id?: any
+  _id: string
+  _schemaVersion: 'v3.1'
   category: string
-  difficulty?: string
-  skill_id?: string | null
-  required_proficiency?: string | null
-  english: string
-  shona: string
-  ndebele: string
-  swahili?: string
-  chinese: string
-  pronunciation?: PhrasePronunciation
-  context?: PhraseContext
-  created_at?: Date
+  contentType: 'phrase' | 'sentence' | 'word' | 'expression' | 'idiom' | 'proverb'
+  difficulty: 'beginner' | 'elementary' | 'intermediate' | 'advanced' | 'fluent'
+  cefrLevel?: string | null
+  creatorEntityId: string
+  scenarioIds?: string[]
+  tags?: string[]
+  slug?: string | null
+  source?: string | null
+  isActive: boolean
+  viewCount: number
+  bookmarkCount: number
+  translations: PhraseTranslation[]
+  createdAt: Date
+  updatedAt: Date
+  mukoko?: Record<string, unknown>
 }
+
+/** The real, pre-existing Mukoko Lingo product entity (entity.entities). */
+export const MUKOKO_LINGO_ENTITY_ID = '0192e000-c000-7000-8000-000000000002'
 
 export interface PhraseProgress {
   _id?: any
