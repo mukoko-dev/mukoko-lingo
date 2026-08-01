@@ -28,9 +28,9 @@ import type {
   Assignment,
   AssignmentSubmission,
   OrganizationEnrollment,
-  ApiKey,
   StudySession,
   SharedGuardrail,
+  PlatformApiKey,
 } from './types'
 
 /** identity.persons — shared ecosystem user record, not Lingo-owned. */
@@ -56,9 +56,10 @@ export const classMemberships = async () => (await getDb()).collection<ClassMemb
 export const assignments = async () => (await getDb()).collection<Assignment>('assignments')
 export const assignmentSubmissions = async () => (await getDb()).collection<AssignmentSubmission>('assignment_submissions')
 export const organizationEnrollments = async () => (await getDb()).collection<OrganizationEnrollment>('organization_enrollments')
-export const apiKeys = async () => (await getDb()).collection<ApiKey>('api_keys')
 export const studySessions = async () => (await getDb()).collection<StudySession>('study_sessions')
 /** shamwari.guardrails — shared ecosystem moderation policy, not Lingo-owned. */
 export const sharedGuardrails = async () => (await getDb('shamwari')).collection<SharedGuardrail>('guardrails')
+/** platform.apiKeys — shared ecosystem API-key registry, not Lingo-owned. */
+export const platformApiKeys = async () => (await getDb('platform')).collection<PlatformApiKey>('apiKeys')
 
 export { getDb }
