@@ -84,8 +84,15 @@ Repoint all phrase read paths (`api/phrases/*`, admin phrase CRUD, the mobile/we
 ### Phase 3 — Shamwari AI conversations
 Move `ai_conversations` reads/writes to `shamwari.conversations` + `shamwari.messages`, tagging `surfaceContext: 'mukoko_lingo'`. Unlocks cross-surface AI conversation history and brings Lingo under the shared `toolUsage`/moderation oversight.
 
-### Phase 4 — Engagement (bookmarks/views/likes)
-Move `bookmarks`/`phrase_views` to `engagement.interactions` (`interactionType: bookmark|view`, `targetReferenceType: lingo_phrase`). Note: `engagement.*` collections use **E2E-encrypted, pseudonymous** payloads (`ciphertext`, `encryptionEnvelope`, `recipientKeyRefs`) — this is a materially bigger lift than a flat collection swap; needs its own design pass on key management before implementation, not just a query rewrite.
+### Phase 4 — Engagement (bookmarks/views/likes) — **done**
+Re-verified live against the cluster: `engagement.interactions`/`reactions`/`comments` are fully E2E-encrypted (`ciphertext`, `encryptionEnvelope`, `recipientKeyRefs`) **and still 0 documents across the entire cluster** — that layer is designed but unimplemented ecosystem-wide, not a Lingo-specific gap. Writing into it would mean Lingo building key-management infrastructure nobody else on the platform has built yet, which is out of scope.
+
+Revised decision: bookmarks and phrase views are low-sensitivity engagement signals, not private content — the same category as a "like," not a DM. `campfire.reactions` (a real, shipped feature in the same cluster) confirms the pattern: plain `reactorPersonId` + emoji `key`, no ciphertext at all, even though `campfire.messages` in that same database does real E2E for message content. Conclusion: encrypt content, not engagement signals.
+
+So Lingo's `bookmarks`/`phrase_views` **stay plain collections in `lingo`** (they already live there mechanically since the `DB_NAME` fix; this phase makes that the intentional target, not an accident) — mirroring `campfire.reactions`-in-`campfire`. Concretely:
+- Indexes confirmed live: `bookmarks` has `{user_id: 1, phrase_id: 1}` unique, `phrase_views` has `{phrase_id: 1}` (both already created per Phase 1's index pass; `scripts/create-indexes.ts` already declared them).
+- **No stored counters**: `lingo.phrases.viewCount`/`bookmarkCount` are left alone (currently `0` on every phrase, not Lingo's to mutate outside admin content authoring). Instead, added `lingo.phraseEngagementLive` — a read-only aggregation view over `bookmarks`/`phrase_views` grouped by `phrase_id`, following the same live-view pattern as `tagCountsLive`/`scenariosLive`. `api/admin/popular-phrases.ts` now reads from it instead of aggregating both collections itself.
+- **Observed gap, not fixed here**: there was no write path recording phrase views at all before this phase (view tracking existed only in aggregate/read form). Added a minimal, best-effort insert into `phrase_views` in `GET /api/phrases/[id]` (the obvious call site) — not a new feature, just wiring up the collection that already existed for this purpose.
 
 ### Phase 5 — Ubuntu gamification (XP/streaks/leaderboard)
 Feed study activity into `ubuntu.contributions` (`sourceDomain: "lingo"`, `category: "cultural"` fits best of the existing enum). Blocked on ecosystem-level seeding of `ubuntu.leaderboardDefinitions` (currently empty everywhere) — needs at least one definition doc before a leaderboard can be computed from it. Badges/missions for language milestones would be net-new content, not a migration.

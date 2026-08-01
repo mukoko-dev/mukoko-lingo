@@ -13,6 +13,7 @@ import type {
   PhraseProgress,
   Bookmark,
   PhraseView,
+  PhraseEngagement,
   Skill,
   UserSkill,
   Assessment,
@@ -42,6 +43,13 @@ export const phrases = async () => (await getDb()).collection<Phrase>('phrases')
 export const phraseProgress = async () => (await getDb()).collection<PhraseProgress>('phrase_progress')
 export const bookmarks = async () => (await getDb()).collection<Bookmark>('bookmarks')
 export const phraseViews = async () => (await getDb()).collection<PhraseView>('phrase_views')
+/**
+ * Read-only view aggregating bookmarks/phrase_views by phrase_id — live,
+ * not stored. Never write through this accessor. See Phase 4 of
+ * docs/ECOSYSTEM_DATA_MIGRATION.md.
+ */
+export const phraseEngagementLive = async () =>
+  (await getDb()).collection<PhraseEngagement>('phraseEngagementLive')
 export const skills = async () => (await getDb()).collection<Skill>('skills')
 export const userSkills = async () => (await getDb()).collection<UserSkill>('user_skills')
 export const assessments = async () => (await getDb()).collection<Assessment>('assessments')

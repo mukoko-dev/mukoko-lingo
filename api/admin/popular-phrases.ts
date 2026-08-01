@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { requireAdmin } from '../_lib/auth-middleware'
-import { phraseViews, bookmarks, phrases } from '../_lib/mongo'
+import { phraseEngagementLive, phrases } from '../_lib/mongo'
 import { toApiPhrase } from '../../lib/db/phrase-shape'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -11,30 +11,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await requireAdmin(req)
 
-    const viewsCol = await phraseViews()
-    const bookmarksCol = await bookmarks()
+    const engagementCol = await phraseEngagementLive()
     const phrasesCol = await phrases()
 
-    const [viewCounts, bookmarkCounts] = await Promise.all([
-      viewsCol.aggregate([{ $group: { _id: '$phrase_id', count: { $sum: 1 } } }]).toArray(),
-      bookmarksCol.aggregate([{ $group: { _id: '$phrase_id', count: { $sum: 1 } } }]).toArray(),
-    ])
+    // phraseEngagementLive is a live Mongo view (bookmarks + phrase_views
+    // grouped by phrase_id) — no stored counters to keep in sync.
+    const top20 = await engagementCol
+      .find({})
+      .sort({ viewCount: -1 })
+      .limit(20)
+      .toArray()
 
-    const bookmarkCountById = new Map(bookmarkCounts.map((b: any) => [b._id, b.count]))
-    const top20 = viewCounts
-      .sort((a: any, b: any) => b.count - a.count)
-      .slice(0, 20)
-
-    const phraseIds = top20.map((v: any) => v._id).filter(Boolean)
+    const phraseIds = top20.map((v) => v.phraseId).filter(Boolean)
     const phraseDocs = await phrasesCol.find({ _id: { $in: phraseIds } }).toArray()
     const phraseById = new Map(phraseDocs.map((p) => [p._id, p]))
 
     const results = top20
-      .filter((v: any) => phraseById.has(v._id))
-      .map((v: any) => ({
-        ...toApiPhrase(phraseById.get(v._id)!),
-        view_count: v.count,
-        bookmark_count: bookmarkCountById.get(v._id) || 0,
+      .filter((v) => phraseById.has(v.phraseId))
+      .map((v) => ({
+        ...toApiPhrase(phraseById.get(v.phraseId)!),
+        view_count: v.viewCount,
+        bookmark_count: v.bookmarkCount,
       }))
 
     return res.status(200).json({ data: results })
