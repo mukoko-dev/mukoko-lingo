@@ -130,6 +130,19 @@ export interface PhraseView {
   viewed_at: Date
 }
 
+/**
+ * lingo.phraseEngagementLive — a read-only Mongo view (not a collection)
+ * that aggregates bookmarks + phrase_views by phrase_id, computed live.
+ * Mirrors the tagCountsLive/scenariosLive pattern: counts are never stored
+ * on the phrase document, always derived on read. See Phase 4 of
+ * docs/ECOSYSTEM_DATA_MIGRATION.md.
+ */
+export interface PhraseEngagement {
+  phraseId: string
+  bookmarkCount: number
+  viewCount: number
+}
+
 export interface SkillLevel {
   sort_order: number
   min_score: number
