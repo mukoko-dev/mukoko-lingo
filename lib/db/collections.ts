@@ -31,6 +31,7 @@ import type {
   StudySession,
   SharedGuardrail,
   PlatformApiKey,
+  UbuntuContribution,
 } from './types'
 
 /** identity.persons — shared ecosystem user record, not Lingo-owned. */
@@ -61,5 +62,7 @@ export const studySessions = async () => (await getDb()).collection<StudySession
 export const sharedGuardrails = async () => (await getDb('shamwari')).collection<SharedGuardrail>('guardrails')
 /** platform.apiKeys — shared ecosystem API-key registry, not Lingo-owned. */
 export const platformApiKeys = async () => (await getDb('platform')).collection<PlatformApiKey>('apiKeys')
+/** ubuntu.contributions — shared ecosystem trust/gamification ledger, not Lingo-owned. */
+export const ubuntuContributions = async () => (await getDb('ubuntu')).collection<UbuntuContribution>('contributions')
 
 export { getDb }
