@@ -15,6 +15,7 @@
 import { randomUUID } from 'crypto'
 import { persons, lingoProfiles } from './collections'
 import type { Person, LingoProfile } from './types'
+import { MUKOKO_LINGO_ENTITY_ID } from './types'
 
 export interface MergedProfile {
   id: string
@@ -208,6 +209,20 @@ export async function getDisplayNames(personIds: string[]): Promise<Record<strin
   const names: Record<string, string> = {}
   for (const person of personDocs) names[person._id] = displayName(person)
   return names
+}
+
+/**
+ * The owning entity for a shamwari conversation is required by the shared
+ * schema, but per-person "family" entity auto-provisioning (Rule 10) isn't
+ * implemented anywhere in the ecosystem yet — most persons have no
+ * `bundu.defaultFamilyEntityId`. Fall back to the Mukoko Lingo product
+ * entity when absent; see the Phase 3 PR description for the known
+ * simplification this represents.
+ */
+export async function resolveOwnerEntityId(personId: string): Promise<string> {
+  const personsCol = await persons()
+  const person = await personsCol.findOne({ _id: personId })
+  return person?.bundu?.defaultFamilyEntityId || MUKOKO_LINGO_ENTITY_ID
 }
 
 /** Resolve a person id from an email — used by class-roster and OneRoster sync. */

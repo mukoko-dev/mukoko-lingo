@@ -20,7 +20,8 @@ import type {
   UserAssessment,
   LearningStandard,
   ModerationAlert,
-  AiConversation,
+  ShamwariConversation,
+  ShamwariMessage,
   SrsCard,
   UserXp,
   XpEvent,
@@ -56,7 +57,10 @@ export const assessments = async () => (await getDb()).collection<Assessment>('a
 export const userAssessments = async () => (await getDb()).collection<UserAssessment>('user_assessments')
 export const learningStandards = async () => (await getDb()).collection<LearningStandard>('learning_standards')
 export const moderationAlerts = async () => (await getDb()).collection<ModerationAlert>('moderation_alerts')
-export const aiConversations = async () => (await getDb()).collection<AiConversation>('ai_conversations')
+/** shamwari.conversations — shared ecosystem AI conversation store, not Lingo-owned. */
+export const shamwariConversations = async () => (await getDb('shamwari')).collection<ShamwariConversation>('conversations')
+/** shamwari.messages — shared ecosystem AI message store, not Lingo-owned. */
+export const shamwariMessages = async () => (await getDb('shamwari')).collection<ShamwariMessage>('messages')
 export const srsCards = async () => (await getDb()).collection<SrsCard>('srs_cards')
 export const userXp = async () => (await getDb()).collection<UserXp>('user_xp')
 export const xpEvents = async () => (await getDb()).collection<XpEvent>('xp_events')

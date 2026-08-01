@@ -1,12 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../../../_lib/cors'
 import { requireAuth } from '../../../_lib/auth-middleware'
-import { aiConversations } from '../../../_lib/mongo'
-
-// Cap embedded messages per conversation to stay well under the 16MB BSON
-// document limit — a tutoring chat session is naturally bounded anyway.
-const MAX_MESSAGES = 200
+import { shamwariConversations, shamwariMessages } from '../../../_lib/mongo'
+import { buildMessageDoc, toApiMessage, toApiMessages } from '../../../../lib/db/conversation-shape'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -15,17 +11,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const user = await requireAuth(req)
-    if (!ObjectId.isValid(id as string)) return res.status(404).json({ error: 'Conversation not found' })
 
-    const col = await aiConversations()
-    const conversation = await col.findOne({ _id: new ObjectId(id as string), user_id: user.personId } as any)
+    const conversationsCol = await shamwariConversations()
+    const conversation = await conversationsCol.findOne({ _id: id as string, ownerPersonId: user.personId })
 
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' })
     }
 
+    const messagesCol = await shamwariMessages()
+
     if (req.method === 'GET') {
-      return res.status(200).json({ data: conversation.messages || [] })
+      const messages = await messagesCol
+        .find({ conversationId: conversation._id })
+        .sort({ sequence: 1 })
+        .toArray()
+
+      return res.status(200).json({ data: toApiMessages(messages) })
     }
 
     if (req.method === 'POST') {
@@ -34,15 +36,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'role and content are required' })
       }
 
-      const message = { role, content, created_at: new Date() }
       const now = new Date()
+      const message = buildMessageDoc({
+        conversationId: conversation._id,
+        role,
+        content,
+        sequence: conversation.messageCount,
+      })
 
-      await col.updateOne({ _id: new ObjectId(id as string) } as any, {
-        $push: { messages: { $each: [message], $slice: -MAX_MESSAGES } },
-        $set: { updated_at: now },
-      } as any)
+      await messagesCol.insertOne(message as any)
+      await conversationsCol.updateOne(
+        { _id: conversation._id },
+        { $inc: { messageCount: 1 }, $set: { lastMessageAt: now, updatedAt: now } } as any
+      )
 
-      return res.status(201).json({ data: message })
+      return res.status(201).json({ data: toApiMessage(message) })
     }
 
     return res.status(405).json({ error: 'Method not allowed' })
