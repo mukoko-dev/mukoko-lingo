@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react'
 import { apiKeysApi } from '@/lib/api-client'
 
+// The real, pre-existing Mukoko Lingo product entity (entity.entities) —
+// keys created from this admin UI are always owned by Lingo itself, not an
+// arbitrary caller-supplied org. Mirrors lib/db/types.ts MUKOKO_LINGO_ENTITY_ID.
+const MUKOKO_LINGO_ENTITY_ID = '0192e000-c000-7000-8000-000000000002'
+
 export default function ApiKeysPage() {
   const [keys, setKeys] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -18,7 +23,7 @@ export default function ApiKeysPage() {
 
   async function createKey() {
     if (!newKeyName.trim()) return
-    const { data } = await apiKeysApi.createApiKey({ name: newKeyName, organization_id: 'default' })
+    const { data } = await apiKeysApi.createApiKey({ name: newKeyName, organization_id: MUKOKO_LINGO_ENTITY_ID })
     if (data?.key) {
       alert(`API Key created. Save this — it won't be shown again:\n\n${data.key}`)
     }

@@ -304,19 +304,42 @@ export interface OrganizationEnrollment {
   enrolled_at: Date
 }
 
-export interface ApiKey {
-  _id?: any
+/**
+ * platform.apiKeys — the shared, ecosystem-wide API-key registry, not
+ * Lingo-owned. `_id` is a UUID string, never an ObjectId. `ownerEntityId`
+ * is the org/entity the key belongs to (`entity.entities._id`); Lingo's
+ * org-issued developer keys are always `keyType: 'external'`.
+ * `keyHashedSecret` stores only the hash — the plaintext key is returned
+ * once at creation time and never persisted.
+ */
+export interface PlatformApiKey {
+  _id: string
+  _schemaVersion: 'v3.1'
+  keyType: 'internal' | 'external'
+  ownerEntityId: string
+  ownerPersonId?: string | null
+  createdByPersonId: string
   name: string
-  organization_id: string
-  key_hash: string
-  key_prefix: string
+  keyPrefix: string
+  keyHashedSecret: string
   scopes: string[]
-  created_by: string
-  last_used_at?: Date
-  expires_at?: Date
-  is_active: boolean
-  created_at: Date
+  surfaceContext: string
+  isActive: boolean
+  billingReferenceId?: string | null
+  planTier?: 'free' | 'starter' | 'growth' | 'enterprise' | null
+  expiresAt?: Date | null
+  lastUsedAt?: Date | null
+  monthlyRequestCount?: number
+  monthlyRequestLimit?: number | null
+  revokedAt?: Date | null
+  revokedReason?: string | null
+  rotationSchedule?: string | null
+  createdAt: Date
+  updatedAt: Date
 }
+
+/** surfaceContext used for every Lingo-issued platform.apiKeys document — matches the domain-prefix convention seen elsewhere in the cluster (e.g. `lingo_phrase`, `shamwari_conversation_turn` targetReferenceTypes). */
+export const LINGO_SURFACE_CONTEXT = 'lingo'
 
 export interface StudySession {
   _id?: any
