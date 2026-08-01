@@ -73,10 +73,10 @@ Both apps call the same API routes. The web app includes all learner features pl
 | Web Frontend | Next.js 15 / Tailwind CSS / Five African Minerals |
 | Routing | Expo Router 6 (mobile) / Next.js App Router (web) |
 | Backend | Vercel Serverless Functions (TypeScript + Python) |
-| Database | MongoDB (database `mukoko-lingo`) |
+| Database | MongoDB (database `lingo` — shared with the Nyuchi ecosystem, see below) |
 | Auth | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow) |
 | AI | Anthropic Claude Haiku 4.5 (server-side proxy with circuit breaker) |
-| Testing | Jest 29 + jest-expo (18 suites, 226 tests) |
+| Testing | Jest 29 + jest-expo (24 suites, 298 tests) |
 | CI/CD | GitHub Actions (typecheck → test → build-web) |
 
 ## Development Commands
@@ -95,26 +95,37 @@ npm run build:web           # Export Expo web build for Vercel
 cd web && npm run build     # Build Next.js web app
 
 # Testing & Quality
-npm test                    # Run all tests (18 suites, 226 tests)
+npm test                    # Run all tests (24 suites, 298 tests)
 npm run test:coverage       # Tests with coverage report
 npx tsc --noEmit            # TypeScript type check
 ```
 
 ## Database Schema
 
-MongoDB, database `mukoko-lingo`, key collections:
+MongoDB cluster shared across the Nyuchi ecosystem — `lingo` is Lingo's own database, but several collections read/write sibling databases owned by other domains/apps (see `docs/ECOSYSTEM_DATA_MIGRATION.md` for the full migration history).
+
+**Shared, not Lingo-owned:**
 
 | Collection | Purpose |
 |------------|---------|
-| `profiles` | User profiles, keyed on the WorkOS `workos_user_id` |
-| `phrases` | Flat multi-language phrase documents (english/shona/ndebele/swahili/chinese) |
-| `phrase_progress`, `bookmarks`, `phrase_views` | Per-user learning activity |
-| `skills`, `user_skills`, `assessments`, `user_assessments`, `learning_standards` | Skills-based progression |
-| `classes`, `class_memberships`, `assignments`, `assignment_submissions`, `organization_enrollments`, `api_keys` | Schools/orgs |
-| `ai_conversations` | Shamwari chat sessions, with messages embedded per conversation |
-| `guardrails`, `moderation_alerts` | Content moderation |
+| `identity.persons` | Real ecosystem user record (UUID `_id`, OIDC claims, `workosUserId`) |
+| `lingo.phrases`, `lingo.languages`, `lingo.scenarios`, `lingo.learningStandards` | Real, ecosystem-curated multilingual content (`translations[]` per phrase, not flat per-language fields) |
+| `shamwari.guardrails` | Content moderation rules |
+| `shamwari.conversations`, `shamwari.messages` | Shamwari AI chat (messages are their own collection, not embedded) |
+| `ubuntu.contributions` | Trust/gamification ledger — Lingo mirrors XP events into it (`sourceDomain: "lingo"`) |
+| `platform.apiKeys` | Org-issued developer API keys (`ownerEntityId`, `keyType: internal/external`) |
 
-Phrases carry all language fields directly on one document — adding a new language is just adding a field, no schema change.
+**Lingo-local** (`lingo` database, no ecosystem equivalent exists):
+
+| Collection | Purpose |
+|------------|---------|
+| `learner_profiles` | Lingo-specific extension of `identity.persons` (role, learning prefs, push tokens), keyed on `person_id` |
+| `phrase_progress`, `bookmarks`, `phrase_views` | Per-user learning activity |
+| `phraseEngagementLive` | Read-only aggregation view over `bookmarks`/`phrase_views`, not a stored counter |
+| `skills`, `user_skills`, `assessments`, `user_assessments` | Skills-based progression |
+| `classes`, `class_memberships`, `assignments`, `assignment_submissions`, `organization_enrollments` | Schools/orgs |
+| `srs_cards`, `user_xp`, `xp_events`, `study_sessions` | Spaced repetition + XP/streaks |
+| `moderation_alerts` | Flagged content pending review |
 
 ## CI/CD Pipeline
 
