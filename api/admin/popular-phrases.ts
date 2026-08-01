@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { requireAdmin } from '../_lib/auth-middleware'
 import { phraseViews, bookmarks, phrases } from '../_lib/mongo'
@@ -26,14 +25,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .sort((a: any, b: any) => b.count - a.count)
       .slice(0, 20)
 
-    const phraseIds = top20.map((v: any) => v._id).filter(ObjectId.isValid)
-    const phraseDocs = await phrasesCol.find({ _id: { $in: phraseIds.map((id: string) => new ObjectId(id)) } } as any).toArray()
-    const phraseById = new Map(phraseDocs.map((p: any) => [String(p._id), p]))
+    const phraseIds = top20.map((v: any) => v._id).filter(Boolean)
+    const phraseDocs = await phrasesCol.find({ _id: { $in: phraseIds } }).toArray()
+    const phraseById = new Map(phraseDocs.map((p) => [p._id, p]))
 
     const results = top20
       .filter((v: any) => phraseById.has(v._id))
       .map((v: any) => ({
-        ...toApiPhrase(phraseById.get(v._id)),
+        ...toApiPhrase(phraseById.get(v._id)!),
         view_count: v.count,
         bookmark_count: bookmarkCountById.get(v._id) || 0,
       }))
