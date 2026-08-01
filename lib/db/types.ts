@@ -215,22 +215,65 @@ export interface ModerationAlert {
   created_at: Date
 }
 
-export interface AiMessage {
-  role: 'user' | 'assistant'
-  content: string
-  created_at: Date
+/**
+ * shamwari.conversations / shamwari.messages — the shared, ecosystem-wide
+ * AI conversation store (`shamwari` database), not Lingo-owned. Replaces
+ * the old Lingo-local `ai_conversations` collection (one doc per
+ * conversation, messages embedded and capped at 200). Both `_id`s are UUID
+ * strings, never ObjectIds.
+ */
+
+/** One Anthropic Messages API content block, e.g. `{ type: 'text', text: '...' }`. */
+export interface AnthropicContentBlock {
+  type: string
+  text?: string
+  [key: string]: unknown
 }
 
-export interface AiConversation {
-  _id?: any
-  user_id: string
-  type: string
-  language_id: string
-  title?: string
-  class_id?: string
-  messages: AiMessage[]
-  updated_at: Date
-  created_at: Date
+/**
+ * shamwari.conversations — `ownerEntityId` is required by the shared
+ * schema; Lingo has no per-person "family" entity provisioning yet (see
+ * `resolveOwnerEntityId` in `lib/db/identity.ts`), so it falls back to the
+ * `MUKOKO_LINGO_ENTITY_ID` product entity when a person has none. Lingo's
+ * own conversation `type` / `languageId` / `classId` fields live in the
+ * `shamwari.conversationContext` sub-object — there's nowhere else for
+ * them in the shared schema, and they're genuinely Lingo-specific, not
+ * generic chat fields.
+ */
+export interface ShamwariConversation {
+  _id: string
+  _schemaVersion: 'v3.1'
+  ownerPersonId: string
+  ownerEntityId: string
+  surfaceContext: string
+  modelProvider: 'anthropic' | 'openai' | 'google' | 'shamwari' | 'ollama'
+  modelVersion: string
+  messageCount: number
+  isActive: boolean
+  lastMessageAt: Date
+  createdAt: Date
+  updatedAt: Date
+  title?: string | null
+  systemPromptHash?: string | null
+  shamwari?: {
+    conversationContext?: Record<string, unknown>
+    retrievalState?: Record<string, unknown>
+  }
+}
+
+/** shamwari.messages — `content` is an array of Anthropic content blocks, not a plain string. */
+export interface ShamwariMessage {
+  _id: string
+  _schemaVersion: 'v3.1'
+  conversationId: string
+  role: 'user' | 'assistant' | 'system' | 'tool'
+  content: AnthropicContentBlock[]
+  sequence: number
+  createdAt: Date
+  inputTokens?: number | null
+  outputTokens?: number | null
+  modelInvocationId?: string | null
+  stopReason?: string | null
 }
 
 export interface SrsCard {
