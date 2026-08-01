@@ -28,9 +28,12 @@ class handler(BaseHTTPRequestHandler):
             db = get_db()
             now = datetime.utcnow()
             thirty_days_ago = now - timedelta(days=30)
+            thirty_days_ago_str = thirty_days_ago.strftime("%Y-%m-%d")
 
             # --- Weekly Retention Cohorts ---
-            # For each signup week, what % came back in subsequent weeks
+            # For each signup week, what % came back in subsequent weeks.
+            # No local `profiles` collection — created_at/last_active/
+            # deleted_at live on lingo.learner_profiles (see overview.py).
             cohort_pipeline = [
                 {"$match": {
                     "deleted_at": None,
@@ -99,11 +102,12 @@ class handler(BaseHTTPRequestHandler):
                 }},
                 {"$sort": {"week": 1}},
             ]
-            cohorts = list(db.profiles.aggregate(cohort_pipeline))
+            cohorts = list(db.learner_profiles.aggregate(cohort_pipeline))
 
             # --- Session Duration Distribution ---
+            # session_date is a 'YYYY-MM-DD' string, not a Date (see overview.py).
             session_pipeline = [
-                {"$match": {"session_date": {"$gte": thirty_days_ago}}},
+                {"$match": {"session_date": {"$gte": thirty_days_ago_str}}},
                 {"$bucket": {
                     "groupBy": "$time_spent_minutes",
                     "boundaries": [0, 5, 10, 15, 30, 60, 120, 999],
@@ -161,28 +165,37 @@ class handler(BaseHTTPRequestHandler):
             popular_categories = list(db.phrase_views.aggregate(category_pipeline))
 
             # --- AI Usage Stats ---
+            # There is no local `ai_conversations` collection — Shamwari AI
+            # chat lives in the shared shamwari.conversations collection
+            # (own database, UUID ids, camelCase fields), not Lingo's. It's
+            # a cross-app collection, so scope to Lingo's own conversations
+            # via surfaceContext (see lib/db/conversation-shape.ts's
+            # SURFACE_CONTEXT). Lingo's `type`/`languageId` fields live
+            # nested under shamwari.conversationContext, not top-level.
+            shamwari_db = get_db("shamwari")
             ai_pipeline = [
+                {"$match": {"surfaceContext": "mukoko-lingo"}},
                 {"$facet": {
                     "total_conversations": [{"$count": "count"}],
                     "recent_conversations": [
-                        {"$match": {"created_at": {"$gte": thirty_days_ago}}},
+                        {"$match": {"createdAt": {"$gte": thirty_days_ago}}},
                         {"$count": "count"},
                     ],
                     "by_type": [
                         {"$group": {
-                            "_id": "$type",
+                            "_id": "$shamwari.conversationContext.type",
                             "count": {"$sum": 1},
                         }},
                     ],
                     "by_language": [
                         {"$group": {
-                            "_id": "$language",
+                            "_id": "$shamwari.conversationContext.languageId",
                             "count": {"$sum": 1},
                         }},
                     ],
                 }}
             ]
-            ai_result = list(db.ai_conversations.aggregate(ai_pipeline))
+            ai_result = list(shamwari_db.conversations.aggregate(ai_pipeline))
             ai_stats = ai_result[0] if ai_result else {}
 
             ai_usage = {

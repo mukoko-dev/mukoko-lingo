@@ -23,6 +23,31 @@ def make_handler(headers):
     return handler
 
 
+class TestGetPhraseText:
+    def test_extracts_text_for_the_requested_language_tag(self):
+        """
+        Regression guard: an earlier version read a flat `phrase["english"]`
+        field that doesn't exist on the real lingo.phrases schema — text
+        lives in translations[], keyed by BCP-47 languageTag — so this
+        always silently returned "Unknown".
+        """
+        phrase = {
+            "translations": [
+                {"languageTag": "en", "text": "Hello"},
+                {"languageTag": "sn", "text": "Mhoro"},
+            ]
+        }
+        assert _helpers.get_phrase_text(phrase, "en") == "Hello"
+        assert _helpers.get_phrase_text(phrase, "sn") == "Mhoro"
+
+    def test_falls_back_to_unknown_for_a_missing_language_tag(self):
+        phrase = {"translations": [{"languageTag": "en", "text": "Hello"}]}
+        assert _helpers.get_phrase_text(phrase, "zh") == "Unknown"
+
+    def test_falls_back_to_unknown_with_no_translations_array(self):
+        assert _helpers.get_phrase_text({}) == "Unknown"
+
+
 class TestGetAllowedOrigin:
     def test_allowlisted_origin_is_echoed(self):
         assert _helpers._get_allowed_origin({"Origin": "https://lingo.mukoko.com"}) == "https://lingo.mukoko.com"
@@ -40,7 +65,7 @@ class TestGetAllowedOrigin:
 
 
 class TestGetDb:
-    def test_uses_the_real_shared_lingo_database_not_the_invented_one(self):
+    def test_defaults_to_the_real_shared_lingo_database_not_the_invented_one(self):
         """
         Regression guard: an earlier version of get_db() pointed at the
         invented, never-populated `mukoko-lingo` database instead of the
@@ -54,6 +79,21 @@ class TestGetDb:
                 patch.object(_helpers, "MongoClient", return_value=fake_client):
             _helpers.get_db()
         fake_client.__getitem__.assert_called_once_with("lingo")
+        _helpers._client = None
+
+    def test_accepts_a_different_database_name_for_shared_ecosystem_dbs(self):
+        """
+        Mirrors lib/db/mongo.ts's getDb(name?) — verify_admin needs
+        `identity` (for identity.persons) and engagement.py needs
+        `shamwari` (for shamwari.conversations); both are sibling
+        databases on the same cluster, not Lingo's own `lingo` db.
+        """
+        _helpers._client = None
+        fake_client = MagicMock()
+        with patch.dict(os.environ, {"MONGODB_URI": "mongodb://fake-uri"}), \
+                patch.object(_helpers, "MongoClient", return_value=fake_client):
+            _helpers.get_db("identity")
+        fake_client.__getitem__.assert_called_once_with("identity")
         _helpers._client = None
 
     def test_raises_without_a_configured_uri(self):
@@ -81,6 +121,61 @@ class TestVerifyAdmin:
         with patch.object(_helpers, "_get_workos_jwks_client", side_effect=Exception("jwks unreachable")):
             result = _helpers.verify_admin(FakeHeaders({"Authorization": "Bearer some-token"}))
         assert result is None
+
+    def _mock_jwt(self, workos_user_id="workos-user-1"):
+        fake_jwks_client = MagicMock()
+        fake_jwks_client.get_signing_key_from_jwt.return_value.key = "fake-signing-key"
+        jwt_decode_patch = patch("jwt.decode", return_value={"sub": workos_user_id})
+        jwks_patch = patch.object(_helpers, "_get_workos_jwks_client", return_value=fake_jwks_client)
+        return jwt_decode_patch, jwks_patch
+
+    def test_no_matching_identity_person_returns_none(self):
+        """
+        identity.persons is keyed on workosUserId, not a `profiles`
+        collection — a token for a WorkOS user with no matching person
+        document must be rejected, not raise.
+        """
+        jwt_patch, jwks_patch = self._mock_jwt()
+        fake_identity_db = MagicMock()
+        fake_identity_db.persons.find_one.return_value = None
+        with jwt_patch, jwks_patch, patch.object(_helpers, "get_db", return_value=fake_identity_db) as get_db_mock:
+            result = _helpers.verify_admin(FakeHeaders({"Authorization": "Bearer tok"}))
+        assert result is None
+        get_db_mock.assert_called_once_with("identity")
+
+    def test_person_without_admin_learner_profile_returns_none(self):
+        """
+        Role lives on lingo.learner_profiles (keyed on person_id), not on
+        identity.persons — a real person with a non-admin role must be
+        rejected.
+        """
+        jwt_patch, jwks_patch = self._mock_jwt()
+        fake_identity_db = MagicMock()
+        fake_identity_db.persons.find_one.return_value = {"_id": "person-1"}
+        fake_lingo_db = MagicMock()
+        fake_lingo_db.learner_profiles.find_one.return_value = {"person_id": "person-1", "role": "user"}
+
+        def get_db_side_effect(name="lingo"):
+            return fake_identity_db if name == "identity" else fake_lingo_db
+
+        with jwt_patch, jwks_patch, patch.object(_helpers, "get_db", side_effect=get_db_side_effect):
+            result = _helpers.verify_admin(FakeHeaders({"Authorization": "Bearer tok"}))
+        assert result is None
+
+    def test_admin_person_returns_person_id_and_role(self):
+        jwt_patch, jwks_patch = self._mock_jwt()
+        fake_identity_db = MagicMock()
+        fake_identity_db.persons.find_one.return_value = {"_id": "person-1"}
+        fake_lingo_db = MagicMock()
+        fake_lingo_db.learner_profiles.find_one.return_value = {"person_id": "person-1", "role": "admin"}
+
+        def get_db_side_effect(name="lingo"):
+            return fake_identity_db if name == "identity" else fake_lingo_db
+
+        with jwt_patch, jwks_patch, patch.object(_helpers, "get_db", side_effect=get_db_side_effect):
+            result = _helpers.verify_admin(FakeHeaders({"Authorization": "Bearer tok"}))
+        assert result == {"person_id": "person-1", "role": "admin"}
+        fake_lingo_db.learner_profiles.find_one.assert_called_once_with({"person_id": "person-1"})
 
 
 class TestJsonResponse:

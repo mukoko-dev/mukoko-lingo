@@ -30,9 +30,15 @@ class handler(BaseHTTPRequestHandler):
             seven_days_ago = now - timedelta(days=7)
             fourteen_days_ago = now - timedelta(days=14)
             thirty_days_ago = now - timedelta(days=30)
+            thirty_days_ago_str = thirty_days_ago.strftime("%Y-%m-%d")
 
             # --- Growth Rate Pipeline ---
-            # Compare this week vs last week for new users
+            # Compare this week vs last week for new users. There is no
+            # local `profiles` collection — user growth/retention fields
+            # (created_at/last_active/deleted_at) live on lingo.learner_profiles,
+            # Lingo's own extension of the shared identity.persons record
+            # (see lib/db/identity.ts). One learner_profiles doc exists per
+            # real user, so it doubles as the user-growth source here.
             growth_pipeline = [
                 {"$match": {"deleted_at": None}},
                 {"$facet": {
@@ -54,7 +60,7 @@ class handler(BaseHTTPRequestHandler):
                     ],
                 }}
             ]
-            growth_result = list(db.profiles.aggregate(growth_pipeline))
+            growth_result = list(db.learner_profiles.aggregate(growth_pipeline))
             growth = growth_result[0] if growth_result else {}
 
             this_week = growth.get("this_week", [{}])[0].get("count", 0) if growth.get("this_week") else 0
@@ -65,13 +71,14 @@ class handler(BaseHTTPRequestHandler):
             growth_rate = ((this_week - last_week) / max(last_week, 1)) * 100
 
             # --- Learning Activity Pipeline ---
-            # Daily study sessions over last 30 days
+            # Daily study sessions over last 30 days. study_sessions.session_date
+            # is stored as a plain 'YYYY-MM-DD' string (see lib/db/types.ts),
+            # not a Date — lexicographic comparison/grouping works directly,
+            # no $dateToString conversion needed (nor possible, on a string field).
             activity_pipeline = [
-                {"$match": {"session_date": {"$gte": thirty_days_ago}}},
+                {"$match": {"session_date": {"$gte": thirty_days_ago_str}}},
                 {"$group": {
-                    "_id": {
-                        "$dateToString": {"format": "%Y-%m-%d", "date": "$session_date"}
-                    },
+                    "_id": "$session_date",
                     "sessions": {"$sum": 1},
                     "phrases_studied": {"$sum": "$phrases_studied"},
                     "total_minutes": {"$sum": "$time_spent_minutes"},
@@ -90,24 +97,27 @@ class handler(BaseHTTPRequestHandler):
             daily_activity = list(db.study_sessions.aggregate(activity_pipeline))
 
             # --- User Funnel Pipeline ---
-            # How many users reach each milestone
+            # How many users reach each milestone. Joins off learner_profiles
+            # (not "_id" — that's an arbitrary ObjectId here, unrelated to
+            # the user_id/person_id referenced by phrase_progress etc. —
+            # but "person_id").
             funnel_pipeline = [
                 {"$match": {"deleted_at": None}},
                 {"$lookup": {
                     "from": "phrase_progress",
-                    "localField": "_id",
+                    "localField": "person_id",
                     "foreignField": "user_id",
                     "as": "progress"
                 }},
                 {"$lookup": {
                     "from": "bookmarks",
-                    "localField": "_id",
+                    "localField": "person_id",
                     "foreignField": "user_id",
                     "as": "bookmarks"
                 }},
                 {"$lookup": {
                     "from": "user_assessments",
-                    "localField": "_id",
+                    "localField": "person_id",
                     "foreignField": "user_id",
                     "as": "assessments"
                 }},
@@ -133,7 +143,7 @@ class handler(BaseHTTPRequestHandler):
                     "mastered_any": {"$sum": {"$cond": [{"$gt": ["$mastered_count", 0]}, 1, 0]}},
                 }},
             ]
-            funnel_result = list(db.profiles.aggregate(funnel_pipeline))
+            funnel_result = list(db.learner_profiles.aggregate(funnel_pipeline))
             funnel = funnel_result[0] if funnel_result else {
                 "total": 0, "started_learning": 0,
                 "bookmarked_phrases": 0, "took_assessment": 0, "mastered_any": 0

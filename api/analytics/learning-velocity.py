@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _helpers import get_db, verify_admin, json_response, handle_options
+from _helpers import get_db, verify_admin, json_response, handle_options, get_phrase_text
 
 
 class handler(BaseHTTPRequestHandler):
@@ -140,12 +140,12 @@ class handler(BaseHTTPRequestHandler):
             ]
             top_phrases = list(db.phrase_progress.aggregate(top_phrases_pipeline))
 
-            # Enrich with phrase details
+            # Enrich with phrase details.
             phrase_ids = [p["phrase_id"] for p in top_phrases]
             phrases_map = {}
             if phrase_ids:
                 for phrase in db.phrases.find({"_id": {"$in": phrase_ids}}):
-                    phrases_map[phrase["_id"]] = phrase.get("english", "Unknown")
+                    phrases_map[phrase["_id"]] = get_phrase_text(phrase, "en")
 
             for p in top_phrases:
                 p["english"] = phrases_map.get(p["phrase_id"], "Unknown")
