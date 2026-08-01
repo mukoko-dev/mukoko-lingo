@@ -53,6 +53,9 @@ web/next-env.d.ts
 # Vercel
 .vercel
 
+# Claude Code agent worktrees (isolated, per-agent working copies)
+.claude/worktrees/
+
 # EAS
 .easignore
 .env*
