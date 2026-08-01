@@ -372,3 +372,27 @@ export interface SharedGuardrail {
   createdAt: Date
   updatedAt: Date
 }
+
+/**
+ * ubuntu.contributions — the shared, ecosystem-wide trust/gamification
+ * ledger (Ubuntu domain, `ubuntu` database), not Lingo-owned. Lingo emits
+ * one of these per synced XP event as enrichment for the platform-wide
+ * scoring pipeline; it is never read back by Lingo itself (see
+ * `lib/db/ubuntu-contribution.ts` for the mapping from an `XpEvent`).
+ * `category` has no "language learning" option in the shared enum
+ * (civic/creative/commercial/care/cultural/factual) — `"cultural"` is used
+ * as the closest fit (oral tradition / language preservation).
+ */
+export interface UbuntuContribution {
+  _id: string
+  _schemaVersion: 'v3.1'
+  contributorPersonId: string
+  contributorEntityId: string
+  contributionType: string
+  sourceDomain: 'lingo'
+  sourceRecordId: string
+  category: 'cultural'
+  weight: number
+  occurredAt: Date
+  createdAt: Date
+}
