@@ -1,6 +1,26 @@
 /**
  * Tests for database storage functions (web implementation via AsyncStorage)
  */
+// Explicitly import the web implementation to avoid native SQLite resolver
+import {
+  initDatabase,
+  addBookmark,
+  removeBookmark,
+  getBookmarks,
+  isBookmarked,
+  updateProgress,
+  getProgress,
+  updateUserSkill,
+  getUserSkills,
+  recordStudySession,
+  getStudySessions,
+  getStudyStreak,
+  getDailyLesson,
+  setDailyLesson,
+  getDailyGoalProgress,
+  updateDailyGoalProgress,
+} from '../database.web'
+
 const store: Record<string, string> = {}
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -21,26 +41,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     }),
   },
 }))
-
-// Explicitly import the web implementation to avoid native SQLite resolver
-import {
-  initDatabase,
-  addBookmark,
-  removeBookmark,
-  getBookmarks,
-  isBookmarked,
-  updateProgress,
-  getProgress,
-  updateUserSkill,
-  getUserSkills,
-  recordStudySession,
-  getStudySessions,
-  getStudyStreak,
-  getDailyLesson,
-  setDailyLesson,
-  getDailyGoalProgress,
-  updateDailyGoalProgress,
-} from '../database.web'
 
 describe('database (web)', () => {
   beforeEach(() => {

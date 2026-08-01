@@ -1379,7 +1379,7 @@ export function calculateAssessmentScore(
   score: number
   total: number
   percentage: number
-  results: Array<{ question: AssessmentQuestion; userAnswer: string; correct: boolean }>
+  results: { question: AssessmentQuestion; userAnswer: string; correct: boolean }[]
 } {
   const results = questions.map(q => ({
     question: q,

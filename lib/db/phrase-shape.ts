@@ -135,7 +135,7 @@ export function buildPhraseDoc(body: Record<string, any>): Phrase {
  * can't address one array element by languageTag in a $set).
  */
 export function mergeTranslations(existing: PhraseTranslation[], body: Record<string, any>): PhraseTranslation[] {
-  const langs: Array<[string, string, string, string]> = [
+  const langs: [string, string, string, string][] = [
     ['en', 'english', 'englishPronunciation', 'englishContext'],
     ['sn', 'shona', 'shonaPronunciation', 'shonaContext'],
     ['nd', 'ndebele', 'ndebelePronunciation', 'ndebeleContext'],

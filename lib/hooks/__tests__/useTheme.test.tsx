@@ -12,7 +12,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 // Mock Appearance
 jest.mock('react-native', () => {
-  const listeners: Array<(prefs: { colorScheme: string }) => void> = []
+  const listeners: ((prefs: { colorScheme: string }) => void)[] = []
   return {
     Appearance: {
       getColorScheme: jest.fn(() => 'light'),

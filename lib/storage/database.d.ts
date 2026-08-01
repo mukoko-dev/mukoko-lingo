@@ -18,7 +18,7 @@ export function getProgress(): Promise<Record<string, { status: string; lastPrac
 export function updateUserSkill(skillName: string, score: number): Promise<void>
 export function getUserSkills(): Promise<Record<string, { score: number; lastAssessed: string }>>
 export function recordStudySession(phrasesPracticed: number, durationMinutes: number): Promise<void>
-export function getStudySessions(): Promise<Array<{ date: string; phrasesPracticed: number; durationMinutes: number }>>
+export function getStudySessions(): Promise<{ date: string; phrasesPracticed: number; durationMinutes: number }[]>
 export function getStudyStreak(): Promise<number>
 
 // Daily lesson operations

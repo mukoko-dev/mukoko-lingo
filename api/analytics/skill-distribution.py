@@ -8,7 +8,6 @@ Returns: skill averages, level distribution, weakest/strongest skills
 
 import sys
 import os
-from datetime import datetime
 from http.server import BaseHTTPRequestHandler
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

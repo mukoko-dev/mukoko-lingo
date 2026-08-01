@@ -5,6 +5,17 @@
  */
 
 // Set API_BASE_URL before module import so apiCall validation passes
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as WebBrowser from 'expo-web-browser'
+import {
+  signInWithAuthKit,
+  handleAuthCallback,
+  signOut,
+  getCurrentUser,
+  getSessionToken,
+  isAuthConfigured,
+} from '../workos-client'
+
 process.env.EXPO_PUBLIC_API_BASE_URL = 'https://test-api.mukoko.com'
 
 // Mock fetch globally
@@ -40,17 +51,6 @@ jest.mock('expo-web-browser', () => ({
 jest.mock('react-native', () => ({
   Platform: { OS: 'web' },
 }))
-
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import * as WebBrowser from 'expo-web-browser'
-import {
-  signInWithAuthKit,
-  handleAuthCallback,
-  signOut,
-  getCurrentUser,
-  getSessionToken,
-  isAuthConfigured,
-} from '../workos-client'
 
 describe('workos-client', () => {
   beforeEach(() => {

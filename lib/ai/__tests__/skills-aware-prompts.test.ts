@@ -5,12 +5,12 @@ import {
   getUserOverallProficiency,
 } from '../skills-aware-prompts'
 
+import { getUserSkills } from '../../storage/database'
+
 // Mock the storage module
 jest.mock('../../storage/database', () => ({
   getUserSkills: jest.fn(),
 }))
-
-import { getUserSkills } from '../../storage/database'
 
 const mockedGetUserSkills = getUserSkills as jest.MockedFunction<typeof getUserSkills>
 

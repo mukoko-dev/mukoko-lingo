@@ -42,7 +42,7 @@ def get_db():
         if not uri:
             raise RuntimeError("MONGODB_URI not configured")
         _client = MongoClient(uri, appName="mukoko-analytics")
-    return _client["mukoko-lingo"]
+    return _client["lingo"]
 
 
 def _get_workos_jwks_client():

@@ -3,6 +3,15 @@
  */
 
 // Mock the database module before any imports
+import {
+  getSkillForCategory,
+  getTodaysLesson,
+  getTodayProgress,
+  markPhraseLearned,
+  generateQuizQuestions,
+} from '../daily-lesson'
+import { phrases } from '@/lib/data/phrases-data'
+
 const mockDailyLessons: Record<string, string[]> = {}
 const mockGoalProgress: Record<string, { learned: number }> = {}
 
@@ -36,15 +45,6 @@ jest.mock('@/lib/storage/database', () => ({
   updateProgress: jest.fn(() => Promise.resolve()),
   updateUserSkill: jest.fn(() => Promise.resolve()),
 }))
-
-import {
-  getSkillForCategory,
-  getTodaysLesson,
-  getTodayProgress,
-  markPhraseLearned,
-  generateQuizQuestions,
-} from '../daily-lesson'
-import { phrases } from '@/lib/data/phrases-data'
 
 describe('daily-lesson service', () => {
   beforeEach(() => {
