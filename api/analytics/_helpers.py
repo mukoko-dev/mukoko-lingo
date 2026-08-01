@@ -26,6 +26,19 @@ ALLOWED_ORIGINS = [
 ]
 
 
+def get_phrase_text(phrase, language_tag="en"):
+    """
+    lingo.phrases has no flat per-language field (no `english`, etc.) —
+    text lives in `translations[]`, an array of {languageTag, text, ...}
+    keyed by BCP-47 tag (see lib/db/types.ts / phrase-shape.ts on the
+    TypeScript side). Returns `default_text` if no matching translation.
+    """
+    return next(
+        (t.get("text") for t in phrase.get("translations", []) if t.get("languageTag") == language_tag),
+        "Unknown",
+    )
+
+
 def _get_allowed_origin(headers):
     """Return the origin if it's in the allowlist, otherwise empty string."""
     origin = headers.get("Origin", "")
@@ -34,15 +47,21 @@ def _get_allowed_origin(headers):
     return ""
 
 
-def get_db():
-    """Get MongoDB database connection (singleton)."""
+def get_db(name="lingo"):
+    """
+    Get a MongoDB database handle off the shared client singleton (one
+    client, many per-database handles) — mirrors lib/db/mongo.ts's
+    `getDb(name?)` on the TypeScript side. Defaults to `lingo`, Lingo's own
+    database; pass `"identity"` / `"shamwari"` / etc. for the shared,
+    ecosystem-wide databases those domains own.
+    """
     global _client
     if _client is None:
         uri = os.environ.get("MONGODB_URI", "")
         if not uri:
             raise RuntimeError("MONGODB_URI not configured")
         _client = MongoClient(uri, appName="mukoko-analytics")
-    return _client["lingo"]
+    return _client[name]
 
 
 def _get_workos_jwks_client():
@@ -59,7 +78,15 @@ def _get_workos_jwks_client():
 def verify_admin(headers):
     """
     Validate a WorkOS access token and check admin role.
-    Returns profile dict or None.
+
+    User identity is split across two databases, same as the TypeScript
+    side (lib/db/identity.ts): `identity.persons` is the shared,
+    ecosystem-wide record (keyed on `workosUserId`, camelCase fields), and
+    `lingo.learner_profiles` is Lingo's own extension collection carrying
+    `role`/`status`, keyed on `person_id` (== `identity.persons._id`).
+    There is no local `profiles` collection — never was, post-migration.
+
+    Returns a small dict ({"person_id", "role"}) or None.
     """
     import jwt
 
@@ -79,13 +106,15 @@ def verify_admin(headers):
         if not workos_user_id:
             return None
 
-        db = get_db()
-        profile = db.profiles.find_one({"workos_user_id": workos_user_id})
+        person = get_db("identity").persons.find_one({"workosUserId": workos_user_id})
+        if not person:
+            return None
 
+        profile = get_db().learner_profiles.find_one({"person_id": person["_id"]})
         if not profile or profile.get("role") != "admin":
             return None
 
-        return profile
+        return {"person_id": person["_id"], "role": profile["role"]}
     except Exception:
         return None
 
