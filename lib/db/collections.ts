@@ -55,7 +55,12 @@ export const skills = async () => (await getDb()).collection<Skill>('skills')
 export const userSkills = async () => (await getDb()).collection<UserSkill>('user_skills')
 export const assessments = async () => (await getDb()).collection<Assessment>('assessments')
 export const userAssessments = async () => (await getDb()).collection<UserAssessment>('user_assessments')
-export const learningStandards = async () => (await getDb()).collection<LearningStandard>('learning_standards')
+/**
+ * lingo.learningStandards — the real, ecosystem-curated collection. The old
+ * `learning_standards` name was a Postgres-era invention that never held a
+ * single document, so the admin standards editor read an empty list.
+ */
+export const learningStandards = async () => (await getDb()).collection<LearningStandard>('learningStandards')
 export const moderationAlerts = async () => (await getDb()).collection<ModerationAlert>('moderation_alerts')
 /** shamwari.conversations — shared ecosystem AI conversation store, not Lingo-owned. */
 export const shamwariConversations = async () => (await getDb('shamwari')).collection<ShamwariConversation>('conversations')

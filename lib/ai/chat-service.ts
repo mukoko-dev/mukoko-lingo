@@ -10,8 +10,7 @@
 import { buildSkillsAwarePrompt } from './skills-aware-prompts'
 import { moderateContent, getModerationMessage } from './moderation'
 import { getSessionToken } from '@/lib/auth/workos-client'
-
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''
+import { getApiBaseUrl } from '@/lib/config/api-base'
 
 export interface ChatMessage {
   id: string
@@ -50,8 +49,8 @@ export async function sendMessage(
     const systemPrompt = await buildSkillsAwarePrompt(conversationType, language)
 
     // If no API URL configured, use simulated response (offline/demo mode)
-    if (!API_BASE_URL) {
-      console.warn('[mukoko][chat] No API_BASE_URL set, using simulated responses')
+    if (!getApiBaseUrl()) {
+      console.warn('[mukoko][chat] No API base URL resolved, using simulated responses')
       return simulateResponse(messages[messages.length - 1]?.content || '')
     }
 
@@ -66,7 +65,7 @@ export async function sendMessage(
     if (token) headers['Authorization'] = `Bearer ${token}`
 
     // Call server-side proxy (API key is server-side only)
-    const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
+    const response = await fetch(`${getApiBaseUrl()}/api/ai/chat`, {
       method: 'POST',
       headers,
       body: JSON.stringify({

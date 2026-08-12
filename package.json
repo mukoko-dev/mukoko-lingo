@@ -19,9 +19,6 @@
   },
   "jest": {
     "preset": "jest-expo",
-    "setupFilesAfterFramework": [
-      "./jest.setup.ts"
-    ],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|lucide-react-native)"
     ],
@@ -33,12 +30,15 @@
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 45,
-        "branches": 35,
-        "functions": 40,
-        "lines": 45
+        "statements": 47,
+        "branches": 42,
+        "functions": 43,
+        "lines": 48
       }
-    }
+    },
+    "setupFilesAfterEnv": [
+      "./jest.setup.ts"
+    ]
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.24",

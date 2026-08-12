@@ -10,9 +10,10 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from './_lib/cors'
+import { createLogger } from './_lib/logger'
 import { phrases } from './_lib/mongo'
 
-const LANGUAGE_FIELDS = ['english', 'shona', 'ndebele', 'swahili', 'chinese']
+const log = createLogger('stats')
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -24,19 +25,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const col = await phrases()
 
-    const [totalPhrases, categories] = await Promise.all([col.countDocuments(), col.distinct('category')])
-
-    const languageCounts = await Promise.all(
-      LANGUAGE_FIELDS.map((field) => col.countDocuments({ [field]: { $exists: true, $ne: '' } }))
-    )
-    const totalLanguages = languageCounts.filter((count) => count > 0).length
+    // Languages live in `translations[]`, keyed by BCP-47 tag — there are no
+    // flat per-language fields on the real `lingo.phrases` documents.
+    const [totalPhrases, categories, languageTags] = await Promise.all([
+      col.countDocuments(),
+      col.distinct('category'),
+      col.distinct('translations.languageTag'),
+    ])
 
     return res.status(200).json({
       total_phrases: totalPhrases,
       total_categories: categories.filter(Boolean).length,
-      total_languages: totalLanguages,
+      total_languages: languageTags.filter(Boolean).length,
     })
   } catch (error: any) {
+    // Log before swallowing — without this the failure is invisible in
+    // Vercel's runtime logs and only reproducible by curling production.
+    log.error('Failed to fetch stats', error?.message || error)
     // Return 500 so the client falls through to its next strategy
     return res.status(500).json({ error: 'Failed to fetch stats' })
   }

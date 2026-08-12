@@ -9,6 +9,7 @@ import { Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Notifications from 'expo-notifications'
 import * as Device from 'expo-device'
+import { getApiBaseUrl } from '@/lib/config/api-base'
 import { profilesApi } from './api-client'
 
 // ---------------------------------------------------------------------------
@@ -121,7 +122,7 @@ async function syncTokenToServer(token: string): Promise<void> {
   try {
     const platform = Platform.OS as string
     const response = await fetch(
-      `${process.env.EXPO_PUBLIC_API_BASE_URL || ''}/api/notifications/register`,
+      `${getApiBaseUrl()}/api/notifications/register`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

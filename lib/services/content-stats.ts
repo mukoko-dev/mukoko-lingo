@@ -7,6 +7,7 @@
  *   2. Bundled static data (offline fallback, local-first principle)
  */
 
+import { getApiBaseUrl } from '@/lib/config/api-base'
 import { phrases as staticPhrases } from '@/lib/data/phrases-data'
 import { LEARNING_LANGUAGES } from '@/lib/hooks/useLearningLanguage'
 
@@ -84,11 +85,11 @@ interface StatsResponse {
 
 /**
  * Try the `/api/stats` Vercel serverless endpoint. Returns null when
- * unreachable. On web the URL is relative (`/api/stats`); on native it
- * requires EXPO_PUBLIC_API_BASE_URL to be set.
+ * unreachable. On web the base URL resolves to the browser's own origin;
+ * on native it requires EXPO_PUBLIC_API_BASE_URL to be set.
  */
 async function fetchFromApi(): Promise<StatsResponse | null> {
-  const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL || ''
+  const apiBase = getApiBaseUrl()
   try {
     const response = await fetch(`${apiBase}/api/stats`, { method: 'GET' })
     if (!response.ok) return null
