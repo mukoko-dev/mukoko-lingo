@@ -7,9 +7,8 @@
  */
 
 import { getSessionToken } from '@/lib/auth/workos-client'
+import { getApiBaseUrl } from '@/lib/config/api-base'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''
 
 // =============================================================================
 // Core HTTP Client with Exponential Backoff Retry
@@ -112,7 +111,7 @@ async function apiGet<T>(path: string, params?: Record<string, string>): Promise
     if (await checkOfflineMode()) return offlineResponse<T>('GET')
 
     const headers = await getAuthHeaders()
-    const url = new URL(`${API_BASE_URL}/api${path}`)
+    const url = new URL(`${getApiBaseUrl()}/api${path}`)
     if (params) {
       Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
     }
@@ -140,7 +139,7 @@ async function apiPost<T>(path: string, body: Record<string, any>): Promise<ApiR
     }
 
     const headers = await getAuthHeaders()
-    const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
+    const response = await fetchWithRetry(`${getApiBaseUrl()}/api${path}`, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
@@ -166,7 +165,7 @@ async function apiPut<T>(path: string, body: Record<string, any>): Promise<ApiRe
     }
 
     const headers = await getAuthHeaders()
-    const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
+    const response = await fetchWithRetry(`${getApiBaseUrl()}/api${path}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify(body),
@@ -192,7 +191,7 @@ async function apiDelete<T>(path: string): Promise<ApiResponse<T>> {
     }
 
     const headers = await getAuthHeaders()
-    const response = await fetchWithRetry(`${API_BASE_URL}/api${path}`, {
+    const response = await fetchWithRetry(`${getApiBaseUrl()}/api${path}`, {
       method: 'DELETE',
       headers,
     })

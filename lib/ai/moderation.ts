@@ -4,7 +4,7 @@
  */
 
 // AI moderation uses the server-side proxy when available, falls back to local-only
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || ''
+import { getApiBaseUrl } from '@/lib/config/api-base'
 
 export type ModerationCategory =
   | 'harassment'
@@ -124,7 +124,7 @@ function checkLocalGuardrails(content: string): ModerationResult | null {
 async function checkAIModeration(content: string): Promise<ModerationResult | null> {
   // AI moderation is handled server-side via the chat proxy.
   // The local guardrails + prompt injection detection handle client-side checks.
-  if (!API_BASE_URL) return null
+  if (!getApiBaseUrl()) return null
 
   try {
     const { getSessionToken } = await import('@/lib/auth/workos-client')
@@ -132,7 +132,7 @@ async function checkAIModeration(content: string): Promise<ModerationResult | nu
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (token) headers['Authorization'] = `Bearer ${token}`
 
-    const response = await fetch(`${API_BASE_URL}/api/ai/moderate`, {
+    const response = await fetch(`${getApiBaseUrl()}/api/ai/moderate`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ content }),

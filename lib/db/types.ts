@@ -191,18 +191,42 @@ export interface UserAssessment {
   completed_at: Date
 }
 
+/**
+ * lingo.learningStandards — the shared, ecosystem-curated proficiency
+ * ladder (camelCase v3.1 schema), NOT the Lingo-invented, never-populated
+ * `learning_standards`. `_id` is a UUID string, never an ObjectId, and
+ * `criteria` is a structured object rather than free text.
+ *
+ * Note the level ladder here is four rungs (beginner → novice → advanced →
+ * fluent) with a `cefrMapping` onto lingo.standards, and is distinct from
+ * the five-rung score bands in lib/ai/skills-aware-prompts.ts.
+ */
+export interface LearningStandardCriteria {
+  vocabularySize?: number
+  sentenceComplexity?: string
+  conversationLength?: string
+  comprehensionLevel?: string
+  pronunciationFocus?: string
+}
+
 export interface LearningStandard {
-  _id?: any
-  level_order: number
+  _id: string
+  _schemaVersion: 'v3.1'
+  level: 'beginner' | 'novice' | 'advanced' | 'fluent'
+  levelOrder: number
   title: string
-  description?: string
-  criteria?: string
-  vocabulary_range?: string
-  conversation_types?: string[]
-  grammar_concepts?: string[]
-  ai_prompt_template?: string
-  example_phrases?: string[]
-  is_active: boolean
+  description: string
+  criteria?: LearningStandardCriteria
+  vocabularyRange?: string
+  conversationTypes?: string[]
+  grammarConcepts?: string[]
+  aiPromptTemplate?: string
+  examplePhrases?: string[]
+  cefrMapping?: string | null
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+  mukoko?: Record<string, unknown>
 }
 
 export interface ModerationAlert {

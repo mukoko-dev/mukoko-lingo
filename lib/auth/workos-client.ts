@@ -8,16 +8,12 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { getApiBaseUrl } from '@/lib/config/api-base'
 import * as SecureStore from 'expo-secure-store'
 import * as WebBrowser from 'expo-web-browser'
 import { Platform } from 'react-native'
 
 const REDIRECT_URI = process.env.EXPO_PUBLIC_WORKOS_REDIRECT_URI || 'mukokolingo://auth/callback'
-
-// Read lazily so env can be set after module load (tests, dynamic config)
-function getApiBaseUrl(): string {
-  return process.env.EXPO_PUBLIC_API_BASE_URL || ''
-}
 
 // Check if we're running in a browser/client environment
 const isClient = typeof window !== 'undefined'
@@ -94,6 +90,9 @@ let _authStateListeners: AuthStateCallback[] = []
 // =============================================================================
 
 async function apiCall(endpoint: string, body: Record<string, any>): Promise<any> {
+  // On web this falls back to the browser's origin (the SPA and the API ship
+  // in the same Vercel deployment), so only a native build can end up here
+  // with nothing configured.
   const apiBase = getApiBaseUrl()
   if (!apiBase) {
     throw new Error('App not configured: missing API URL. Please set EXPO_PUBLIC_API_BASE_URL.')

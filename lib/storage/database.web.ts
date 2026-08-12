@@ -4,7 +4,9 @@ import { Phrase } from '../data/phrases-data'
 // Web uses AsyncStorage for all storage operations
 
 export async function initDatabase() {
-  console.log('Using AsyncStorage for web platform')
+  if (__DEV__) {
+    console.log('[mukoko][storage] Using AsyncStorage for web platform')
+  }
   return
 }
 

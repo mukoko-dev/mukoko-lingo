@@ -31,7 +31,16 @@ async function getClient(): Promise<MongoClient> {
   if (!_clientPromise) {
     _clientPromise = new MongoClient(MONGODB_URI, { appName: 'mukoko-api' }).connect()
   }
-  _client = await _clientPromise
+  try {
+    _client = await _clientPromise
+  } catch (error) {
+    // Never leave a rejected promise cached: a warm instance that lost its
+    // first connect (bad URI, DNS blip, Atlas failover) would otherwise
+    // replay that same rejection for the rest of its life instead of
+    // retrying on the next request.
+    _clientPromise = null
+    throw error
+  }
   return _client
 }
 

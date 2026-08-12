@@ -13,6 +13,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { getApiBaseUrl } from '@/lib/config/api-base'
 import { phrases as staticPhrases } from '@/lib/data/phrases-data'
 import {
   savePhrases,
@@ -195,7 +196,7 @@ export async function flushSyncQueue(): Promise<void> {
   if (queue.length === 0) return
 
   const remaining: SyncQueueItem[] = []
-  const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || ''
+  const apiBaseUrl = getApiBaseUrl()
 
   for (const item of queue) {
     try {
