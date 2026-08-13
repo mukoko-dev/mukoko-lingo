@@ -31,7 +31,6 @@ export interface Person {
   gender?: string | null
   birthdate?: Date | null
   workosUserId?: string | null
-  stytchUserId?: string | null
   isActive: boolean
   lastSeenAt?: Date | null
   createdAt: Date
@@ -144,20 +143,32 @@ export interface PhraseEngagement {
 }
 
 export interface SkillLevel {
+  /** Proficiency band slug — beginner | elementary | intermediate | advanced | fluent. */
+  level?: string
   sort_order: number
+  /** Inclusive lower bound of the band; mirrors scoreToLevel() in lib/ai/skills-aware-prompts.ts. */
   min_score: number
   name?: string
 }
 
+/**
+ * lingo.skills — the five core proficiency skills. Lingo-owned, so fields
+ * are snake_case like the other Lingo-local collections, but `_id` follows
+ * the cluster-wide UUID-string convention and is never an ObjectId.
+ * Seeded from lib/data/skills-data.ts via scripts/seed-skills.ts.
+ */
 export interface Skill {
-  _id?: any
+  _id: string
   name: string
-  display_name: string
-  description?: string
+  /** i18n by UI language tag (en, sn, nd, sw, zh). */
+  display_name: Record<string, string>
+  description?: Record<string, string>
   icon?: string
   is_active: boolean
   sort_order: number
   levels?: SkillLevel[]
+  created_at?: Date
+  updated_at?: Date
 }
 
 export interface UserSkill {

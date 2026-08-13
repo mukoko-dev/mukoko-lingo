@@ -42,7 +42,7 @@ export default function WelcomeScreen() {
   const isTablet = width >= 768
   const isDesktop = width >= 1024
 
-  // Live counts from Supabase data API — with a bundled offline fallback
+  // Live counts from the /api/stats endpoint — with a bundled offline fallback
   // so the landing page never shows placeholder text.
   const [stats, setStats] = useState<ContentStats | null>(null)
 
