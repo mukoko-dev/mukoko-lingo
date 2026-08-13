@@ -72,6 +72,10 @@ export async function sendMessage(
         messages: apiMessages,
         system_prompt: systemPrompt,
         max_tokens: 1024,
+        // The server routes Chinese practice and translation help to Kimi;
+        // it can only do that if it knows what the learner is working on.
+        language,
+        conversation_type: conversationType,
       }),
     })
 
