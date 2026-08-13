@@ -4,6 +4,7 @@ import {
   View,
   Text,
   ActivityIndicator,
+  Platform,
 } from 'react-native'
 import { useRouter, Stack, useLocalSearchParams } from 'expo-router'
 
@@ -40,8 +41,15 @@ export default function AuthCallbackScreen() {
       }
 
       try {
+        // On web this route IS the redirect target, so the browser's own URL
+        // already carries `code`/`state`. Only native arrives here as a
+        // reconstructed deep link.
         const query = new URLSearchParams(params as Record<string, string>).toString()
-        const { data, error } = await handleAuthCallback(`mukokolingo://auth/callback?${query}`)
+        const callbackUrl =
+          Platform.OS === 'web' && typeof window !== 'undefined'
+            ? window.location.href
+            : `mukokolingo://auth/callback?${query}`
+        const { data, error } = await handleAuthCallback(callbackUrl)
 
         if (error) throw error
 
