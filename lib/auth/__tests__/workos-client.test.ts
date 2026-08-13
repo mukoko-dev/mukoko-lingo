@@ -52,7 +52,23 @@ jest.mock('react-native', () => ({
   Platform: { OS: 'web' },
 }))
 
+// The module runs as the web build here, so it reads window.location for both
+// the API base URL and the redirect URI, and navigates via location.assign.
+const TEST_ORIGIN = 'https://lingo.mukoko.com'
+const mockAssign = jest.fn()
+const ORIGINAL_LOCATION = typeof window !== 'undefined' ? window.location : undefined
+
 describe('workos-client', () => {
+  beforeAll(() => {
+    if (typeof (global as any).window === 'undefined') (global as any).window = {}
+    delete (global as any).window.location
+    ;(global as any).window.location = { origin: TEST_ORIGIN, href: `${TEST_ORIGIN}/auth`, assign: mockAssign }
+  })
+
+  afterAll(() => {
+    if (ORIGINAL_LOCATION) (global as any).window.location = ORIGINAL_LOCATION
+  })
+
   beforeEach(() => {
     jest.clearAllMocks()
     mockFetch.mockReset()
@@ -62,54 +78,61 @@ describe('workos-client', () => {
   // ==========================================================================
   // Sign-in (authorization URL + PKCE)
   // ==========================================================================
-  describe('signInWithAuthKit', () => {
-    it('requests an authorization URL, opens it, and exchanges the returned code', async () => {
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({
-            url: 'https://auth.workos.com/authorize?client_id=abc',
-            state: 'state-123',
-            code_verifier: 'verifier-123',
-          }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({
-            access_token: 'access-token-123',
-            refresh_token: 'refresh-token-123',
-            user: { user_id: 'user-123', email: 'test@example.com', created_at: '2026-01-01' },
-          }),
-        })
-
-      ;(WebBrowser.openAuthSessionAsync as jest.Mock).mockResolvedValueOnce({
-        type: 'success',
-        url: 'mukokolingo://auth/callback?code=auth-code-123&state=state-123',
-      })
-
-      const result = await signInWithAuthKit()
-
-      expect(result.error).toBeNull()
-      expect(result.data?.session?.access_token).toBe('access-token-123')
-      expect(result.data?.user?.user_id).toBe('user-123')
-
-      // Verify the code exchange sent the persisted PKCE verifier, not the state
-      const exchangeBody = JSON.parse(mockFetch.mock.calls[1][1].body)
-      expect(exchangeBody.code).toBe('auth-code-123')
-      expect(exchangeBody.code_verifier).toBe('verifier-123')
-    })
-
-    it('returns no error when the user cancels the hosted sign-in', async () => {
+  describe('signInWithAuthKit (web)', () => {
+    it('asks WorkOS to redirect back to the web app, never the mobile scheme', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ url: 'https://auth.workos.com/authorize', state: 's', code_verifier: 'v' }),
+        json: () => Promise.resolve({
+          url: 'https://auth.workos.com/authorize?client_id=abc',
+          state: 'state-123',
+          code_verifier: 'verifier-123',
+        }),
       })
-      ;(WebBrowser.openAuthSessionAsync as jest.Mock).mockResolvedValueOnce({ type: 'cancel' })
+
+      await signInWithAuthKit()
+
+      // The regression: web used to send `mukokolingo://auth/callback`, so the
+      // browser was handed a scheme it has no handler for and the
+      // authorization code never came back.
+      const authorizeBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(authorizeBody.redirect_uri).toBe(`${TEST_ORIGIN}/auth/callback`)
+      expect(authorizeBody.redirect_uri).not.toContain('mukokolingo://')
+    })
+
+    it('navigates the page to AuthKit instead of opening an auth session', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          url: 'https://auth.workos.com/authorize?client_id=abc',
+          state: 'state-123',
+          code_verifier: 'verifier-123',
+        }),
+      })
 
       const result = await signInWithAuthKit()
 
-      expect(result.error).toBeNull()
-      expect(result.data).toBeNull()
+      expect(mockAssign).toHaveBeenCalledWith('https://auth.workos.com/authorize?client_id=abc')
+      expect(WebBrowser.openAuthSessionAsync).not.toHaveBeenCalled()
+      // Navigation takes over; there is no session to return from this call.
+      expect(result).toEqual({ data: null, error: null })
+    })
+
+    it('persists the PKCE verifier before leaving the page', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          url: 'https://auth.workos.com/authorize',
+          state: 'state-123',
+          code_verifier: 'verifier-123',
+        }),
+      })
+
+      await signInWithAuthKit()
+
+      // A full-page navigation wipes memory, so the verifier has to already be
+      // in storage by the time assign() is called or the callback can't finish.
+      const pending = JSON.parse(mockAsyncStorageMemory.get('@mukoko_workos_pending_auth')!)
+      expect(pending.code_verifier).toBe('verifier-123')
     })
 
     it('returns an error when the authorize request fails', async () => {

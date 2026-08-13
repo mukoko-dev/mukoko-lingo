@@ -13,10 +13,32 @@ import * as SecureStore from 'expo-secure-store'
 import * as WebBrowser from 'expo-web-browser'
 import { Platform } from 'react-native'
 
-const REDIRECT_URI = process.env.EXPO_PUBLIC_WORKOS_REDIRECT_URI || 'mukokolingo://auth/callback'
+const NATIVE_REDIRECT_URI = process.env.EXPO_PUBLIC_WORKOS_REDIRECT_URI || 'mukokolingo://auth/callback'
+const WEB_REDIRECT_URI = process.env.EXPO_PUBLIC_WORKOS_REDIRECT_URI_WEB || ''
+const WEB_REDIRECT_FALLBACK = 'https://lingo.mukoko.com/auth/callback'
 
 // Check if we're running in a browser/client environment
 const isClient = typeof window !== 'undefined'
+
+/**
+ * Where WorkOS should send the browser back to after sign-in.
+ *
+ * This has to be platform-specific. The web build used to send the mobile
+ * deep-link scheme, so AuthKit issued a valid authorization code and then told
+ * the browser to open `mukokolingo://auth/callback` — which no browser has a
+ * handler for. Sign-in appeared to fail even though it had succeeded; the code
+ * simply never made it back to the app.
+ *
+ * On web we derive the origin at runtime so preview and localhost builds come
+ * back to themselves rather than to production (each origin still has to be
+ * registered on the WorkOS AuthKit application).
+ */
+export function getRedirectUri(): string {
+  if (Platform.OS !== 'web') return NATIVE_REDIRECT_URI
+  if (WEB_REDIRECT_URI) return WEB_REDIRECT_URI
+  if (isClient && window.location?.origin) return `${window.location.origin}/auth/callback`
+  return WEB_REDIRECT_FALLBACK
+}
 
 // =============================================================================
 // Secure Storage Adapter (platform-specific)
@@ -159,17 +181,28 @@ async function clearPersistedSession(): Promise<void> {
  */
 export async function signInWithAuthKit(screenHint?: 'sign-in' | 'sign-up'): Promise<AuthResult> {
   try {
+    const redirectUri = getRedirectUri()
     const { url, state, code_verifier } = await apiCall('/authorize', {
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: redirectUri,
       screen_hint: screenHint,
     })
 
     // Persist the PKCE verifier in case the app is backgrounded/reloaded
     // before the redirect lands (e.g. the OS hands control back via a cold
     // start deep link instead of resolving openAuthSessionAsync directly).
+    // On web this is what carries the verifier across the full-page navigation
+    // below, so it must be written before we leave the page.
     await SecureStorageAdapter.setItem(PENDING_AUTH_KEY, JSON.stringify({ state, code_verifier }))
 
-    const result = await WebBrowser.openAuthSessionAsync(url, REDIRECT_URI)
+    if (Platform.OS === 'web' && isClient) {
+      // Navigate the whole page rather than opening an auth session popup:
+      // AuthKit returns to /auth/callback in this same tab, and that route
+      // finishes the exchange. Nothing after this line runs.
+      window.location.assign(url)
+      return { data: null, error: null }
+    }
+
+    const result = await WebBrowser.openAuthSessionAsync(url, redirectUri)
 
     if (result.type !== 'success' || !result.url) {
       return { data: null, error: null } // user cancelled — not an error
