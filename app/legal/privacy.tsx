@@ -36,7 +36,7 @@ const SECTIONS = [
     title: 'Data Storage & Security',
     content: [
       'Your data is stored securely using industry-standard encryption',
-      'We use Supabase and WorkOS for secure authentication and data storage',
+      'We use WorkOS AuthKit for secure authentication and MongoDB Atlas for data storage',
       'AI conversations are processed securely and not shared with third parties',
       'We implement appropriate security measures to protect your information',
     ],

@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
 import { userSkills, skills } from '../_lib/mongo'
@@ -14,11 +13,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const userSkillsCol = await userSkills()
     const rows = await userSkillsCol.find({ user_id: user.personId }).toArray()
 
+    // Skill `_id`s are UUID strings, not ObjectIds — the previous
+    // ObjectId.isValid() filter dropped every real id, so `skill` always
+    // came back null.
     const skillsCol = await skills()
     const skillIds = rows.map((r: any) => r.skill_id).filter(Boolean)
-    const skillDocs = await skillsCol
-      .find({ _id: { $in: skillIds.filter(ObjectId.isValid).map((id: string) => new ObjectId(id)) } })
-      .toArray()
+    const skillDocs = skillIds.length ? await skillsCol.find({ _id: { $in: skillIds } }).toArray() : []
     const skillById = new Map(skillDocs.map((s: any) => [String(s._id), { ...s, id: String(s._id) }]))
 
     const data = rows.map((r: any) => ({ ...r, id: String(r._id), skill: skillById.get(r.skill_id) || null }))

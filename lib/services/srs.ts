@@ -13,7 +13,7 @@
  *   5 = Perfect, instant recall
  *
  * Integration: SRS state is stored locally (AsyncStorage/SQLite) and optionally
- * synced to Supabase for cross-device persistence.
+ * synced through the REST API to `lingo.srs_cards` for cross-device persistence.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
