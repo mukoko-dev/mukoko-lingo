@@ -138,16 +138,23 @@ async function checkAIModeration(content: string): Promise<ModerationResult | nu
       body: JSON.stringify({ content }),
     })
 
-    if (!response.ok) return null
+    if (!response.ok) {
+      console.warn(`[mukoko][moderation] AI check unavailable: ${response.status}`)
+      return null
+    }
 
-    const data = await response.json()
-    const text = data.content?.[0]?.text || ''
+    // The route returns `{ data: { flagged, categories, severity, confidence,
+    // ai_checked } }`. This used to read `data.content[0].text` — the raw
+    // Anthropic shape, which the route never returned — so every AI check
+    // silently resolved to null and only local guardrails ever ran.
+    const result = (await response.json())?.data
+    if (!result) return null
 
-    // Parse the JSON response
-    const match = text.match(/\{[\s\S]*\}/)
-    if (!match) return null
+    if (result.ai_checked === false) {
+      console.warn(`[mukoko][moderation] AI check did not run: ${result.reason || 'unknown'}`)
+      return null
+    }
 
-    const result = JSON.parse(match[0])
     if (result.flagged) {
       return {
         flagged: true,

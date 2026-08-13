@@ -361,6 +361,23 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 - **API Key**: `AI_GATEWAY_API_KEY` environment variable
 - **SDK**: `@ai-sdk/openai` + `ai` packages for streaming via Vercel AI SDK
 
+**Provider routing & fallback** (`api/_lib/ai-provider.ts`):
+- Two transports with **separate, non-interchangeable** credentials —
+  `ANTHROPIC_API_KEY` → `api.anthropic.com/v1/messages` (`x-api-key`,
+  Messages shape) and `AI_GATEWAY_API_KEY` →
+  `ai-gateway.vercel.sh/v1/chat/completions` (`Authorization: Bearer`,
+  OpenAI shape). Never fall back from one to the other by key alone.
+- Chinese practice and `translation_help` prefer Kimi
+  (`moonshotai/kimi-k2.5`); everything else leads with Claude Haiku direct.
+  Remaining candidates act as fallbacks in order.
+- Per-candidate circuit breakers (3 failures / 5 min cooldown), so one
+  provider tripping doesn't take the others down.
+- `AiNotConfiguredError` (no credential) and `AiUnavailableError` (all
+  candidates failed) are distinct — `/api/ai/moderate` relies on that to
+  avoid silently passing all content when moderation breaks. Its responses
+  carry `ai_checked`; set `AI_MODERATION_FAIL_CLOSED=true` to 503 instead of
+  falling back to local guardrails.
+
 **Core AI System** (`lib/ai/skills-aware-prompts.ts`):
 - `buildSkillsAwarePrompt(conversationType, language)` - Called for EVERY AI interaction
 - Reads user skills from local storage via `getUserSkills()`
