@@ -6,116 +6,30 @@
 // AI moderation uses the server-side proxy when available, falls back to local-only
 import { getApiBaseUrl } from '@/lib/config/api-base'
 
-export type ModerationCategory =
-  | 'harassment'
-  | 'hate_speech'
-  | 'sexual_content'
-  | 'violence'
-  | 'self_harm'
-  | 'off_topic'
-  | 'personal_info'
+export type {
+  ModerationCategory,
+  GuardrailVerdict,
+} from './guardrail-rules'
 
-export interface ModerationResult {
-  flagged: boolean
-  categories: ModerationCategory[]
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  confidence: number
-  reason?: string
-}
-
-// Prompt injection detection patterns
-const PROMPT_INJECTION_PATTERNS = [
-  /ignore\s+(all\s+)?previous\s+instructions/i,
-  /ignore\s+(all\s+)?above\s+instructions/i,
-  /disregard\s+(all\s+)?previous/i,
-  /forget\s+(all\s+)?previous/i,
-  /you\s+are\s+now\s+/i,
-  /new\s+instructions?\s*:/i,
-  /system\s*prompt\s*:/i,
-  /\bact\s+as\s+/i,
-  /pretend\s+(you\s+are|to\s+be)/i,
-  /reveal\s+(your|the)\s+(system|initial)\s+prompt/i,
-  /what\s+(is|are)\s+your\s+(system|initial)\s+instructions/i,
-  /repeat\s+(your|the)\s+(system|initial)\s+prompt/i,
-  /output\s+(your|the)\s+instructions/i,
-  /\]\s*\}\s*\{/,  // JSON injection attempt
-]
-
-// Core guardrail rules applied locally (no API needed)
-const LOCAL_GUARDRAILS = [
-  {
-    category: 'personal_info' as ModerationCategory,
-    patterns: [
-      /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/,  // phone numbers
-      /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,  // emails
-      /\b\d{3}-\d{2}-\d{4}\b/,  // SSN-like
-    ],
-    severity: 'medium' as const,
-    message: 'Please avoid sharing personal information like phone numbers, emails, or IDs in chat.',
-  },
-  {
-    category: 'off_topic' as ModerationCategory,
-    keywords: [
-      'hack', 'exploit', 'malware', 'ransomware', 'ddos',
-      'bomb', 'weapon', 'drug deal',
-    ],
-    severity: 'high' as const,
-    message: 'This topic is outside the scope of language learning. Let\'s focus on learning!',
-  },
-]
+import type { ModerationCategory, GuardrailVerdict } from './guardrail-rules'
+import { evaluateGuardrails } from './guardrail-rules'
 
 /**
- * Check content against local guardrails (fast, no API call)
+ * Result of a moderation pass. Structurally identical to the shared
+ * `GuardrailVerdict` — kept as its own exported name because callers across
+ * the app import `ModerationResult`.
+ */
+export type ModerationResult = GuardrailVerdict
+
+/**
+ * Check content against local guardrails (fast, no API call).
+ *
+ * The rules themselves live in `./guardrail-rules` so the server can apply the
+ * same ones — a check that only runs in the client bundle is a check an
+ * attacker can simply skip by calling the API directly.
  */
 function checkLocalGuardrails(content: string): ModerationResult | null {
-  // Check for prompt injection attempts first
-  for (const pattern of PROMPT_INJECTION_PATTERNS) {
-    if (pattern.test(content)) {
-      return {
-        flagged: true,
-        categories: ['off_topic'],
-        severity: 'critical',
-        confidence: 0.9,
-        reason: 'Message appears to contain instruction manipulation. Let\'s keep our conversation focused on language learning!',
-      }
-    }
-  }
-
-  const lowerContent = content.toLowerCase()
-
-  for (const guardrail of LOCAL_GUARDRAILS) {
-    // Check patterns
-    if (guardrail.patterns) {
-      for (const pattern of guardrail.patterns) {
-        if (pattern.test(content)) {
-          return {
-            flagged: true,
-            categories: [guardrail.category],
-            severity: guardrail.severity,
-            confidence: 0.95,
-            reason: guardrail.message,
-          }
-        }
-      }
-    }
-
-    // Check keywords
-    if (guardrail.keywords) {
-      for (const keyword of guardrail.keywords) {
-        if (lowerContent.includes(keyword)) {
-          return {
-            flagged: true,
-            categories: [guardrail.category],
-            severity: guardrail.severity,
-            confidence: 0.8,
-            reason: guardrail.message,
-          }
-        }
-      }
-    }
-  }
-
-  return null
+  return evaluateGuardrails(content)
 }
 
 /**

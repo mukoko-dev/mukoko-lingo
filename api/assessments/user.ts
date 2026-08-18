@@ -18,8 +18,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const skillsCol = await skills()
     const assessmentIds = rows.map((r: any) => r.assessment_id).filter(ObjectId.isValid)
     const assessmentDocs = await assessmentsCol.find({ _id: { $in: assessmentIds.map((id: string) => new ObjectId(id)) } } as any).toArray()
-    const skillIds = assessmentDocs.map((a: any) => a.skill_id).filter(ObjectId.isValid)
-    const skillDocs = await skillsCol.find({ _id: { $in: skillIds.map((id: string) => new ObjectId(id)) } } as any).toArray()
+    // `skills._id` is a UUID string, so the ObjectId filter dropped them all.
+    const skillIds = assessmentDocs.map((a: any) => a.skill_id).filter(Boolean)
+    const skillDocs = skillIds.length
+      ? await skillsCol.find({ _id: { $in: skillIds } } as any).toArray()
+      : []
     const skillById = new Map(skillDocs.map((s: any) => [String(s._id), { ...s, id: String(s._id) }]))
     const assessmentById = new Map(
       assessmentDocs.map((a: any) => [String(a._id), { ...a, id: String(a._id), skill: skillById.get(a.skill_id) || null }])

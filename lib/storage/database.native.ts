@@ -60,7 +60,7 @@ export async function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_progress_status ON progress(status);
   `)
 
-  console.log('SQLite database initialized')
+  if (__DEV__) console.log('SQLite database initialized')
 }
 
 // Phrase operations

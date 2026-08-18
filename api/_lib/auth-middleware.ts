@@ -94,6 +94,26 @@ export async function authenticateRequest(req: VercelRequest): Promise<Authentic
 }
 
 /**
+ * Verify an access token's signature and expiry against WorkOS's JWKS and
+ * return its claims, or null if it is not a valid token.
+ *
+ * Use this instead of `decodeJwt` anywhere a claim is going to be acted on:
+ * `decodeJwt` only base64-decodes the payload, so its output is attacker
+ * controlled for any caller willing to hand-craft a token.
+ */
+export async function verifyAccessToken(accessToken: string): Promise<Record<string, any> | null> {
+  if (!accessToken) return null
+  try {
+    const { payload } = await jwtVerify(accessToken, getJwks())
+    return payload as Record<string, any>
+  } catch (error: any) {
+    const message = error?.error_message || error?.message || 'Token verification failed'
+    console.error(`[mukoko][auth] Access token verification failed: ${message}`)
+    return null
+  }
+}
+
+/**
  * Require authentication - returns user or throws
  */
 export async function requireAuth(req: VercelRequest): Promise<AuthenticatedUser> {

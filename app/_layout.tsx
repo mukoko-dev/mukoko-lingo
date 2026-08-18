@@ -137,7 +137,7 @@ export default function RootLayout() {
 
     // Listen for auth changes
     const { data: { subscription } } = onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event)
+      if (__DEV__) console.log('[mukoko][auth] Auth state changed:', event)
       setAuthState({
         isAuthenticated: !!session,
         isLoading: false,

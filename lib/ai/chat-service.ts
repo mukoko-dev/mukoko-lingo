@@ -7,7 +7,6 @@
  * circuit breaker protection.
  */
 
-import { buildSkillsAwarePrompt } from './skills-aware-prompts'
 import { moderateContent, getModerationMessage } from './moderation'
 import { getSessionToken } from '@/lib/auth/workos-client'
 import { getApiBaseUrl } from '@/lib/config/api-base'
@@ -45,8 +44,9 @@ export async function sendMessage(
       }
     }
 
-    // Build skills-aware system prompt
-    const systemPrompt = await buildSkillsAwarePrompt(conversationType, language)
+    // The system prompt is built server-side from the authenticated user's
+    // stored proficiency — the server ignores any prompt sent from here, so
+    // this is only needed for the offline/simulated path below.
 
     // If no API URL configured, use simulated response (offline/demo mode)
     if (!getApiBaseUrl()) {
@@ -70,10 +70,10 @@ export async function sendMessage(
       headers,
       body: JSON.stringify({
         messages: apiMessages,
-        system_prompt: systemPrompt,
         max_tokens: 1024,
-        // The server routes Chinese practice and translation help to Kimi;
-        // it can only do that if it knows what the learner is working on.
+        // The server uses these to pick the provider (Chinese practice and
+        // translation help go to Kimi) and to build the system prompt. Both
+        // are mapped through allowlists server-side.
         language,
         conversation_type: conversationType,
       }),

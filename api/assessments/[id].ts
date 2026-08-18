@@ -17,9 +17,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!assessment) return res.status(404).json({ error: 'Assessment not found' })
 
     let skill = null
-    if (assessment.skill_id && ObjectId.isValid(assessment.skill_id)) {
+    if (assessment.skill_id) {
+      // `skills._id` is a UUID string, not an ObjectId. The old
+      // ObjectId.isValid() guard was false for every real skill id, so this
+      // join always resolved to null and the response never carried a skill.
       const skillsCol = await skills()
-      const skillDoc = await skillsCol.findOne({ _id: new ObjectId(assessment.skill_id) } as any)
+      const skillDoc = await skillsCol.findOne({ _id: assessment.skill_id } as any)
       if (skillDoc) skill = { ...skillDoc, id: String(skillDoc._id) }
     }
 
