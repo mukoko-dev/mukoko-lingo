@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../../_lib/cors'
 import { requireAdmin } from '../../_lib/auth-middleware'
 import { skills } from '../../_lib/mongo'
@@ -12,7 +11,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     await requireAdmin(req)
-    if (!ObjectId.isValid(id as string)) return res.status(404).json({ error: 'Skill not found' })
+    // `skills._id` is a UUID string, not an ObjectId — the old guard rejected
+    // every real skill as 404, so admin skill edits could never save.
+    if (typeof id !== 'string' || !id) return res.status(404).json({ error: 'Skill not found' })
 
     const update: Record<string, any> = {}
     if (req.body.display_name !== undefined) update.display_name = req.body.display_name
@@ -23,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const col = await skills()
     const skill = await col.findOneAndUpdate(
-      { _id: new ObjectId(id as string) } as any,
+      { _id: id } as any,
       { $set: update },
       { returnDocument: 'after' }
     )

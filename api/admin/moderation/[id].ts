@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../../_lib/cors'
 import { requireAdmin } from '../../_lib/auth-middleware'
 import { moderationAlerts } from '../../_lib/mongo'
@@ -12,7 +11,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const admin = await requireAdmin(req)
-    if (!ObjectId.isValid(id as string)) return res.status(404).json({ error: 'Alert not found' })
+    // `moderation_alerts._id` is a UUID string (see recordModerationAlert in
+    // api/_lib/moderation.ts), so an ObjectId guard here 404s every alert and
+    // the admin queue's Approve/Reject buttons never work.
+    if (typeof id !== 'string' || !id) return res.status(404).json({ error: 'Alert not found' })
 
     const { status, admin_notes } = req.body || {}
     if (!status) return res.status(400).json({ error: 'status is required' })
@@ -29,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const col = await moderationAlerts()
     const alert = await col.findOneAndUpdate(
-      { _id: new ObjectId(id as string) } as any,
+      { _id: id } as any,
       { $set: update },
       { returnDocument: 'after' }
     )

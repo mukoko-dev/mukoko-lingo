@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { assessments, skills } from '../_lib/mongo'
 
@@ -18,8 +17,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const docs = await col.find(filter).sort({ created_at: -1 }).toArray()
 
     const skillsCol = await skills()
-    const skillIds = docs.map((a: any) => a.skill_id).filter(ObjectId.isValid)
-    const skillDocs = await skillsCol.find({ _id: { $in: skillIds.map((id: string) => new ObjectId(id)) } } as any).toArray()
+    // `skills._id` is a UUID string — filtering by ObjectId.isValid dropped
+    // every real id, so no assessment ever came back with its skill attached.
+    const skillIds = docs.map((a: any) => a.skill_id).filter(Boolean)
+    const skillDocs = skillIds.length
+      ? await skillsCol.find({ _id: { $in: skillIds } } as any).toArray()
+      : []
     const skillById = new Map(skillDocs.map((s: any) => [String(s._id), { ...s, id: String(s._id) }]))
 
     const data = docs.map((a: any) => ({ ...a, id: String(a._id), skill: skillById.get(a.skill_id) || null }))

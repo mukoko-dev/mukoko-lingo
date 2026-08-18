@@ -5,6 +5,9 @@ import { shamwariConversations } from '../../_lib/mongo'
 import { resolveOwnerEntityId } from '../../../lib/db/identity'
 import { LANG_CODE_MAP } from '../../../lib/db/phrase-shape'
 import { buildConversationDoc, toApiConversation, toApiConversations } from '../../../lib/db/conversation-shape'
+import { createLogger } from '../../_lib/logger'
+
+const log = createLogger('ai')
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -54,6 +57,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
-    return res.status(500).json({ error: error.message || 'Internal server error' })
+    log.error(`conversations route error: ${error?.message || error}`)
+    // Generic body — raw exception text exposes database internals.
+    return res.status(500).json({ error: 'Internal server error' })
   }
 }

@@ -84,7 +84,7 @@ export async function cachePhrasesForOffline(): Promise<void> {
       STORAGE_KEYS.OFFLINE_CACHED_AT,
       new Date().toISOString()
     )
-    console.log(`[offline] Cached ${staticPhrases.length} phrases for offline use`)
+    if (__DEV__) console.log(`[offline] Cached ${staticPhrases.length} phrases for offline use`)
   } catch (error) {
     console.error('[offline] Failed to cache phrases:', error)
   }
@@ -121,7 +121,7 @@ export async function cacheUserDataForOffline(): Promise<void> {
       JSON.stringify(snapshot)
     )
 
-    console.log('[offline] User data snapshot created:', snapshot)
+    if (__DEV__) console.log('[offline] User data snapshot created:', snapshot)
   } catch (error) {
     console.error('[offline] Failed to cache user data:', error)
   }
@@ -221,6 +221,6 @@ export async function flushSyncQueue(): Promise<void> {
 
   const flushed = queue.length - remaining.length
   if (flushed > 0) {
-    console.log(`[offline] Flushed ${flushed}/${queue.length} queued operations`)
+    if (__DEV__) console.log(`[offline] Flushed ${flushed}/${queue.length} queued operations`)
   }
 }

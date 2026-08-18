@@ -60,13 +60,13 @@ Notifications.setNotificationHandler({
 export async function registerForPushNotifications(): Promise<string | null> {
   // Push notifications only work on physical devices
   if (!Device.isDevice) {
-    console.log('[notifications] Push notifications require a physical device')
+    if (__DEV__) console.log('[notifications] Push notifications require a physical device')
     return null
   }
 
   // Web does not support Expo push tokens in the same way
   if (Platform.OS === 'web') {
-    console.log('[notifications] Push tokens are not supported on web')
+    if (__DEV__) console.log('[notifications] Push tokens are not supported on web')
     return null
   }
 
@@ -81,7 +81,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     }
 
     if (finalStatus !== 'granted') {
-      console.log('[notifications] Permission not granted')
+      if (__DEV__) console.log('[notifications] Permission not granted')
       return null
     }
 
@@ -131,7 +131,7 @@ async function syncTokenToServer(token: string): Promise<void> {
     )
     // We intentionally ignore 401 — the user might not be signed in yet.
     if (response.ok) {
-      console.log('[notifications] Token synced to server')
+      if (__DEV__) console.log('[notifications] Token synced to server')
     }
   } catch {
     // Network issues are non-critical here

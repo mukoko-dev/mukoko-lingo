@@ -1,0 +1,83 @@
+/**
+ * Server-side construction of the Shamwari system prompt.
+ *
+ * The chat route used to accept `system_prompt` from the request body, which
+ * meant the caller decided what the model was told it was — the tutor framing,
+ * the safety guidance, all of it could be replaced wholesale by anyone posting
+ * to the endpoint directly. The prompt is now built here from the
+ * authenticated user's stored proficiency; the request only gets to pick a
+ * conversation type and a language, both from fixed sets.
+ */
+
+import { userSkills, skills as skillsCollection } from './mongo'
+import { createLogger } from './logger'
+import {
+  buildTutorPrompt,
+  defaultProficiencyMap,
+  toProficiencyMap,
+  normalizeLanguage,
+  normalizeConversationType,
+  ALL_SKILL_NAMES,
+} from '../../lib/ai/prompt-builder'
+
+const log = createLogger('ai')
+
+/**
+ * Read the user's per-skill scores from `lingo.user_skills`.
+ *
+ * `user_skills` keys on `skill_id` (a UUID into `lingo.skills`), so the skill
+ * names the prompt scaffolds against come from that join. Only `linguistic`
+ * skills are used — domain skills describe what a learner is working on, not
+ * an ability the tutor adjusts its language for.
+ */
+export async function loadProficiencyScores(personId: string): Promise<Record<string, number>> {
+  const scores: Record<string, number> = {}
+
+  const userSkillsCol = await userSkills()
+  const rows = await userSkillsCol.find({ user_id: personId }).toArray()
+  if (rows.length === 0) return scores
+
+  const skillIds = rows.map((r: any) => r.skill_id).filter(Boolean)
+  if (skillIds.length === 0) return scores
+
+  const skillsCol = await skillsCollection()
+  const skillDocs = await skillsCol.find({ _id: { $in: skillIds } as any }).toArray()
+  const nameById = new Map(skillDocs.map((s: any) => [String(s._id), s.name]))
+
+  for (const row of rows as any[]) {
+    const name = nameById.get(String(row.skill_id))
+    // Ignore anything that isn't one of the five linguistic skills the prompt
+    // knows how to scaffold against.
+    if (!name || !ALL_SKILL_NAMES.includes(name)) continue
+    if (typeof row.current_score === 'number') scores[name] = row.current_score
+  }
+
+  return scores
+}
+
+/**
+ * Build the system prompt for an authenticated user.
+ *
+ * `language` and `conversationType` come from the request but are mapped
+ * through allowlists, so neither can contribute arbitrary text to the prompt.
+ * A database failure degrades to beginner defaults rather than dropping the
+ * prompt — a request must never reach the model unframed.
+ */
+export async function buildSystemPromptForUser(params: {
+  personId: string
+  language: unknown
+  conversationType: unknown
+}): Promise<string> {
+  const language = normalizeLanguage(params.language)
+  const conversationType = normalizeConversationType(params.conversationType)
+
+  let proficiencyMap = defaultProficiencyMap()
+  try {
+    const scores = await loadProficiencyScores(params.personId)
+    if (Object.keys(scores).length > 0) proficiencyMap = toProficiencyMap(scores)
+  } catch (error: any) {
+    log.error(`Failed to load proficiency, using beginner defaults: ${error?.message || error}`)
+  }
+
+  return buildTutorPrompt({ proficiencyMap, conversationType, language })
+}

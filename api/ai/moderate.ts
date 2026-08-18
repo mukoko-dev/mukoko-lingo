@@ -100,6 +100,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
     log.error(`Moderation route error: ${error?.message || error}`)
-    return res.status(500).json({ error: error.message || 'Internal server error' })
+    return res.status(500).json({ error: 'Internal server error' })
   }
 }

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleCors } from '../_lib/cors'
 import { workos, WORKOS_CLIENT_ID } from '../_lib/auth-middleware'
-import { WORKOS_REDIRECTS } from '../../lib/workos/config'
+import { WORKOS_REDIRECTS, isAllowedRedirectUri } from '../../lib/workos/config'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -9,6 +9,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { redirect_uri, screen_hint } = req.body || {}
   const redirectUri = redirect_uri || WORKOS_REDIRECTS.MOBILE
+
+  // The redirect target decides where the authorization code is delivered, and
+  // it arrives here as unvalidated request-body input. Check it against our own
+  // allowlist instead of leaning entirely on the list registered with WorkOS.
+  if (!isAllowedRedirectUri(redirectUri)) {
+    console.warn('[mukoko][auth] Rejected sign-in for a redirect URI that is not allowlisted')
+    return res.status(400).json({ error: 'Invalid redirect URI' })
+  }
 
   try {
     const { url, state, codeVerifier } = await workos.userManagement.getAuthorizationUrlWithPKCE({

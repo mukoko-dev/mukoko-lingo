@@ -16,6 +16,9 @@ import {
   AiNotConfiguredError,
   AiUnavailableError,
 } from '../../_lib/ai-provider'
+import { moderateUserContent } from '../../_lib/moderation'
+import { buildSystemPromptForUser } from '../../_lib/tutor-prompt'
+import { sanitizeChatMessages, lastUserMessage, InvalidChatInputError } from '../../_lib/chat-input'
 
 const log = createLogger('ai')
 
@@ -60,15 +63,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' })
     }
 
-    const { messages, system_prompt, max_tokens, language, conversation_type } = req.body || {}
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: 'messages array is required' })
+    // `system_prompt` is intentionally NOT read from the body. It used to be,
+    // which let any caller replace the tutor framing and the safety guidance
+    // wholesale. The prompt is built server-side from this user's stored
+    // proficiency; the request only chooses a language and conversation type,
+    // both mapped through allowlists.
+    const { messages, max_tokens, language, conversation_type } = req.body || {}
+
+    const sanitizedMessages = sanitizeChatMessages(messages)
+
+    // Moderate here, not just in the client. `lib/ai/moderation.ts` runs in the
+    // caller's bundle, so it only protects users who go through our UI —
+    // posting straight to this route skipped every guardrail.
+    const userText = lastUserMessage(sanitizedMessages)
+    if (userText) {
+      const verdict = await moderateUserContent({
+        personId: user.personId,
+        content: userText,
+        contentType: 'chat_message',
+      })
+      if (verdict) {
+        return res.status(400).json({
+          error: verdict.reason || 'Message blocked by content guardrails',
+          moderated: true,
+          categories: verdict.categories,
+        })
+      }
     }
 
+    const systemPrompt = await buildSystemPromptForUser({
+      personId: user.personId,
+      language,
+      conversationType: conversation_type,
+    })
+
     const result = await completeChat({
-      messages,
-      system: system_prompt || undefined,
-      maxTokens: max_tokens || 1024,
+      messages: sanitizedMessages,
+      system: systemPrompt,
+      maxTokens: Math.min(Number(max_tokens) || 1024, 4096),
       language,
       conversationType: conversation_type,
     })
@@ -78,6 +110,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
   } catch (error: any) {
     if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
+
+    if (error instanceof InvalidChatInputError) {
+      return res.status(400).json({ error: error.message })
+    }
 
     if (error instanceof AiNotConfiguredError) {
       return res.status(503).json({ error: 'AI service not configured' })
@@ -99,6 +135,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     log.error(`Chat proxy error: ${error.message}`)
-    return res.status(500).json({ error: error.message || 'Internal server error' })
+    // Generic body: raw exception text leaks driver internals, collection and
+    // field names, and connection strings to any caller who can trigger one.
+    return res.status(500).json({ error: 'Internal server error' })
   }
 }
