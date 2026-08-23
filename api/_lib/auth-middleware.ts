@@ -42,6 +42,9 @@ function getJwks(): JWTVerifyGetKey {
   return _jwks
 }
 
+/** How long after expiry a token is still accepted for logout revocation. */
+const EXPIRED_TOKEN_TOLERANCE_SECONDS = 30 * 24 * 60 * 60
+
 export interface AuthenticatedUser {
   workosUserId: string
   personId: string
@@ -101,12 +104,31 @@ export async function authenticateRequest(req: VercelRequest): Promise<Authentic
  * `decodeJwt` only base64-decodes the payload, so its output is attacker
  * controlled for any caller willing to hand-craft a token.
  */
-export async function verifyAccessToken(accessToken: string): Promise<Record<string, any> | null> {
+export async function verifyAccessToken(
+  accessToken: string,
+  options: { allowExpired?: boolean } = {}
+): Promise<Record<string, any> | null> {
   if (!accessToken) return null
   try {
     const { payload } = await jwtVerify(accessToken, getJwks())
     return payload as Record<string, any>
   } catch (error: any) {
+    // Logout still needs to revoke the session behind an access token that has
+    // since expired — they are short-lived and the client does not refresh
+    // before signing out, so requiring an unexpired token meant revocation
+    // silently never happened. Retry with a wide clock tolerance: the
+    // signature and every other claim are still verified, only the expiry
+    // window widens, and a token older than this is not worth revoking.
+    if (options.allowExpired && error?.code === 'ERR_JWT_EXPIRED') {
+      try {
+        const { payload } = await jwtVerify(accessToken, getJwks(), {
+          clockTolerance: EXPIRED_TOKEN_TOLERANCE_SECONDS,
+        })
+        return payload as Record<string, any>
+      } catch {
+        // fall through to the failure log below
+      }
+    }
     const message = error?.error_message || error?.message || 'Token verification failed'
     console.error(`[mukoko][auth] Access token verification failed: ${message}`)
     return null

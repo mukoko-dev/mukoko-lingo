@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // base64-decodes the payload — so any caller could POST a hand-crafted,
       // unsigned token carrying someone else's session id and have the server
       // revoke that session for them.
-      const payload = await verifyAccessToken(access_token)
+      const payload = await verifyAccessToken(access_token, { allowExpired: true })
       const sid = typeof payload?.sid === 'string' ? payload.sid : undefined
       if (sid) await workos.userManagement.revokeSession({ sessionId: sid })
     }

@@ -8,6 +8,7 @@
  */
 
 import { moderateContent, getModerationMessage } from './moderation'
+import { getUserSkills } from '@/lib/storage/database'
 import { getSessionToken } from '@/lib/auth/workos-client'
 import { getApiBaseUrl } from '@/lib/config/api-base'
 
@@ -71,6 +72,11 @@ export async function sendMessage(
       body: JSON.stringify({
         messages: apiMessages,
         max_tokens: 1024,
+        // Scores only. Practice, quizzes and assessments record proficiency
+        // into device storage and nothing syncs it to the server, so without
+        // this the tutor scaffolds every learner as a beginner. The server
+        // clamps these and prefers its own copy when it has one.
+        proficiency: await localProficiencyScores(),
         // The server uses these to pick the provider (Chinese practice and
         // translation help go to Kimi) and to build the system prompt. Both
         // are mapped through allowlists server-side.
@@ -96,6 +102,10 @@ export async function sendMessage(
           error: 'service_unavailable',
         }
       }
+      if (response.status === 400 && errorData.moderated) {
+        // Show the guardrail reason the server sent, not a connection error.
+        return { message: errorMsg, error: 'content_moderated' }
+      }
       throw new Error(errorMsg)
     }
 
@@ -114,6 +124,24 @@ export async function sendMessage(
       message: "I'm having trouble connecting right now. Please check your internet connection and try again!",
       error: error instanceof Error ? error.message : 'Unknown error',
     }
+  }
+}
+
+/**
+ * Locally recorded proficiency, as a plain name -> score map.
+ * Returns an empty object if storage is unavailable — the server then falls
+ * back to its own data or to beginner defaults.
+ */
+async function localProficiencyScores(): Promise<Record<string, number>> {
+  try {
+    const skills = await getUserSkills()
+    const scores: Record<string, number> = {}
+    for (const [name, data] of Object.entries(skills)) {
+      if (typeof data?.score === 'number') scores[name] = data.score
+    }
+    return scores
+  } catch {
+    return {}
   }
 }
 

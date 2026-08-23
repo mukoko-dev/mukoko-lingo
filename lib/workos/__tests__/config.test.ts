@@ -70,3 +70,42 @@ describe('isAllowedRedirectUri', () => {
     expect(isAllowedRedirectUri('javascript:alert(1)')).toBe(false)
   })
 })
+
+describe('the production Vercel alias', () => {
+  it('accepts the bare project hostname over https', () => {
+    // The client derives its redirect from window.location.origin, so a
+    // deployment reached on the alias rather than the custom domain would
+    // otherwise be rejected before WorkOS ever saw it.
+    expect(isAllowedRedirectUri('https://mukoko-lingo.vercel.app/auth/callback')).toBe(true)
+  })
+
+  it('still requires https and an exact hostname', () => {
+    expect(isAllowedRedirectUri('http://mukoko-lingo.vercel.app/auth/callback')).toBe(false)
+    expect(isAllowedRedirectUri('https://mukoko-lingo.vercel.app.evil.com/auth/callback')).toBe(false)
+    expect(isAllowedRedirectUri('https://evil-mukoko-lingo.vercel.app/auth/callback')).toBe(false)
+  })
+})
+
+describe('private LAN dev hosts', () => {
+  it('accepts Expo web served on a machine network address', () => {
+    expect(isAllowedRedirectUri('http://192.168.1.14:8081/auth/callback')).toBe(true)
+    expect(isAllowedRedirectUri('http://10.0.0.7:8081/auth/callback')).toBe(true)
+    expect(isAllowedRedirectUri('http://172.16.0.3:8081/auth/callback')).toBe(true)
+  })
+
+  it('holds the 172.16-172.31 boundary of the private range', () => {
+    // 172.16.0.0/12 is private; the octets either side of it are public
+    // routable space and must not be treated as a dev machine.
+    expect(isAllowedRedirectUri('http://172.16.0.1:8081/auth/callback')).toBe(true)
+    expect(isAllowedRedirectUri('http://172.31.255.254:8081/auth/callback')).toBe(true)
+    expect(isAllowedRedirectUri('http://172.15.0.1:8081/auth/callback')).toBe(false)
+    expect(isAllowedRedirectUri('http://172.32.0.1:8081/auth/callback')).toBe(false)
+  })
+
+  it('rejects public addresses and hosts that merely embed one', () => {
+    expect(isAllowedRedirectUri('http://11.0.0.1:8081/auth/callback')).toBe(false)
+    expect(isAllowedRedirectUri('http://193.168.1.1:8081/auth/callback')).toBe(false)
+    expect(isAllowedRedirectUri('http://192.168.1.14.evil.com/auth/callback')).toBe(false)
+    expect(isAllowedRedirectUri('https://evil.com/?a=http://192.168.1.14/auth/callback')).toBe(false)
+  })
+})

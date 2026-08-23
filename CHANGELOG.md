@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **AI system prompt moved server-side** — `/api/ai/chat` now builds the tutor prompt in `api/_lib/tutor-prompt.ts` from the authenticated user's proficiency and ignores any caller-supplied `system_prompt`. The only request fields that influence the prompt are `language` and `conversation_type`, both mapped through allowlists in `lib/ai/prompt-builder.ts`, so an unrecognised value becomes a known constant instead of reaching the template.
+- **Chat input is validated as a security boundary** (`api/_lib/chat-input.ts`) — a client-supplied `system` role is rejected outright (a provider would read it as instructions), along with unknown roles and non-string content. History is capped and forced to open on a user turn.
+- **Moderation enforced on the server, across the whole history** — guardrails moved to `api/_lib/moderation.ts` and now scan *every* turn rather than only the newest. Previously moderation lived solely in the client bundle, so posting straight to the route bypassed it, and a payload placed in an earlier turn or a forged `assistant` turn reached the model unchecked. Blocked requests return 400 with the guardrail reason, which the client now surfaces instead of a generic connection error.
+- **`moderation_alerts` are actually written** — the admin review queue and analytics read the collection, but nothing had ever written to it, so the queue could never show an item.
+- **Logout revokes the WorkOS session again** — `verifyAccessToken` accepts a `allowExpired` option so sign-out can revoke the session behind an already-expired access token. Signature and all other claims are still verified; only the expiry window widens.
+- **Six UUID/ObjectId query fixes** — leftovers from the Supabase→MongoDB migration. One would have made every moderation alert permanently unresolvable.
+
+### Fixed
+- **Web sign-in dead end** — AuthKit issued the authorization code then tried to hand it to `mukokolingo://`, which no browser can open. `lib/auth/workos-client.ts` is now platform-aware and navigates the full page on web.
+- **Adaptive tutoring restored** — moving the prompt server-side made it read `lingo.user_skills`, which is empty and written by nothing (scores live in device storage), so Shamwari scaffolded every learner as an absolute beginner. The client now sends a numeric proficiency map that the server clamps; stored scores win whenever they exist.
+- **Redirect allowlist matched what clients actually compute** from `window.location.origin` — private-LAN Expo dev hosts and the bare `mukoko-lingo.vercel.app` alias were rejected before WorkOS ever saw them.
+- **`max_tokens` had a ceiling but no floor** — a negative or fractional value reached the provider and came back as a 502. Now clamped to an integer in [1, 4096].
+
+### Added
+- **Provider routing with fallback and circuit breakers** (`api/_lib/ai-provider.ts`) — Chinese practice and `translation_help` lead with Kimi (`moonshotai/kimi-k2.5`) via the Vercel AI Gateway; everything else leads with Claude Haiku direct. The two transports have separate, non-interchangeable credentials and never fall back to each other by key alone. `AiNotConfiguredError` and `AiUnavailableError` stay distinct so moderation cannot silently pass all content when it breaks.
+
 ### Changed
 - **Database: Supabase PostgreSQL → MongoDB** — Reverted the data layer back to MongoDB (the platform's original database before the 0.0.1 Supabase migration). All API routes now read/write MongoDB collections via `lib/db/mongo.ts` / `lib/db/collections.ts` instead of `@supabase/supabase-js`. Phrases collapse from a normalized `phrase`+`translation` join into one flat document per phrase (matching the pre-Supabase shape already used by `lib/data/phrases-data.ts`); `ai_conversations` now embed their messages; hand-rolled "select-then-insert" upserts (phrase progress, user skills, SRS cards, assignment submissions) became atomic `findOneAndUpdate`/`bulkWrite` upserts. Fixed two latent bugs surfaced during the port: the auth lookup now keys profiles on the stable WorkOS `workos_user_id` instead of email, and the leaderboard query's `user_id`/`person_id` field-name inconsistency was standardized on `user_id`.
 - **Auth: Stytch → WorkOS AuthKit** — Replaced Stytch (email OTP, WhatsApp OTP, magic links) with WorkOS AuthKit's hosted sign-in page via the PKCE authorization-code flow. `api/_lib/auth-middleware.ts` now verifies access tokens locally against WorkOS's JWKS instead of round-tripping to the auth provider on every request. WhatsApp OTP has no WorkOS equivalent and was dropped.

@@ -8,7 +8,6 @@
 
 import {
   sanitizeChatMessages,
-  lastUserMessage,
   InvalidChatInputError,
   MAX_MESSAGES,
   MAX_CONTENT_CHARS,
@@ -89,19 +88,32 @@ describe('sanitizeChatMessages', () => {
   })
 })
 
-describe('lastUserMessage', () => {
-  it('returns the most recent user turn, not the assistant one', () => {
-    const messages = sanitizeChatMessages([
-      { role: 'user', content: 'first' },
-      { role: 'assistant', content: 'reply' },
-      { role: 'user', content: 'second' },
+describe('leading turn', () => {
+  it('drops a seeded assistant welcome so the conversation opens on a user turn', () => {
+    // The chat screen seeds an assistant greeting; providers reject a
+    // conversation that starts on an assistant turn.
+    const result = sanitizeChatMessages([
+      { role: 'assistant', content: 'Mhoro! I am Shamwari.' },
+      { role: 'user', content: 'How do I say hello?' },
     ])
 
-    expect(lastUserMessage(messages)).toBe('second')
+    expect(result).toHaveLength(1)
+    expect(result[0].role).toBe('user')
   })
 
-  it('returns null when there is no user turn to moderate', () => {
-    const messages = sanitizeChatMessages([{ role: 'assistant', content: 'reply' }])
-    expect(lastUserMessage(messages)).toBeNull()
+  it('rejects a conversation with no user turn at all', () => {
+    expect(() => sanitizeChatMessages([{ role: 'assistant', content: 'reply' }])).toThrow(
+      InvalidChatInputError
+    )
+  })
+
+  it('still opens on a user turn after truncation', () => {
+    // Truncating to the last MAX_MESSAGES can land on an assistant turn.
+    const many = Array.from({ length: MAX_MESSAGES + 10 }, (_, i) => ({
+      role: i % 2 === 0 ? 'assistant' : 'user',
+      content: `message ${i}`,
+    }))
+
+    expect(sanitizeChatMessages(many)[0].role).toBe('user')
   })
 })
