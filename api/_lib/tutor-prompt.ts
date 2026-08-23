@@ -67,17 +67,58 @@ export async function buildSystemPromptForUser(params: {
   personId: string
   language: unknown
   conversationType: unknown
+  /**
+   * Proficiency the client holds locally. Practice, mini-quizzes and
+   * assessments all record scores through `updateUserSkill` into device
+   * storage, and nothing syncs them to `lingo.user_skills` — so the server
+   * has no copy for most users and would otherwise scaffold every learner as
+   * a beginner.
+   *
+   * These are numbers only, and they are clamped and used solely to pick
+   * which fixed guidance string the prompt gets. No client text ever reaches
+   * the prompt, which is what the caller-supplied `system_prompt` used to do.
+   * Server-held scores win when they exist.
+   */
+  clientScores?: unknown
 }): Promise<string> {
   const language = normalizeLanguage(params.language)
   const conversationType = normalizeConversationType(params.conversationType)
 
   let proficiencyMap = defaultProficiencyMap()
+  let source: 'db' | 'client' | 'default' = 'default'
+
   try {
     const scores = await loadProficiencyScores(params.personId)
-    if (Object.keys(scores).length > 0) proficiencyMap = toProficiencyMap(scores)
+    if (Object.keys(scores).length > 0) {
+      proficiencyMap = toProficiencyMap(scores)
+      source = 'db'
+    }
   } catch (error: any) {
-    log.error(`Failed to load proficiency, using beginner defaults: ${error?.message || error}`)
+    log.error(`Failed to load proficiency, falling back: ${error?.message || error}`)
   }
 
+  if (source === 'default') {
+    const fromClient = sanitizeClientScores(params.clientScores)
+    if (Object.keys(fromClient).length > 0) {
+      proficiencyMap = toProficiencyMap(fromClient)
+      source = 'client'
+    }
+  }
+
+  log.debug(`Tutor prompt proficiency source: ${source}`)
   return buildTutorPrompt({ proficiencyMap, conversationType, language })
+}
+
+/**
+ * Keep only the five known skill names with finite numeric scores.
+ * `toProficiencyMap` clamps to 0-100 afterwards.
+ */
+export function sanitizeClientScores(raw: unknown): Record<string, number> {
+  const out: Record<string, number> = {}
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out
+  for (const name of ALL_SKILL_NAMES) {
+    const value = (raw as Record<string, unknown>)[name]
+    if (typeof value === 'number' && Number.isFinite(value)) out[name] = value
+  }
+  return out
 }

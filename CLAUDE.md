@@ -153,6 +153,10 @@ nyuchi-lingo/
 ├── api/                          # Vercel Serverless Functions (backend)
 │   ├── _lib/                     # Shared middleware
 │   │   ├── auth-middleware.ts    # WorkOS access-token validation + admin check
+│   │   ├── ai-provider.ts        # Provider routing, fallback, circuit breakers
+│   │   ├── tutor-prompt.ts       # Server-side system prompt + score clamping
+│   │   ├── chat-input.ts         # Chat body validation (rejects `system` role)
+│   │   ├── moderation.ts         # Server-side guardrails + moderation_alerts
 │   │   ├── mongo.ts              # Mongo client + collection accessors re-export shim
 │   │   └── cors.ts               # CORS configuration
 │   ├── auth/                     # Auth endpoints (login, register, OTP, magic links, WhatsApp)
@@ -183,9 +187,11 @@ nyuchi-lingo/
 │
 ├── lib/                          # Core libraries
 │   ├── ai/                       # AI integration
-│   │   ├── chat-service.ts       # Anthropic Claude API for Shamwari
-│   │   ├── skills-aware-prompts.ts # Adaptive prompts based on proficiency
-│   │   └── moderation.ts         # Content moderation (local + AI)
+│   │   ├── chat-service.ts       # Client for /api/ai/chat (sends proficiency)
+│   │   ├── prompt-builder.ts     # Pure prompt template (shared with the API)
+│   │   ├── guardrail-rules.ts    # Guardrail pattern definitions
+│   │   ├── skills-aware-prompts.ts # Client-side proficiency helpers
+│   │   └── moderation.ts         # Client-side pre-check (not the boundary)
 │   ├── auth/
 │   │   └── workos-client.ts      # WorkOS AuthKit client (PKCE hosted sign-in)
 │   ├── db/
@@ -378,10 +384,20 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
   carry `ai_checked`; set `AI_MODERATION_FAIL_CLOSED=true` to 503 instead of
   falling back to local guardrails.
 
-**Core AI System** (`lib/ai/skills-aware-prompts.ts`):
-- `buildSkillsAwarePrompt(conversationType, language)` - Called for EVERY AI interaction
-- Reads user skills from local storage via `getUserSkills()`
-- Builds adaptive system prompt with:
+**Core AI System** — the system prompt is built **server-side**. A caller
+cannot supply, extend, or replace it; `/api/ai/chat` ignores any
+`system_prompt` in the request body.
+
+- `lib/ai/prompt-builder.ts` — pure template, no React Native imports so the
+  serverless bundle can load it. Owns `normalizeLanguage`,
+  `normalizeConversationType`, `scoreToLevel`, `toProficiencyMap` and the
+  standing `INJECTION_RESISTANCE` block.
+- `api/_lib/tutor-prompt.ts` — `buildSystemPromptForUser({ personId, language,
+  conversationType, clientScores })`, called for EVERY AI interaction.
+- `lib/ai/skills-aware-prompts.ts` — client-side helpers (`scoreToLevel`,
+  conversation starters). It no longer builds the prompt that reaches a model.
+
+The prompt is assembled from:
   - User proficiency profile (overall + individual skills)
   - Vocabulary complexity guidance (simple → native-level)
   - Grammar complexity guidance (present simple → full grammatical range)
@@ -389,11 +405,45 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
   - Error correction approach (correct everything → no corrections)
   - Conversation type specific guidance (practice/scenario/translation_help)
 
-**Content Moderation** (`lib/ai/moderation.ts`):
+**Only two request fields influence it**, and both go through allowlists:
+`language` and `conversation_type`. Anything unrecognised falls back to a
+known constant rather than reaching the template.
+
+**Proficiency resolution order** (`api/_lib/tutor-prompt.ts`):
+1. `lingo.user_skills` for this person — authoritative when present.
+2. Otherwise the request's `proficiency` map, passed through
+   `sanitizeClientScores` (five known skill names, finite numbers only) and
+   then `toProficiencyMap` (clamped 0–100).
+3. Otherwise beginner defaults.
+
+Step 2 exists because practice, mini-quizzes and assessments record scores
+into **device storage** via `updateUserSkill`, and nothing syncs them to
+`lingo.user_skills` — which is empty. Without it the tutor scaffolds every
+learner as an absolute beginner. Only *numbers* cross this boundary, and they
+only select which fixed guidance string the template uses, so it does not
+reopen the injection surface that removing `system_prompt` closed. It
+self-corrects once `user_skills` is populated.
+
+**Request validation** (`api/_lib/chat-input.ts`): `sanitizeChatMessages`
+rejects a client-supplied `system` role (which the provider would read as
+instructions), rejects non-string content and unknown roles, caps the history
+at `MAX_MESSAGES` turns of `MAX_CONTENT_CHARS`, and guarantees the array opens
+on a user turn.
+
+**Content Moderation** — runs **server-side** in `api/_lib/moderation.ts`.
+`lib/ai/moderation.ts` still runs in the client bundle, but it only protects
+users who go through the UI; posting straight to the route bypasses it.
+
+- `/api/ai/chat` moderates **every turn** in the submitted history, not just
+  the newest — a payload can sit in an earlier turn, or in a forged
+  `assistant` turn, and still reach the model. Guardrails are local regex, so
+  scanning the whole array costs nothing extra.
 - Local guardrails (pattern/keyword matching against `guardrails` collection)
 - AI-based moderation via Claude Haiku for nuanced content
 - 6 core categories: sexual content, hate speech, harassment, violence, self-harm, misinformation
-- Flagged content creates `moderation_alerts` for admin review
+- Flagged content creates `moderation_alerts` (UUID `_id`) for admin review
+- A blocked request returns 400 with `moderated: true` and the guardrail
+  reason, which the client surfaces instead of a generic network error
 
 **AI Message Storage** (`api/ai/conversations/`):
 - `POST /api/ai/conversations` - Create conversation
@@ -536,12 +586,19 @@ const data = await col.find({ category: 'greetings' }).toArray()
 
 ### Local Storage (Mobile)
 
-Skills-aware prompts read from local storage, not the API:
+Proficiency is recorded locally — practice, mini-quizzes and assessments all
+write through `updateUserSkill`, and nothing syncs it to `lingo.user_skills`:
 
 ```typescript
 import { getUserSkills } from '@/lib/storage/database'
 // Platform-agnostic: AsyncStorage (web) or SQLite (native)
 ```
+
+`lib/ai/chat-service.ts` sends these scores to `/api/ai/chat` as a numeric
+`proficiency` map so the server-built prompt can adapt. The server clamps
+them and prefers `lingo.user_skills` whenever that collection has a row for
+the user. **Do not send prompt text from the client** — the prompt itself is
+built server-side (see AI Integration above).
 
 ## Database Schema Management
 
@@ -553,15 +610,45 @@ import { getUserSkills } from '@/lib/storage/database'
 - **CI pipeline**: GitHub Actions runs TypeScript check + tests on push to `main` and `feature/*`
 - **Coverage**: Tracked via `jest --coverage`, collected from `lib/**` and `components/**`
 
-**Test Suites** (8 suites, 107+ tests):
-- `lib/ai/__tests__/chat-service.test.ts` - AI chat simulation + moderation integration
-- `lib/ai/__tests__/moderation.test.ts` - Content moderation (local + AI)
-- `lib/auth/__tests__/workos-client.test.ts` - WorkOS AuthKit flow tests
-- `lib/data/__tests__/phrases-data.test.ts` - Phrase data integrity validation
-- `lib/data/__tests__/assessment-questions.test.ts` - Question bank validation
-- `lib/data/__tests__/translations.test.ts` - Translation completeness
-- `lib/hooks/__tests__/useLearningLanguage.test.tsx` - Hook behavior
-- `lib/storage/__tests__/database.test.ts` - Storage operations (bookmarks, progress, skills, sessions)
+**Test Suites** (37 suites, 421 tests). Run `npx jest --listTests` for the
+current set; the security-relevant ones are worth knowing by name:
+
+*Backend (`api/**`)* — note these are **not** included in
+`collectCoverageFrom`, so they do not move the coverage thresholds:
+- `api/_lib/__tests__/auth-middleware.test.ts` - Token verification; that
+  `allowExpired` widens expiry **only** and never rescues a bad signature
+- `api/_lib/__tests__/chat-input.test.ts` - Rejects a client `system` role,
+  unknown roles, non-string content; leading-turn rule
+- `api/_lib/__tests__/tutor-prompt.test.ts` - Prompt built from stored
+  proficiency; client scores clamped; hostile input ignored
+- `api/ai/chat/__tests__/chat-route.test.ts` - Every turn moderated (not just
+  the newest), forged `assistant` turns labelled, `max_tokens` clamped
+- `api/_lib/__tests__/ai-provider.test.ts` - Provider routing, fallback, circuit breakers
+- `api/_lib/__tests__/moderation.test.ts` - Server-side guardrails + alert writes
+- `api/_lib/__tests__/jose-cjs.test.ts` - Guards the jose v6 ESM/CJS auth outage
+
+*Shared (`lib/**`)*:
+- `lib/ai/__tests__/prompt-injection.test.ts` - Allowlists hold against
+  injection strings; no caller text reaches the prompt
+- `lib/workos/__tests__/config.test.ts` - Redirect allowlist, including the
+  private-LAN range boundary and the production Vercel alias
+- `lib/ai/__tests__/chat-service.test.ts` - Chat client + moderation integration
+- `lib/ai/__tests__/moderation.test.ts` - Client-side pre-check
+- `lib/auth/__tests__/workos-client.test.ts` / `.native.test.ts` - AuthKit flow, per platform
+- `lib/data/__tests__/*` - Phrase, question bank and translation integrity
+- `lib/db/__tests__/*-shape.test.ts` - Document ↔ API shape mapping
+- `lib/services/__tests__/*` - API client, SRS, XP, daily lesson
+- `lib/storage/__tests__/database.test.ts` - Bookmarks, progress, skills, sessions
+- `lib/hooks/__tests__/*` - Language, theme and UI-language hooks
+- `components/__tests__/*` - Flash card, mini quiz, daily lesson, celebration
+
+**Mocking `api/**` modules in tests**: Babel hoists `import` above the
+`const mockX = jest.fn()` declarations, so a `jest.mock` factory that captures
+those bindings directly reads them in their temporal dead zone and silently
+yields `undefined` exports. Have the factory delegate instead —
+`someExport: (...a) => mockSomeExport(...a)` — and include `__esModule: true`.
+Modules that read `process.env` into consts at import time (e.g.
+`auth-middleware`) need `jest.isolateModules` + `require` after the env is set.
 
 ## CI/CD Pipeline
 
@@ -596,11 +683,19 @@ import { getUserSkills } from '@/lib/storage/database'
 4. Use `useTheme()` hook for theme-aware colors from `constants/Colors.ts`
 
 ### Working with AI Features
-1. All AI endpoints stored at `api/ai/conversations/`
-2. Client-side AI via `lib/ai/chat-service.ts` (direct Anthropic API)
-3. Add moderation check using `moderateContent()` from `lib/ai/moderation.ts`
-4. Store conversations via `aiApi.createConversation()` and `aiApi.storeMessage()`
-5. Failed moderation creates `moderation_alerts` for admin review
+1. Chat goes through `/api/ai/chat`; conversation storage lives at
+   `api/ai/conversations/`. No provider key ever reaches the client.
+2. Client calls the route via `lib/ai/chat-service.ts` — it may send
+   `language`, `conversation_type` and a numeric `proficiency` map, and
+   **nothing else that shapes the prompt**.
+3. Moderation belongs on the **server** (`api/_lib/moderation.ts`), applied to
+   every turn. `lib/ai/moderation.ts` is a client-side pre-check for UX only —
+   adding a check there does not protect the endpoint.
+4. Any new field read from `req.body` that reaches a model must go through an
+   allowlist or a numeric clamp; see `api/_lib/chat-input.ts` and
+   `sanitizeClientScores`.
+5. Store conversations via `aiApi.createConversation()` and `aiApi.storeMessage()`
+6. Failed moderation creates `moderation_alerts` for admin review
 
 ### Modifying Learning Standards
 1. Use admin UI at admin → standards

@@ -26,6 +26,21 @@ const PREVIEW_HOST = /^mukoko-lingo-[a-z0-9-]+-nyuchi\.vercel\.app$/
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1'])
 
 /**
+ * Private LAN addresses, so Expo web served on a machine's network IP (the
+ * usual way to test on a phone) isn't rejected before it reaches WorkOS.
+ */
+const PRIVATE_LAN_HOST =
+  /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})$/
+
+/**
+ * The project's default Vercel hostname. The client derives its redirect from
+ * window.location.origin, so a deployment reached on this alias rather than
+ * the custom domain would otherwise be rejected locally before WorkOS ever
+ * saw it.
+ */
+const PRODUCTION_ALIAS_HOSTS = new Set(['mukoko-lingo.vercel.app'])
+
+/**
  * Whether a client-supplied redirect URI may be handed to WorkOS.
  *
  * `/api/auth/authorize` takes `redirect_uri` straight from the request body,
@@ -57,8 +72,14 @@ export function isAllowedRedirectUri(uri: unknown): uri is string {
   // Credentials in the authority section can disguise the real host.
   if (parsed.username !== '' || parsed.password !== '') return false
 
-  if (parsed.protocol === 'https:' && PREVIEW_HOST.test(parsed.hostname)) return true
-  if (parsed.protocol === 'http:' && LOCAL_HOSTS.has(parsed.hostname)) return true
+  if (parsed.protocol === 'https:') {
+    if (PREVIEW_HOST.test(parsed.hostname)) return true
+    if (PRODUCTION_ALIAS_HOSTS.has(parsed.hostname)) return true
+  }
+  if (parsed.protocol === 'http:') {
+    if (LOCAL_HOSTS.has(parsed.hostname)) return true
+    if (PRIVATE_LAN_HOST.test(parsed.hostname)) return true
+  }
 
   return false
 }

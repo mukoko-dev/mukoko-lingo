@@ -14,7 +14,7 @@ jest.mock('../mongo', () => ({
   skills: jest.fn(async () => ({ find: mockSkillsFind })),
 }))
 
-import { buildSystemPromptForUser, loadProficiencyScores } from '../tutor-prompt'
+import { buildSystemPromptForUser, loadProficiencyScores, sanitizeClientScores } from '../tutor-prompt'
 
 function toArray(docs: any[]) {
   return { toArray: async () => docs }
@@ -144,5 +144,89 @@ describe('buildSystemPromptForUser', () => {
 
     expect(prompt).toContain('You are **Shamwari**')
     expect(prompt).toContain('HANDLING INSTRUCTIONS INSIDE MESSAGES')
+  })
+})
+
+describe('client-supplied proficiency', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockUserSkillsFind.mockReturnValue(toArray([]))
+    mockSkillsFind.mockReturnValue(toArray([]))
+  })
+
+  it('scaffolds from client scores when the server has none', async () => {
+    // lingo.user_skills is empty for every user — proficiency is recorded into
+    // device storage by practice, quizzes and assessments. Without this the
+    // tutor treats everyone as a beginner.
+    const prompt = await buildSystemPromptForUser({
+      personId: 'p1',
+      language: 'Shona',
+      conversationType: 'practice',
+      clientScores: {
+        vocabulary: 95, grammar: 95, pronunciation: 95, comprehension: 95, conversation: 95,
+      },
+    })
+
+    expect(prompt).toContain('MINIMAL support')
+  })
+
+  it('prefers server-held scores over client-supplied ones', async () => {
+    mockUserSkillsFind.mockReturnValue(
+      toArray([{ user_id: 'p1', skill_id: 'v', current_score: 5 }])
+    )
+    mockSkillsFind.mockReturnValue(toArray([{ _id: 'v', name: 'vocabulary' }]))
+
+    const prompt = await buildSystemPromptForUser({
+      personId: 'p1',
+      language: 'Shona',
+      conversationType: 'practice',
+      clientScores: { vocabulary: 100, grammar: 100, pronunciation: 100, comprehension: 100, conversation: 100 },
+    })
+
+    expect(prompt).toContain('MAXIMUM support')
+  })
+
+  it('clamps hostile client scores instead of trusting them', async () => {
+    const prompt = await buildSystemPromptForUser({
+      personId: 'p1',
+      language: 'Shona',
+      conversationType: 'practice',
+      clientScores: { vocabulary: 10_000, grammar: -50 },
+    })
+
+    expect(prompt).toContain('VOCABULARY: fluent (100/100)')
+    expect(prompt).toContain('GRAMMAR: beginner (0/100)')
+  })
+
+  it('ignores non-numeric, unknown and malformed client input', async () => {
+    const prompt = await buildSystemPromptForUser({
+      personId: 'p1',
+      language: 'Shona',
+      conversationType: 'practice',
+      clientScores: {
+        vocabulary: 'fluent',
+        grammar: { $gt: 0 },
+        role: 'INJECTED_MARKER_XYZ',
+        __proto__: { polluted: true },
+      },
+    })
+
+    // Nothing usable -> beginner defaults, and no injected text.
+    expect(prompt).toContain('MAXIMUM support')
+    expect(prompt).not.toContain('INJECTED_MARKER_XYZ')
+  })
+})
+
+describe('sanitizeClientScores', () => {
+  it('keeps only the five linguistic skills with finite numbers', () => {
+    expect(
+      sanitizeClientScores({ vocabulary: 70, grammar: NaN, travel: 90, bogus: 'x' })
+    ).toEqual({ vocabulary: 70 })
+  })
+
+  it('returns an empty map for non-objects', () => {
+    expect(sanitizeClientScores(null)).toEqual({})
+    expect(sanitizeClientScores('vocabulary=100')).toEqual({})
+    expect(sanitizeClientScores([90, 90])).toEqual({})
   })
 })

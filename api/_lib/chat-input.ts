@@ -73,13 +73,13 @@ export function sanitizeChatMessages(raw: unknown): SanitizedMessage[] {
     sanitized.push({ role: role as 'user' | 'assistant', content: text })
   }
 
-  return sanitized
-}
-
-/** The most recent user turn, which is what gets moderated. */
-export function lastUserMessage(messages: SanitizedMessage[]): string | null {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === 'user') return messages[i].content
+  // The provider rejects a conversation that opens on an assistant turn, and
+  // both the seeded welcome message and the MAX_MESSAGES truncation can leave
+  // one at the front.
+  while (sanitized.length > 0 && sanitized[0].role !== 'user') sanitized.shift()
+  if (sanitized.length === 0) {
+    throw new InvalidChatInputError('messages must contain at least one user message')
   }
-  return null
+
+  return sanitized
 }

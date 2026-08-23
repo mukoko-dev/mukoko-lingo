@@ -18,9 +18,19 @@ import {
 } from '../../_lib/ai-provider'
 import { moderateUserContent } from '../../_lib/moderation'
 import { buildSystemPromptForUser } from '../../_lib/tutor-prompt'
-import { sanitizeChatMessages, lastUserMessage, InvalidChatInputError } from '../../_lib/chat-input'
+import { sanitizeChatMessages, InvalidChatInputError } from '../../_lib/chat-input'
 
 const log = createLogger('ai')
+
+/**
+ * `Math.min(n, 4096)` alone let a negative or fractional value through to the
+ * provider, which answers with a 400 that surfaces as a 502.
+ */
+export function clampMaxTokens(raw: unknown): number {
+  const n = Math.floor(Number(raw))
+  if (!Number.isFinite(n) || n < 1) return 1024
+  return Math.min(n, 4096)
+}
 
 // ── Rate Limiting (in-memory, per-user) ────────────────────────────────────
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000 // 1 hour
@@ -68,19 +78,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // wholesale. The prompt is built server-side from this user's stored
     // proficiency; the request only chooses a language and conversation type,
     // both mapped through allowlists.
-    const { messages, max_tokens, language, conversation_type } = req.body || {}
+    const { messages, max_tokens, language, conversation_type, proficiency } = req.body || {}
 
     const sanitizedMessages = sanitizeChatMessages(messages)
 
     // Moderate here, not just in the client. `lib/ai/moderation.ts` runs in the
     // caller's bundle, so it only protects users who go through our UI —
     // posting straight to this route skipped every guardrail.
-    const userText = lastUserMessage(sanitizedMessages)
-    if (userText) {
+    // Every turn, not just the latest. The whole history is client-supplied,
+    // so payloads can sit in an earlier turn — or in a forged `assistant`
+    // turn — and still reach the model. The guardrails are local regex checks,
+    // so scanning the full array costs nothing extra.
+    for (const message of sanitizedMessages) {
       const verdict = await moderateUserContent({
         personId: user.personId,
-        content: userText,
-        contentType: 'chat_message',
+        content: message.content,
+        contentType: message.role === 'user' ? 'chat_message' : 'chat_history',
       })
       if (verdict) {
         return res.status(400).json({
@@ -95,12 +108,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       personId: user.personId,
       language,
       conversationType: conversation_type,
+      clientScores: proficiency,
     })
 
     const result = await completeChat({
       messages: sanitizedMessages,
       system: systemPrompt,
-      maxTokens: Math.min(Number(max_tokens) || 1024, 4096),
+      maxTokens: clampMaxTokens(max_tokens),
       language,
       conversationType: conversation_type,
     })
