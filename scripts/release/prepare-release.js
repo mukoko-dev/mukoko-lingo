@@ -19,7 +19,7 @@ const fs = require('fs')
 const path = require('path')
 const { execFileSync } = require('child_process')
 
-const { aggregateBump, nextVersion, classifyCommit } = require('./version')
+const { aggregateBump, nextVersion, classifyCommit, baseVersion } = require('./version')
 const { cutRelease } = require('./changelog')
 const { applyVersion, REQUIRED_FILES, OPTIONAL_FILES } = require('./version-files')
 
@@ -88,12 +88,19 @@ function main() {
   const args = parseArgs(process.argv.slice(2))
   const readFile = (file) => fs.readFileSync(path.join(repoRoot, file), 'utf8')
 
-  const currentVersion = JSON.parse(readFile('package.json')).version
+  const packageVersion = JSON.parse(readFile('package.json')).version
   const previousTag = lastTag()
   const commits = commitsSince(previousTag)
 
-  console.log(`Current version:  ${currentVersion}`)
+  // The tag is authoritative when it is ahead: a release whose version-bump
+  // commit could not be pushed (protected branch) leaves the files behind the
+  // last published tag, and counting from the files would cut a version that
+  // has already shipped.
+  const currentVersion = baseVersion(previousTag, packageVersion)
+
+  console.log(`Package version:  ${packageVersion}`)
   console.log(`Previous tag:     ${previousTag || '(none)'}`)
+  console.log(`Counting from:    ${currentVersion}${currentVersion !== packageVersion ? ' (tag is ahead of the files)' : ''}`)
   console.log(`Commits in range: ${commits.length}`)
   for (const commit of commits) {
     const subject = commit.message.split('\n')[0]
@@ -125,7 +132,7 @@ function main() {
     const before = readFile(file)
     const after = applyVersion(file, before, version, date)
     if (after === before) {
-      throw new Error(`${file} still reads ${currentVersion} — its version marker moved`)
+      throw new Error(`${file} was not rewritten to ${version} — its version marker moved`)
     }
     writes.push([file, after])
   }

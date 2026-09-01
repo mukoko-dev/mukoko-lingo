@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Nothing yet._
+
+---
+
+## [0.1.0] — 2026-09-01
+
 ### Security
 - **AI system prompt moved server-side** — `/api/ai/chat` now builds the tutor prompt in `api/_lib/tutor-prompt.ts` from the authenticated user's proficiency and ignores any caller-supplied `system_prompt`. The only request fields that influence the prompt are `language` and `conversation_type`, both mapped through allowlists in `lib/ai/prompt-builder.ts`, so an unrecognised value becomes a known constant instead of reaching the template.
 - **Chat input is validated as a security boundary** (`api/_lib/chat-input.ts`) — a client-supplied `system` role is rejected outright (a provider would read it as instructions), along with unknown roles and non-string content. History is capped and forced to open on a user turn.
@@ -69,7 +75,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dependencies** — Updated all packages across `root` and `web/`: Expo SDK 54 → 57, Next.js 15 → 16, Tailwind CSS 3 → 4. Held back `jest`/`@types/jest` (jest-expo still requires Jest 29) and `@testing-library/react-native` (v14 switches to async `render()`/`renderHook()`, which would require rewriting every test file).
 
 ---
-
 ## [0.0.1] — 2026-04-08
 
 ### Initial Release: Supabase Migration & Platform Architecture

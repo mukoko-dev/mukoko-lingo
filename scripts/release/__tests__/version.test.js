@@ -5,7 +5,7 @@
  * cases are the ones that must NOT release and the pre-1.0 breaking rule.
  */
 
-const { classifyCommit, aggregateBump, nextVersion } = require('../version')
+const { classifyCommit, aggregateBump, nextVersion, compareVersions, baseVersion } = require('../version')
 
 describe('classifyCommit', () => {
   it('maps the conventional types this repo uses', () => {
@@ -75,5 +75,39 @@ describe('nextVersion', () => {
 
   it('rejects a non-semver current version rather than guessing', () => {
     expect(() => nextVersion('latest', 'patch')).toThrow(/semver/)
+  })
+})
+
+describe('baseVersion', () => {
+  it('uses the package version when the tag agrees with it', () => {
+    expect(baseVersion('v0.1.0', '0.1.0')).toBe('0.1.0')
+  })
+
+  it('prefers the tag when the tag is ahead of the files', () => {
+    // This is the real case that bit on the first automated release: branch
+    // protection rejected the version-bump commit, so v0.1.0 shipped while
+    // package.json still read 0.0.1. Counting from the files would have cut
+    // 0.0.2 next — a version below one already published.
+    expect(baseVersion('v0.1.0', '0.0.1')).toBe('0.1.0')
+    expect(nextVersion(baseVersion('v0.1.0', '0.0.1'), 'patch')).toBe('0.1.1')
+  })
+
+  it('keeps the package version when the files are ahead of the tag', () => {
+    // A hand-bumped file set is still the intent; never walk it backwards.
+    expect(baseVersion('v0.1.0', '0.2.0')).toBe('0.2.0')
+  })
+
+  it('falls back to the package version when there is no tag', () => {
+    expect(baseVersion(null, '0.0.1')).toBe('0.0.1')
+    expect(baseVersion('', '0.0.1')).toBe('0.0.1')
+  })
+})
+
+describe('compareVersions', () => {
+  it('orders by major, then minor, then patch', () => {
+    expect(compareVersions('1.0.0', '0.9.9')).toBe(1)
+    expect(compareVersions('0.2.0', '0.10.0')).toBe(-1)
+    expect(compareVersions('0.1.2', '0.1.2')).toBe(0)
+    expect(compareVersions('v0.1.0', '0.1.0')).toBe(0)
   })
 })
