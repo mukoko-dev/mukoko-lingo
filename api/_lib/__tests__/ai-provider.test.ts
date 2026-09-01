@@ -22,7 +22,6 @@ function loadProvider(env: Record<string, string | undefined>): ProviderModule {
     if (value === undefined) delete process.env[key]
     else process.env[key] = value
   }
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mod: ProviderModule = require('../ai-provider')
   process.env = previous
   return mod

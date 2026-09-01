@@ -78,4 +78,37 @@ function nextVersion(current, bump) {
   return `${major}.${minor}.${patch + 1}`
 }
 
-module.exports = { classifyCommit, aggregateBump, nextVersion, parseVersion, TYPE_BUMPS }
+/** Compare two semver strings: -1, 0 or 1. */
+function compareVersions(a, b) {
+  const left = parseVersion(a)
+  const right = parseVersion(b)
+  for (const part of ['major', 'minor', 'patch']) {
+    if (left[part] !== right[part]) return left[part] < right[part] ? -1 : 1
+  }
+  return 0
+}
+
+/**
+ * The version a release should be counted from.
+ *
+ * Normally the two agree: the release job bumps `package.json` in the same
+ * commit it tags. They diverge when the bump cannot be pushed — branch
+ * protection rejecting the bot, say — leaving a published tag ahead of the
+ * files. Taking the newer of the two keeps the next release moving forward
+ * instead of re-cutting a version that has already shipped.
+ */
+function baseVersion(tag, packageVersion) {
+  if (!tag) return packageVersion
+  const tagVersion = String(tag).replace(/^v/, '')
+  return compareVersions(tagVersion, packageVersion) > 0 ? tagVersion : packageVersion
+}
+
+module.exports = {
+  classifyCommit,
+  aggregateBump,
+  nextVersion,
+  parseVersion,
+  compareVersions,
+  baseVersion,
+  TYPE_BUMPS,
+}

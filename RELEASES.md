@@ -27,6 +27,15 @@ The gate is the **CI workflow's conclusion**, not the push itself: a merge whose
 tests fail is never tagged. The release commit carries `[skip ci]`, so it cannot
 start a CI run that would re-trigger the release job.
 
+**When the bump commit cannot be pushed** — branch protection rejecting the bot,
+which is what happens on this repo today — the job still tags the merge commit
+and publishes the Release, and logs a warning. The version files and
+`CHANGELOG.md` then sit behind the tag until someone lands them by hand. The
+next release is not confused by that: the version is counted from the newer of
+the last tag and `package.json`, so a published `v0.1.0` with files still
+reading `0.0.1` still yields `0.1.1`, never `0.0.2`. Granting the workflow push
+access (or adding a `RELEASE_TOKEN` PAT) removes the manual step.
+
 ### What decides the version
 
 `scripts/release/version.js` reads the Conventional Commit subjects between the
@@ -107,7 +116,7 @@ Mukoko Lingo follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PA
 - **MINOR** — new features, backwards-compatible
 - **PATCH** — bug fixes, security patches, small improvements
 
-### Current Version: 0.0.1
+### Current Version: 0.1.0
 
 ## Release channels
 
@@ -163,6 +172,7 @@ git checkout -b hotfix/short-description
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.1.0 | 2026-09-01 | See [CHANGELOG](CHANGELOG.md) |
 | 0.0.1 | 2026-04-08 | Initial release: Supabase migration, Next.js web app, school model, OneRoster, security hardening |
 
 ## Contact
