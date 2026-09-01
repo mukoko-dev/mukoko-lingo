@@ -6,8 +6,6 @@ global.fetch = jest.fn()
 describe('moderation', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    // Default: no API key, so AI moderation is skipped
-    process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY = ''
   })
 
   describe('moderateContent', () => {

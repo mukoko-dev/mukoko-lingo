@@ -24,11 +24,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`max_tokens` had a ceiling but no floor** — a negative or fractional value reached the provider and came back as a 502. Now clamped to an integer in [1, 4096].
 
 ### Added
-- **Provider routing with fallback and circuit breakers** (`api/_lib/ai-provider.ts`) — Chinese practice and `translation_help` lead with Kimi (`moonshotai/kimi-k2.5`) via the Vercel AI Gateway; everything else leads with Claude Haiku direct. The two transports have separate, non-interchangeable credentials and never fall back to each other by key alone. `AiNotConfiguredError` and `AiUnavailableError` stay distinct so moderation cannot silently pass all content when it breaks.
+- **Releases are automatic** (`.github/workflows/release.yml`) — a merge to
+  `main` whose CI run goes green is tagged and published without anyone
+  touching a version number. The next version is derived from Conventional
+  Commit subjects since the last tag (`feat:` minor, `fix:`/`perf:`/`refactor:`
+  patch, housekeeping releases nothing, and a breaking change stays inside 0.x
+  until 1.0 is cut deliberately). The job bumps all nine files that carry the
+  version, moves `CHANGELOG.md`'s `[Unreleased]` section under the new heading,
+  tags, and publishes a GitHub Release whose notes are that section. Preview
+  any merge's outcome with `npm run release:dry`. Full details in
+  [RELEASES.md](RELEASES.md).
+- **Documentation drift check** (`scripts/docs/check-docs.js`, CI job `docs`) —
+  fails the build when shipped code reads an environment variable
+  `.env.example` does not document, when a retired name (`ANTHROPIC_API_KEY`,
+  `AI_GATEWAY_API_KEY`, the invented `mukoko-lingo` database) reappears in the
+  docs, when a relative markdown link points at nothing, or when CLAUDE.md's
+  test-suite count no longer matches the suites on disk. It found an
+  undocumented `NEXT_PUBLIC_API_BASE_URL` and four dead documentation links on
+  its first run.
+- **`docs-maintainer` agent** (`.claude/agents/docs-maintainer.md`) — owns
+  keeping the written record true, with the checklist of documents that go
+  stale together (change an env var, and five files need visiting).
+- **BRANDING.md** — the Five African Minerals palette, voice, typography and
+  touch-target rules, derived from `constants/Colors.ts`. Three documents had
+  been linking to it for months; it had never existed.
+- **Single-provider AI transport with a circuit breaker** (`api/_lib/ai-provider.ts`) — Cloudflare Workers AI reached through Cloudflare AI Gateway, on the OpenAI-compatible `/ai/v1/chat/completions` endpoint. 3 failures open the breaker for 5 minutes, so an outage fails fast instead of making every learner wait out the 15s timeout. `AiNotConfiguredError` and `AiUnavailableError` stay distinct so moderation cannot silently pass all content when it breaks.
 
 ### Changed
+- **AI provider: Anthropic + Vercel AI Gateway → Cloudflare Workers AI** — inference is now `@cf/qwen/qwen3-30b-a3b-fp8` on Workers AI, routed through Cloudflare AI Gateway. `ANTHROPIC_API_KEY` and `AI_GATEWAY_API_KEY` are gone, replaced by `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` (required) and `CLOUDFLARE_AI_GATEWAY_ID` / `CLOUDFLARE_AI_GATEWAY_TOKEN` / `WORKERS_AI_MODEL` (optional). The Anthropic Messages transport, the dual-credential split and the per-language Kimi routing were all removed — `language` and `conversation_type` now shape only the system prompt. Conversation documents record `modelProvider: 'cloudflare'`, and the unused `ai` / `@ai-sdk/openai` packages were dropped from `package.json`.
 - **Database: Supabase PostgreSQL → MongoDB** — Reverted the data layer back to MongoDB (the platform's original database before the 0.0.1 Supabase migration). All API routes now read/write MongoDB collections via `lib/db/mongo.ts` / `lib/db/collections.ts` instead of `@supabase/supabase-js`. Phrases collapse from a normalized `phrase`+`translation` join into one flat document per phrase (matching the pre-Supabase shape already used by `lib/data/phrases-data.ts`); `ai_conversations` now embed their messages; hand-rolled "select-then-insert" upserts (phrase progress, user skills, SRS cards, assignment submissions) became atomic `findOneAndUpdate`/`bulkWrite` upserts. Fixed two latent bugs surfaced during the port: the auth lookup now keys profiles on the stable WorkOS `workos_user_id` instead of email, and the leaderboard query's `user_id`/`person_id` field-name inconsistency was standardized on `user_id`.
 - **Auth: Stytch → WorkOS AuthKit** — Replaced Stytch (email OTP, WhatsApp OTP, magic links) with WorkOS AuthKit's hosted sign-in page via the PKCE authorization-code flow. `api/_lib/auth-middleware.ts` now verifies access tokens locally against WorkOS's JWKS instead of round-tripping to the auth provider on every request. WhatsApp OTP has no WorkOS equivalent and was dropped.
+- **Documentation rewritten against the code, not from memory** —
+  `RELEASES.md` now describes the automated flow instead of a manual
+  branch-tag-publish ritual (and no longer names a `mukoko-lingo` database);
+  `docs/TEST_COVERAGE_ANALYSIS.md` was measuring 8 suites and a Supabase client
+  that no longer exists, and now reports the real 42 suites, the thin
+  functions-threshold margin, and the fact that `api/**` — every security
+  boundary in the app — has no coverage floor at all;
+  `docs/EMAIL_TEMPLATES.md` was configuring Supabase email with a palette that
+  is not the brand's, and now targets the WorkOS AuthKit dashboard;
+  `.env.local.example` was pure Supabase/OpenAI/Next.js from before the
+  migration. `CONTRIBUTING.md` gained the commit-type → release-effect table,
+  since a commit subject now decides the version.
 - **Dependencies** — Updated all packages across `root` and `web/`: Expo SDK 54 → 57, Next.js 15 → 16, Tailwind CSS 3 → 4. Held back `jest`/`@types/jest` (jest-expo still requires Jest 29) and `@testing-library/react-native` (v14 switches to async `render()`/`renderHook()`, which would require rewriting every test file).
 
 ---

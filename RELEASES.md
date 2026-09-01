@@ -1,128 +1,171 @@
 # Release Management
 
-## Overview
+Releases are **automatic**. A merge to `main` whose CI run goes green is tagged
+and published by `.github/workflows/release.yml` — nobody bumps a version by
+hand, and nobody runs `gh release create`.
 
-This document describes the release process for Mukoko Lingo, including versioning, release procedures, and deployment workflows.
+This document explains what that job does, what makes it fire (and what makes
+it stay quiet), and the few things still done by a person.
 
-## Versioning
-
-Mukoko Lingo follows [Semantic Versioning](https://semver.org/):
+## How a release happens
 
 ```
-MAJOR.MINOR.PATCH
+PR merged to main  →  CI workflow runs on the merge commit
+                        ↓ (success)
+                   Release workflow (workflow_run)
+                        ↓
+      derive next version from Conventional Commits since the last tag
+                        ↓
+   bump version files + move CHANGELOG [Unreleased] under the new heading
+                        ↓
+        commit "chore(release): vX.Y.Z [skip ci]" → push to main
+                        ↓
+              annotated tag vX.Y.Z → GitHub Release
 ```
 
-- **MAJOR**: Breaking changes, significant architecture changes
-- **MINOR**: New features, backwards-compatible enhancements
-- **PATCH**: Bug fixes, security patches, minor improvements
+The gate is the **CI workflow's conclusion**, not the push itself: a merge whose
+tests fail is never tagged. The release commit carries `[skip ci]`, so it cannot
+start a CI run that would re-trigger the release job.
 
-### Current Version: 0.0.1
+### What decides the version
 
-### Version Locations (must all match)
+`scripts/release/version.js` reads the Conventional Commit subjects between the
+last `v*` tag and the merge commit, and takes the largest bump any of them asks
+for:
+
+| Commit type | Bump | Changelog group |
+|---|---|---|
+| `feat:` | minor | Added |
+| `fix:` | patch | Fixed |
+| `perf:`, `refactor:`, `revert:` | patch | Changed |
+| any `(security)` scope | patch | Security |
+| `docs:`, `chore:`, `ci:`, `test:`, `style:`, `build:` | **none** | — |
+| `type!:` or a `BREAKING CHANGE:` footer | major | — |
+| anything not matching `type(scope): subject` | **none** | — |
+
+Two consequences worth knowing:
+
+- **A docs-only or CI-only merge releases nothing.** The job runs, reports "No
+  release" in its summary, and exits 0. That is the designed outcome, not a
+  failure to investigate.
+- **Below 1.0.0 a breaking change lands as a minor** (`0.3.7` → `0.4.0`).
+  Semver already allows anything to break in `0.x`, and declaring 1.0 is a
+  product decision — not something an automated job should make because a
+  commit subject had a `!` in it.
+
+### What the job writes
 
 | File | Field |
 |------|-------|
 | `package.json` | `version` |
 | `web/package.json` | `version` |
+| `package-lock.json`, `web/package-lock.json` | `version` + `packages[""].version` |
 | `app.json` | `expo.version` |
 | `constants/Version.ts` | `APP_VERSION` |
-| `web/app/layout.tsx` | Footer text |
-| `RELEASES.md` | Current Version |
-| `CLAUDE.md` | Project Status |
+| `CHANGELOG.md` | `[Unreleased]` → `[X.Y.Z] — date`, new empty `[Unreleased]` |
+| `RELEASES.md` | Current Version + a Version History row |
+| `CLAUDE.md` | Project Status → Current Version |
 
-## Release Channels
+The first five are **required**: if one of them stops matching its marker (a
+reformat, a rename), the job fails loudly rather than shipping a half-bumped
+tree. `scripts/release/__tests__/version-files.test.js` runs each transform
+against the real files in CI, so that breakage surfaces in a PR instead of in a
+release.
+
+### Release notes
+
+The notes published on the GitHub Release are the `[Unreleased]` section of
+`CHANGELOG.md`, verbatim. Keep that section current as work lands — it is the
+release notes, written by the people who did the work.
+
+If `[Unreleased]` is empty, the job falls back to generating entries from the
+commit subjects in the range. That fallback exists so a release is never
+blocked, not because a list of subjects is a good changelog. If nothing at all
+qualifies, no release is cut.
+
+## Running it yourself
+
+```bash
+# Exactly what a merge to main would produce, writing nothing
+npm run release:dry
+
+# Manual release from the Actions tab:
+#   Actions → Release → Run workflow
+#     version:  blank to derive, or an explicit 0.2.0
+#     dry_run:  true to see the plan without tagging
+```
+
+`workflow_dispatch` is the escape hatch for the cases automation should not
+decide: cutting `1.0.0`, releasing after a revert, or re-running a job that
+failed partway.
+
+## Versioning
+
+Mukoko Lingo follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
+
+- **MAJOR** — breaking changes (manual below 1.0, see above)
+- **MINOR** — new features, backwards-compatible
+- **PATCH** — bug fixes, security patches, small improvements
+
+### Current Version: 0.0.1
+
+## Release channels
 
 ### Production
 - **Branch**: `main`
 - **Environment**: Vercel Production
-- **URL**: https://lingo.mukoko.com (mobile web), TBD (Next.js web)
-- **Database**: MongoDB (database `mukoko-lingo`)
+- **URL**: https://lingo.mukoko.com (Expo web), `/console` (Next.js web app)
+- **Database**: MongoDB, database `lingo` (shared across the Nyuchi ecosystem)
 - **Auth**: WorkOS AuthKit (Production environment)
+- **AI**: Cloudflare Workers AI via Cloudflare AI Gateway
 
-### Development
-- **Branch**: Feature branches
-- **Environment**: Local / Vercel Preview
-- **Database**: Same MongoDB database (use with care)
+### Preview
+- **Branch**: any PR branch
+- **Environment**: Vercel Preview
+- **Database**: the same MongoDB database — treat writes with care
 
-## Release Process
+Vercel deploys on merge to `main` independently of the release job. A tag is a
+marker of what shipped, not the thing that ships it.
 
-### 1. Pre-Release Checklist
+## What is still manual
 
-- [ ] All mobile tests pass (`npm test -- --ci`)
-- [ ] No TypeScript errors (`npx tsc --noEmit`)
-- [ ] Web app builds (`cd web && npm run build`)
-- [ ] Security review for sensitive changes
-- [ ] Documentation updated (CLAUDE.md, CHANGELOG.md, RELEASES.md)
-- [ ] Version bumped in all locations (see table above)
-- [ ] Mobile compatibility verified
+- **Native builds (EAS)** — the release job does not build or submit apps.
+  ```bash
+  npx eas build --profile production --platform all
+  npx eas update --branch production   # OTA JS-only update
+  ```
+- **Cutting 1.0.0** — `workflow_dispatch` with an explicit version.
+- **Environment variables** — a release does not carry config. New variables
+  (see `.env.example`) must exist in Vercel before the code that reads them
+  merges.
 
-### 2. Creating a Release
+## Hotfixes
 
-```bash
-# Ensure you're on main with latest changes
-git checkout main
-git pull origin main
-
-# Create release branch
-git checkout -b release/v0.1.0
-
-# Bump version in all locations
-# Update CHANGELOG.md with release notes
-
-# Commit version bump
-git add .
-git commit -m "chore: bump version to 0.1.0"
-
-# Push and create PR
-git push -u origin release/v0.1.0
-```
-
-### 3. After Merge
-
-```bash
-# Tag the release
-git tag -a v0.1.0 -m "Release v0.1.0"
-git push origin v0.1.0
-
-# Create GitHub Release from the tag
-gh release create v0.1.0 --title "v0.1.0" --notes "See CHANGELOG.md"
-```
-
-### 4. Deployment
-
-**Mobile Web (Expo)**:
-- Auto-deploys to Vercel on merge to `main`
-- Build: `npx expo export --platform web`
-
-**Next.js Web App**:
-- Auto-deploys to Vercel on merge to `main`
-- Build: `cd web && npm run build`
-
-**Mobile Native (EAS)**:
-- Preview: `npx eas build --profile preview --platform all`
-- Production: `npx eas build --profile production --platform all`
-- OTA updates: `npx eas update --branch production`
-
-## Version History
-
-| Version | Date | Highlights |
-|---------|------|------------|
-| 0.0.1 | Apr 2026 | Initial release: Supabase migration, Next.js web app, school model, OneRoster, security hardening |
-
-## Hotfix Process
+Nothing special: branch, fix, PR, merge. A `fix:` commit on `main` with green CI
+cuts a patch release on its own.
 
 ```bash
 git checkout main && git pull
-git checkout -b hotfix/description
-# Fix, commit, push, PR, merge
-# Tag as patch (e.g., v0.0.2)
+git checkout -b hotfix/short-description
+# fix, commit as `fix(scope): ...`, push, PR, merge
 ```
+
+## If a release does not appear
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Job ran, summary says "No release" | Only housekeeping commits since the last tag | Nothing to do, or dispatch manually with a version |
+| Job did not run at all | CI failed, or the merge commit carried `[skip ci]` | Fix CI; re-run the CI workflow on that commit |
+| Warning: "Could not push the version bump to main" | Branch protection rejects the bot's push | The tag and Release are still published against the merge commit. Grant the workflow push access, or add a `RELEASE_TOKEN` secret (a PAT with `contents: write`) |
+| "Tag vX.Y.Z already exists" | A previous run got as far as tagging | Delete the tag if the release is incomplete, then re-dispatch |
+
+## Version history
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| 0.0.1 | 2026-04-08 | Initial release: Supabase migration, Next.js web app, school model, OneRoster, security hardening |
 
 ## Contact
 
 - Engineering: dev@mukoko.com
 - Security: security@mukoko.com
-
----
-
-Last updated: April 2026

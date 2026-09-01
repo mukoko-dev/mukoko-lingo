@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Mukoko Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) with both web and mobile (Expo/React Native) applications, powered by MongoDB, WorkOS AuthKit, Vercel Serverless Functions, and Anthropic Claude.
+**Mukoko Lingo is an AI-first, skills-based multilingual language learning platform** (English, Shona, Ndebele, Chinese) with both web and mobile (Expo/React Native) applications, powered by MongoDB, WorkOS AuthKit, Vercel Serverless Functions, and Cloudflare Workers AI.
 
 **Parent Company**: Nyuchi Africa (nyuchi.com)
 
@@ -34,7 +34,7 @@ When implementing AI features, the AI should:
 
 ### Key Features
 1. **Native Phrase Learning** - Core learning experience focused on practical phrases with language selector
-2. **Shamwari AI Tutoring** - AI powered by Anthropic Claude (`claude-haiku-4-5-20251001`), adapts to learner's proficiency level
+2. **Shamwari AI Tutoring** - AI powered by Cloudflare Workers AI (`@cf/qwen/qwen3-30b-a3b-fp8`), adapts to learner's proficiency level
 3. **Skills-Based Assessments** - Assessment engine with question bank, diagnostic and skill-specific tests
 4. **User Insights Dashboard** - Bookmarks, phrase mastery tracking, skill proficiency, study analytics
 5. **Progressive Learning Path** - Skills naturally unlock as proficiency grows
@@ -68,6 +68,11 @@ npm run test:coverage    # Run tests with coverage report
 
 # Code Quality
 npx tsc --noEmit         # TypeScript type checking
+npm run lint             # ESLint
+node scripts/docs/check-docs.js   # Documentation drift check (also runs in CI)
+
+# Release (automated — see RELEASES.md)
+npm run release:dry      # What a merge to main would tag, writing nothing
 ```
 
 ## Environment Setup
@@ -93,13 +98,13 @@ EXPO_PUBLIC_WORKOS_REDIRECT_URI=mukokolingo://auth/callback
 # API Base URL (Vercel serverless functions)
 EXPO_PUBLIC_API_BASE_URL=https://your-api-domain.vercel.app
 
-# Anthropic Claude API Key (for mobile AI tutor)
-# Model: claude-haiku-4-5-20251001
-# Anthropic API Key is SERVER-SIDE ONLY (proxied via /api/ai/chat)
-# ANTHROPIC_API_KEY=your_anthropic_api_key_here
-
-# Vercel AI Gateway (for web API routes)
-AI_GATEWAY_API_KEY=your_api_key_here
+# Cloudflare Workers AI, via Cloudflare AI Gateway (SERVER-SIDE ONLY —
+# proxied via /api/ai/chat). Model: @cf/qwen/qwen3-30b-a3b-fp8
+CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id
+CLOUDFLARE_API_TOKEN=your_cloudflare_api_token
+CLOUDFLARE_AI_GATEWAY_ID=your_gateway_id
+# CLOUDFLARE_AI_GATEWAY_TOKEN=  # only for an authenticated gateway
+# WORKERS_AI_MODEL=@cf/qwen/qwen3-30b-a3b-fp8  # model override
 ```
 
 ### Local Development
@@ -153,7 +158,7 @@ nyuchi-lingo/
 ├── api/                          # Vercel Serverless Functions (backend)
 │   ├── _lib/                     # Shared middleware
 │   │   ├── auth-middleware.ts    # WorkOS access-token validation + admin check
-│   │   ├── ai-provider.ts        # Provider routing, fallback, circuit breakers
+│   │   ├── ai-provider.ts        # Workers AI transport + circuit breaker
 │   │   ├── tutor-prompt.ts       # Server-side system prompt + score clamping
 │   │   ├── chat-input.ts         # Chat body validation (rejects `system` role)
 │   │   ├── moderation.ts         # Server-side guardrails + moderation_alerts
@@ -237,9 +242,13 @@ nyuchi-lingo/
 │
 ├── assets/                       # App icons, splash screens, images
 ├── public/                       # Static web assets
-├── scripts/                      # DB migration scripts + utilities
+├── scripts/                      # DB scripts, release + docs automation
+│   ├── release/                  # Version derivation, changelog surgery, CLI
+│   └── docs/check-docs.js        # Documentation drift check (CI job)
 ├── docs/                         # Technical documentation
-├── .github/workflows/ci.yml     # CI pipeline (TypeScript + tests + web build)
+├── .github/workflows/
+│   ├── ci.yml                    # lint → typecheck → test → docs → builds
+│   └── release.yml               # Auto-tag + GitHub Release after green CI
 └── .claude/agents/               # Custom Claude Code agent definitions
 ```
 
@@ -255,9 +264,9 @@ nyuchi-lingo/
 | Backend | Vercel Serverless Functions (TypeScript + Python) |
 | Database | MongoDB (database `lingo` — shared with the rest of the Nyuchi ecosystem) |
 | Auth | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow) |
-| AI | Anthropic Claude Haiku 4.5 (direct API + Vercel AI Gateway) |
+| AI | Cloudflare Workers AI — Qwen3 30B A3B, via Cloudflare AI Gateway |
 | Testing | Jest 29 + jest-expo + React Testing Library |
-| CI/CD | GitHub Actions (typecheck → test → build-web) |
+| CI/CD | GitHub Actions — CI (lint, typecheck, test, docs, builds) → Release (auto-tag) |
 
 ### Authentication System
 
@@ -357,32 +366,40 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 
 **Philosophy**: Mukoko Lingo is an AI-first application. The AI tutor reads user proficiency for every interaction to provide adaptive, personalized teaching.
 
-**Mobile AI (Direct Anthropic API)**:
-- **API Key**: `ANTHROPIC_API_KEY` (server-side only, proxied via `/api/ai/chat`)
-- **Model**: `claude-haiku-4-5-20251001`
-- **Implementation**: `lib/ai/chat-service.ts` - Direct `fetch()` to Anthropic Messages API
-- **Fallback**: Simulated responses when no API key is set (demo/offline mode)
+**Inference** — one provider, server-side only. Clients never hold a
+credential; everything goes through `/api/ai/chat` and `/api/ai/moderate`.
 
-**Web AI (Vercel AI Gateway)**:
-- **API Key**: `AI_GATEWAY_API_KEY` environment variable
-- **SDK**: `@ai-sdk/openai` + `ai` packages for streaming via Vercel AI SDK
+- **Provider**: Cloudflare Workers AI, reached through Cloudflare AI Gateway
+- **Model**: `@cf/qwen/qwen3-30b-a3b-fp8` (MoE, ~3B active params per pass —
+  fast enough for a tutor turn, strong multilingual coverage). Override with
+  `WORKERS_AI_MODEL` — a deploy variable, not a code change.
+- **Client fallback**: `lib/ai/chat-service.ts` returns simulated responses
+  when the route reports the service unconfigured (demo/offline mode)
 
-**Provider routing & fallback** (`api/_lib/ai-provider.ts`):
-- Two transports with **separate, non-interchangeable** credentials —
-  `ANTHROPIC_API_KEY` → `api.anthropic.com/v1/messages` (`x-api-key`,
-  Messages shape) and `AI_GATEWAY_API_KEY` →
-  `ai-gateway.vercel.sh/v1/chat/completions` (`Authorization: Bearer`,
-  OpenAI shape). Never fall back from one to the other by key alone.
-- Chinese practice and `translation_help` prefer Kimi
-  (`moonshotai/kimi-k2.5`); everything else leads with Claude Haiku direct.
-  Remaining candidates act as fallbacks in order.
-- Per-candidate circuit breakers (3 failures / 5 min cooldown), so one
-  provider tripping doesn't take the others down.
-- `AiNotConfiguredError` (no credential) and `AiUnavailableError` (all
-  candidates failed) are distinct — `/api/ai/moderate` relies on that to
-  avoid silently passing all content when moderation breaks. Its responses
-  carry `ai_checked`; set `AI_MODERATION_FAIL_CLOSED=true` to 503 instead of
-  falling back to local guardrails.
+**Transport** (`api/_lib/ai-provider.ts`):
+- `POST https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1/chat/completions`
+  with `Authorization: Bearer {CLOUDFLARE_API_TOKEN}` and
+  `cf-aig-gateway-id: {CLOUDFLARE_AI_GATEWAY_ID}`. Add
+  `CLOUDFLARE_AI_GATEWAY_TOKEN` only for a gateway set to "authenticated".
+- The endpoint is **OpenAI-compatible**: the system prompt is a leading
+  `system` message (not a top-level field), and the answer comes back on
+  `choices[0].message.content`.
+- `CLOUDFLARE_AI_GATEWAY_ID` is optional. Unset, requests still reach Workers
+  AI — they just bypass the gateway, losing caching, per-gateway rate limits
+  and the request log. An empty `cf-aig-gateway-id` header is never sent;
+  Cloudflare rejects it.
+- Circuit breaker: 3 failures / 5 min cooldown, then one probe. With a single
+  provider it no longer protects a sibling candidate — it fails fast during an
+  outage instead of making every learner wait out the 15s timeout.
+- `AiNotConfiguredError` (no credential) and `AiUnavailableError` (the call
+  failed) are distinct — `/api/ai/moderate` relies on that to avoid silently
+  passing all content when moderation breaks. Its responses carry
+  `ai_checked`; set `AI_MODERATION_FAIL_CLOSED=true` to 503 instead of falling
+  back to local guardrails.
+- **Neither Anthropic nor the Vercel AI Gateway is used any more.** Both
+  transports, both credentials (`ANTHROPIC_API_KEY`, `AI_GATEWAY_API_KEY`) and
+  the per-language Kimi routing were removed; `language` and
+  `conversation_type` now shape only the system prompt, never provider choice.
 
 **Core AI System** — the system prompt is built **server-side**. A caller
 cannot supply, extend, or replace it; `/api/ai/chat` ignores any
@@ -439,7 +456,7 @@ users who go through the UI; posting straight to the route bypasses it.
   `assistant` turn, and still reach the model. Guardrails are local regex, so
   scanning the whole array costs nothing extra.
 - Local guardrails (pattern/keyword matching against `guardrails` collection)
-- AI-based moderation via Claude Haiku for nuanced content
+- AI-based moderation via the same Workers AI model for nuanced content
 - 6 core categories: sexual content, hate speech, harassment, violence, self-harm, misinformation
 - Flagged content creates `moderation_alerts` (UUID `_id`) for admin review
 - A blocked request returns 400 with `moderated: true` and the guardrail
@@ -456,7 +473,7 @@ users who go through the UI; posting straight to the route bypasses it.
 
 **Mobile Tab Navigation** (`app/(tabs)/_layout.tsx`):
 1. **Learn** (`index.tsx`) - Daily lesson (flash cards + quiz) and phrase browsing with language selector, search, category filters
-2. **Shamwari** (`ai-practice.tsx`) - AI chat tutor powered by Anthropic Claude, accepts phrase context from Learn/Phrase screens
+2. **Shamwari** (`ai-practice.tsx`) - AI chat tutor powered by Workers AI, accepts phrase context from Learn/Phrase screens
 3. **Progress** (`insights.tsx`) - Dashboard (daily goal, streak, skill proficiency, phrase mastery) + Phrases (bookmarked/tracked phrases)
 4. **Profile** (`profile.tsx`) - User settings and preferences
 
@@ -607,10 +624,13 @@ built server-side (see AI Integration above).
 ## Testing Infrastructure
 
 - **Framework**: Jest 29 with jest-expo preset, React Testing Library
-- **CI pipeline**: GitHub Actions runs TypeScript check + tests on push to `main` and `feature/*`
-- **Coverage**: Tracked via `jest --coverage`, collected from `lib/**` and `components/**`
+- **CI pipeline**: GitHub Actions runs lint, TypeScript check, tests, the docs
+  drift check and both builds on pushes to `main`/`feature/*` and on every PR
+- **Coverage**: Tracked via `jest --coverage`, collected from `lib/**` and
+  `components/**` — `api/**` and `scripts/**` tests run but do **not** count
+  toward the thresholds, so the backend has no coverage floor
 
-**Test Suites** (37 suites, 421 tests). Run `npx jest --listTests` for the
+**Test Suites** (42 suites, 464 tests). Run `npx jest --listTests` for the
 current set; the security-relevant ones are worth knowing by name:
 
 *Backend (`api/**`)* — note these are **not** included in
@@ -623,8 +643,12 @@ current set; the security-relevant ones are worth knowing by name:
   proficiency; client scores clamped; hostile input ignored
 - `api/ai/chat/__tests__/chat-route.test.ts` - Every turn moderated (not just
   the newest), forged `assistant` turns labelled, `max_tokens` clamped
-- `api/_lib/__tests__/ai-provider.test.ts` - Provider routing, fallback, circuit breakers
+- `api/_lib/__tests__/ai-provider.test.ts` - Workers AI wiring (gateway headers,
+  OpenAI shape), the two-part config gate, circuit breaker
 - `api/_lib/__tests__/moderation.test.ts` - Server-side guardrails + alert writes
+- `api/ai/__tests__/moderate-json.test.ts` - Verdict extraction survives a
+  reasoning model's `<think>` block (a bad match fails open, silently dropping
+  the AI moderation pass)
 - `api/_lib/__tests__/jose-cjs.test.ts` - Guards the jose v6 ESM/CJS auth outage
 
 *Shared (`lib/**`)*:
@@ -642,6 +666,18 @@ current set; the security-relevant ones are worth knowing by name:
 - `lib/hooks/__tests__/*` - Language, theme and UI-language hooks
 - `components/__tests__/*` - Flash card, mini quiz, daily lesson, celebration
 
+*Tooling (`scripts/**`)* — these guard the automation, not the app:
+- `scripts/release/__tests__/version.test.js` - Which commit types release, and
+  that a pre-1.0 breaking change stays inside 0.x
+- `scripts/release/__tests__/changelog.test.js` - `[Unreleased]` moves under a
+  version heading without disturbing published sections; an empty section
+  cannot produce a hollow release
+- `scripts/release/__tests__/version-files.test.js` - Each version transform
+  runs against the **real** project files, so a reformat that breaks a marker
+  fails in the PR rather than mid-release
+- `scripts/docs/__tests__/check-docs.test.js` - The drift checker catches real
+  drift without crying wolf over a legitimate `mukoko-lingo` slug or hostname
+
 **Mocking `api/**` modules in tests**: Babel hoists `import` above the
 `const mockX = jest.fn()` declarations, so a `jest.mock` factory that captures
 those bindings directly reads them in their temporal dead zone and silently
@@ -652,15 +688,48 @@ Modules that read `process.env` into consts at import time (e.g.
 
 ## CI/CD Pipeline
 
-**GitHub Actions** (`.github/workflows/ci.yml`):
+### CI (`.github/workflows/ci.yml`)
 
-1. **TypeScript Check** - `npx tsc --noEmit` (Node 20)
-2. **Run Tests** - `npm test -- --ci --coverage` (Node 20)
-3. **Build Web** - `npx expo export --platform web` (depends on steps 1+2 passing)
-   - Uploads `dist/` as artifact (7-day retention)
-4. Mobile builds (iOS/Android via EAS) - commented out, require `EXPO_TOKEN`
+**Triggers**: push to `main` or `feature/*`, and every pull request to `main`.
 
-**Triggers**: Push to `main` or `feature/*`, Pull requests to `main`
+| Job | What it runs |
+|---|---|
+| `lint` | `npm run lint` (mobile) |
+| `typecheck` | `npx tsc --noEmit` |
+| `test` | `npm test -- --ci --coverage`, uploads `coverage/` (7 days) |
+| `docs` | `node scripts/docs/check-docs.js` — dependency-free drift check |
+| `build-mobile-web` | `npx expo export --platform web`, uploads `dist/` (needs lint + typecheck + test) |
+| `lint-web` / `typecheck-web` / `build-web` | The same three for the Next.js app in `web/` |
+| `python` | `ruff check .` + `pytest` for the analytics functions |
+
+Mobile builds (iOS/Android via EAS) are present but commented out — they need
+an `EXPO_TOKEN`.
+
+**Docs drift check** (`scripts/docs/check-docs.js`) fails the build when: shipped
+code reads a `process.env` variable `.env.example` does not document; a retired
+name (`ANTHROPIC_API_KEY`, `AI_GATEWAY_API_KEY`, the invented `mukoko-lingo`
+database) reappears outside the history that legitimately mentions it; or
+CLAUDE.md's test-suite count no longer matches the suites on disk. Add a
+retired name to `RETIRED_TERMS` whenever you remove one.
+
+### Release (`.github/workflows/release.yml`)
+
+Releases are **automatic**. The workflow fires on the CI workflow *completing
+successfully* on `main` (`workflow_run`), so a merge whose tests fail is never
+tagged. It derives the next version from Conventional Commit subjects since the
+last tag, bumps every version file, moves `CHANGELOG.md`'s `[Unreleased]`
+section under the new heading, commits `chore(release): vX.Y.Z [skip ci]`, tags,
+and publishes a GitHub Release whose notes are that changelog section.
+
+- `feat:` → minor, `fix:`/`perf:`/`refactor:` → patch, `docs:`/`chore:`/`ci:`/
+  `test:` → **no release** (the job reports "No release" and exits 0)
+- Below 1.0.0 a breaking change lands as a minor; cutting 1.0 is a manual
+  `workflow_dispatch`
+- If branch protection rejects the bot's push, the tag and Release still go out
+  against the merge commit and the job logs a warning
+
+Preview with `npm run release:dry`. Full details, including the failure table:
+[RELEASES.md](RELEASES.md).
 
 ## Common Workflows
 
@@ -735,7 +804,7 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 2. Start dev server: `npx expo start`
 3. Sign up for a test account via the auth screen
 4. To test admin features, set your role to 'admin' in the `learner_profiles` MongoDB collection (not `identity.persons` — that's the shared ecosystem record)
-5. Test AI features in the Shamwari tab (requires `ANTHROPIC_API_KEY` server-side, falls back to simulated mode without it)
+5. Test AI features in the Shamwari tab (requires `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` server-side, falls back to simulated mode without them)
 6. Check moderation queue in admin → moderation
 7. Test theme switching (light/dark/system)
 
@@ -748,20 +817,30 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 - **README.md** - Project overview and quick start
 - **BRANDING.md** - Brand guidelines, colors, typography
 - **SECURITY.md** - Security architecture, WorkOS AuthKit
-- **CHANGELOG.md** - Version history
-- **RELEASES.md** - Release management and versioning
+- **CHANGELOG.md** - Version history; `[Unreleased]` is published as release notes
+- **CONTRIBUTING.md** - Commit conventions and their release effect, PR flow
+- **RELEASES.md** - Release automation, channels, what is still manual
 
 ### Technical Documentation (`/docs/`):
-- **[docs/EMAIL_TEMPLATES.md](docs/EMAIL_TEMPLATES.md)** - Branded email templates (stale — predates both the Stytch and WorkOS integrations; email templates now live in the WorkOS AuthKit dashboard)
-- **[docs/TEST_COVERAGE_ANALYSIS.md](docs/TEST_COVERAGE_ANALYSIS.md)** - Test suite analysis
+- **[docs/TEST_COVERAGE_ANALYSIS.md](docs/TEST_COVERAGE_ANALYSIS.md)** - What the suite covers, where the floors are missing
+- **[docs/ECOSYSTEM_DATA_MIGRATION.md](docs/ECOSYSTEM_DATA_MIGRATION.md)** - Moving onto the shared ecosystem collections
+- **[docs/EMAIL_TEMPLATES.md](docs/EMAIL_TEMPLATES.md)** - Branded transactional email, now authored in the WorkOS AuthKit dashboard
 
 ### Scripts (`/scripts/`):
-- **[scripts/migrations-README.md](scripts/migrations-README.md)** - Database migration guide
-- **[scripts/MIGRATION_SUMMARY.md](scripts/MIGRATION_SUMMARY.md)** - Migration history
+- `scripts/create-indexes.ts` - MongoDB index creation (schemaless DB, indexes are the schema)
+- `scripts/seed-phrases.ts` / `scripts/seed-skills.ts` - Seed content collections
+- `scripts/release/` - Release automation: `version.js` (bump rules),
+  `changelog.js` (`[Unreleased]` surgery), `version-files.js` (per-file
+  transforms), `prepare-release.js` (CLI, `--dry-run`)
+- `scripts/docs/check-docs.js` - Documentation drift check (CI job `docs`)
 - **[scripts/DATABASE_SCHEMA_REVIEW.md](scripts/DATABASE_SCHEMA_REVIEW.md)** - Database schema documentation
-- `scripts/028_seed_standards_guardrails.sql` - Database seed data
-- `scripts/apply-migrations.sh` - Migration runner
-- `scripts/apply-critical-fixes.sh` - Critical fix runner
+- **[scripts/MIGRATION_SUMMARY.md](scripts/MIGRATION_SUMMARY.md)** - Migration history
+
+### Agents (`/.claude/agents/`):
+- `docs-maintainer` - Keeps the written record true; run it whenever a change
+  alters something documented, and whenever the drift check fails
+- `admin-experience-guardian` - New features get the admin controls to manage them
+- `auth-security-auditor` - Auth, RBAC and CRUD authorization review
 
 ### Creating New Documentation
 
@@ -769,15 +848,16 @@ When creating new completion summaries, migration docs, or work records:
 1. Place technical docs in `/docs/`
 2. Place migration/script docs in `/scripts/`
 3. Keep root directory clean - only essential, frequently-referenced documents belong there
+4. Never hand-edit a version number — the release job owns every one of them
 
 ---
 
 ## Project Status
 
 **Current Version**: 0.0.1 (April 2026)
-**Framework**: Expo SDK 54 / React Native 0.81 / React 19
+**Framework**: Expo SDK 57 / React Native 0.86 / React 19
 **Backend**: MongoDB + WorkOS AuthKit + Vercel Serverless
-**AI**: Anthropic Claude Haiku 4.5 (`claude-haiku-4-5-20251001`)
+**AI**: Cloudflare Workers AI (`@cf/qwen/qwen3-30b-a3b-fp8`) via Cloudflare AI Gateway
 **Status**: Active development
 **Parent Company**: Nyuchi Africa (nyuchi.com)
 

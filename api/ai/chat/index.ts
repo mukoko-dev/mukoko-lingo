@@ -111,12 +111,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       clientScores: proficiency,
     })
 
+    // `language` and `conversation_type` shape the system prompt above; they
+    // no longer reach the provider, which serves one model for every request.
     const result = await completeChat({
       messages: sanitizedMessages,
       system: systemPrompt,
       maxTokens: clampMaxTokens(max_tokens),
-      language,
-      conversationType: conversation_type,
     })
 
     return res.status(200).json({

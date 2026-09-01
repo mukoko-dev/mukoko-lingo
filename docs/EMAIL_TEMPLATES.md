@@ -1,345 +1,211 @@
-# Branded Email Templates for Mukoko Lingo
+# Branded Email Templates
 
-This document provides branded email templates for Supabase authentication emails. These templates should be configured in your Supabase Dashboard.
+Transactional email is sent by **WorkOS AuthKit**, not by this codebase. There
+is no mail library in the repo and no template files to deploy — the templates
+below are pasted into the WorkOS dashboard, per environment.
 
-## Configuration Steps
+> This document previously described Supabase's email settings and used a
+> purple palette that is not the brand's. Both were left over from the
+> pre-WorkOS stack. Everything below is the current setup.
 
-1. Go to your [Supabase Dashboard](https://supabase.com/dashboard)
-2. Select your project
-3. Navigate to **Authentication** > **Email Templates**
-4. Replace the default templates with the branded versions below
+## Where to configure
 
-## Important: Add Redirect URLs
+1. [WorkOS Dashboard](https://dashboard.workos.com) → your environment
+2. **Authentication → Emails** (branding and templates)
+3. **Authentication → Redirects** — the redirect URIs AuthKit is allowed to
+   send users back to. These must match what the app computes, or a correct
+   sign-in dies at the last hop:
+   - `mukokolingo://auth/callback` (native)
+   - `https://lingo.mukoko.com/auth/callback` (production web)
+   - your Expo dev host, e.g. `http://192.168.1.20:8081/auth/callback`
 
-Before password reset works, you must add the redirect URLs to your Supabase project:
+   `lib/workos/config.ts` owns the client-side allowlist and its tests pin the
+   private-LAN ranges — add a host there too, or the client refuses before
+   WorkOS is ever asked.
 
-1. Go to **Authentication** > **URL Configuration**
-2. Add these to **Redirect URLs**:
-   - `mukokolingo://reset-password` (for Expo app)
-   - `com.mukoko.lingo://reset-password` (alternative scheme)
-   - Your production web URL if applicable
+## Which emails exist
 
----
+AuthKit sends these, and which ones are live depends on what the environment
+has enabled:
 
-## 1. Confirm Signup Email
+| Email | Sent when | Contains |
+|---|---|---|
+| Email verification | A new account is created | 6-digit code or verification link |
+| Magic auth | Passwordless sign-in is requested | 6-digit code |
+| Password reset | `app/auth/forgot-password.tsx` requests one | Reset link → `app/auth/reset-password.tsx` |
+| Organization invitation | A teacher invites a learner to a class | Accept link |
 
-**Subject:** Welcome to Mukoko Lingo - Confirm Your Email
+The app does not template, queue, or send any of them. Changing wording is a
+dashboard change, not a deploy.
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirm Your Email</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; background-color: #faf9f5;">
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #faf9f5;">
-    <tr>
-      <td style="padding: 40px 20px;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-          <!-- Header -->
-          <tr>
-            <td style="padding: 40px 40px 24px; text-align: center; background: linear-gradient(135deg, #5f5873 0%, #7c73e6 100%); border-radius: 16px 16px 0 0;">
-              <img src="https://your-domain.com/logo.png" alt="Mukoko Lingo" width="64" height="64" style="display: block; margin: 0 auto 16px;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff;">Welcome to Mukoko Lingo!</h1>
-            </td>
-          </tr>
-          <!-- Body -->
-          <tr>
-            <td style="padding: 32px 40px;">
-              <p style="margin: 0 0 16px; font-size: 16px; line-height: 24px; color: #1a1a1a;">
-                Hi there,
-              </p>
-              <p style="margin: 0 0 24px; font-size: 16px; line-height: 24px; color: #4a4a4a;">
-                Thanks for signing up for Mukoko Lingo! Please confirm your email address to start your language learning journey.
-              </p>
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                  <td style="text-align: center;">
-                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 14px 32px; background-color: #5f5873; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 12px;">
-                      Confirm Email Address
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin: 24px 0 0; font-size: 14px; line-height: 20px; color: #6b6b6b;">
-                If you didn't create an account with Mukoko Lingo, you can safely ignore this email.
-              </p>
-            </td>
-          </tr>
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 24px 40px; background-color: #f5f5f5; border-radius: 0 0 16px 16px; text-align: center;">
-              <p style="margin: 0; font-size: 12px; color: #6b6b6b;">
-                Mukoko Lingo - Learn African Languages with AI
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-```
+## Brand values for the templates
 
----
+From `constants/Colors.ts` (light theme — email has no dark mode worth
+trusting). Do not invent shades: these are the Five African Minerals palette,
+and [BRANDING.md](../BRANDING.md) is the source of truth.
 
-## 2. Password Reset Email
+| Role | Hex | Use in email |
+|---|---|---|
+| Cobalt (primary) | `#0047AB` | Header band, primary button |
+| Tanzanite (secondary) | `#4B0082` | Header gradient end |
+| Gold/warm brown (accent) | `#5D4037` | The code block, emphasis |
+| Army green (success) | `#729B63` | Confirmation states |
+| Warm cream | `#FAF9F5` | Page background |
+| Card | `#FFFFFF` | Content panel |
+| Text primary | `#141413` | Body copy |
+| Text secondary | `#52524E` | Supporting copy, footer |
 
-**Subject:** Reset Your Mukoko Lingo Password
+Voice: Shamwari is warm, patient and encouraging — friendly without being
+cute, and never at the expense of clarity about what the reader must do.
+
+## Base template
+
+One shell, four bodies. Paste the shell, swap the block marked `<!-- BODY -->`
+for the one you need below. Tables and inline styles are deliberate: email
+clients still do not do flexbox or `<style>` blocks reliably.
 
 ```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reset Your Password</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; background-color: #faf9f5;">
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #faf9f5;">
-    <tr>
-      <td style="padding: 40px 20px;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-          <!-- Header -->
-          <tr>
-            <td style="padding: 40px 40px 24px; text-align: center; background: linear-gradient(135deg, #5f5873 0%, #7c73e6 100%); border-radius: 16px 16px 0 0;">
-              <img src="https://your-domain.com/logo.png" alt="Mukoko Lingo" width="64" height="64" style="display: block; margin: 0 auto 16px;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff;">Password Reset Request</h1>
-            </td>
-          </tr>
-          <!-- Body -->
-          <tr>
-            <td style="padding: 32px 40px;">
-              <p style="margin: 0 0 16px; font-size: 16px; line-height: 24px; color: #1a1a1a;">
-                Hi there,
-              </p>
-              <p style="margin: 0 0 24px; font-size: 16px; line-height: 24px; color: #4a4a4a;">
-                We received a request to reset your Mukoko Lingo password. Click the button below to create a new password.
-              </p>
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                  <td style="text-align: center;">
-                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 14px 32px; background-color: #5f5873; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 12px;">
-                      Reset Password
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin: 24px 0 0; font-size: 14px; line-height: 20px; color: #6b6b6b;">
-                This link will expire in 24 hours. If you didn't request a password reset, you can safely ignore this email - your password will remain unchanged.
-              </p>
-            </td>
-          </tr>
-          <!-- Security Notice -->
-          <tr>
-            <td style="padding: 0 40px 24px;">
-              <div style="padding: 16px; background-color: #fff8e6; border-radius: 8px; border-left: 4px solid #F6AD55;">
-                <p style="margin: 0; font-size: 13px; color: #8B7355;">
-                  <strong>Security tip:</strong> Never share this link with anyone. Mukoko Lingo will never ask for your password via email.
-                </p>
-              </div>
-            </td>
-          </tr>
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 24px 40px; background-color: #f5f5f5; border-radius: 0 0 16px 16px; text-align: center;">
-              <p style="margin: 0; font-size: 12px; color: #6b6b6b;">
-                Mukoko Lingo - Learn African Languages with AI
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+       style="background-color: #FAF9F5; margin: 0; padding: 0;">
+  <tr>
+    <td style="padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+             style="max-width: 480px; margin: 0 auto; background-color: #FFFFFF; border-radius: 16px; overflow: hidden;">
+
+        <!-- Header -->
+        <tr>
+          <td style="padding: 36px 40px 28px; text-align: center;
+                     background: linear-gradient(135deg, #0047AB 0%, #4B0082 100%);">
+            <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #FFFFFF;">
+              Mukoko Lingo
+            </h1>
+            <p style="margin: 6px 0 0; font-size: 14px; color: rgba(255,255,255,0.85);">
+              Learn Shona, Ndebele and Chinese with Shamwari
+            </p>
+          </td>
+        </tr>
+
+        <!-- BODY -->
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding: 24px 40px 32px; text-align: center; border-top: 1px solid #F3F2EE;">
+            <p style="margin: 0 0 8px; font-size: 12px; color: #52524E;">
+              If you did not request this, you can safely ignore this email.
+            </p>
+            <p style="margin: 0; font-size: 12px; color: #8C8B87;">
+              Mukoko Lingo · a <a href="https://nyuchi.com" style="color: #0047AB; text-decoration: none;">Nyuchi Africa</a> product
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
 ```
 
----
+### Body: verification / magic auth code
 
-## 3. Magic Link Email
-
-**Subject:** Your Mukoko Lingo Sign-In Link
+**Subject** — verification: `Confirm your email · Mukoko Lingo`
+**Subject** — magic auth: `Your sign-in code · Mukoko Lingo`
 
 ```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign In to Mukoko Lingo</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; background-color: #faf9f5;">
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #faf9f5;">
-    <tr>
-      <td style="padding: 40px 20px;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-          <!-- Header -->
-          <tr>
-            <td style="padding: 40px 40px 24px; text-align: center; background: linear-gradient(135deg, #5f5873 0%, #7c73e6 100%); border-radius: 16px 16px 0 0;">
-              <img src="https://your-domain.com/logo.png" alt="Mukoko Lingo" width="64" height="64" style="display: block; margin: 0 auto 16px;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff;">Sign In to Mukoko Lingo</h1>
-            </td>
-          </tr>
-          <!-- Body -->
-          <tr>
-            <td style="padding: 32px 40px;">
-              <p style="margin: 0 0 16px; font-size: 16px; line-height: 24px; color: #1a1a1a;">
-                Hi there,
-              </p>
-              <p style="margin: 0 0 24px; font-size: 16px; line-height: 24px; color: #4a4a4a;">
-                Click the button below to sign in to your Mukoko Lingo account. No password needed!
-              </p>
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                  <td style="text-align: center;">
-                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 14px 32px; background-color: #729B63; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 12px;">
-                      Sign In Now
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin: 24px 0 0; font-size: 14px; line-height: 20px; color: #6b6b6b;">
-                This link will expire in 1 hour. If you didn't request this sign-in link, you can safely ignore this email.
-              </p>
-            </td>
-          </tr>
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 24px 40px; background-color: #f5f5f5; border-radius: 0 0 16px 16px; text-align: center;">
-              <p style="margin: 0; font-size: 12px; color: #6b6b6b;">
-                Mukoko Lingo - Learn African Languages with AI
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+<tr>
+  <td style="padding: 32px 40px;">
+    <p style="margin: 0 0 16px; font-size: 16px; color: #141413;">Mhoro!</p>
+    <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #52524E;">
+      Enter this code to continue. It expires in 10 minutes.
+    </p>
+    <div style="margin: 0 0 24px; padding: 18px; text-align: center; background-color: #F3F2EE; border-radius: 12px;">
+      <span style="font-size: 30px; font-weight: 700; letter-spacing: 8px; color: #5D4037;">
+        {{code}}
+      </span>
+    </div>
+    <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #8C8B87;">
+      Never share this code. Nobody from Mukoko Lingo will ask you for it.
+    </p>
+  </td>
+</tr>
 ```
 
----
+### Body: password reset
 
-## 4. Email Change Confirmation
-
-**Subject:** Confirm Your New Email Address - Mukoko Lingo
+**Subject**: `Reset your password · Mukoko Lingo`
 
 ```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirm Email Change</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; background-color: #faf9f5;">
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #faf9f5;">
-    <tr>
-      <td style="padding: 40px 20px;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-          <!-- Header -->
-          <tr>
-            <td style="padding: 40px 40px 24px; text-align: center; background: linear-gradient(135deg, #5f5873 0%, #7c73e6 100%); border-radius: 16px 16px 0 0;">
-              <img src="https://your-domain.com/logo.png" alt="Mukoko Lingo" width="64" height="64" style="display: block; margin: 0 auto 16px;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff;">Confirm Email Change</h1>
-            </td>
-          </tr>
-          <!-- Body -->
-          <tr>
-            <td style="padding: 32px 40px;">
-              <p style="margin: 0 0 16px; font-size: 16px; line-height: 24px; color: #1a1a1a;">
-                Hi there,
-              </p>
-              <p style="margin: 0 0 24px; font-size: 16px; line-height: 24px; color: #4a4a4a;">
-                You requested to change your email address for your Mukoko Lingo account. Please confirm this change by clicking the button below.
-              </p>
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                  <td style="text-align: center;">
-                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 14px 32px; background-color: #5f5873; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 12px;">
-                      Confirm New Email
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin: 24px 0 0; font-size: 14px; line-height: 20px; color: #6b6b6b;">
-                If you didn't request this change, please contact support immediately.
-              </p>
-            </td>
-          </tr>
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 24px 40px; background-color: #f5f5f5; border-radius: 0 0 16px 16px; text-align: center;">
-              <p style="margin: 0; font-size: 12px; color: #6b6b6b;">
-                Mukoko Lingo - Learn African Languages with AI
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+<tr>
+  <td style="padding: 32px 40px;">
+    <p style="margin: 0 0 16px; font-size: 16px; color: #141413;">Reset your password</p>
+    <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #52524E;">
+      Tap the button below to choose a new one. The link expires in 1 hour and
+      can only be used once.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 24px;">
+      <tr>
+        <td style="border-radius: 12px; background-color: #0047AB;">
+          <a href="{{link}}"
+             style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 600;
+                    color: #FFFFFF; text-decoration: none;">
+            Choose a new password
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin: 0; font-size: 12px; line-height: 1.6; color: #8C8B87; word-break: break-all;">
+      Button not working? Paste this into your browser:<br>{{link}}
+    </p>
+  </td>
+</tr>
 ```
 
----
+### Body: class invitation
 
-## Brand Colors Reference
+**Subject**: `You have been invited to a class · Mukoko Lingo`
 
-| Color Name | Hex Code | Usage |
-|------------|----------|-------|
-| Primary Purple | `#5f5873` | Main buttons, headers |
-| Primary Light | `#7c73e6` | Gradients, accents |
-| Secondary Green | `#729B63` | Success states, CTAs |
-| Background | `#faf9f5` | Email background |
-| Card | `#ffffff` | Content cards |
-| Text Primary | `#1a1a1a` | Main text |
-| Text Secondary | `#4a4a4a` | Body text |
-| Text Muted | `#6b6b6b` | Fine print |
-| Warning/Accent | `#F6AD55` | Security notices |
-| Warm Brown | `#8B7355` | Warning text |
+```html
+<tr>
+  <td style="padding: 32px 40px;">
+    <p style="margin: 0 0 16px; font-size: 16px; color: #141413;">
+      {{inviter_name}} invited you to join {{organization_name}}
+    </p>
+    <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #52524E;">
+      Accept to start learning with your class. Your progress, streak and skill
+      levels stay yours.
+    </p>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+      <tr>
+        <td style="border-radius: 12px; background-color: #729B63;">
+          <a href="{{link}}"
+             style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 600;
+                    color: #FFFFFF; text-decoration: none;">
+            Accept invitation
+          </a>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+```
 
----
+Placeholder names (`{{code}}`, `{{link}}`, `{{organization_name}}`) follow
+WorkOS's template variables — check the dashboard's variable list for the
+template you are editing rather than assuming these names carry across.
 
-## Testing Email Templates
+## Testing
 
-### Local Development (Inbucket)
-
-When running Supabase locally, emails are captured by Inbucket:
-
-1. Start Supabase: `supabase start`
-2. Open Inbucket: http://127.0.0.1:54324
-3. Trigger an auth action (signup, password reset)
-4. Check Inbucket for the email
-
-### Production
-
-1. Configure email templates in Supabase Dashboard
-2. Test each flow:
-   - Sign up and check confirmation email
-   - Trigger password reset and check email
-   - Change email and verify both addresses receive emails
-
----
+1. Edit in the **Staging** WorkOS environment first; Production is a separate
+   set of templates.
+2. Trigger the real flow (sign up, request a reset) rather than a preview —
+   previews do not exercise the redirect URI, which is where these break.
+3. Check on a phone. The 480px panel and 48px tap targets exist for that.
+4. Confirm the link returns to the app: a code that arrives but lands on a
+   dead redirect is the failure mode this document's redirect section is about.
 
 ## Troubleshooting
 
-### Password Reset Link Not Working
-
-1. Verify redirect URLs are added in Supabase Dashboard
-2. Check that `mukokolingo://` scheme is in `app.json`
-3. Ensure the app can handle deep links (test with `npx uri-scheme open mukokolingo://reset-password --ios`)
-
-### Emails Not Being Received
-
-1. Check spam/junk folder
-2. Verify email provider is configured in Supabase
-3. Check Supabase logs for email delivery errors
-4. For production, consider using a dedicated email service (SendGrid, Postmark, etc.)
+| Symptom | Likely cause |
+|---|---|
+| Email never arrives | Sending domain not verified in WorkOS, or the flow is disabled for that environment |
+| Link opens the browser instead of the app | Deep link scheme missing from the redirect list, or `app.json` scheme changed |
+| "Redirect URI mismatch" after clicking | The URI is not registered in WorkOS, or not in `lib/workos/config.ts`'s allowlist |
+| Styling collapses in Outlook | A `<style>` block or flexbox crept in — keep everything inline and table-based |

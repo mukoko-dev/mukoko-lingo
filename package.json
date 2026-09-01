@@ -15,6 +15,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "postinstall": "echo 'Dependencies installed'",
+    "release:dry": "node scripts/release/prepare-release.js --dry-run",
+    "release:prepare": "node scripts/release/prepare-release.js",
     "lint": "eslint ."
   },
   "jest": {
@@ -41,13 +43,11 @@
     ]
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.24",
     "@expo/vector-icons": "^15.1.1",
     "@react-native-async-storage/async-storage": "^3.1.1",
     "@react-navigation/native": "^7.3.14",
     "@vercel/functions": "^3.7.6",
     "@workos-inc/node": "^10.8.0",
-    "ai": "^7.0.42",
     "expo": "^57.0.9",
     "expo-constants": "~57.0.8",
     "expo-dev-client": "~57.0.10",

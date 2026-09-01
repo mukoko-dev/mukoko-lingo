@@ -53,10 +53,10 @@ We will acknowledge receipt within 48 hours and provide a detailed response with
 
 ### AI Security
 
-- **Server-Side Proxy**: Anthropic API key is server-side only (`/api/ai/chat`), never exposed to client bundle
+- **Server-Side Proxy**: Cloudflare credentials are server-side only (`/api/ai/chat`), never exposed to client bundle
 - **Circuit Breaker**: 3 failures → 5 minute cooldown → half-open probe (Hystrix pattern)
 - **Rate Limiting**: 30 requests/hour per user on AI chat endpoint
-- **Request Timeout**: 15 second AbortController timeout on all Anthropic API calls
+- **Request Timeout**: 15 second AbortController timeout on all Workers AI calls
 - **Prompt Injection Detection**: 14 regex patterns detect instruction manipulation attempts:
   - System override attempts ("ignore previous instructions")
   - Role confusion ("you are now", "pretend to be")
@@ -78,7 +78,9 @@ Required environment variables (never commit actual values):
 MONGODB_URI=                     # MongoDB connection string
 WORKOS_API_KEY=                  # WorkOS API key (server-side, never expose)
 WORKOS_CLIENT_ID=                # WorkOS Client ID (server-side)
-ANTHROPIC_API_KEY=               # Anthropic key (server-side only)
+CLOUDFLARE_ACCOUNT_ID=           # Cloudflare account id (server-side only)
+CLOUDFLARE_API_TOKEN=            # Workers AI token (server-side only)
+CLOUDFLARE_AI_GATEWAY_ID=        # AI Gateway to route through (optional)
 EXPO_PUBLIC_WORKOS_CLIENT_ID=    # WorkOS Client ID (safe for client)
 EXPO_PUBLIC_API_BASE_URL=        # API base URL
 ```
@@ -125,7 +127,7 @@ Implemented via `vercel.json`:
 ## Mobile App Security
 
 - **Secure Storage**: Session tokens use `expo-secure-store` (native) with AsyncStorage fallback (web)
-- **No Client-Side API Keys**: Anthropic API key is server-side only via proxy
+- **No Client-Side API Keys**: Cloudflare credentials are server-side only via proxy
 - **Deep Link Validation**: External URLs validated before navigation
 - **Error Boundaries**: Route-level crash isolation prevents information leakage
 

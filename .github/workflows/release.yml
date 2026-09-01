@@ -1,0 +1,128 @@
+name: Release
+
+# Tag and publish after a merge to main, once CI has gone green on that exact
+# commit. The version is derived from Conventional Commit subjects since the
+# last tag (see scripts/release/version.js), so a merge that only carries
+# docs/chore/ci work releases nothing and the job ends quietly.
+#
+# `workflow_run` is what makes this "after a merge is successful" rather than
+# "on every push": it fires only when the CI workflow itself finishes, and the
+# job below refuses to run unless that conclusion was success.
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Explicit version, e.g. 0.2.0 (blank = derive from commits)'
+        required: false
+        type: string
+      dry_run:
+        description: 'Prepare only — do not commit, tag or publish'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+# One release at a time: two jobs racing would both compute the same next
+# version and one would lose the tag push.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag and publish
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+
+    steps:
+      - name: Checkout the commit CI validated
+        uses: actions/checkout@v4
+        with:
+          # For workflow_run, github.sha points at the default branch tip, which
+          # may already be ahead of what CI actually checked. Use the run's own
+          # head_sha so the tag lands on the tested commit.
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
+          fetch-depth: 0
+          fetch-tags: true
+          # A PAT in RELEASE_TOKEN lets the version-bump commit through branch
+          # protection. Without one the job still releases — see the fallback
+          # in "Commit, tag and push" below.
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Prepare release
+        id: prepare
+        run: |
+          node scripts/release/prepare-release.js \
+            ${{ inputs.version && format('--version {0}', inputs.version) || '' }} \
+            ${{ inputs.dry_run && '--dry-run' || '' }} \
+            --notes-out "$RUNNER_TEMP/release-notes.md"
+
+      - name: Summarise
+        run: |
+          {
+            if [ "${{ steps.prepare.outputs.release }}" != "true" ]; then
+              echo "### No release"
+              echo
+              echo "${{ steps.prepare.outputs.reason || 'dry run' }}"
+            else
+              echo "### ${{ steps.prepare.outputs.tag }} (${{ steps.prepare.outputs.bump }})"
+              echo
+              cat "$RUNNER_TEMP/release-notes.md"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit, tag and push
+        id: publish
+        if: steps.prepare.outputs.release == 'true' && !inputs.dry_run
+        env:
+          TAG: ${{ steps.prepare.outputs.tag }}
+          VALIDATED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          # [skip ci] keeps this commit from starting a CI run, which would
+          # otherwise finish green and re-trigger this workflow.
+          git commit -m "chore(release): $TAG [skip ci]"
+
+          if git push origin HEAD:main; then
+            target="$(git rev-parse HEAD)"
+          else
+            # Protected branch, or main moved on while CI ran. The release
+            # itself still happens — it just points at the merged commit and
+            # the version files stay to be bumped by hand.
+            echo "::warning::Could not push the version bump to main; tagging $VALIDATED_SHA instead. Grant the workflow push access or set a RELEASE_TOKEN secret to get version bumps committed automatically."
+            target="$VALIDATED_SHA"
+          fi
+
+          git tag -a "$TAG" -m "Release $TAG" "$target"
+          git push origin "$TAG"
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        if: steps.prepare.outputs.release == 'true' && !inputs.dry_run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.prepare.outputs.tag }}
+          TARGET: ${{ steps.publish.outputs.target }}
+        run: |
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --target "$TARGET" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"

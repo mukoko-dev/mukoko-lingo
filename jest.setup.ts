@@ -11,7 +11,6 @@ beforeAll(() => {
   console.warn = (...args: unknown[]) => {
     // Allow specific warnings through if needed
     const message = String(args[0])
-    if (message.includes('EXPO_PUBLIC_ANTHROPIC_API_KEY')) return
     if (message.includes('AsyncStorage')) return
     originalWarn(...args)
   }

@@ -281,7 +281,10 @@ export interface ShamwariConversation {
   ownerPersonId: string
   ownerEntityId: string
   surfaceContext: string
-  modelProvider: 'anthropic' | 'openai' | 'google' | 'shamwari' | 'ollama'
+  // `cloudflare` is Lingo's addition: inference moved to Workers AI, and
+  // recording the old `anthropic` value would misattribute every new
+  // conversation. Needs ratifying in the shared shamwari schema.
+  modelProvider: 'anthropic' | 'openai' | 'google' | 'shamwari' | 'ollama' | 'cloudflare'
   modelVersion: string
   messageCount: number
   isActive: boolean

@@ -32,7 +32,23 @@ Analyze the following message and respond with a JSON object:
 Categories to check: harassment, hate_speech, sexual_content, violence, self_harm, off_topic
 Only flag content that is clearly inappropriate for a language learning context.
 Do NOT flag: normal language learning questions, cultural discussions, greetings, translation requests.
-Respond with ONLY the JSON object, no other text.`
+Respond with ONLY the JSON object, no other text, no reasoning and no <think> block.`
+
+/**
+ * Pull the verdict object out of the model's reply.
+ *
+ * The model is told to return bare JSON, but tolerate it wrapping the object
+ * in prose. Reasoning-capable models (Qwen3, the current Workers AI model,
+ * among them) can also prefix the answer with a `<think>` block; its braces
+ * would otherwise be swallowed by the greedy match and produce JSON that does
+ * not parse — which fails open and quietly drops the AI moderation pass.
+ */
+export function extractModerationJson(text: unknown): string | null {
+  if (typeof text !== 'string') return null
+  const stripped = text.replace(/<think>[\s\S]*?<\/think>/gi, '')
+  const match = stripped.match(/\{[\s\S]*\}/)
+  return match ? match[0] : null
+}
 
 function unchecked(reason: string) {
   return { flagged: false, categories: [], severity: 'low', confidence: 0, ai_checked: false, reason }
@@ -72,9 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ data: unchecked('provider_error') })
     }
 
-    // The model is told to return bare JSON, but tolerate it wrapping the
-    // object in prose.
-    const match = typeof text === 'string' ? text.match(/\{[\s\S]*\}/) : null
+    const match = extractModerationJson(text)
     if (!match) {
       log.error(`AI moderation returned unparseable output: ${String(text).slice(0, 200)}`)
       if (FAIL_CLOSED) return res.status(503).json({ error: 'Moderation unavailable' })
@@ -82,7 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-      const parsed = JSON.parse(match[0])
+      const parsed = JSON.parse(match)
       return res.status(200).json({
         data: {
           flagged: Boolean(parsed.flagged),
