@@ -22,7 +22,8 @@ This is a monorepo with two apps sharing a single API layer:
 | `lib/` | Shared business logic |
 | `components/` | Mobile React Native components |
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the 5-layer component hierarchy.
+See [CLAUDE.md](CLAUDE.md) for the architecture reference, including the
+5-layer component hierarchy used in the web app.
 
 ## Development
 
@@ -60,6 +61,30 @@ fix: correct bookmark toggle on phrase detail
 docs: update API route documentation
 refactor: extract PhraseCard to L2 component
 ```
+
+**Your commit type picks the next version.** Releases are cut automatically
+from these subjects after a merge to `main` (see [RELEASES.md](RELEASES.md)):
+
+| Type | Effect on the next release |
+|---|---|
+| `feat:` | minor bump — listed under **Added** |
+| `fix:` | patch bump — listed under **Fixed** |
+| `perf:`, `refactor:`, `revert:` | patch bump — listed under **Changed** |
+| `type(security):` | patch bump — listed under **Security** |
+| `docs:`, `chore:`, `ci:`, `test:`, `style:`, `build:` | no release |
+| `type!:` or a `BREAKING CHANGE:` footer | major (minor while the version is below 1.0) |
+
+A subject that does not match `type(scope): description` — a bare
+"updated some files", a merge commit — releases nothing, so squash-merge with a
+conventional subject.
+
+## Changelog
+
+Add your entry to the `## [Unreleased]` section of
+[CHANGELOG.md](CHANGELOG.md) in the same PR as the change. That section is
+published verbatim as the GitHub Release notes, so write it for someone reading
+the release later: what changed, and why it mattered. The release job only moves
+it under a version heading — it does not write it for you.
 
 ## Pull Requests
 

@@ -1,45 +1,50 @@
 /**
- * AI provider routing with fallback.
+ * AI provider transport.
  *
- * Two independent transports, each with its own credential and wire format:
+ * One provider: Cloudflare Workers AI, reached through Cloudflare AI Gateway.
  *
- *   anthropic  ANTHROPIC_API_KEY   → api.anthropic.com/v1/messages   (x-api-key,
- *                                    Anthropic Messages shape)
- *   gateway    AI_GATEWAY_API_KEY  → ai-gateway.vercel.sh/v1/chat/completions
- *                                    (Authorization: Bearer, OpenAI shape)
+ *   https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1/chat/completions
+ *   Authorization: Bearer {CLOUDFLARE_API_TOKEN}
+ *   cf-aig-gateway-id: {CLOUDFLARE_AI_GATEWAY_ID}
  *
- * These are NOT interchangeable credentials. The routes used to do
- * `ANTHROPIC_API_KEY || AI_GATEWAY_API_KEY` and then POST to Anthropic with
- * `x-api-key` either way, so a gateway-only deployment sent a gateway key to
- * Anthropic and got a 401 on every request. Each key now only ever reaches the
- * transport it belongs to.
+ * The endpoint is OpenAI-compatible, so the system prompt travels as a leading
+ * `system` message rather than a top-level field, and the answer comes back on
+ * `choices[0].message.content`.
  *
- * Routing: Chinese practice and translate-to-English run better on Kimi, so
- * those requests try Kimi (via the gateway) first. Everything else leads with
- * Claude Haiku direct. Either way the remaining candidates act as fallbacks,
- * so a single provider outage degrades rather than fails.
+ * This used to be two transports — Anthropic direct (`x-api-key`, Messages
+ * shape) plus the Vercel AI Gateway (`Bearer`, OpenAI shape) with Kimi for
+ * Chinese and translation. Neither is used any more: inference is Workers AI,
+ * so both credentials, both wire formats and the per-language candidate
+ * ordering are gone. `language`/`conversationType` no longer reach this module
+ * at all — they only ever chose a candidate order, and there is one candidate.
+ *
+ * The circuit breaker stays. With no second provider to fall back to it no
+ * longer protects a sibling candidate; it fails fast during an outage instead
+ * of making every learner wait out the 15s timeout.
  */
 
 import { createLogger } from './logger'
 
 const log = createLogger('ai')
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || ''
-const AI_GATEWAY_API_KEY = process.env.AI_GATEWAY_API_KEY || ''
+const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || ''
+const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN || ''
+/** AI Gateway to route through. Unset = straight to Workers AI, no gateway. */
+const CLOUDFLARE_AI_GATEWAY_ID = process.env.CLOUDFLARE_AI_GATEWAY_ID || ''
+/** Only needed when the gateway is set to "authenticated". */
+const CLOUDFLARE_AI_GATEWAY_TOKEN = process.env.CLOUDFLARE_AI_GATEWAY_TOKEN || ''
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
-const GATEWAY_API_URL = 'https://ai-gateway.vercel.sh/v1/chat/completions'
-
-/** Direct Anthropic model id (Messages API). */
-export const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
-/** Same model reached through the gateway — gateway ids are `provider/model`. */
-export const GATEWAY_CLAUDE_MODEL = 'anthropic/claude-haiku-4.5'
-/** Kimi K2.5: strong Mandarin and zh↔en translation, cheap enough for chat. */
-export const GATEWAY_KIMI_MODEL = 'moonshotai/kimi-k2.5'
+/**
+ * Qwen3 30B A3B (FP8) — a mixture-of-experts model that activates ~3B
+ * parameters per pass, so it answers a tutor turn quickly and handles the
+ * multilingual load (Shona, Ndebele, Chinese) the app is built around.
+ * Overridable so a model swap is a deploy variable, not a code change.
+ */
+export const WORKERS_AI_MODEL = process.env.WORKERS_AI_MODEL || '@cf/qwen/qwen3-30b-a3b-fp8'
 
 const REQUEST_TIMEOUT_MS = 15 * 1000
 
-export type ProviderId = 'anthropic' | 'gateway'
+export type ProviderId = 'workers-ai'
 
 export interface ChatTurn {
   role: 'user' | 'assistant'
@@ -50,12 +55,6 @@ export interface ChatRequest {
   messages: ChatTurn[]
   system?: string
   maxTokens?: number
-  /**
-   * Target learning language and conversation type, used only to pick a
-   * candidate order. Both optional — omitted means the default order.
-   */
-  language?: string
-  conversationType?: string
 }
 
 export interface ChatResult {
@@ -72,7 +71,7 @@ export class AiNotConfiguredError extends Error {
   }
 }
 
-/** Every candidate provider failed. `status` is the best HTTP status to surface. */
+/** The provider call failed. `status` is the best HTTP status to surface. */
 export class AiUnavailableError extends Error {
   status: number
   constructor(message: string, status = 502) {
@@ -82,45 +81,18 @@ export class AiUnavailableError extends Error {
   }
 }
 
-interface Candidate {
-  provider: ProviderId
-  model: string
-}
-
-const CANDIDATES: Record<ProviderId, (model: string) => boolean> = {
-  anthropic: () => Boolean(ANTHROPIC_API_KEY),
-  gateway: () => Boolean(AI_GATEWAY_API_KEY),
-}
-
-/**
- * True when the request is Chinese practice or a translation request — the
- * cases the user asked to route to Kimi.
- */
-export function prefersKimi(language?: string, conversationType?: string): boolean {
-  const lang = (language || '').toLowerCase()
-  if (lang.includes('chinese') || lang.includes('mandarin') || lang.startsWith('zh')) return true
-  return conversationType === 'translation_help'
-}
-
-/** Candidate providers in preference order, filtered to configured credentials. */
-export function resolveCandidates(language?: string, conversationType?: string): Candidate[] {
-  const kimi: Candidate = { provider: 'gateway', model: GATEWAY_KIMI_MODEL }
-  const claudeDirect: Candidate = { provider: 'anthropic', model: ANTHROPIC_MODEL }
-  const claudeGateway: Candidate = { provider: 'gateway', model: GATEWAY_CLAUDE_MODEL }
-
-  const ordered = prefersKimi(language, conversationType)
-    ? [kimi, claudeDirect, claudeGateway]
-    : [claudeDirect, claudeGateway, kimi]
-
-  return ordered.filter((c) => CANDIDATES[c.provider](c.model))
-}
-
+/** Both halves are required: the account scopes the URL, the token signs it. */
 export function isAiConfigured(): boolean {
-  return Boolean(ANTHROPIC_API_KEY || AI_GATEWAY_API_KEY)
+  return Boolean(CLOUDFLARE_ACCOUNT_ID && CLOUDFLARE_API_TOKEN)
 }
 
-// ── Circuit breaker, one per candidate ─────────────────────────────────────
-// Keyed by `provider:model` so Kimi tripping doesn't take Claude down with it.
+export function workersAiUrl(): string {
+  return `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/v1/chat/completions`
+}
+
+// ── Circuit breaker ────────────────────────────────────────────────────────
+// Keyed by model so an override (WORKERS_AI_MODEL) starts with a clean breaker
+// rather than inheriting the failures of the model it replaced.
 const CIRCUIT_FAILURE_THRESHOLD = 3
 const CIRCUIT_COOLDOWN_MS = 5 * 60 * 1000
 
@@ -182,43 +154,30 @@ async function fetchWithTimeout(url: string, options: RequestInit): Promise<Resp
   }
 }
 
-async function callAnthropic(req: ChatRequest, model: string): Promise<string> {
-  const response = await fetchWithTimeout(ANTHROPIC_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: req.maxTokens || 1024,
-      system: req.system || undefined,
-      messages: req.messages,
-    }),
-  })
-
-  if (!response.ok) {
-    throw await httpError('anthropic', model, response)
+function buildHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${CLOUDFLARE_API_TOKEN}`,
   }
-
-  const data: any = await response.json()
-  return data?.content?.[0]?.text || ''
+  // Without this header the request still reaches Workers AI, it just bypasses
+  // the gateway (no caching, no per-gateway rate limits, no request log).
+  if (CLOUDFLARE_AI_GATEWAY_ID) headers['cf-aig-gateway-id'] = CLOUDFLARE_AI_GATEWAY_ID
+  if (CLOUDFLARE_AI_GATEWAY_TOKEN) {
+    headers['cf-aig-authorization'] = `Bearer ${CLOUDFLARE_AI_GATEWAY_TOKEN}`
+  }
+  return headers
 }
 
-async function callGateway(req: ChatRequest, model: string): Promise<string> {
+async function callWorkersAi(req: ChatRequest, model: string): Promise<string> {
   // OpenAI-compatible shape: the system prompt is a leading message, not a
   // top-level field.
   const messages = req.system
     ? [{ role: 'system', content: req.system }, ...req.messages]
     : req.messages
 
-  const response = await fetchWithTimeout(GATEWAY_API_URL, {
+  const response = await fetchWithTimeout(workersAiUrl(), {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,
-    },
+    headers: buildHeaders(),
     body: JSON.stringify({
       model,
       max_tokens: req.maxTokens || 1024,
@@ -227,65 +186,44 @@ async function callGateway(req: ChatRequest, model: string): Promise<string> {
   })
 
   if (!response.ok) {
-    throw await httpError('gateway', model, response)
+    const body = await response.text().catch(() => '')
+    log.error(`workers-ai (${model}) responded ${response.status}: ${body.slice(0, 500)}`)
+    throw new AiUnavailableError(`workers-ai error ${response.status}`, response.status)
   }
 
   const data: any = await response.json()
   return data?.choices?.[0]?.message?.content || ''
 }
 
-async function httpError(provider: ProviderId, model: string, response: Response): Promise<AiUnavailableError> {
-  const body = await response.text().catch(() => '')
-  log.error(`${provider} (${model}) responded ${response.status}: ${body.slice(0, 500)}`)
-  return new AiUnavailableError(`${provider} error ${response.status}`, response.status)
-}
-
 /**
- * Run the request against each configured candidate in order, returning the
- * first success.
+ * Run the request against Workers AI.
  *
- * Throws `AiNotConfiguredError` when nothing is configured (a 503 for the
- * caller) and `AiUnavailableError` when every candidate failed. Callers must
- * not conflate the two — the moderation route in particular has to know the
+ * Throws `AiNotConfiguredError` when no credential is set (a 503 for the
+ * caller) and `AiUnavailableError` when the call failed. Callers must not
+ * conflate the two — the moderation route in particular has to know the
  * difference between "AI moderation is off" and "AI moderation broke".
  */
 export async function completeChat(req: ChatRequest): Promise<ChatResult> {
-  const candidates = resolveCandidates(req.language, req.conversationType)
-  if (candidates.length === 0) throw new AiNotConfiguredError()
+  if (!isAiConfigured()) throw new AiNotConfiguredError()
 
-  let lastError: AiUnavailableError | null = null
-  let sawOpenCircuit = false
-
-  for (const candidate of candidates) {
-    const key = `${candidate.provider}:${candidate.model}`
-    if (isCircuitOpen(key)) {
-      sawOpenCircuit = true
-      continue
-    }
-
-    try {
-      const text =
-        candidate.provider === 'anthropic'
-          ? await callAnthropic(req, candidate.model)
-          : await callGateway(req, candidate.model)
-
-      recordSuccess(key)
-      return { text, provider: candidate.provider, model: candidate.model }
-    } catch (error: any) {
-      recordFailure(key)
-      if (error?.name === 'AbortError') {
-        log.error(`${key} timed out after ${REQUEST_TIMEOUT_MS}ms`)
-        lastError = new AiUnavailableError('AI request timed out', 504)
-      } else if (error instanceof AiUnavailableError) {
-        lastError = error
-      } else {
-        log.error(`${key} threw: ${error?.message || error}`)
-        lastError = new AiUnavailableError(error?.message || 'AI request failed', 502)
-      }
-    }
+  const model = WORKERS_AI_MODEL
+  const key = `workers-ai:${model}`
+  if (isCircuitOpen(key)) {
+    throw new AiUnavailableError('AI service temporarily unavailable', 503)
   }
 
-  if (lastError) throw lastError
-  if (sawOpenCircuit) throw new AiUnavailableError('AI service temporarily unavailable', 503)
-  throw new AiUnavailableError('AI request failed')
+  try {
+    const text = await callWorkersAi(req, model)
+    recordSuccess(key)
+    return { text, provider: 'workers-ai', model }
+  } catch (error: any) {
+    recordFailure(key)
+    if (error?.name === 'AbortError') {
+      log.error(`${key} timed out after ${REQUEST_TIMEOUT_MS}ms`)
+      throw new AiUnavailableError('AI request timed out', 504)
+    }
+    if (error instanceof AiUnavailableError) throw error
+    log.error(`${key} threw: ${error?.message || error}`)
+    throw new AiUnavailableError(error?.message || 'AI request failed', 502)
+  }
 }

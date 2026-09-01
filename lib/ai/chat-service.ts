@@ -2,9 +2,9 @@
  * AI Chat Service for React Native
  * Handles communication with Shamwari AI tutor via server-side proxy.
  *
- * The Anthropic API key is server-side only. The client sends messages
- * to /api/ai/chat which proxies to Claude with rate limiting and
- * circuit breaker protection.
+ * The provider credentials are server-side only. The client sends messages
+ * to /api/ai/chat, which proxies to Cloudflare Workers AI with rate limiting
+ * and circuit breaker protection.
  */
 
 import { moderateContent, getModerationMessage } from './moderation'
@@ -77,9 +77,9 @@ export async function sendMessage(
         // this the tutor scaffolds every learner as a beginner. The server
         // clamps these and prefers its own copy when it has one.
         proficiency: await localProficiencyScores(),
-        // The server uses these to pick the provider (Chinese practice and
-        // translation help go to Kimi) and to build the system prompt. Both
-        // are mapped through allowlists server-side.
+        // The server uses these to build the system prompt; both are mapped
+        // through allowlists server-side. They no longer select a provider —
+        // every request is served by one Workers AI model.
         language,
         conversation_type: conversationType,
       }),

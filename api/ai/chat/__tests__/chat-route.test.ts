@@ -101,7 +101,7 @@ describe('chat route', () => {
     mockIsAiConfigured.mockReturnValue(true)
     mockModerateUserContent.mockResolvedValue(null)
     mockBuildSystemPrompt.mockResolvedValue('SYSTEM')
-    mockCompleteChat.mockResolvedValue({ text: 'ok', provider: 'anthropic', model: 'm' })
+    mockCompleteChat.mockResolvedValue({ text: 'ok', provider: 'workers-ai', model: 'm' })
   })
 
   it('moderates every turn, not just the newest user message', async () => {

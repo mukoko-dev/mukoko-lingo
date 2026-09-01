@@ -23,7 +23,7 @@ function makeConversation(overrides: Partial<ShamwariConversation> = {}): Shamwa
     ownerPersonId: 'person-1',
     ownerEntityId: 'entity-1',
     surfaceContext: SURFACE_CONTEXT,
-    modelProvider: 'anthropic',
+    modelProvider: 'cloudflare',
     modelVersion: MODEL_VERSION,
     messageCount: 0,
     isActive: true,
@@ -64,7 +64,7 @@ describe('buildConversationDoc', () => {
     expect(doc.ownerPersonId).toBe('person-1')
     expect(doc.ownerEntityId).toBe('entity-1')
     expect(doc.surfaceContext).toBe(SURFACE_CONTEXT)
-    expect(doc.modelProvider).toBe('anthropic')
+    expect(doc.modelProvider).toBe('cloudflare')
     expect(doc.modelVersion).toBe(MODEL_VERSION)
     expect(doc.messageCount).toBe(0)
     expect(doc.isActive).toBe(true)

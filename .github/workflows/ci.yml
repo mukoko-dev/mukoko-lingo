@@ -103,6 +103,25 @@ jobs:
           path: dist/
           retention-days: 7
 
+  docs:
+    name: Docs Drift Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # No install needed — the checker is dependency-free Node. It catches an
+      # env var that never reached .env.example, a retired credential name
+      # creeping back into the docs, and a test-suite count CLAUDE.md has
+      # outgrown.
+      - name: Check documentation drift
+        run: node scripts/docs/check-docs.js
+
   # ── Web App (Next.js) ──────────────────────────────────────────────────
   lint-web:
     name: Lint (Web)

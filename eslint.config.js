@@ -29,6 +29,15 @@ module.exports = defineConfig([
     },
   },
   {
+    // scripts/ is Node tooling (release automation, docs drift check), not app
+    // code: CommonJS, with __dirname and process available.
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: globals.node,
+    },
+  },
+  {
     // eslint-config-expo's React Compiler-readiness rule family
     // (react-hooks/refs, /set-state-in-effect, /immutability,
     // /preserve-manual-memoization) is new, strict, and flags real

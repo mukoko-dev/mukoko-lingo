@@ -4,7 +4,7 @@
 
 Learn Shona, Ndebele, Chinese, and English with AI-powered tutoring by Shamwari.
 
-Built with Expo SDK 57 / React Native, Next.js, MongoDB, WorkOS AuthKit, Vercel Serverless, and Anthropic Claude.
+Built with Expo SDK 57 / React Native, Next.js, MongoDB, WorkOS AuthKit, Vercel Serverless, and Cloudflare Workers AI.
 
 **Parent Company**: [Nyuchi Africa](https://nyuchi.com) | **Registry**: [registry.mukoko.com](https://registry.mukoko.com)
 
@@ -30,7 +30,8 @@ Copy `.env.example` to `.env.local` and fill in:
 
 - `MONGODB_URI` — MongoDB connection string
 - `WORKOS_API_KEY` / `WORKOS_CLIENT_ID` — WorkOS AuthKit credentials
-- `ANTHROPIC_API_KEY` — Anthropic Claude API key (server-side only)
+- `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` — Workers AI credentials (server-side only)
+- `CLOUDFLARE_AI_GATEWAY_ID` — Cloudflare AI Gateway to route inference through
 - `EXPO_PUBLIC_API_BASE_URL` — Vercel API base URL
 
 See `.env.example` for the complete list.
@@ -49,7 +50,7 @@ Both apps call the same API routes. The web app includes all learner features pl
 
 - **Daily Lessons** — Smart phrase selection (5 phrases/day) with flash cards and mini-quizzes
 - **230+ Phrases** — 4 languages with pronunciation guides and cultural context
-- **Shamwari AI Tutor** — Claude-powered tutor that adapts to learner proficiency
+- **Shamwari AI Tutor** — Qwen-powered tutor that adapts to learner proficiency
 - **Skills & Assessments** — 5 core skills with diagnostic, formative, and summative tests
 - **Classes & Assignments** — Teachers create classes, assign phrases, track student progress
 - **OneRoster Integration** — Sync school rosters from Clever, ClassLink, PowerSchool
@@ -61,7 +62,7 @@ Both apps call the same API routes. The web app includes all learner features pl
 | Tab | Purpose |
 |-----|---------|
 | **Learn** | Daily lessons (flash cards + quiz) and phrase browsing |
-| **Shamwari** | AI tutor chat powered by Anthropic Claude |
+| **Shamwari** | AI tutor chat powered by Cloudflare Workers AI |
 | **Progress** | Dashboard, bookmarks, skill proficiency, mastery tracking |
 | **Profile** | Settings, preferences, theme, sign out |
 
@@ -75,7 +76,7 @@ Both apps call the same API routes. The web app includes all learner features pl
 | Backend | Vercel Serverless Functions (TypeScript + Python) |
 | Database | MongoDB (database `lingo` — shared with the Nyuchi ecosystem, see below) |
 | Auth | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow) |
-| AI | Anthropic Claude Haiku 4.5 (server-side proxy with circuit breaker) |
+| AI | Cloudflare Workers AI — Qwen3 30B A3B via AI Gateway (server-side proxy with circuit breaker) |
 | Testing | Jest 29 + jest-expo (24 suites, 298 tests) |
 | CI/CD | GitHub Actions (typecheck → test → build-web) |
 
@@ -131,18 +132,28 @@ MongoDB cluster shared across the Nyuchi ecosystem — `lingo` is Lingo's own da
 
 GitHub Actions runs on push to `main`/`feature/*` and PRs to `main`:
 
-1. **TypeScript Check** — `npx tsc --noEmit`
-2. **Jest Tests** — `npm test -- --ci --coverage`
-3. **Build Web** — `npx expo export --platform web`
+1. **Lint** — `npm run lint` (mobile and web)
+2. **TypeScript Check** — `npx tsc --noEmit` (mobile and web)
+3. **Jest Tests** — `npm test -- --ci --coverage`
+4. **Docs Drift Check** — `node scripts/docs/check-docs.js`
+5. **Python** — `ruff check .` + `pytest` for the analytics functions
+6. **Builds** — `npx expo export --platform web` and `next build`
+
+**Releases are automatic.** When CI goes green on `main`, the release workflow
+derives the next version from the Conventional Commit subjects since the last
+tag, bumps every version file, cuts `CHANGELOG.md`'s `[Unreleased]` section
+into a version heading, tags, and publishes a GitHub Release. A docs- or
+chore-only merge releases nothing. See **[RELEASES.md](RELEASES.md)**.
 
 ## Documentation
 
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** — 5-layer component hierarchy and data layer awareness
 - **[CLAUDE.md](CLAUDE.md)** — Developer guide & full architecture reference
 - **[BRANDING.md](BRANDING.md)** — Brand guidelines & Five African Minerals design system
 - **[SECURITY.md](SECURITY.md)** — Security architecture
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — Contribution guidelines
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — Contribution guidelines, commit conventions
+- **[RELEASES.md](RELEASES.md)** — Release automation and channels
 - **[CHANGELOG.md](CHANGELOG.md)** — Version history
+- **[docs/TEST_COVERAGE_ANALYSIS.md](docs/TEST_COVERAGE_ANALYSIS.md)** — What the test suite covers
 
 ## Brand — Five African Minerals
 

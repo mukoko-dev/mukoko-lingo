@@ -13,8 +13,8 @@ import type { AnthropicContentBlock, ShamwariConversation, ShamwariMessage } fro
 /** Surface identifier Lingo registers itself under in shared AI infrastructure. */
 export const SURFACE_CONTEXT = 'mukoko-lingo'
 
-/** Model Lingo calls directly (see `lib/ai/chat-service.ts`). */
-export const MODEL_VERSION = 'claude-haiku-4-5-20251001'
+/** Model Lingo calls (see `api/_lib/ai-provider.ts`). */
+export const MODEL_VERSION = '@cf/qwen/qwen3-30b-a3b-fp8'
 
 export interface ApiConversation {
   id: string
@@ -46,7 +46,7 @@ export function buildConversationDoc(params: {
     ownerPersonId: params.ownerPersonId,
     ownerEntityId: params.ownerEntityId,
     surfaceContext: SURFACE_CONTEXT,
-    modelProvider: 'anthropic',
+    modelProvider: 'cloudflare',
     modelVersion: MODEL_VERSION,
     messageCount: 0,
     isActive: true,
