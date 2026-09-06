@@ -9,7 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+- **The release job pushes its version bump with `RELEASE_BUMP_TOKEN`** — the
+  org-wide PAT that can push through branch protection, with a per-repo
+  `RELEASE_TOKEN` as an override. v0.1.0 and v0.1.1 were both tagged on their
+  merge commits because the bump was rejected; the workflow simply was not
+  asking for a token that already existed. The fallback (tag the merge commit,
+  publish the Release anyway) is unchanged, and its warning now names the
+  likely cause instead of telling the reader to create a new PAT.
+
+---
+
+## [0.1.1] — 2026-09-01
+
+### Fixed
+- **release**: count the next version from the tag when it is ahead of the files (#40) (`b8cb526`)
 
 ---
 
@@ -75,6 +89,7 @@ _Nothing yet._
 - **Dependencies** — Updated all packages across `root` and `web/`: Expo SDK 54 → 57, Next.js 15 → 16, Tailwind CSS 3 → 4. Held back `jest`/`@types/jest` (jest-expo still requires Jest 29) and `@testing-library/react-native` (v14 switches to async `render()`/`renderHook()`, which would require rewriting every test file).
 
 ---
+
 ## [0.0.1] — 2026-04-08
 
 ### Initial Release: Supabase Migration & Platform Architecture

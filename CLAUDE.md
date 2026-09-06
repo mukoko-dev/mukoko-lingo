@@ -630,7 +630,7 @@ built server-side (see AI Integration above).
   `components/**` — `api/**` and `scripts/**` tests run but do **not** count
   toward the thresholds, so the backend has no coverage floor
 
-**Test Suites** (42 suites, 469 tests). Run `npx jest --listTests` for the
+**Test Suites** (42 suites, 470 tests). Run `npx jest --listTests` for the
 current set; the security-relevant ones are worth knowing by name:
 
 *Backend (`api/**`)* — note these are **not** included in
@@ -855,7 +855,7 @@ When creating new completion summaries, migration docs, or work records:
 
 ## Project Status
 
-**Current Version**: 0.1.0 (2026-09-01)
+**Current Version**: 0.1.1 (2026-09-01)
 **Framework**: Expo SDK 57 / React Native 0.86 / React 19
 **Backend**: MongoDB + WorkOS AuthKit + Vercel Serverless
 **AI**: Cloudflare Workers AI (`@cf/qwen/qwen3-30b-a3b-fp8`) via Cloudflare AI Gateway
