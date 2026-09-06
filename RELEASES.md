@@ -27,14 +27,20 @@ The gate is the **CI workflow's conclusion**, not the push itself: a merge whose
 tests fail is never tagged. The release commit carries `[skip ci]`, so it cannot
 start a CI run that would re-trigger the release job.
 
-**When the bump commit cannot be pushed** — branch protection rejecting the bot,
-which is what happens on this repo today — the job still tags the merge commit
-and publishes the Release, and logs a warning. The version files and
-`CHANGELOG.md` then sit behind the tag until someone lands them by hand. The
-next release is not confused by that: the version is counted from the newer of
-the last tag and `package.json`, so a published `v0.1.0` with files still
-reading `0.0.1` still yields `0.1.1`, never `0.0.2`. Granting the workflow push
-access (or adding a `RELEASE_TOKEN` PAT) removes the manual step.
+**The bump commit is pushed with `RELEASE_BUMP_TOKEN`**, the org-wide PAT that
+can push through branch protection. The job checks out with
+`secrets.RELEASE_BUMP_TOKEN || secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN`,
+so a per-repo `RELEASE_TOKEN` overrides it if one is ever needed, and neither
+being present is not fatal.
+
+**When the bump commit cannot be pushed** — the org secret not granted to this
+repository, its owner unable to push to `main`, or `main` having moved on while
+CI ran — the job still tags the merge commit and publishes the Release, and
+logs a warning naming the likely cause. The version files and `CHANGELOG.md`
+then sit behind the tag until someone lands them by hand. The next release is
+not confused by that: the version is counted from the newer of the last tag and
+`package.json`, so a published `v0.1.0` with files still reading `0.0.1` still
+yields `0.1.1`, never `0.0.2`.
 
 ### What decides the version
 
@@ -165,7 +171,7 @@ git checkout -b hotfix/short-description
 |---|---|---|
 | Job ran, summary says "No release" | Only housekeeping commits since the last tag | Nothing to do, or dispatch manually with a version |
 | Job did not run at all | CI failed, or the merge commit carried `[skip ci]` | Fix CI; re-run the CI workflow on that commit |
-| Warning: "Could not push the version bump to main" | Branch protection rejects the bot's push | The tag and Release are still published against the merge commit. Grant the workflow push access, or add a `RELEASE_TOKEN` secret (a PAT with `contents: write`) |
+| Warning: "Could not push the version bump to main" | `RELEASE_BUMP_TOKEN` did not reach the job, or its owner cannot push to `main` | The tag and Release are still published against the merge commit; the version files need landing by hand. Check the org secret's repository access list includes `mukoko-lingo`, and that the token can push through the `main` ruleset |
 | "Tag vX.Y.Z already exists" | A previous run got as far as tagging | Delete the tag if the release is incomplete, then re-dispatch |
 
 ## Version history

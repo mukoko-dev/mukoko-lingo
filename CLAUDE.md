@@ -725,8 +725,9 @@ and publishes a GitHub Release whose notes are that changelog section.
   `test:` → **no release** (the job reports "No release" and exits 0)
 - Below 1.0.0 a breaking change lands as a minor; cutting 1.0 is a manual
   `workflow_dispatch`
-- If branch protection rejects the bot's push, the tag and Release still go out
-  against the merge commit and the job logs a warning
+- The version-bump commit is pushed with the org-wide `RELEASE_BUMP_TOKEN`
+  (per-repo `RELEASE_TOKEN` overrides it). If that push is rejected, the tag and
+  Release still go out against the merge commit and the job logs a warning
 
 Preview with `npm run release:dry`. Full details, including the failure table:
 [RELEASES.md](RELEASES.md).
