@@ -54,10 +54,12 @@ jobs:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
           fetch-depth: 0
           fetch-tags: true
-          # A PAT in RELEASE_TOKEN lets the version-bump commit through branch
-          # protection. Without one the job still releases — see the fallback
-          # in "Commit, tag and push" below.
-          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          # RELEASE_BUMP_TOKEN is the org-wide PAT that can push through branch
+          # protection; RELEASE_TOKEN is a per-repo override if one is ever
+          # needed. With neither — or with an org secret not granted to this
+          # repository — the expression resolves to GITHUB_TOKEN and the job
+          # still releases, via the fallback in "Commit, tag and push" below.
+          token: ${{ secrets.RELEASE_BUMP_TOKEN || secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -107,7 +109,7 @@ jobs:
             # Protected branch, or main moved on while CI ran. The release
             # itself still happens — it just points at the merged commit and
             # the version files stay to be bumped by hand.
-            echo "::warning::Could not push the version bump to main; tagging $VALIDATED_SHA instead. Grant the workflow push access or set a RELEASE_TOKEN secret to get version bumps committed automatically."
+            echo "::warning::Could not push the version bump to main; tagging $VALIDATED_SHA instead. Check that the org secret RELEASE_BUMP_TOKEN is granted to this repository and that its owner can push to main."
             target="$VALIDATED_SHA"
           fi
 
