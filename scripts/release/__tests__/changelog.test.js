@@ -39,6 +39,15 @@ describe('cutRelease', () => {
     expect(changelog).toContain('## [Unreleased]\n\n_Nothing yet._')
   })
 
+  it('separates the new section from the one below it the way the file does', () => {
+    // Both hand reconciliations produced `---` butted against the next
+    // heading; every other boundary in the real file has a blank line.
+    const { changelog } = cutRelease(FILE, { version: '0.1.0', date: '2026-09-01' })
+
+    expect(changelog).toContain('---\n\n## [0.0.1]')
+    expect(changelog).not.toContain('---\n## [')
+  })
+
   it('leaves the already-published sections untouched', () => {
     const { changelog } = cutRelease(FILE, { version: '0.1.0', date: '2026-09-01' })
 

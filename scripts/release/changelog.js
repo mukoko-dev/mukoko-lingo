@@ -88,8 +88,11 @@ function cutRelease(markdown, { version, date, fallbackCommits } = {}) {
   if (!notes) return { changelog: markdown, notes: '', released: false }
 
   const heading = `## [${version}] — ${date || new Date().toISOString().slice(0, 10)}`
+  // The trailing blank line matters: `section.end` lands on the next heading,
+  // so without it the rule and that heading end up on consecutive lines, which
+  // is not how the rest of the file separates versions.
   const rebuilt =
-    `${UNRELEASED_HEADING}\n\n${EMPTY_MARKER}\n\n---\n\n${heading}\n\n${notes}\n\n---\n`
+    `${UNRELEASED_HEADING}\n\n${EMPTY_MARKER}\n\n---\n\n${heading}\n\n${notes}\n\n---\n\n`
 
   const changelog = markdown.slice(0, section.start) + rebuilt + markdown.slice(section.end)
   return { changelog, notes, released: true }

@@ -122,7 +122,7 @@ Mukoko Lingo follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PA
 - **MINOR** — new features, backwards-compatible
 - **PATCH** — bug fixes, security patches, small improvements
 
-### Current Version: 0.1.0
+### Current Version: 0.1.1
 
 ## Release channels
 
@@ -178,6 +178,7 @@ git checkout -b hotfix/short-description
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.1.1 | 2026-09-01 | See [CHANGELOG](CHANGELOG.md) |
 | 0.1.0 | 2026-09-01 | See [CHANGELOG](CHANGELOG.md) |
 | 0.0.1 | 2026-04-08 | Initial release: Supabase migration, Next.js web app, school model, OneRoster, security hardening |
 
