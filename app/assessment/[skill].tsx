@@ -13,6 +13,7 @@ import { CheckCircle, XCircle, ArrowRight, RotateCcw, Trophy } from 'lucide-reac
 import { useColorScheme } from '@/components/useColorScheme'
 import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { updateUserSkill } from '@/lib/storage/database'
+import { assessmentsApi } from '@/lib/services/api-client'
 import { useLearningLanguage } from '@/lib/hooks/useLearningLanguage'
 import {
   getQuestionsForSkill,
@@ -38,6 +39,7 @@ export default function AssessmentScreen() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
   const [results, setResults] = useState<ReturnType<typeof calculateAssessmentScore> | null>(null)
+  const [startedAt, setStartedAt] = useState(() => Date.now())
 
   useEffect(() => {
     loadQuestions()
@@ -67,6 +69,7 @@ export default function AssessmentScreen() {
     setShowFeedback(false)
     setPhase('quiz')
     setResults(null)
+    setStartedAt(Date.now())
   }, [skill, learningLanguage])
 
   const currentQuestion = questions[currentIndex]
@@ -97,6 +100,20 @@ export default function AssessmentScreen() {
       const scoreResult = calculateAssessmentScore(questions, finalAnswers)
       setResults(scoreResult)
       setPhase('results')
+
+      // The server regrades these answers and owns what is persisted — the
+      // local pass below only feeds device storage, which the tutor falls back
+      // to while `lingo.user_skills` is empty. Best-effort: a learner offline,
+      // or on a deployment without the API, still sees their result.
+      try {
+        await assessmentsApi.submitAssessment({
+          skill_id: skill,
+          answers: finalAnswers,
+          time_taken: Math.round((Date.now() - startedAt) / 1000),
+        })
+      } catch (error) {
+        console.warn(`[mukoko][assessment] Could not record submission: ${String(error)}`)
+      }
 
       // Update skill scores
       if (skill === 'diagnostic') {

@@ -159,6 +159,8 @@ nyuchi-lingo/
 │   ├── _lib/                     # Shared middleware
 │   │   ├── auth-middleware.ts    # WorkOS access-token validation + admin check
 │   │   ├── ai-provider.ts        # Workers AI transport + circuit breaker
+│   │   ├── assessment-grading.ts # Server-side scoring (pure; no DB, no HTTP)
+│   │   ├── doc-id.ts             # `_id` lookups for UUID-or-ObjectId collections
 │   │   ├── tutor-prompt.ts       # Server-side system prompt + score clamping
 │   │   ├── chat-input.ts         # Chat body validation (rejects `system` role)
 │   │   ├── moderation.ts         # Server-side guardrails + moderation_alerts
@@ -169,7 +171,7 @@ nyuchi-lingo/
 │   ├── bookmarks/                # Bookmark management
 │   ├── profiles/                 # User profile CRUD
 │   ├── skills/                   # Skills data endpoints
-│   ├── assessments/              # Assessment endpoints
+│   ├── assessments/              # Assessment endpoints (graded server-side)
 │   ├── progress/                 # Progress tracking
 │   ├── study-sessions/           # Study session recording
 │   ├── ai/conversations/         # AI chat conversation + message storage
@@ -361,6 +363,40 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 - **Diagnostic** - Initial skill level determination
 - **Formative** - Ongoing progress checks during learning
 - **Summative** - Skill mastery verification before unlock
+
+**Grading is server-side** (`api/_lib/assessment-grading.ts`, used by
+`POST /api/assessments/submit`). The client sends **answers only**; the route
+computes the score, the pass/fail and any level change:
+
+- A body carrying `score` or `passed` is **rejected with 400**, not ignored —
+  the same posture as a client-supplied `system` role in `chat-input.ts`. The
+  route used to record both verbatim, which let any caller promote themselves;
+  and because `user_skills.current_score` is read by `tutor-prompt.ts` on every
+  AI turn, a forged score also changed how Shamwari teaches.
+- The answer key comes from the `lingo.assessments` document when one exists
+  and carries `questions`; otherwise from the shared bank in
+  `lib/data/assessment-questions.ts`, keyed to the ids submitted. A submission
+  with no resolvable key is refused (422) rather than recorded as a hollow zero.
+- `total` is the size of the key, never the number of answers sent — one
+  correct answer out of ten is 10%, not 100%. Unknown ids are ignored.
+- **A level is only promoted by a real assessment document naming a
+  `target_level`.** The bundled bank has no target level, so a bank-graded pass
+  records a score and stops there.
+- `user_skills.skill_id` is a `skills._id` UUID while the bank labels skills by
+  name; the route resolves either form before writing, because a name in that
+  column produces a row every reader silently ignores.
+- A diagnostic scores every skill its key covers, but promotes only the skill
+  it was taken for.
+- `assessments._id` may be a UUID or an ObjectId (the collection is empty and
+  unseeded), so all three assessment routes resolve both shapes via
+  `api/_lib/doc-id.ts`. The old ObjectId-only lookup meant a UUID id silently
+  skipped promotion altogether.
+
+**Residual, by design**: the question bank ships in the client bundle, so a
+determined learner can read the answers. That is a cheating problem rather than
+privilege escalation — closing it means serving questions without their answers
+and moving per-question feedback to after submission, which the submit response
+already carries (`results`, `per_skill`).
 
 ### AI Integration (AI-First Architecture)
 
@@ -630,7 +666,7 @@ built server-side (see AI Integration above).
   `components/**` — `api/**` and `scripts/**` tests run but do **not** count
   toward the thresholds, so the backend has no coverage floor
 
-**Test Suites** (42 suites, 470 tests). Run `npx jest --listTests` for the
+**Test Suites** (45 suites, 510 tests). Run `npx jest --listTests` for the
 current set; the security-relevant ones are worth knowing by name:
 
 *Backend (`api/**`)* — note these are **not** included in
@@ -645,11 +681,20 @@ current set; the security-relevant ones are worth knowing by name:
   the newest), forged `assistant` turns labelled, `max_tokens` clamped
 - `api/_lib/__tests__/ai-provider.test.ts` - Workers AI wiring (gateway headers,
   OpenAI shape), the two-part config gate, circuit breaker
+- `api/_lib/__tests__/assessment-grading.test.ts` - Scoring is computed from
+  answers: a partial submission cannot claim 100%, invented question ids are
+  ignored, a retake never lowers a score, and only a real assessment document
+  promotes a level
+- `api/assessments/__tests__/submit-route.test.ts` - The route rejects a
+  caller-supplied `score`/`passed`, writes `user_skills` against the
+  `skills._id` (not the bank's skill name), and resolves a UUID assessment id
 - `api/_lib/__tests__/moderation.test.ts` - Server-side guardrails + alert writes
 - `api/ai/__tests__/moderate-json.test.ts` - Verdict extraction survives a
   reasoning model's `<think>` block (a bad match fails open, silently dropping
   the AI moderation pass)
 - `api/_lib/__tests__/jose-cjs.test.ts` - Guards the jose v6 ESM/CJS auth outage
+- `api/_lib/__tests__/logger.test.ts` - The caller's message is an argument,
+  never `console.error`'s format string; control characters cannot forge a line
 
 *Shared (`lib/**`)*:
 - `lib/ai/__tests__/prompt-injection.test.ts` - Allowlists hold against

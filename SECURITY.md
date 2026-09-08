@@ -57,6 +57,11 @@ We will acknowledge receipt within 48 hours and provide a detailed response with
 - **Circuit Breaker**: 3 failures → 5 minute cooldown → half-open probe (Hystrix pattern)
 - **Rate Limiting**: 30 requests/hour per user on AI chat endpoint
 - **Request Timeout**: 15 second AbortController timeout on all Workers AI calls
+- **Server-Side Assessment Grading**: `/api/assessments/submit` computes the
+  score from submitted answers (`api/_lib/assessment-grading.ts`) and rejects a
+  body carrying `score` or `passed`. A learner cannot promote their own skill
+  level, and cannot inflate `user_skills.current_score`, which the tutor prompt
+  reads on every AI turn
 - **Prompt Injection Detection**: 14 regex patterns detect instruction manipulation attempts:
   - System override attempts ("ignore previous instructions")
   - Role confusion ("you are now", "pretend to be")
