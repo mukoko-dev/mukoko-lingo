@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Nothing yet._
+
+---
+
+## [0.2.0] — 2026-09-08
+
 ### Security
 - **Assessments are graded on the server** — `POST /api/assessments/submit`
   recorded whatever `score` and `passed` the caller sent, and promoted
