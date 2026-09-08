@@ -1,7 +1,7 @@
 # Test Coverage Analysis
 
 **Last measured**: September 2026 · **Framework**: Jest 29 + jest-expo
-**Suites**: 41 · **Tests**: 451 · all passing
+**Suites**: 45 · **Tests**: 510 · all passing
 
 Regenerate the numbers below with `npm run test:coverage`. They are a snapshot,
 not a contract — the contract is the threshold block in `package.json`.
@@ -39,12 +39,13 @@ coverage, or the ratchet does nothing.
 `collectCoverageFrom` includes only `lib/**` and `components/**`. Everything
 else runs in CI but counts for nothing:
 
-- **`api/**` (65 TypeScript modules)** — including every security boundary the
+- **`api/**` (67 TypeScript modules)** — including every security boundary the
   app has: `auth-middleware.ts`, `chat-input.ts`, `tutor-prompt.ts`,
-  `moderation.ts`, `ai-provider.ts`. These *are* tested (8 suites, listed in
-  CLAUDE.md), and those tests are the reason the prompt-injection and
-  moderation work can be trusted — but nothing stops the next route from
-  shipping with no test at all, because the thresholds cannot see it.
+  `moderation.ts`, `ai-provider.ts`, `assessment-grading.ts`. These *are*
+  tested (10 suites, listed in CLAUDE.md), and those tests are the reason the
+  prompt-injection, moderation and grading work can be trusted — but nothing
+  stops the next route from shipping with no test at all, because the
+  thresholds cannot see it.
 - **`app/**`** — every screen: auth flows, assessments, admin operations. No
   tests, no floor.
 - **`scripts/**`** — the release automation is well covered (3 suites) purely
@@ -68,8 +69,11 @@ The listing in CLAUDE.md is the current index. The ones worth knowing by name:
 | `api/ai/__tests__/moderate-json.test.ts` | A reasoning model's `<think>` block cannot silently disable AI moderation |
 | `api/_lib/__tests__/ai-provider.test.ts` | Workers AI wiring, the two-part config gate, the circuit breaker |
 | `api/_lib/__tests__/jose-cjs.test.ts` | Guards the jose v6 ESM/CJS crash that once took sign-in down |
+| `api/_lib/__tests__/logger.test.ts` | Request data reaches a log as an argument, never as a `util.format` template |
 | `lib/workos/__tests__/config.test.ts` | Redirect allowlist, including the 172.16–172.31 private-range boundary |
 | `lib/ai/__tests__/prompt-injection.test.ts` | Allowlists hold; no caller text reaches the prompt |
+| `api/_lib/__tests__/assessment-grading.test.ts` | A score is computed from answers — a partial submission cannot claim 100%, and only a real assessment promotes a level |
+| `api/assessments/__tests__/submit-route.test.ts` | The submit route rejects a caller-supplied `score`/`passed` |
 | `scripts/release/__tests__/*` | The release automation cannot ship a hollow or half-bumped release |
 
 ## Gaps worth closing, in order
@@ -81,17 +85,20 @@ The listing in CLAUDE.md is the current index. The ones worth knowing by name:
 2. **`lib/storage/database.native.ts` (273 lines, 0%)** — the web path is
    covered and the native path is not, so iOS/Android storage divergence is
    invisible. The web suite is a ready-made template: mirror it.
-3. **Assessment grading** — scoring currently happens client-side, so a learner
-   can self-promote their skill level. Moot while `lingo.assessments` is empty;
-   the moment it is seeded, this needs a server-side grader *and* the tests
-   that pin it.
-4. **`lib/services/notifications.ts` (272 lines, 0%)** and `offline.ts` — both
+3. **`lib/services/notifications.ts` (272 lines, 0%)** and `offline.ts` — both
    fail quietly by design, which is exactly the shape of bug tests catch and
    users do not report.
-5. **`components/AppHeader.tsx` (87 statements, 0%)** — the one piece of chrome
+4. **`components/AppHeader.tsx` (87 statements, 0%)** — the one piece of chrome
    on every screen.
-6. **Python analytics** — `api/analytics/tests/` covers helpers and imports;
+5. **Python analytics** — `api/analytics/tests/` covers helpers and imports;
    the four aggregation pipelines themselves are unpinned.
+
+*Closed since the last measurement*: assessment grading, which used to happen
+client-side with the route recording whatever score it was handed. It is now
+computed in `api/_lib/assessment-grading.ts` and covered by 35 tests — none of
+which move the coverage numbers below, because they live under `api/**`. That
+is this document's first point, demonstrated: the app's newest security
+boundary carries no coverage floor at all.
 
 ## Writing tests against `api/**`
 

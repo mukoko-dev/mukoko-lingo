@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
+import { findById } from '../_lib/doc-id'
 import { assessments, skills } from '../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -10,10 +10,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { id } = req.query
 
   try {
-    if (!ObjectId.isValid(id as string)) return res.status(404).json({ error: 'Assessment not found' })
-
+    // `assessments._id` may be a UUID string like every other populated
+    // lingo collection; the old ObjectId.isValid() guard 404'd those before
+    // the query ran.
     const col = await assessments()
-    const assessment = await col.findOne({ _id: new ObjectId(id as string) } as any)
+    const assessment = await findById<any>(col, id as string)
     if (!assessment) return res.status(404).json({ error: 'Assessment not found' })
 
     let skill = null

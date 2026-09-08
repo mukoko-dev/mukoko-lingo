@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ObjectId } from 'mongodb'
 import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
+import { idsFilter } from '../_lib/doc-id'
 import { userAssessments, assessments, skills } from '../_lib/mongo'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -16,8 +16,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const assessmentsCol = await assessments()
     const skillsCol = await skills()
-    const assessmentIds = rows.map((r: any) => r.assessment_id).filter(ObjectId.isValid)
-    const assessmentDocs = await assessmentsCol.find({ _id: { $in: assessmentIds.map((id: string) => new ObjectId(id)) } } as any).toArray()
+    // `assessments._id` may be a UUID string; the old ObjectId filter dropped
+    // every such id, so a history row never carried its assessment.
+    const assessmentIds = rows
+      .map((r: any) => r.assessment_id)
+      .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+    const assessmentDocs = assessmentIds.length
+      ? await assessmentsCol.find(idsFilter(assessmentIds) as any).toArray()
+      : []
     // `skills._id` is a UUID string, so the ObjectId filter dropped them all.
     const skillIds = assessmentDocs.map((a: any) => a.skill_id).filter(Boolean)
     const skillDocs = skillIds.length
