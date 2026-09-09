@@ -203,6 +203,29 @@ export interface UserAssessment {
 }
 
 /**
+ * lingo.assessment_sessions — a quiz the server issued to one learner.
+ *
+ * The `question_ids` are the assessment: submit grades against this list, not
+ * against whatever ids the client sends answers for, so the learner cannot
+ * choose their own denominator. `_id` is a UUID string, matching every other
+ * populated `lingo` collection. Single use, and expiring — see
+ * `api/_lib/assessment-session.ts`.
+ */
+export interface AssessmentSession {
+  _id: string
+  user_id: string
+  skill_id: string
+  resolved_skill_id: string | null
+  assessment_id: string | null
+  question_ids: string[]
+  is_diagnostic: boolean
+  language: string | null
+  created_at: Date
+  expires_at: Date
+  submitted_at: Date | null
+}
+
+/**
  * lingo.learningStandards — the shared, ecosystem-curated proficiency
  * ladder (camelCase v3.1 schema), NOT the Lingo-invented, never-populated
  * `learning_standards`. `_id` is a UUID string, never an ObjectId, and

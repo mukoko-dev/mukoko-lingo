@@ -9,6 +9,8 @@
  */
 
 import {
+  ceilingForLevels,
+  DEFAULT_LEVEL_CEILING,
   sanitizeAnswers,
   answerKeyFromAssessment,
   answerKeyFromBank,
@@ -27,6 +29,26 @@ const KEY = [
   { questionId: 'q3', correctAnswer: 'Goodbye', skill: 'grammar' },
   { questionId: 'q4', correctAnswer: 'Please', skill: 'grammar' },
 ]
+
+describe('ceilingForLevels', () => {
+  it('lets a question set evidence the level above its difficulty, no further', () => {
+    expect(ceilingForLevels(['beginner'])).toBe(64)
+    expect(ceilingForLevels(['elementary'])).toBe(79)
+    expect(ceilingForLevels(['intermediate'])).toBe(89)
+    expect(ceilingForLevels(['advanced'])).toBe(100)
+    expect(ceilingForLevels(['fluent'])).toBe(100)
+  })
+
+  it('takes the hardest question in the set', () => {
+    expect(ceilingForLevels(['beginner', 'intermediate', 'beginner'])).toBe(89)
+  })
+
+  it('treats an unknown or missing difficulty as the easiest', () => {
+    // The safe reading: a question of unknown difficulty proves the least.
+    expect(ceilingForLevels([])).toBe(DEFAULT_LEVEL_CEILING)
+    expect(ceilingForLevels([undefined, 'not-a-level'])).toBe(DEFAULT_LEVEL_CEILING)
+  })
+})
 
 describe('sanitizeAnswers', () => {
   it('accepts a flat map of strings', () => {
@@ -112,6 +134,20 @@ describe('gradeAnswers', () => {
     const result = gradeAnswers(KEY, { q1: 'Hello', q2: 'Thank you', q3: 'wrong', q4: 'wrong' })
 
     expect(result.perSkill).toEqual({ vocabulary: 100, grammar: 0 })
+  })
+
+  it('reports a ceiling per skill, from that skill\'s hardest question', () => {
+    // A diagnostic can ask one skill something harder than another; each
+    // score is limited by its own evidence, not by the set's best question.
+    const mixed = [
+      { questionId: 'q1', correctAnswer: 'a', skill: 'vocabulary', level: 'beginner' },
+      { questionId: 'q2', correctAnswer: 'b', skill: 'grammar', level: 'advanced' },
+    ]
+
+    const result = gradeAnswers(mixed, { q1: 'a', q2: 'b' })
+
+    expect(result.perSkillCeiling).toEqual({ vocabulary: 64, grammar: 100 })
+    expect(result.ceiling).toBe(100)
   })
 
   it('never passes an empty key', () => {
@@ -200,10 +236,44 @@ describe('resolveSkillUpdate', () => {
       percentage: 90,
       passed: true,
       assessment: { target_level: 'intermediate' },
+      ceiling: 100,
     })
 
     expect(promoted).toMatchObject({ current_score: 90, current_level: 'intermediate' })
     expect(promoted?.level_achieved_at).toBeInstanceOf(Date)
+  })
+
+  it('caps what a set of questions can claim', () => {
+    // The probe that found this: a perfect run on beginner questions was
+    // writing 100 — "fluent" — which the tutor then reads on every turn.
+    const update = resolveSkillUpdate({
+      existing: null,
+      percentage: 100,
+      passed: true,
+      assessment: null,
+      ceiling: 64,
+    })
+
+    expect(update).toEqual({ current_score: 64 })
+  })
+
+  it('defaults to the safest ceiling when none is given', () => {
+    const update = resolveSkillUpdate({ existing: null, percentage: 100, passed: true, assessment: null })
+
+    expect(update).toEqual({ current_score: DEFAULT_LEVEL_CEILING })
+  })
+
+  it('does not revoke a higher score earned on harder questions', () => {
+    // The cap limits what this attempt may claim; it is not a demotion.
+    const update = resolveSkillUpdate({
+      existing: { current_score: 92 },
+      percentage: 100,
+      passed: true,
+      assessment: null,
+      ceiling: 64,
+    })
+
+    expect(update).toBeNull()
   })
 
   it('records the score but never a level for a bank-graded quiz', () => {
@@ -214,6 +284,7 @@ describe('resolveSkillUpdate', () => {
       percentage: 90,
       passed: true,
       assessment: null,
+      ceiling: 100,
     })
 
     expect(update).toEqual({ current_score: 90 })
@@ -249,6 +320,7 @@ describe('resolveSkillUpdate', () => {
       percentage: 75,
       passed: true,
       assessment: { target_level: 'intermediate' },
+      ceiling: 100,
     })
 
     expect(update).toMatchObject({ current_score: 95, current_level: 'intermediate' })

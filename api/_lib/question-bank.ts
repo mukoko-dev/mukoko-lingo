@@ -1,9 +1,20 @@
 /**
- * Assessment Question Bank
- * Questions organized by skill and difficulty for language proficiency testing
+ * Assessment Question Bank — **server-side only**.
+ *
+ * This file carries every question's `correctAnswer`. It lived in
+ * `lib/data/assessment-questions.ts` until the client stopped grading, which
+ * shipped the whole answer key in the app bundle: anyone could read the
+ * answers out of the JS. Nothing under `app/`, `components/` or `lib/` may
+ * import it — the client receives questions through `/api/assessments/start`,
+ * stripped to `toPublicQuestion` below.
+ *
+ * Question selection also lives here rather than in the client, because the
+ * set a learner is issued is what their score is computed against: a caller
+ * that chooses its own questions chooses its own denominator.
  */
 
-import type { SkillName, ProficiencyLevel } from '../types/skills'
+import type { SkillName, ProficiencyLevel } from '../../lib/types/skills'
+import type { PublicAssessmentQuestion } from '../../lib/types/assessment'
 
 export interface AssessmentQuestion {
   id: string
@@ -1369,27 +1380,21 @@ export function getDiagnosticQuestions(language?: string, count: number = 10): A
   return shuffled.slice(0, count)
 }
 
-/**
- * Calculate score from answers
- */
-export function calculateAssessmentScore(
-  questions: AssessmentQuestion[],
-  answers: Record<string, string>
-): {
-  score: number
-  total: number
-  percentage: number
-  results: { question: AssessmentQuestion; userAnswer: string; correct: boolean }[]
-} {
-  const results = questions.map(q => ({
-    question: q,
-    userAnswer: answers[q.id] || '',
-    correct: answers[q.id] === q.correctAnswer,
-  }))
+/** The question as the client may see it: no answer, no explanation. */
+export function toPublicQuestion(q: AssessmentQuestion): PublicAssessmentQuestion {
+  return {
+    id: q.id,
+    skill: q.skill,
+    level: q.level,
+    type: q.type,
+    question: q.question,
+    options: q.options,
+    language: q.language,
+  }
+}
 
-  const score = results.filter(r => r.correct).length
-  const total = questions.length
-  const percentage = total > 0 ? Math.round((score / total) * 100) : 0
-
-  return { score, total, percentage, results }
+/** Look questions up by id, preserving the order the ids were issued in. */
+export function questionsByIds(ids: string[]): AssessmentQuestion[] {
+  const byId = new Map(assessmentQuestions.map((q) => [q.id, q]))
+  return ids.map((id) => byId.get(id)).filter((q): q is AssessmentQuestion => Boolean(q))
 }

@@ -1,7 +1,7 @@
 # Test Coverage Analysis
 
 **Last measured**: September 2026 · **Framework**: Jest 29 + jest-expo
-**Suites**: 45 · **Tests**: 510 · all passing
+**Suites**: 48 · **Tests**: 550 · all passing
 
 Regenerate the numbers below with `npm run test:coverage`. They are a snapshot,
 not a contract — the contract is the threshold block in `package.json`.
@@ -10,14 +10,17 @@ not a contract — the contract is the threshold block in `package.json`.
 
 | Metric | Threshold (`package.json`) | Actual | Margin |
 |---|---|---|---|
-| Statements | 47% | 51.6% | +4.6 |
-| Branches | 42% | 45.8% | +3.8 |
-| Functions | 43% | 45.0% | **+2.0** |
-| Lines | 48% | 53.3% | +5.3 |
+| Statements | 47% | 50.9% | +3.9 |
+| Branches | 42% | 45.4% | +3.4 |
+| Functions | 43% | 43.6% | **+0.6** |
+| Lines | 48% | 52.7% | +4.7 |
 
-Functions is the tight one: two percentage points of headroom is roughly one
-uncovered module away from a red build. Raise the thresholds when you add
-coverage, or the ratchet does nothing.
+Functions is the tight one, and it got tighter: **half a percentage point** of
+headroom now, down from two. Moving the question bank and its three fully
+covered helpers out of `lib/data/` into `api/_lib/` is most of the drop — the
+functions are still tested, but `api/**` is not in `collectCoverageFrom`, so
+they no longer count. That is this document's first point happening in
+practice, and the next uncovered module in `lib/**` will turn the build red.
 
 ### By area (statement coverage)
 
@@ -25,7 +28,7 @@ coverage, or the ratchet does nothing.
 |---|---|---|
 | `lib/workos` | 100% | Redirect allowlist — security boundary, fully pinned |
 | `lib/config` | 100% | API base URL resolution |
-| `lib/data` | 94% | Phrase, question bank and translation integrity |
+| `lib/data` | 100% | Phrase and translation integrity |
 | `lib/hooks` | 89% | Language, theme, UI language |
 | `lib/ai` | 70% | Client chat + moderation pre-check |
 | `lib/auth` | 65% | AuthKit PKCE flow, both platforms |
@@ -41,10 +44,11 @@ else runs in CI but counts for nothing:
 
 - **`api/**` (67 TypeScript modules)** — including every security boundary the
   app has: `auth-middleware.ts`, `chat-input.ts`, `tutor-prompt.ts`,
-  `moderation.ts`, `ai-provider.ts`, `assessment-grading.ts`. These *are*
-  tested (10 suites, listed in CLAUDE.md), and those tests are the reason the
-  prompt-injection, moderation and grading work can be trusted — but nothing
-  stops the next route from shipping with no test at all, because the
+  `moderation.ts`, `ai-provider.ts`, `assessment-grading.ts`,
+  `assessment-session.ts`, and the `question-bank.ts` answer key itself. These
+  *are* tested (14 suites, listed in CLAUDE.md), and those tests are the reason
+  the prompt-injection, moderation and grading work can be trusted — but
+  nothing stops the next route from shipping with no test at all, because the
   thresholds cannot see it.
 - **`app/**`** — every screen: auth flows, assessments, admin operations. No
   tests, no floor.
@@ -69,11 +73,14 @@ The listing in CLAUDE.md is the current index. The ones worth knowing by name:
 | `api/ai/__tests__/moderate-json.test.ts` | A reasoning model's `<think>` block cannot silently disable AI moderation |
 | `api/_lib/__tests__/ai-provider.test.ts` | Workers AI wiring, the two-part config gate, the circuit breaker |
 | `api/_lib/__tests__/jose-cjs.test.ts` | Guards the jose v6 ESM/CJS crash that once took sign-in down |
-| `api/_lib/__tests__/logger.test.ts` | Request data reaches a log as an argument, never as a `util.format` template |
 | `lib/workos/__tests__/config.test.ts` | Redirect allowlist, including the 172.16–172.31 private-range boundary |
 | `lib/ai/__tests__/prompt-injection.test.ts` | Allowlists hold; no caller text reaches the prompt |
-| `api/_lib/__tests__/assessment-grading.test.ts` | A score is computed from answers — a partial submission cannot claim 100%, and only a real assessment promotes a level |
-| `api/assessments/__tests__/submit-route.test.ts` | The submit route rejects a caller-supplied `score`/`passed` |
+| `api/_lib/__tests__/assessment-grading.test.ts` | A score is computed from answers, and only a real assessment promotes a level |
+| `api/_lib/__tests__/assessment-session.test.ts` | An issued quiz is single use, expiring, and belongs to one learner |
+| `api/assessments/__tests__/start-route.test.ts` | Issued questions carry no answer; the stored ids are the ids sent |
+| `api/assessments/__tests__/submit-route.test.ts` | Grading uses the **issued** set, so answering one of four is 25%; a caller-supplied `score`/`passed` is rejected |
+| `api/_lib/__tests__/question-bank-isolation.test.ts` | No client-side file imports the answer key — a bundling property no type check would catch |
+| `api/_lib/__tests__/logger.test.ts` | Request data reaches a log as an argument, never as a `util.format` template |
 | `scripts/release/__tests__/*` | The release automation cannot ship a hollow or half-bumped release |
 
 ## Gaps worth closing, in order
@@ -93,12 +100,14 @@ The listing in CLAUDE.md is the current index. The ones worth knowing by name:
 5. **Python analytics** — `api/analytics/tests/` covers helpers and imports;
    the four aggregation pipelines themselves are unpinned.
 
-*Closed since the last measurement*: assessment grading, which used to happen
-client-side with the route recording whatever score it was handed. It is now
-computed in `api/_lib/assessment-grading.ts` and covered by 35 tests — none of
-which move the coverage numbers below, because they live under `api/**`. That
-is this document's first point, demonstrated: the app's newest security
-boundary carries no coverage floor at all.
+*Closed since the last measurement*: assessment grading. First the score moved
+server-side; then a live run against the real question bank showed that was
+only half of it — the caller still chose *which* questions counted, so one
+correct answer scored 100%. The server now issues the quiz
+(`api/_lib/assessment-session.ts`) and grades the set it issued, and the answer
+key no longer ships to the client at all. Seventy-one tests cover it, none of
+which move the numbers above, because they live under `api/**`. That is this
+document's first point, demonstrated twice.
 
 ## Writing tests against `api/**`
 

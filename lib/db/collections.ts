@@ -18,6 +18,7 @@ import type {
   UserSkill,
   Assessment,
   UserAssessment,
+  AssessmentSession,
   LearningStandard,
   ModerationAlert,
   ShamwariConversation,
@@ -55,6 +56,9 @@ export const skills = async () => (await getDb()).collection<Skill>('skills')
 export const userSkills = async () => (await getDb()).collection<UserSkill>('user_skills')
 export const assessments = async () => (await getDb()).collection<Assessment>('assessments')
 export const userAssessments = async () => (await getDb()).collection<UserAssessment>('user_assessments')
+/** Quizzes the server has issued — see `api/_lib/assessment-session.ts`. */
+export const assessmentSessions = async () =>
+  (await getDb()).collection<AssessmentSession>('assessment_sessions')
 /**
  * lingo.learningStandards — the real, ecosystem-curated collection. The old
  * `learning_standards` name was a Postgres-era invention that never held a

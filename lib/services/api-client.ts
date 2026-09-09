@@ -9,6 +9,7 @@
 import { getSessionToken } from '@/lib/auth/workos-client'
 import { getApiBaseUrl } from '@/lib/config/api-base'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import type { AssessmentSessionResponse, AssessmentSubmitResponse } from '@/lib/types/assessment'
 
 // =============================================================================
 // Core HTTP Client with Exponential Backoff Retry
@@ -320,9 +321,18 @@ export const assessmentsApi = {
   /** Get assessment */
   getAssessment: (id: string) => apiGet<any>(`/assessments/${id}`),
 
-  /** Submit assessment */
-  submitAssessment: (data: Record<string, any>) =>
-    apiPost<any>('/assessments/submit', data),
+  /**
+   * Start an assessment — the server picks the questions and returns them
+   * without their answers. Its `session_id` is what makes the score
+   * trustworthy: submit grades against the issued set, not against whatever
+   * the client sends back.
+   */
+  startAssessment: (data: { skill_id: string; language?: string; count?: number; level?: string }) =>
+    apiPost<AssessmentSessionResponse>('/assessments/start', data),
+
+  /** Submit answers for an issued assessment. Requires its `session_id`. */
+  submitAssessment: (data: { session_id: string; answers: Record<string, string>; time_taken?: number }) =>
+    apiPost<AssessmentSubmitResponse>('/assessments/submit', data),
 
   /** Get user assessment history */
   getUserAssessments: () => apiGet<any[]>('/assessments/user'),

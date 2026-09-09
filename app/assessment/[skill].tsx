@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { CheckCircle, XCircle, ArrowRight, RotateCcw, Trophy } from 'lucide-react-native'
@@ -15,15 +16,19 @@ import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
 import { updateUserSkill } from '@/lib/storage/database'
 import { assessmentsApi } from '@/lib/services/api-client'
 import { useLearningLanguage } from '@/lib/hooks/useLearningLanguage'
-import {
-  getQuestionsForSkill,
-  getDiagnosticQuestions,
-  calculateAssessmentScore,
-  AssessmentQuestion,
-} from '@/lib/data/assessment-questions'
-import type { SkillName, ProficiencyLevel } from '@/lib/types/skills'
+import type {
+  AssessmentSubmitResponse,
+  PublicAssessmentQuestion,
+} from '@/lib/types/assessment'
 
-type Phase = 'quiz' | 'results'
+/**
+ * The questions arrive from `/api/assessments/start` without their answers,
+ * and the server grades the set it issued. That is what makes the score
+ * trustworthy — and it is why there is no per-question "Correct!" during the
+ * quiz any more: this screen genuinely does not know. The full review, with
+ * every correct answer and explanation, arrives in the submit response.
+ */
+type Phase = 'loading' | 'quiz' | 'submitting' | 'results' | 'error'
 
 export default function AssessmentScreen() {
   const { skill } = useLocalSearchParams<{ skill: string }>()
@@ -32,111 +37,126 @@ export default function AssessmentScreen() {
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme
   const { learningLanguage } = useLearningLanguage()
 
-  const [phase, setPhase] = useState<Phase>('quiz')
-  const [questions, setQuestions] = useState<AssessmentQuestion[]>([])
+  const [phase, setPhase] = useState<Phase>('loading')
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [questions, setQuestions] = useState<PublicAssessmentQuestion[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
-  const [showFeedback, setShowFeedback] = useState(false)
-  const [results, setResults] = useState<ReturnType<typeof calculateAssessmentScore> | null>(null)
+  const [results, setResults] = useState<AssessmentSubmitResponse | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [startedAt, setStartedAt] = useState(() => Date.now())
 
+  const startAssessment = useCallback(async () => {
+    setPhase('loading')
+    setErrorMessage(null)
+    try {
+      const { data } = await assessmentsApi.startAssessment({
+        skill_id: skill,
+        language: learningLanguage,
+      })
+      if (!data || !data.questions?.length) throw new Error('No questions were issued')
+
+      setSessionId(data.session_id)
+      setQuestions(data.questions)
+      setCurrentIndex(0)
+      setAnswers({})
+      setSelectedAnswer(null)
+      setResults(null)
+      setStartedAt(Date.now())
+      setPhase('quiz')
+    } catch (error) {
+      // The bank lives on the server now, so there is no offline fallback to
+      // drop back to: say so rather than showing an empty quiz.
+      console.warn(`[mukoko][assessment] Could not start assessment: ${String(error)}`)
+      setErrorMessage('Could not load this assessment. Check your connection and try again.')
+      setPhase('error')
+    }
+  }, [skill, learningLanguage])
+
   useEffect(() => {
-    loadQuestions()
-  }, [skill, learningLanguage])
-
-  const loadQuestions = useCallback(() => {
-    let qs: AssessmentQuestion[]
-    if (skill === 'diagnostic') {
-      qs = getDiagnosticQuestions(learningLanguage, 8)
-    } else {
-      qs = getQuestionsForSkill(skill as SkillName, 'beginner', learningLanguage, 5)
-    }
-
-    // If we don't have enough language-specific questions, get any language
-    if (qs.length < 3) {
-      if (skill === 'diagnostic') {
-        qs = getDiagnosticQuestions(undefined, 8)
-      } else {
-        qs = getQuestionsForSkill(skill as SkillName, 'beginner', undefined, 5)
-      }
-    }
-
-    setQuestions(qs)
-    setCurrentIndex(0)
-    setAnswers({})
-    setSelectedAnswer(null)
-    setShowFeedback(false)
-    setPhase('quiz')
-    setResults(null)
-    setStartedAt(Date.now())
-  }, [skill, learningLanguage])
+    startAssessment()
+  }, [startAssessment])
 
   const currentQuestion = questions[currentIndex]
 
   const handleSelectAnswer = (answer: string) => {
-    if (showFeedback) return
     setSelectedAnswer(answer)
   }
 
-  const handleConfirmAnswer = () => {
-    if (!selectedAnswer || !currentQuestion) return
-
-    setShowFeedback(true)
-    setAnswers(prev => ({
-      ...prev,
-      [currentQuestion.id]: selectedAnswer,
-    }))
-  }
-
   const handleNext = async () => {
+    if (!currentQuestion || !selectedAnswer) return
+
+    const recorded = { ...answers, [currentQuestion.id]: selectedAnswer }
+    setAnswers(recorded)
+
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(prev => prev + 1)
       setSelectedAnswer(null)
-      setShowFeedback(false)
-    } else {
-      // Assessment complete
-      const finalAnswers = { ...answers, [currentQuestion.id]: selectedAnswer! }
-      const scoreResult = calculateAssessmentScore(questions, finalAnswers)
-      setResults(scoreResult)
+      return
+    }
+
+    if (!sessionId) {
+      setErrorMessage('This assessment expired before it could be submitted. Please start again.')
+      setPhase('error')
+      return
+    }
+
+    setPhase('submitting')
+    try {
+      const { data } = await assessmentsApi.submitAssessment({
+        session_id: sessionId,
+        answers: recorded,
+        time_taken: Math.round((Date.now() - startedAt) / 1000),
+      })
+      if (!data) throw new Error('No result returned')
+
+      setResults(data)
       setPhase('results')
 
-      // The server regrades these answers and owns what is persisted — the
-      // local pass below only feeds device storage, which the tutor falls back
-      // to while `lingo.user_skills` is empty. Best-effort: a learner offline,
-      // or on a deployment without the API, still sees their result.
-      try {
-        await assessmentsApi.submitAssessment({
-          skill_id: skill,
-          answers: finalAnswers,
-          time_taken: Math.round((Date.now() - startedAt) / 1000),
-        })
-      } catch (error) {
-        console.warn(`[mukoko][assessment] Could not record submission: ${String(error)}`)
+      // Mirror the server's numbers into device storage, which the tutor falls
+      // back to while `lingo.user_skills` is sparse. The server's figures, not
+      // a second local grading pass — there is only one score now.
+      const perSkill = Object.entries(data.per_skill || {})
+      if (perSkill.length > 0) {
+        for (const [skillName, pct] of perSkill) await updateUserSkill(skillName, pct)
+      } else if (skill !== 'diagnostic') {
+        await updateUserSkill(skill, data.score)
       }
-
-      // Update skill scores
-      if (skill === 'diagnostic') {
-        // For diagnostic, update all skills based on questions answered
-        const skillScores: Record<string, { correct: number; total: number }> = {}
-        scoreResult.results.forEach(r => {
-          const s = r.question.skill
-          if (!skillScores[s]) skillScores[s] = { correct: 0, total: 0 }
-          skillScores[s].total++
-          if (r.correct) skillScores[s].correct++
-        })
-
-        for (const [skillName, data] of Object.entries(skillScores)) {
-          const pct = Math.round((data.correct / data.total) * 100)
-          await updateUserSkill(skillName, pct)
-        }
-      } else {
-        await updateUserSkill(skill, scoreResult.percentage)
-      }
+    } catch (error) {
+      console.warn(`[mukoko][assessment] Could not submit assessment: ${String(error)}`)
+      setErrorMessage('Your answers could not be submitted. Check your connection and try again.')
+      setPhase('error')
     }
   }
 
   const styles = createStyles(theme)
+
+  if (phase === 'loading' || phase === 'submitting') {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={styles.emptyText}>
+          {phase === 'submitting' ? 'Grading your answers…' : 'Preparing your assessment…'}
+        </Text>
+      </View>
+    )
+  }
+
+  if (phase === 'error') {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.emptyText}>{errorMessage ?? 'Something went wrong.'}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={startAssessment}>
+          <RotateCcw size={18} color={theme.primary} />
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.primaryButton} onPress={() => router.back()}>
+          <Text style={styles.primaryButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  }
 
   if (questions.length === 0) {
     return (
@@ -153,16 +173,16 @@ export default function AssessmentScreen() {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.resultsContent}>
         <View style={styles.resultsHeader}>
-          <View style={[styles.scoreRing, results.percentage >= 65 ? styles.scoreRingPass : styles.scoreRingFail]}>
-            <Text style={styles.scorePercent}>{results.percentage}%</Text>
+          <View style={[styles.scoreRing, results.passed ? styles.scoreRingPass : styles.scoreRingFail]}>
+            <Text style={styles.scorePercent}>{results.score}%</Text>
           </View>
           <Text style={styles.resultsTitle}>
-            {results.percentage >= 65 ? 'Great Job!' : 'Keep Practicing!'}
+            {results.passed ? 'Great Job!' : 'Keep Practicing!'}
           </Text>
           <Text style={styles.resultsSubtitle}>
-            {results.score} of {results.total} correct
+            {results.correct} of {results.total} correct
           </Text>
-          {results.percentage >= 65 && (
+          {results.passed && (
             <View style={styles.passedBadge}>
               <Trophy size={16} color="#ffffff" />
               <Text style={styles.passedBadgeText}>Assessment Passed</Text>
@@ -171,29 +191,36 @@ export default function AssessmentScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>Question Review</Text>
-        {results.results.map((r, index) => (
-          <View key={r.question.id} style={styles.reviewCard}>
-            <View style={styles.reviewHeader}>
-              {r.correct ? (
-                <CheckCircle size={20} color={theme.secondary} />
-              ) : (
-                <XCircle size={20} color="#ef4444" />
-              )}
-              <Text style={styles.reviewNumber}>Q{index + 1}</Text>
-            </View>
-            <Text style={styles.reviewQuestion}>{r.question.question}</Text>
-            {!r.correct && (
-              <View style={styles.reviewCorrection}>
-                <Text style={styles.reviewYourAnswer}>Your answer: {r.userAnswer}</Text>
-                <Text style={styles.reviewCorrectAnswer}>Correct: {r.question.correctAnswer}</Text>
+        {results.results.map((r, index) => {
+          // The question text is the copy this screen was issued; the verdict,
+          // the correct answer and the explanation all come from the server.
+          const asked = questions.find(q => q.id === r.questionId)
+          return (
+            <View key={r.questionId} style={styles.reviewCard}>
+              <View style={styles.reviewHeader}>
+                {r.correct ? (
+                  <CheckCircle size={20} color={theme.secondary} />
+                ) : (
+                  <XCircle size={20} color="#ef4444" />
+                )}
+                <Text style={styles.reviewNumber}>Q{index + 1}</Text>
               </View>
-            )}
-            <Text style={styles.reviewExplanation}>{r.question.explanation}</Text>
-          </View>
-        ))}
+              <Text style={styles.reviewQuestion}>{asked?.question ?? r.questionId}</Text>
+              {!r.correct && (
+                <View style={styles.reviewCorrection}>
+                  <Text style={styles.reviewYourAnswer}>
+                    Your answer: {r.userAnswer || 'Not answered'}
+                  </Text>
+                  <Text style={styles.reviewCorrectAnswer}>Correct: {r.correctAnswer}</Text>
+                </View>
+              )}
+              {r.explanation ? <Text style={styles.reviewExplanation}>{r.explanation}</Text> : null}
+            </View>
+          )
+        })}
 
         <View style={styles.resultsActions}>
-          <TouchableOpacity style={styles.retryButton} onPress={loadQuestions}>
+          <TouchableOpacity style={styles.retryButton} onPress={startAssessment}>
             <RotateCcw size={18} color={theme.primary} />
             <Text style={styles.retryButtonText}>Retake Assessment</Text>
           </TouchableOpacity>
@@ -204,8 +231,6 @@ export default function AssessmentScreen() {
       </ScrollView>
     )
   }
-
-  const isCorrect = selectedAnswer === currentQuestion?.correctAnswer
 
   return (
     <View style={styles.container}>
@@ -241,84 +266,40 @@ export default function AssessmentScreen() {
         <View style={styles.optionsContainer}>
           {currentQuestion.options.map((option, index) => {
             const isSelected = selectedAnswer === option
-            const isCorrectOption = showFeedback && option === currentQuestion.correctAnswer
-            const isWrongSelection = showFeedback && isSelected && !isCorrect
 
             return (
               <TouchableOpacity
                 key={index}
-                style={[
-                  styles.optionButton,
-                  isSelected && !showFeedback && styles.optionSelected,
-                  isCorrectOption && styles.optionCorrect,
-                  isWrongSelection && styles.optionWrong,
-                ]}
+                style={[styles.optionButton, isSelected && styles.optionSelected]}
                 onPress={() => handleSelectAnswer(option)}
-                disabled={showFeedback}
               >
                 <View style={styles.optionLabel}>
-                  <View
-                    style={[
-                      styles.optionDot,
-                      isSelected && !showFeedback && styles.optionDotSelected,
-                      isCorrectOption && styles.optionDotCorrect,
-                      isWrongSelection && styles.optionDotWrong,
-                    ]}
-                  >
-                    {isCorrectOption && <CheckCircle size={16} color="#ffffff" />}
-                    {isWrongSelection && <XCircle size={16} color="#ffffff" />}
-                  </View>
-                  <Text
-                    style={[
-                      styles.optionText,
-                      isCorrectOption && styles.optionTextCorrect,
-                      isWrongSelection && styles.optionTextWrong,
-                    ]}
-                  >
-                    {option}
-                  </Text>
+                  <View style={[styles.optionDot, isSelected && styles.optionDotSelected]} />
+                  <Text style={styles.optionText}>{option}</Text>
                 </View>
               </TouchableOpacity>
             )
           })}
         </View>
 
-        {/* Feedback */}
-        {showFeedback && (
-          <View style={[styles.feedbackCard, isCorrect ? styles.feedbackCorrect : styles.feedbackWrong]}>
-            <View style={styles.feedbackHeader}>
-              {isCorrect ? (
-                <CheckCircle size={20} color={theme.secondary} />
-              ) : (
-                <XCircle size={20} color="#ef4444" />
-              )}
-              <Text style={[styles.feedbackTitle, isCorrect ? styles.feedbackTitleCorrect : styles.feedbackTitleWrong]}>
-                {isCorrect ? 'Correct!' : 'Not quite right'}
-              </Text>
-            </View>
-            <Text style={styles.feedbackExplanation}>{currentQuestion.explanation}</Text>
-          </View>
-        )}
+        <Text style={styles.answerNote}>
+          Your answers are graded when you finish — you will see every correct
+          answer and why it is right on the results screen.
+        </Text>
       </ScrollView>
 
       {/* Action Button */}
       <View style={styles.actionSection}>
-        {!showFeedback ? (
-          <TouchableOpacity
-            style={[styles.primaryButton, !selectedAnswer && styles.primaryButtonDisabled]}
-            onPress={handleConfirmAnswer}
-            disabled={!selectedAnswer}
-          >
-            <Text style={styles.primaryButtonText}>Check Answer</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.primaryButton} onPress={handleNext}>
-            <Text style={styles.primaryButtonText}>
-              {currentIndex < questions.length - 1 ? 'Next Question' : 'See Results'}
-            </Text>
-            <ArrowRight size={18} color="#ffffff" />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={[styles.primaryButton, !selectedAnswer && styles.primaryButtonDisabled]}
+          onPress={handleNext}
+          disabled={!selectedAnswer}
+        >
+          <Text style={styles.primaryButtonText}>
+            {currentIndex < questions.length - 1 ? 'Next Question' : 'Finish & See Results'}
+          </Text>
+          <ArrowRight size={18} color="#ffffff" />
+        </TouchableOpacity>
       </View>
     </View>
   )
@@ -624,6 +605,14 @@ const createStyles = (theme: typeof lightTheme) =>
       borderWidth: 1,
       borderColor: theme.primary,
       gap: 8,
+    },
+    answerNote: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: theme.textMuted,
+      textAlign: 'center',
+      marginTop: 20,
+      paddingHorizontal: 8,
     },
     retryButtonText: {
       color: theme.primary,
