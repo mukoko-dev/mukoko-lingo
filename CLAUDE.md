@@ -160,6 +160,9 @@ nyuchi-lingo/
 │   │   ├── auth-middleware.ts    # WorkOS access-token validation + admin check
 │   │   ├── ai-provider.ts        # Workers AI transport + circuit breaker
 │   │   ├── assessment-grading.ts # Server-side scoring (pure; no DB, no HTTP)
+│   │   ├── assessment-session.ts # Issued-quiz rules (pure; single use, expiring)
+│   │   ├── question-bank.ts      # The questions AND answers — server-side only
+│   │   ├── skill-ids.ts          # Skill name/UUID resolution shared by the routes
 │   │   ├── doc-id.ts             # `_id` lookups for UUID-or-ObjectId collections
 │   │   ├── tutor-prompt.ts       # Server-side system prompt + score clamping
 │   │   ├── chat-input.ts         # Chat body validation (rejects `system` role)
@@ -171,7 +174,7 @@ nyuchi-lingo/
 │   ├── bookmarks/                # Bookmark management
 │   ├── profiles/                 # User profile CRUD
 │   ├── skills/                   # Skills data endpoints
-│   ├── assessments/              # Assessment endpoints (graded server-side)
+│   ├── assessments/              # Assessment endpoints (issued + graded server-side)
 │   ├── progress/                 # Progress tracking
 │   ├── study-sessions/           # Study session recording
 │   ├── ai/conversations/         # AI chat conversation + message storage
@@ -223,7 +226,8 @@ nyuchi-lingo/
 │   ├── workos/
 │   │   └── config.ts             # WorkOS AuthKit redirect URI configuration
 │   └── types/
-│       └── skills.ts             # Skills system TypeScript definitions
+│       ├── skills.ts             # Skills system TypeScript definitions
+│       └── assessment.ts         # Answer-free question + result shapes (types only)
 │
 ├── components/                   # Reusable React Native components
 │   ├── AppHeader.tsx             # Navigation header
@@ -322,6 +326,8 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 - `skills` - 5 core skills (pronunciation, vocabulary, grammar, comprehension, conversation) with i18n display names, plus an embedded `levels` array (5 proficiency levels, beginner → fluent)
 - `user_skills` - Current user proficiency per skill (score 0-100, read by AI tutor)
 - `assessments` - Assessment templates (diagnostic/formative/summative) with questions JSON
+- `assessment_sessions` - Quizzes the server has issued: `question_ids`, owner,
+  expiry, single-use flag. Grading reads this, not the request
 - `user_assessments` - User test results with answers, score, pass/fail
 - `learning_standards` - AI tutor configuration by proficiency level
 
@@ -364,9 +370,24 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 - **Formative** - Ongoing progress checks during learning
 - **Summative** - Skill mastery verification before unlock
 
-**Grading is server-side** (`api/_lib/assessment-grading.ts`, used by
-`POST /api/assessments/submit`). The client sends **answers only**; the route
-computes the score, the pass/fail and any level change:
+**Assessments are issued and graded server-side.** The client asks for a
+quiz, answers it, and is told the result; it never chooses the questions and
+never holds an answer.
+
+1. `POST /api/assessments/start` picks the questions, stores their ids in
+   `lingo.assessment_sessions`, and returns them **without `correctAnswer` or
+   `explanation`** (`toPublicQuestion`).
+2. `POST /api/assessments/submit` takes that `session_id` plus answers and
+   grades against the **issued** ids.
+
+The two-step flow is the security boundary, not ceremony. When the key was
+built from the ids a caller answered (`answerKeyFromBank(bank,
+Object.keys(answers))`), submitting one correct answer scored 1/1 = 100% and
+wrote `user_skills.current_score = 100`: the caller could not choose the
+numerator, but it could choose the denominator, which is just as good. The
+server now owns both.
+
+Details (`api/_lib/assessment-grading.ts`, `api/_lib/assessment-session.ts`):
 
 - A body carrying `score` or `passed` is **rejected with 400**, not ignored —
   the same posture as a client-supplied `system` role in `chat-input.ts`. The
@@ -374,11 +395,31 @@ computes the score, the pass/fail and any level change:
   and because `user_skills.current_score` is read by `tutor-prompt.ts` on every
   AI turn, a forged score also changed how Shamwari teaches.
 - The answer key comes from the `lingo.assessments` document when one exists
-  and carries `questions`; otherwise from the shared bank in
-  `lib/data/assessment-questions.ts`, keyed to the ids submitted. A submission
-  with no resolvable key is refused (422) rather than recorded as a hollow zero.
-- `total` is the size of the key, never the number of answers sent — one
-  correct answer out of ten is 10%, not 100%. Unknown ids are ignored.
+  and carries `questions`; otherwise from `api/_lib/question-bank.ts`. Either
+  way it is **restricted to the session's `question_ids`**. A submission with
+  no resolvable key is refused (422) rather than recorded as a hollow zero.
+- `total` is the size of the issued set, never the number of answers sent — one
+  correct answer out of five is 20%. An unanswered question is wrong; an id
+  that was never issued is not graded at all.
+- A session is **single use and expiring** (2 hours). The submit route claims
+  it with a conditional update before grading, so two concurrent submissions
+  cannot both grade the same quiz — a re-gradeable quiz is one that can be
+  retried until the answers come out right. Another learner's `session_id`
+  is a 404, not a 403, so responses cannot be used to enumerate sessions.
+- The caller may ask for a question `count`; it is clamped to 3–25 rather than
+  refused. The floor matters: a one-question quiz makes any correct answer a
+  perfect score.
+- **A persisted score cannot exceed what the questions could demonstrate.**
+  `ceilingForLevels` caps it at the top of the band *above* the hardest
+  question asked: beginner → 64, elementary → 79, intermediate → 89,
+  advanced/fluent → 100. `getDiagnosticQuestions` only ever selects
+  beginner-level questions, so a perfect diagnostic evidences elementary, and a
+  skill sampled with one four-option question can no longer write 100
+  ("fluent") into the row the tutor reads every turn. Retakes are unlimited and
+  keep the best score, which is what made that worth guessing at. The cap
+  limits what an attempt may claim; a higher score already earned on harder
+  questions is never revoked. The response carries `score_ceiling` and
+  `per_skill_ceiling` alongside the raw percentages.
 - **A level is only promoted by a real assessment document naming a
   `target_level`.** The bundled bank has no target level, so a bank-graded pass
   records a score and stops there.
@@ -388,15 +429,22 @@ computes the score, the pass/fail and any level change:
 - A diagnostic scores every skill its key covers, but promotes only the skill
   it was taken for.
 - `assessments._id` may be a UUID or an ObjectId (the collection is empty and
-  unseeded), so all three assessment routes resolve both shapes via
+  unseeded), so all the assessment routes resolve both shapes via
   `api/_lib/doc-id.ts`. The old ObjectId-only lookup meant a UUID id silently
   skipped promotion altogether.
 
-**Residual, by design**: the question bank ships in the client bundle, so a
-determined learner can read the answers. That is a cheating problem rather than
-privilege escalation — closing it means serving questions without their answers
-and moving per-question feedback to after submission, which the submit response
-already carries (`results`, `per_skill`).
+**The question bank is server-side.** `api/_lib/question-bank.ts` carries every
+`correctAnswer`; while it lived in `lib/data/assessment-questions.ts` the whole
+answer key shipped in the app bundle. Nothing under `app/`, `components/`,
+`lib/`, `constants/` or `web/` may import it —
+`api/_lib/__tests__/question-bank-isolation.test.ts` walks the source tree and
+fails if anything does, because a re-added import would break no type check and
+no other test.
+
+**What this costs**: the quiz screen can no longer show "Correct!" per question
+— it genuinely does not know. Every correct answer and explanation arrives in
+the submit response and is shown in the review. Assessments also now require
+connectivity; the screen surfaces a retry rather than a silent empty quiz.
 
 ### AI Integration (AI-First Architecture)
 
@@ -624,6 +672,20 @@ const { data: userSkills } = await skillsApi.getUserSkills()
 
 **Available API namespaces**: `profilesApi`, `phrasesApi`, `bookmarksApi`, `progressApi`, `skillsApi`, `assessmentsApi`, `standardsApi`, `moderationApi`, `guardrailsApi`, `aiApi`, `adminStatsApi`, `analyticsApi`
 
+Assessments are two calls, in this order — `submitAssessment` without a
+`session_id` from `startAssessment` is refused with a 400:
+
+```typescript
+const { data: quiz } = await assessmentsApi.startAssessment({ skill_id: 'vocabulary', language: 'shona' })
+// quiz.questions carry no correctAnswer — grade nothing locally
+const { data: result } = await assessmentsApi.submitAssessment({
+  session_id: quiz.session_id,
+  answers,
+  time_taken: seconds,
+})
+// result.results carries the correct answers and explanations, for the review
+```
+
 ### Server-Side (Vercel API Routes)
 
 ```typescript
@@ -666,7 +728,7 @@ built server-side (see AI Integration above).
   `components/**` — `api/**` and `scripts/**` tests run but do **not** count
   toward the thresholds, so the backend has no coverage floor
 
-**Test Suites** (45 suites, 510 tests). Run `npx jest --listTests` for the
+**Test Suites** (48 suites, 550 tests). Run `npx jest --listTests` for the
 current set; the security-relevant ones are worth knowing by name:
 
 *Backend (`api/**`)* — note these are **not** included in
@@ -685,9 +747,17 @@ current set; the security-relevant ones are worth knowing by name:
   answers: a partial submission cannot claim 100%, invented question ids are
   ignored, a retake never lowers a score, and only a real assessment document
   promotes a level
-- `api/assessments/__tests__/submit-route.test.ts` - The route rejects a
-  caller-supplied `score`/`passed`, writes `user_skills` against the
-  `skills._id` (not the bank's skill name), and resolves a UUID assessment id
+- `api/_lib/__tests__/assessment-session.test.ts` - An issued quiz is single
+  use, expires, and belongs to one learner; a question count is clamped rather
+  than trusted
+- `api/assessments/__tests__/start-route.test.ts` - Issued questions carry no
+  answer or explanation, and the ids stored are exactly the ids sent
+- `api/assessments/__tests__/submit-route.test.ts` - Grading uses the **issued**
+  question set, so answering one of four is 25% and not 100%; a
+  caller-supplied `score`/`passed` is rejected; `user_skills` is written
+  against the `skills._id`; a session cannot be graded twice
+- `api/_lib/__tests__/question-bank-isolation.test.ts` - Nothing under `app/`,
+  `components/`, `lib/`, `constants/` or `web/` imports the answer key
 - `api/_lib/__tests__/moderation.test.ts` - Server-side guardrails + alert writes
 - `api/ai/__tests__/moderate-json.test.ts` - Verdict extraction survives a
   reasoning model's `<think>` block (a bad match fails open, silently dropping
@@ -704,7 +774,8 @@ current set; the security-relevant ones are worth knowing by name:
 - `lib/ai/__tests__/chat-service.test.ts` - Chat client + moderation integration
 - `lib/ai/__tests__/moderation.test.ts` - Client-side pre-check
 - `lib/auth/__tests__/workos-client.test.ts` / `.native.test.ts` - AuthKit flow, per platform
-- `lib/data/__tests__/*` - Phrase, question bank and translation integrity
+- `lib/data/__tests__/*` - Phrase and translation integrity (the question bank
+  moved to `api/_lib/`, and its suite with it)
 - `lib/db/__tests__/*-shape.test.ts` - Document ↔ API shape mapping
 - `lib/services/__tests__/*` - API client, SRS, XP, daily lesson
 - `lib/storage/__tests__/database.test.ts` - Bookmarks, progress, skills, sessions

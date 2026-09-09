@@ -1,11 +1,18 @@
+/**
+ * The question bank, which now lives server-side because it carries every
+ * `correctAnswer`. Scoring moved to `assessment-grading.ts`, so the old
+ * `calculateAssessmentScore` cases live there instead.
+ */
+
 import {
   assessmentQuestions,
   getQuestionsForSkill,
   getDiagnosticQuestions,
-  calculateAssessmentScore,
-} from '../assessment-questions'
+  questionsByIds,
+  toPublicQuestion,
+} from '../question-bank'
 
-describe('assessment-questions', () => {
+describe('question-bank', () => {
   describe('question bank', () => {
     it('contains questions', () => {
       expect(assessmentQuestions.length).toBeGreaterThan(0)
@@ -86,38 +93,44 @@ describe('assessment-questions', () => {
     })
   })
 
-  describe('calculateAssessmentScore', () => {
-    it('calculates correct score', () => {
-      const qs = assessmentQuestions.slice(0, 3)
-      const answers: Record<string, string> = {}
-      // Answer all correctly
-      qs.forEach(q => { answers[q.id] = q.correctAnswer })
+  describe('toPublicQuestion', () => {
+    it('removes the answer and the explanation', () => {
+      // The whole point of moving this module: what crosses to a client must
+      // not let the learner answer without knowing anything.
+      const pub = toPublicQuestion(assessmentQuestions[0]) as unknown as Record<string, unknown>
 
-      const result = calculateAssessmentScore(qs, answers)
-      expect(result.score).toBe(3)
-      expect(result.total).toBe(3)
-      expect(result.percentage).toBe(100)
-      expect(result.results.every(r => r.correct)).toBe(true)
+      // The key set, not a substring search: for multiple choice the correct
+      // answer is necessarily one of the options. What must not survive is any
+      // way to tell *which* option it is.
+      expect(Object.keys(pub).sort()).toEqual(
+        ['id', 'language', 'level', 'options', 'question', 'skill', 'type']
+      )
+      expect(pub.options).toEqual(assessmentQuestions[0].options)
     })
 
-    it('handles wrong answers', () => {
-      const qs = assessmentQuestions.slice(0, 2)
-      const answers: Record<string, string> = {
-        [qs[0].id]: 'wrong answer',
-        [qs[1].id]: qs[1].correctAnswer,
-      }
+    it('keeps everything needed to answer', () => {
+      const pub = toPublicQuestion(assessmentQuestions[0])
 
-      const result = calculateAssessmentScore(qs, answers)
-      expect(result.score).toBe(1)
-      expect(result.total).toBe(2)
-      expect(result.percentage).toBe(50)
+      expect(pub.id).toBe(assessmentQuestions[0].id)
+      expect(pub.question).toBe(assessmentQuestions[0].question)
+      expect(pub.skill).toBe(assessmentQuestions[0].skill)
+      expect(pub.type).toBe(assessmentQuestions[0].type)
+    })
+  })
+
+  describe('questionsByIds', () => {
+    it('returns the questions in the order they were issued', () => {
+      const ids = [assessmentQuestions[2].id, assessmentQuestions[0].id]
+
+      expect(questionsByIds(ids).map(q => q.id)).toEqual(ids)
     })
 
-    it('handles no answers', () => {
-      const qs = assessmentQuestions.slice(0, 2)
-      const result = calculateAssessmentScore(qs, {})
-      expect(result.score).toBe(0)
-      expect(result.percentage).toBe(0)
+    it('drops ids the bank no longer has', () => {
+      // A session issued before a bank edit must not resolve to undefined
+      // entries that would then be graded as unanswerable.
+      expect(questionsByIds(['nope', assessmentQuestions[0].id]).map(q => q.id)).toEqual([
+        assessmentQuestions[0].id,
+      ])
     })
   })
 })

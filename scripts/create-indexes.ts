@@ -28,6 +28,13 @@ async function main() {
   await db.collection('xp_events').createIndex({ user_id: 1, event_date: 1 })
   await db.collection('study_sessions').createIndex({ user_id: 1, session_date: 1 })
 
+  // Issued quizzes: looked up by _id on submit, and swept once they expire.
+  // The TTL index is what keeps the collection from growing without bound —
+  // a session is worthless the moment it lapses.
+  await db.collection('assessment_sessions').createIndex({ user_id: 1, created_at: -1 })
+  await db.collection('assessment_sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 86400 })
+  await db.collection('user_assessments').createIndex({ user_id: 1, completed_at: -1 })
+
   console.log('Indexes created.')
   process.exit(0)
 }

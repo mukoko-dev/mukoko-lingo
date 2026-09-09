@@ -1,21 +1,24 @@
 /**
- * Assessment submission — graded **server-side**.
+ * Assessment submission — graded **server-side, against the questions the
+ * server issued**.
  *
- * The caller sends answers. It does not send a score: this route computes one
- * from an answer key it resolves itself, and only that number is persisted or
- * used to promote a skill level. A body carrying `score` or `passed` is
- * rejected rather than ignored, on the same reasoning as the client-supplied
- * `system` role in `api/_lib/chat-input.ts` — a caller sending it has either
- * misunderstood the contract or is probing it, and both are worth surfacing.
+ * The caller sends a `session_id` and answers. It does not send a score, and
+ * it does not decide which questions count: both were the ways a learner could
+ * write their own `user_skills.current_score`, which `api/_lib/tutor-prompt.ts`
+ * reads on every AI turn, so a forged score changes how Shamwari teaches.
  *
- * This matters beyond unlocking content: `user_skills.current_score` is read
- * by `api/_lib/tutor-prompt.ts` for every AI turn, so a forged score changes
- * how Shamwari teaches that learner.
- *
- * The answer key comes from the `lingo.assessments` document when one exists
- * and carries questions; otherwise from the shared bank in
- * `lib/data/assessment-questions.ts`, which is what the app builds its
- * assessments from today.
+ * - A body carrying `score` or `passed` is rejected rather than ignored, on
+ *   the same reasoning as a client-supplied `system` role in
+ *   `api/_lib/chat-input.ts`: a caller sending it has either misunderstood the
+ *   contract or is probing it.
+ * - The answer key is the `question_ids` of the session — the set
+ *   `/api/assessments/start` chose. Answering one of five questions is 20%,
+ *   not 100%, because `total` no longer depends on what was submitted.
+ * - A session is single use and expires, so a quiz cannot be re-graded until
+ *   the answers come out right.
+ * - A persisted score is capped by the difficulty of the questions asked.
+ *   Diagnostics are drawn entirely from beginner-level questions, so a perfect
+ *   diagnostic evidences elementary, not fluency — see `ceilingForLevels`.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
@@ -23,7 +26,8 @@ import { handleCors } from '../_lib/cors'
 import { requireAuth } from '../_lib/auth-middleware'
 import { createLogger } from '../_lib/logger'
 import { findById } from '../_lib/doc-id'
-import { userAssessments, assessments, userSkills, skills } from '../_lib/mongo'
+import { resolveSkillIds } from '../_lib/skill-ids'
+import { assessmentSessions, userAssessments, assessments, userSkills, skills } from '../_lib/mongo'
 import {
   sanitizeAnswers,
   answerKeyFromAssessment,
@@ -33,33 +37,10 @@ import {
   resolveSkillUpdate,
   InvalidSubmissionError,
 } from '../_lib/assessment-grading'
-import { assessmentQuestions } from '../../lib/data/assessment-questions'
+import { assertSessionUsable, InvalidSessionError } from '../_lib/assessment-session'
+import { assessmentQuestions } from '../_lib/question-bank'
 
 const log = createLogger('assessments')
-
-/**
- * `user_skills.skill_id` is a `skills._id` UUID, which the tutor prompt joins
- * back to a name; the bundled question bank labels skills by name. Writing a
- * name into that column would create rows every reader silently ignores, so
- * callers may send either and the server resolves to the id.
- */
-async function resolveSkillIds(
-  skillsCol: { find: (filter: any) => { toArray: () => Promise<any[]> } },
-  values: string[]
-): Promise<Map<string, string>> {
-  const wanted = values.filter(Boolean)
-  if (wanted.length === 0) return new Map()
-
-  const docs = await skillsCol.find({ $or: [{ _id: { $in: wanted } }, { name: { $in: wanted } }] }).toArray()
-
-  const byValue = new Map<string, string>()
-  for (const doc of docs) {
-    const id = String(doc._id)
-    if (wanted.includes(id)) byValue.set(id, id)
-    if (typeof doc.name === 'string' && wanted.includes(doc.name)) byValue.set(doc.name, id)
-  }
-  return byValue
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return
@@ -69,21 +50,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await requireAuth(req)
     const body = (req.body || {}) as Record<string, unknown>
 
-    // Not silently dropped: a caller sending these believes it decides the
-    // outcome, and that belief is exactly what this route no longer honours.
     if ('score' in body || 'passed' in body) {
       return res.status(400).json({
         error: 'score and passed are computed server-side; submit answers only',
       })
     }
 
-    const skillId = typeof body.skill_id === 'string' ? body.skill_id : null
-    if (!skillId) return res.status(400).json({ error: 'skill_id is required' })
+    const sessionId = typeof body.session_id === 'string' ? body.session_id : null
+    if (!sessionId) {
+      return res.status(400).json({
+        error: 'session_id is required; start the assessment with POST /api/assessments/start',
+      })
+    }
 
-    const assessmentId = typeof body.assessment_id === 'string' ? body.assessment_id : null
-    const timeTaken = typeof body.time_taken === 'number' && Number.isFinite(body.time_taken)
-      ? Math.max(0, Math.round(body.time_taken))
-      : null
+    const timeTaken =
+      typeof body.time_taken === 'number' && Number.isFinite(body.time_taken)
+        ? Math.max(0, Math.round(body.time_taken))
+        : null
 
     let answers: Record<string, string>
     try {
@@ -95,22 +78,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw error
     }
 
-    // The assessment document is optional — the app assembles quizzes from the
-    // shared bank — but when one exists it owns the key, the pass mark and the
-    // level a pass unlocks.
-    const assessmentsCol = await assessments()
-    const assessment = assessmentId ? await findById<any>(assessmentsCol, assessmentId) : null
+    const sessionsCol = await assessmentSessions()
+    let session
+    try {
+      session = assertSessionUsable((await sessionsCol.findOne({ _id: sessionId })) as any, user.personId)
+    } catch (error) {
+      if (error instanceof InvalidSessionError) {
+        return res.status(error.status).json({ error: error.message })
+      }
+      throw error
+    }
 
-    const fromAssessment = answerKeyFromAssessment(assessment)
-    const answerKey = fromAssessment.length > 0
-      ? fromAssessment
-      : answerKeyFromBank(assessmentQuestions, Object.keys(answers))
+    // Claim the session before grading. A concurrent second submit finds it
+    // already claimed and is refused, rather than both grading the same quiz.
+    const claim = await sessionsCol.findOneAndUpdate(
+      { _id: sessionId, submitted_at: null },
+      { $set: { submitted_at: new Date() } }
+    )
+    if (!claim || (typeof claim === 'object' && 'value' in claim && !claim.value)) {
+      return res.status(409).json({ error: 'This assessment has already been submitted' })
+    }
+
+    const assessmentsCol = await assessments()
+    const assessment = session.assessment_id ? await findById<any>(assessmentsCol, session.assessment_id) : null
+
+    // The key covers exactly what was issued: an unanswered question is wrong,
+    // and an id that was never issued is not graded at all.
+    const issued = new Set(session.question_ids)
+    const fromAssessment = answerKeyFromAssessment(assessment).filter((entry) => issued.has(entry.questionId))
+    const answerKey =
+      fromAssessment.length > 0 ? fromAssessment : answerKeyFromBank(assessmentQuestions, session.question_ids)
 
     if (answerKey.length === 0) {
-      // Recording a hollow zero would be worse than refusing: it would look
-      // like a failed attempt the learner actually made.
+      // The session named questions neither source can grade — a bank edited
+      // between issue and submit. Recording a hollow zero would look like a
+      // failed attempt the learner made.
       log.error(
-        `No answer key for submission by ${user.personId} (assessment_id=${assessmentId ?? 'none'}, ${Object.keys(answers).length} answers)`
+        `No answer key for session ${sessionId} (${session.question_ids.length} issued, assessment=${session.assessment_id ?? 'none'})`
       )
       return res.status(422).json({ error: 'No answer key found for these questions' })
     }
@@ -118,23 +122,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = gradeAnswers(answerKey, answers, resolvePassingScore(assessment))
     const now = new Date()
 
-    // A diagnostic spans several skills, so score each one the key covers.
-    // Names come from the key entries, the body's skill_id may be either an id
-    // or a name, and both resolve to a `skills._id` before anything is written.
     const skillsCol = await skills()
     const perSkillNames = Object.keys(result.perSkill)
-    const resolved = await resolveSkillIds(skillsCol, [skillId, ...perSkillNames])
-    const primarySkillId = resolved.get(skillId) ?? null
+    const resolved = await resolveSkillIds(skillsCol, [session.skill_id, ...perSkillNames])
+    const primarySkillId = session.resolved_skill_id ?? resolved.get(session.skill_id) ?? null
 
-    const skillResults = perSkillNames.length > 0
-      ? perSkillNames.map((name) => ({ name, skillId: resolved.get(name) ?? null, percentage: result.perSkill[name] }))
-      : [{ name: skillId, skillId: primarySkillId, percentage: result.percentage }]
+    // A diagnostic spans several skills, so score each one the key covers.
+    const skillResults =
+      perSkillNames.length > 0
+        ? perSkillNames.map((name) => ({
+            name,
+            skillId: resolved.get(name) ?? null,
+            percentage: result.perSkill[name],
+            // Per skill, not overall: a diagnostic can ask one skill a harder
+            // question than another, and each score is capped by its own.
+            ceiling: result.perSkillCeiling[name],
+          }))
+        : [{ name: session.skill_id, skillId: primarySkillId, percentage: result.percentage, ceiling: result.ceiling }]
 
     const userAssessmentsCol = await userAssessments()
     const insertResult = await userAssessmentsCol.insertOne({
       user_id: user.personId,
-      assessment_id: assessmentId,
-      skill_id: primarySkillId ?? skillId,
+      session_id: sessionId,
+      assessment_id: session.assessment_id,
+      skill_id: primarySkillId ?? session.skill_id,
       answers,
       score: result.percentage,
       passed: result.passed,
@@ -163,6 +174,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         percentage: entry.percentage,
         passed: entry.percentage >= resolvePassingScore(assessment),
         assessment: promotable,
+        ceiling: entry.ceiling,
       })
       if (!update) continue
 
@@ -179,16 +191,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       data: {
         id: String(insertResult.insertedId),
         user_id: user.personId,
-        assessment_id: assessmentId,
-        skill_id: primarySkillId ?? skillId,
+        session_id: sessionId,
+        assessment_id: session.assessment_id,
+        skill_id: primarySkillId ?? session.skill_id,
         score: result.percentage,
         correct: result.score,
         total: result.total,
         passed: result.passed,
-        // Returned so a client can show a review without shipping the answer
-        // key in its own bundle.
+        // The answers, released now that the attempt is closed — this is what
+        // lets the client show a review without ever holding the key itself.
         results: result.perQuestion,
         per_skill: result.perSkill,
+        // What the questions asked could demonstrate. A perfect run on
+        // beginner questions is a perfect run on beginner questions.
+        score_ceiling: result.ceiling,
+        per_skill_ceiling: result.perSkillCeiling,
         skills_updated: updatedSkills,
         level_achieved: levelAchieved,
         time_taken: timeTaken,
