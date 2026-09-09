@@ -971,7 +971,7 @@ When creating new completion summaries, migration docs, or work records:
 
 ## Project Status
 
-**Current Version**: 0.2.0 (2026-09-08)
+**Current Version**: 0.3.0 (2026-09-09)
 **Framework**: Expo SDK 57 / React Native 0.86 / React 19
 **Backend**: MongoDB + WorkOS AuthKit + Vercel Serverless
 **AI**: Cloudflare Workers AI (`@cf/qwen/qwen3-30b-a3b-fp8`) via Cloudflare AI Gateway

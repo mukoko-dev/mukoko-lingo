@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Nothing yet._
+
+---
+
+## [0.3.0] — 2026-09-09
+
 ### Security
 - **The server issues the assessment, not just the score** — grading moved
   server-side in v0.2.0, but the answer key was still built from the question
@@ -60,9 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `user_assessments` rows carry the `session_id` they were graded under.
 - `scripts/create-indexes.ts` adds an `assessment_sessions` TTL index, so
   lapsed quizzes are swept rather than accumulating.
-
-
-_Nothing yet._
 
 ---
 
