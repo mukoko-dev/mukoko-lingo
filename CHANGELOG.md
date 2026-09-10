@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Nothing yet._
+
+---
+
+## [0.4.0] — 2026-09-10
+
 ### Added
 - **31 intermediate and advanced assessment questions** (`api/_lib/question-bank.ts`),
   taking the bank from 95 to 126 — intermediate 24 → 42, advanced 16 → 28.
@@ -26,9 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Ndebele, plus pragmatic items (declining without loss of face, Shikamoo →
   Marahaba, 你吃了吗 as a greeting) that reward comprehension over vocabulary
   recall.
-
-
-_Nothing yet._
 
 ---
 

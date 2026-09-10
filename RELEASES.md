@@ -122,7 +122,7 @@ Mukoko Lingo follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PA
 - **MINOR** — new features, backwards-compatible
 - **PATCH** — bug fixes, security patches, small improvements
 
-### Current Version: 0.3.0
+### Current Version: 0.4.0
 
 ## Release channels
 
@@ -178,6 +178,7 @@ git checkout -b hotfix/short-description
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.4.0 | 2026-09-10 | See [CHANGELOG](CHANGELOG.md) |
 | 0.3.0 | 2026-09-09 | See [CHANGELOG](CHANGELOG.md) |
 | 0.2.0 | 2026-09-08 | See [CHANGELOG](CHANGELOG.md) |
 | 0.1.1 | 2026-09-01 | See [CHANGELOG](CHANGELOG.md) |
