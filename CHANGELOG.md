@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **31 intermediate and advanced assessment questions** (`api/_lib/question-bank.ts`),
+  taking the bank from 95 to 126 — intermediate 24 → 42, advanced 16 → 28.
+  Weighted to the cells that could not fill a quiz at all: Chinese conversation
+  had **no** questions below advanced, and Swahili pronunciation had one or two
+  at every level. Every skill in every language can now fill an intermediate
+  and an advanced quiz, which `question-bank.test.ts` pins — a cell below
+  `MIN_QUESTIONS` silently issues a shorter quiz, and the v0.3.0 difficulty cap
+  then reads that as weaker evidence, so coverage is now load-bearing rather
+  than cosmetic.
+
+  Content covers tone sandhi and 把/过/measure words in Chinese, penultimate
+  stress and noun-class concord in Swahili, the negative circumfix and
+  applicative extension in Shona, and ukuthi clauses and class-2 agreement in
+  Ndebele, plus pragmatic items (declining without loss of face, Shikamoo →
+  Marahaba, 你吃了吗 as a greeting) that reward comprehension over vocabulary
+  recall.
+
+
 _Nothing yet._
 
 ---

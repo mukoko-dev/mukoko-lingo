@@ -4,6 +4,7 @@
  * `calculateAssessmentScore` cases live there instead.
  */
 
+import type { ProficiencyLevel, SkillName } from '../../../lib/types/skills'
 import {
   assessmentQuestions,
   getQuestionsForSkill,
@@ -11,6 +12,9 @@ import {
   questionsByIds,
   toPublicQuestion,
 } from '../question-bank'
+
+const SKILLS: SkillName[] = ['pronunciation', 'vocabulary', 'grammar', 'comprehension', 'conversation']
+const LANGUAGES = ['shona', 'ndebele', 'swahili', 'chinese']
 
 describe('question-bank', () => {
   describe('question bank', () => {
@@ -90,6 +94,49 @@ describe('question-bank', () => {
     it('respects the count limit', () => {
       const qs = getDiagnosticQuestions(undefined, 3)
       expect(qs.length).toBeLessThanOrEqual(3)
+    })
+  })
+
+  describe('coverage', () => {
+    // `MIN_QUESTIONS` in assessment-session.ts is 3, so a cell with fewer than
+    // that cannot fill a quiz and the learner silently gets a shorter one —
+    // which the difficulty cap then reads as weaker evidence. Coverage is a
+    // property of the bank, not of the code that draws from it.
+    const MIN_PER_CELL = 3
+
+    it.each(['intermediate', 'advanced'] as ProficiencyLevel[])(
+      'can fill a %s quiz for every skill in every language',
+      (level) => {
+        const thin: string[] = []
+        for (const language of LANGUAGES) {
+          for (const skill of SKILLS) {
+            const available = getQuestionsForSkill(skill, level, language, 999).length
+            if (available < MIN_PER_CELL) thin.push(`${language}/${skill}: ${available}`)
+          }
+        }
+
+        expect(thin).toEqual([])
+      }
+    )
+
+    it('offers enough beginner questions for a diagnostic in each language', () => {
+      // Diagnostics draw only beginner questions, and score every skill they
+      // touch — a one-question sample is what the difficulty cap exists to
+      // contain.
+      for (const language of LANGUAGES) {
+        expect(getDiagnosticQuestions(language, 99).length).toBeGreaterThanOrEqual(MIN_PER_CELL)
+      }
+    })
+
+    it('labels every question with a known level', () => {
+      const levels = new Set(assessmentQuestions.map((q) => q.level))
+
+      expect([...levels].sort()).toEqual(
+        ['advanced', 'beginner', 'elementary', 'fluent', 'intermediate'].filter((l) => levels.has(l as ProficiencyLevel))
+      )
+      // An unknown or missing level silently caps a score at the beginner
+      // ceiling, so it must never happen quietly.
+      expect(assessmentQuestions.every((q) => typeof q.level === 'string' && q.level.length > 0)).toBe(true)
     })
   })
 

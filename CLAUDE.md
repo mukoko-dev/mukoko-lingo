@@ -728,7 +728,7 @@ built server-side (see AI Integration above).
   `components/**` — `api/**` and `scripts/**` tests run but do **not** count
   toward the thresholds, so the backend has no coverage floor
 
-**Test Suites** (48 suites, 550 tests). Run `npx jest --listTests` for the
+**Test Suites** (48 suites, 554 tests). Run `npx jest --listTests` for the
 current set; the security-relevant ones are worth knowing by name:
 
 *Backend (`api/**`)* — note these are **not** included in
@@ -758,6 +758,10 @@ current set; the security-relevant ones are worth knowing by name:
   against the `skills._id`; a session cannot be graded twice
 - `api/_lib/__tests__/question-bank-isolation.test.ts` - Nothing under `app/`,
   `components/`, `lib/`, `constants/` or `web/` imports the answer key
+- `api/_lib/__tests__/question-bank.test.ts` - Bank integrity, and that every
+  skill in every language can fill an intermediate and an advanced quiz: a cell
+  below `MIN_QUESTIONS` silently issues a shorter quiz, which the difficulty
+  cap then reads as weaker evidence
 - `api/_lib/__tests__/moderation.test.ts` - Server-side guardrails + alert writes
 - `api/ai/__tests__/moderate-json.test.ts` - Verdict extraction survives a
   reasoning model's `<think>` block (a bad match fails open, silently dropping
