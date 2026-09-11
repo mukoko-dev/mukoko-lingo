@@ -47,9 +47,26 @@ function bumpVersionTs(content, version) {
 function bumpReleasesMd(content, version, date) {
   let next = content.replace(/(### Current Version: )v?[\d.]+/, `$1${version}`)
   // Newest first, directly under the table header.
+  //
+  // RELEASES.md is Prettier-formatted, so the header and every row carry
+  // padding to the widest cell in each column. Match the header loosely and
+  // pad the row we insert to the same widths: an unpadded row would fail
+  // `prettier --check` and markdownlint MD060 on the very next pull request.
   next = next.replace(
-    /(\| Version \| Date \| Highlights \|\n\|[-| ]+\|\n)/,
-    `$1| ${version} | ${date} | See [CHANGELOG](CHANGELOG.md) |\n`
+    /\|[ \t]*Version[ \t]*\|[ \t]*Date[ \t]*\|[ \t]*Highlights[ \t]*\|\r?\n\|[-:| \t]+\|\r?\n/,
+    (block) => {
+      const header = block.split('\n')[0]
+      const widths = header
+        .trim()
+        .slice(1, -1)
+        .split('|')
+        .map((cell) => cell.length - 2)
+      const cells = [version, date, 'See [CHANGELOG](CHANGELOG.md)']
+      const row = `|${cells
+        .map((cell, i) => ` ${cell.padEnd(Math.max(widths[i] || 0, cell.length))} `)
+        .join('|')}|`
+      return `${block}${row}\n`
+    }
   )
   return next
 }
