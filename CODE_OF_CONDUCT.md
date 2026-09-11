@@ -16,19 +16,19 @@ diverse, inclusive, and healthy community.
 
 Examples of behavior that contributes to a positive environment:
 
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Accepting responsibility and apologizing to those affected by our mistakes
-* Focusing on what is best not just for us as individuals, but for the community
+- Demonstrating empathy and kindness toward other people
+- Being respectful of differing opinions, viewpoints, and experiences
+- Giving and gracefully accepting constructive feedback
+- Accepting responsibility and apologizing to those affected by our mistakes
+- Focusing on what is best not just for us as individuals, but for the community
 
 Examples of unacceptable behavior:
 
-* The use of sexualized language or imagery, and sexual attention or advances
-* Trolling, insulting or derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information without explicit permission
-* Other conduct which could reasonably be considered inappropriate
+- The use of sexualized language or imagery, and sexual attention or advances
+- Trolling, insulting or derogatory comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information without explicit permission
+- Other conduct which could reasonably be considered inappropriate
 
 ## Ubuntu Philosophy
 
@@ -39,7 +39,7 @@ from communal benefit. We build technology sovereignty for Africa together.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the project team at **conduct@nyuchi.com**.
+reported to the project team at **<conduct@nyuchi.com>**.
 
 All complaints will be reviewed and investigated promptly and fairly. The
 project team is obligated to maintain confidentiality with regard to the

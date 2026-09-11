@@ -48,15 +48,15 @@ yields `0.1.1`, never `0.0.2`.
 last `v*` tag and the merge commit, and takes the largest bump any of them asks
 for:
 
-| Commit type | Bump | Changelog group |
-|---|---|---|
-| `feat:` | minor | Added |
-| `fix:` | patch | Fixed |
-| `perf:`, `refactor:`, `revert:` | patch | Changed |
-| any `(security)` scope | patch | Security |
-| `docs:`, `chore:`, `ci:`, `test:`, `style:`, `build:` | **none** | — |
-| `type!:` or a `BREAKING CHANGE:` footer | major | — |
-| anything not matching `type(scope): subject` | **none** | — |
+| Commit type                                           | Bump     | Changelog group |
+| ----------------------------------------------------- | -------- | --------------- |
+| `feat:`                                               | minor    | Added           |
+| `fix:`                                                | patch    | Fixed           |
+| `perf:`, `refactor:`, `revert:`                       | patch    | Changed         |
+| any `(security)` scope                                | patch    | Security        |
+| `docs:`, `chore:`, `ci:`, `test:`, `style:`, `build:` | **none** | —               |
+| `type!:` or a `BREAKING CHANGE:` footer               | major    | —               |
+| anything not matching `type(scope): subject`          | **none** | —               |
 
 Two consequences worth knowing:
 
@@ -70,16 +70,16 @@ Two consequences worth knowing:
 
 ### What the job writes
 
-| File | Field |
-|------|-------|
-| `package.json` | `version` |
-| `web/package.json` | `version` |
-| `package-lock.json`, `web/package-lock.json` | `version` + `packages[""].version` |
-| `app.json` | `expo.version` |
-| `constants/Version.ts` | `APP_VERSION` |
-| `CHANGELOG.md` | `[Unreleased]` → `[X.Y.Z] — date`, new empty `[Unreleased]` |
-| `RELEASES.md` | Current Version + a Version History row |
-| `CLAUDE.md` | Project Status → Current Version |
+| File                                         | Field                                                       |
+| -------------------------------------------- | ----------------------------------------------------------- |
+| `package.json`                               | `version`                                                   |
+| `web/package.json`                           | `version`                                                   |
+| `package-lock.json`, `web/package-lock.json` | `version` + `packages[""].version`                          |
+| `app.json`                                   | `expo.version`                                              |
+| `constants/Version.ts`                       | `APP_VERSION`                                               |
+| `CHANGELOG.md`                               | `[Unreleased]` → `[X.Y.Z] — date`, new empty `[Unreleased]` |
+| `RELEASES.md`                                | Current Version + a Version History row                     |
+| `CLAUDE.md`                                  | Project Status → Current Version                            |
 
 The first five are **required**: if one of them stops matching its marker (a
 reformat, a rename), the job fails loudly rather than shipping a half-bumped
@@ -127,14 +127,16 @@ Mukoko Lingo follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PA
 ## Release channels
 
 ### Production
+
 - **Branch**: `main`
 - **Environment**: Vercel Production
-- **URL**: https://lingo.mukoko.com (Expo web), `/console` (Next.js web app)
+- **URL**: <https://lingo.mukoko.com> (Expo web), `/console` (Next.js web app)
 - **Database**: MongoDB, database `lingo` (shared across the Nyuchi ecosystem)
 - **Auth**: WorkOS AuthKit (Production environment)
 - **AI**: Cloudflare Workers AI via Cloudflare AI Gateway
 
 ### Preview
+
 - **Branch**: any PR branch
 - **Environment**: Vercel Preview
 - **Database**: the same MongoDB database — treat writes with care
@@ -145,10 +147,12 @@ marker of what shipped, not the thing that ships it.
 ## What is still manual
 
 - **Native builds (EAS)** — the release job does not build or submit apps.
+
   ```bash
   npx eas build --profile production --platform all
   npx eas update --branch production   # OTA JS-only update
   ```
+
 - **Cutting 1.0.0** — `workflow_dispatch` with an explicit version.
 - **Environment variables** — a release does not carry config. New variables
   (see `.env.example`) must exist in Vercel before the code that reads them
@@ -167,25 +171,25 @@ git checkout -b hotfix/short-description
 
 ## If a release does not appear
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| Job ran, summary says "No release" | Only housekeeping commits since the last tag | Nothing to do, or dispatch manually with a version |
-| Job did not run at all | CI failed, or the merge commit carried `[skip ci]` | Fix CI; re-run the CI workflow on that commit |
+| Symptom                                            | Cause                                                                          | Fix                                                                                                                                                                                                                                     |
+| -------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Job ran, summary says "No release"                 | Only housekeeping commits since the last tag                                   | Nothing to do, or dispatch manually with a version                                                                                                                                                                                      |
+| Job did not run at all                             | CI failed, or the merge commit carried `[skip ci]`                             | Fix CI; re-run the CI workflow on that commit                                                                                                                                                                                           |
 | Warning: "Could not push the version bump to main" | `RELEASE_BUMP_TOKEN` did not reach the job, or its owner cannot push to `main` | The tag and Release are still published against the merge commit; the version files need landing by hand. Check the org secret's repository access list includes `mukoko-lingo`, and that the token can push through the `main` ruleset |
-| "Tag vX.Y.Z already exists" | A previous run got as far as tagging | Delete the tag if the release is incomplete, then re-dispatch |
+| "Tag vX.Y.Z already exists"                        | A previous run got as far as tagging                                           | Delete the tag if the release is incomplete, then re-dispatch                                                                                                                                                                           |
 
 ## Version history
 
-| Version | Date | Highlights |
-|---------|------|------------|
-| 0.4.0 | 2026-09-10 | See [CHANGELOG](CHANGELOG.md) |
-| 0.3.0 | 2026-09-09 | See [CHANGELOG](CHANGELOG.md) |
-| 0.2.0 | 2026-09-08 | See [CHANGELOG](CHANGELOG.md) |
-| 0.1.1 | 2026-09-01 | See [CHANGELOG](CHANGELOG.md) |
-| 0.1.0 | 2026-09-01 | See [CHANGELOG](CHANGELOG.md) |
-| 0.0.1 | 2026-04-08 | Initial release: Supabase migration, Next.js web app, school model, OneRoster, security hardening |
+| Version | Date       | Highlights                                                                                        |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| 0.4.0   | 2026-09-10 | See [CHANGELOG](CHANGELOG.md)                                                                     |
+| 0.3.0   | 2026-09-09 | See [CHANGELOG](CHANGELOG.md)                                                                     |
+| 0.2.0   | 2026-09-08 | See [CHANGELOG](CHANGELOG.md)                                                                     |
+| 0.1.1   | 2026-09-01 | See [CHANGELOG](CHANGELOG.md)                                                                     |
+| 0.1.0   | 2026-09-01 | See [CHANGELOG](CHANGELOG.md)                                                                     |
+| 0.0.1   | 2026-04-08 | Initial release: Supabase migration, Next.js web app, school model, OneRoster, security hardening |
 
 ## Contact
 
-- Engineering: dev@mukoko.com
-- Security: security@mukoko.com
+- Engineering: <dev@mukoko.com>
+- Security: <security@mukoko.com>

@@ -28,12 +28,12 @@ below are pasted into the WorkOS dashboard, per environment.
 AuthKit sends these, and which ones are live depends on what the environment
 has enabled:
 
-| Email | Sent when | Contains |
-|---|---|---|
-| Email verification | A new account is created | 6-digit code or verification link |
-| Magic auth | Passwordless sign-in is requested | 6-digit code |
-| Password reset | `app/auth/forgot-password.tsx` requests one | Reset link → `app/auth/reset-password.tsx` |
-| Organization invitation | A teacher invites a learner to a class | Accept link |
+| Email                   | Sent when                                   | Contains                                   |
+| ----------------------- | ------------------------------------------- | ------------------------------------------ |
+| Email verification      | A new account is created                    | 6-digit code or verification link          |
+| Magic auth              | Passwordless sign-in is requested           | 6-digit code                               |
+| Password reset          | `app/auth/forgot-password.tsx` requests one | Reset link → `app/auth/reset-password.tsx` |
+| Organization invitation | A teacher invites a learner to a class      | Accept link                                |
 
 The app does not template, queue, or send any of them. Changing wording is a
 dashboard change, not a deploy.
@@ -44,16 +44,16 @@ From `constants/Colors.ts` (light theme — email has no dark mode worth
 trusting). Do not invent shades: these are the Five African Minerals palette,
 and [BRANDING.md](../BRANDING.md) is the source of truth.
 
-| Role | Hex | Use in email |
-|---|---|---|
-| Cobalt (primary) | `#0047AB` | Header band, primary button |
-| Tanzanite (secondary) | `#4B0082` | Header gradient end |
-| Gold/warm brown (accent) | `#5D4037` | The code block, emphasis |
-| Army green (success) | `#729B63` | Confirmation states |
-| Warm cream | `#FAF9F5` | Page background |
-| Card | `#FFFFFF` | Content panel |
-| Text primary | `#141413` | Body copy |
-| Text secondary | `#52524E` | Supporting copy, footer |
+| Role                     | Hex       | Use in email                |
+| ------------------------ | --------- | --------------------------- |
+| Cobalt (primary)         | `#0047AB` | Header band, primary button |
+| Tanzanite (secondary)    | `#4B0082` | Header gradient end         |
+| Gold/warm brown (accent) | `#5D4037` | The code block, emphasis    |
+| Army green (success)     | `#729B63` | Confirmation states         |
+| Warm cream               | `#FAF9F5` | Page background             |
+| Card                     | `#FFFFFF` | Content panel               |
+| Text primary             | `#141413` | Body copy                   |
+| Text secondary           | `#52524E` | Supporting copy, footer     |
 
 Voice: Shamwari is warm, patient and encouraging — friendly without being
 cute, and never at the expense of clarity about what the reader must do.
@@ -203,9 +203,9 @@ template you are editing rather than assuming these names carry across.
 
 ## Troubleshooting
 
-| Symptom | Likely cause |
-|---|---|
-| Email never arrives | Sending domain not verified in WorkOS, or the flow is disabled for that environment |
-| Link opens the browser instead of the app | Deep link scheme missing from the redirect list, or `app.json` scheme changed |
-| "Redirect URI mismatch" after clicking | The URI is not registered in WorkOS, or not in `lib/workos/config.ts`'s allowlist |
-| Styling collapses in Outlook | A `<style>` block or flexbox crept in — keep everything inline and table-based |
+| Symptom                                   | Likely cause                                                                        |
+| ----------------------------------------- | ----------------------------------------------------------------------------------- |
+| Email never arrives                       | Sending domain not verified in WorkOS, or the flow is disabled for that environment |
+| Link opens the browser instead of the app | Deep link scheme missing from the redirect list, or `app.json` scheme changed       |
+| "Redirect URI mismatch" after clicking    | The URI is not registered in WorkOS, or not in `lib/workos/config.ts`'s allowlist   |
+| Styling collapses in Outlook              | A `<style>` block or flexbox crept in — keep everything inline and table-based      |

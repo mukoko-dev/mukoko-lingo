@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - **`lib/db/identity.ts` is covered** (26 tests) — the merge between the shared
   `identity.persons` record and Lingo's `learner_profiles`, which every
   authenticated request passes through and which
@@ -23,12 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   profile or to touch the ecosystem-owned record.
 
 ### Changed
+
 - **Coverage thresholds raised** to 53/47/46/55 (statements/branches/functions/
   lines). Functions had drifted to half a point of headroom when the question
   bank moved to `api/_lib/`, which is outside `collectCoverageFrom`; covering
   `identity.ts` recovered it, and raising the floor keeps the gain instead of
   leaving it to be spent by the next uncovered module.
-
 
 _Nothing yet._
 
@@ -37,6 +38,7 @@ _Nothing yet._
 ## [0.4.0] — 2026-09-10
 
 ### Added
+
 - **31 intermediate and advanced assessment questions** (`api/_lib/question-bank.ts`),
   taking the bank from 95 to 126 — intermediate 24 → 42, advanced 16 → 28.
   Weighted to the cells that could not fill a quiz at all: Chinese conversation
@@ -59,9 +61,10 @@ _Nothing yet._
 ## [0.3.0] — 2026-09-09
 
 ### Security
+
 - **The server issues the assessment, not just the score** — grading moved
   server-side in v0.2.0, but the answer key was still built from the question
-  ids the *caller* submitted (`answerKeyFromBank(bank, Object.keys(answers))`).
+  ids the _caller_ submitted (`answerKeyFromBank(bank, Object.keys(answers))`).
   Submitting a single correct answer therefore scored 1/1 = 100% and wrote
   `user_skills.current_score = 100`, which `api/_lib/tutor-prompt.ts` reads on
   every AI turn: the caller could not choose the numerator, but choosing the
@@ -76,6 +79,7 @@ _Nothing yet._
   (claimed with a conditional update, so two concurrent submissions cannot both
   grade it), expiring after two hours, and readable only by its owner — another
   learner's id returns 404 rather than 403.
+
 - **A score cannot exceed what the questions asked could demonstrate**
   (`ceilingForLevels`) — found by driving the real start/submit handlers
   against the real question bank rather than mocks. `getDiagnosticQuestions`
@@ -100,6 +104,7 @@ _Nothing yet._
   import would break no type check and no other test.
 
 ### Changed
+
 - **The assessment screen no longer grades locally.** It asks the server for a
   quiz, submits answers, and shows the server's verdict. Two consequences worth
   knowing: there is no per-question "Correct!" during the quiz (the screen does
@@ -115,6 +120,7 @@ _Nothing yet._
 ## [0.2.0] — 2026-09-08
 
 ### Security
+
 - **Assessments are graded on the server** — `POST /api/assessments/submit`
   recorded whatever `score` and `passed` the caller sent, and promoted
   `user_skills.current_level` on that basis, so anyone who could reach the
@@ -143,6 +149,7 @@ _Nothing yet._
   either form before writing.
 
 ### Fixed
+
 - **Assessment routes resolve a UUID `_id`** (`api/_lib/doc-id.ts`) — all three
   looked assessments up by `ObjectId` only. `lingo.assessments` is empty and
   unseeded while every populated `lingo` collection uses UUID strings, so a
@@ -151,6 +158,7 @@ _Nothing yet._
   without any error.
 
 ### Changed
+
 - **The release job pushes its version bump with `RELEASE_BUMP_TOKEN`** — the
   org-wide PAT that can push through branch protection, with a per-repo
   `RELEASE_TOKEN` as an override. v0.1.0 and v0.1.1 were both tagged on their
@@ -164,6 +172,7 @@ _Nothing yet._
 ## [0.1.1] — 2026-09-01
 
 ### Fixed
+
 - **release**: count the next version from the tag when it is ahead of the files (#40) (`b8cb526`)
 
 ---
@@ -171,20 +180,23 @@ _Nothing yet._
 ## [0.1.0] — 2026-09-01
 
 ### Security
+
 - **AI system prompt moved server-side** — `/api/ai/chat` now builds the tutor prompt in `api/_lib/tutor-prompt.ts` from the authenticated user's proficiency and ignores any caller-supplied `system_prompt`. The only request fields that influence the prompt are `language` and `conversation_type`, both mapped through allowlists in `lib/ai/prompt-builder.ts`, so an unrecognised value becomes a known constant instead of reaching the template.
 - **Chat input is validated as a security boundary** (`api/_lib/chat-input.ts`) — a client-supplied `system` role is rejected outright (a provider would read it as instructions), along with unknown roles and non-string content. History is capped and forced to open on a user turn.
-- **Moderation enforced on the server, across the whole history** — guardrails moved to `api/_lib/moderation.ts` and now scan *every* turn rather than only the newest. Previously moderation lived solely in the client bundle, so posting straight to the route bypassed it, and a payload placed in an earlier turn or a forged `assistant` turn reached the model unchecked. Blocked requests return 400 with the guardrail reason, which the client now surfaces instead of a generic connection error.
+- **Moderation enforced on the server, across the whole history** — guardrails moved to `api/_lib/moderation.ts` and now scan _every_ turn rather than only the newest. Previously moderation lived solely in the client bundle, so posting straight to the route bypassed it, and a payload placed in an earlier turn or a forged `assistant` turn reached the model unchecked. Blocked requests return 400 with the guardrail reason, which the client now surfaces instead of a generic connection error.
 - **`moderation_alerts` are actually written** — the admin review queue and analytics read the collection, but nothing had ever written to it, so the queue could never show an item.
 - **Logout revokes the WorkOS session again** — `verifyAccessToken` accepts a `allowExpired` option so sign-out can revoke the session behind an already-expired access token. Signature and all other claims are still verified; only the expiry window widens.
 - **Six UUID/ObjectId query fixes** — leftovers from the Supabase→MongoDB migration. One would have made every moderation alert permanently unresolvable.
 
 ### Fixed
+
 - **Web sign-in dead end** — AuthKit issued the authorization code then tried to hand it to `mukokolingo://`, which no browser can open. `lib/auth/workos-client.ts` is now platform-aware and navigates the full page on web.
 - **Adaptive tutoring restored** — moving the prompt server-side made it read `lingo.user_skills`, which is empty and written by nothing (scores live in device storage), so Shamwari scaffolded every learner as an absolute beginner. The client now sends a numeric proficiency map that the server clamps; stored scores win whenever they exist.
 - **Redirect allowlist matched what clients actually compute** from `window.location.origin` — private-LAN Expo dev hosts and the bare `mukoko-lingo.vercel.app` alias were rejected before WorkOS ever saw them.
 - **`max_tokens` had a ceiling but no floor** — a negative or fractional value reached the provider and came back as a 502. Now clamped to an integer in [1, 4096].
 
 ### Added
+
 - **Releases are automatic** (`.github/workflows/release.yml`) — a merge to
   `main` whose CI run goes green is tagged and published without anyone
   touching a version number. The next version is derived from Conventional
@@ -212,6 +224,7 @@ _Nothing yet._
 - **Single-provider AI transport with a circuit breaker** (`api/_lib/ai-provider.ts`) — Cloudflare Workers AI reached through Cloudflare AI Gateway, on the OpenAI-compatible `/ai/v1/chat/completions` endpoint. 3 failures open the breaker for 5 minutes, so an outage fails fast instead of making every learner wait out the 15s timeout. `AiNotConfiguredError` and `AiUnavailableError` stay distinct so moderation cannot silently pass all content when it breaks.
 
 ### Changed
+
 - **AI provider: Anthropic + Vercel AI Gateway → Cloudflare Workers AI** — inference is now `@cf/qwen/qwen3-30b-a3b-fp8` on Workers AI, routed through Cloudflare AI Gateway. `ANTHROPIC_API_KEY` and `AI_GATEWAY_API_KEY` are gone, replaced by `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` (required) and `CLOUDFLARE_AI_GATEWAY_ID` / `CLOUDFLARE_AI_GATEWAY_TOKEN` / `WORKERS_AI_MODEL` (optional). The Anthropic Messages transport, the dual-credential split and the per-language Kimi routing were all removed — `language` and `conversation_type` now shape only the system prompt. Conversation documents record `modelProvider: 'cloudflare'`, and the unused `ai` / `@ai-sdk/openai` packages were dropped from `package.json`.
 - **Database: Supabase PostgreSQL → MongoDB** — Reverted the data layer back to MongoDB (the platform's original database before the 0.0.1 Supabase migration). All API routes now read/write MongoDB collections via `lib/db/mongo.ts` / `lib/db/collections.ts` instead of `@supabase/supabase-js`. Phrases collapse from a normalized `phrase`+`translation` join into one flat document per phrase (matching the pre-Supabase shape already used by `lib/data/phrases-data.ts`); `ai_conversations` now embed their messages; hand-rolled "select-then-insert" upserts (phrase progress, user skills, SRS cards, assignment submissions) became atomic `findOneAndUpdate`/`bulkWrite` upserts. Fixed two latent bugs surfaced during the port: the auth lookup now keys profiles on the stable WorkOS `workos_user_id` instead of email, and the leaderboard query's `user_id`/`person_id` field-name inconsistency was standardized on `user_id`.
 - **Auth: Stytch → WorkOS AuthKit** — Replaced Stytch (email OTP, WhatsApp OTP, magic links) with WorkOS AuthKit's hosted sign-in page via the PKCE authorization-code flow. `api/_lib/auth-middleware.ts` now verifies access tokens locally against WorkOS's JWKS instead of round-tripping to the auth provider on every request. WhatsApp OTP has no WorkOS equivalent and was dropped.
@@ -238,6 +251,7 @@ _Nothing yet._
 Major migration from MongoDB/Prisma to Supabase PostgreSQL with normalized schemas, plus Next.js web app, school/business model, and registry compliance.
 
 ### Added
+
 - **Supabase PostgreSQL** — All API routes wired to `lingo.*` / `identity.*` / `system.*` schemas
 - **Next.js Web App** — Full browser experience at `/web` with learning + admin dashboard
 - **School/Business Model** — Classes, memberships, assignments, submissions API endpoints
@@ -254,6 +268,7 @@ Major migration from MongoDB/Prisma to Supabase PostgreSQL with normalized schem
 - **GitHub Templates** — CONTRIBUTING, CODE_OF_CONDUCT, issue templates, PR template, CODEOWNERS
 
 ### Changed
+
 - **Database** — MongoDB Atlas + Prisma → Supabase PostgreSQL (3 schemas, 20 tables)
 - **Phrase Storage** — Flat columns → normalized `phrase` + `translation` (1 row per language per phrase)
 - **Auth Identity** — MongoDB Profile (ObjectId) → `identity.person` (UUID)
@@ -263,6 +278,7 @@ Major migration from MongoDB/Prisma to Supabase PostgreSQL with normalized schem
 - **Mobile App** — Stripped admin features (moved to web app)
 
 ### Removed
+
 - **MongoDB Atlas** — All MongoDB dependencies removed
 - **Prisma ORM** — Schema and client removed (replaced by Supabase JS)
 - **NativeWind/Tailwind** — Removed from mobile app (belongs in web app only)
@@ -274,6 +290,7 @@ Major migration from MongoDB/Prisma to Supabase PostgreSQL with normalized schem
 ## [3.1.0] — UX Overhaul
 
 ### Added
+
 - **Daily Lessons** - Smart phrase selection system (5 phrases/day) prioritizing weak skills and unmastered content
 - **Flash Cards** - Flip-to-reveal card component for learning phrases with pronunciation guides
 - **Mini Quiz** - 3-option multiple choice quiz after reviewing daily lesson cards
@@ -286,6 +303,7 @@ Major migration from MongoDB/Prisma to Supabase PostgreSQL with normalized schem
 - **Header Language Selector** - Globe dropdown in AppHeader for switching UI language
 
 ### Changed
+
 - **Tab Restructure (5→4)** - Removed Skills tab, merged content into new Progress tab (Dashboard + Phrases views)
 - **Learn Tab** - Split into "Today's Lesson" (daily flash cards + quiz) and "Browse All" (original phrase browser)
 - **Progress Tab** - Combined dashboard with daily goal, stats, skill proficiency, and phrase mastery breakdown
@@ -297,11 +315,13 @@ Major migration from MongoDB/Prisma to Supabase PostgreSQL with normalized schem
 - **Landing Page Routing** - Changed from onboarding-flag-based to auth-based routing
 
 ### Fixed
+
 - **Landing Page Missing** - Users now always see welcome page when not authenticated
 - **Language Preferences** - Added working UI language selector with system detection and persistence
 - **Header Colors** - Primary Cobalt colors instead of secondary Tanzanite
 
 ### Technical
+
 - New storage functions: `getDailyLesson`, `setDailyLesson`, `getDailyGoalProgress`, `updateDailyGoalProgress`
 - New service: `lib/services/daily-lesson.ts` with smart phrase selection, quiz generation
 - New components: `FlashCard`, `DailyLessonCard`, `MiniQuiz`, `CelebrationCard`
@@ -309,6 +329,7 @@ Major migration from MongoDB/Prisma to Supabase PostgreSQL with normalized schem
 - Updated tests for database operations and translation completeness
 
 ### Planned
+
 - Offline mode support for phrase browsing
 - Push notifications for study reminders
 - Gamification elements (badges, achievements)
@@ -327,12 +348,14 @@ This release completes the migration from Supabase to Stytch authentication with
 ### Added
 
 #### Authentication
+
 - **Stytch Auth Integration** - Complete authentication system with email/password, OTP, magic links
 - **WhatsApp OTP** - WhatsApp-based one-time password authentication
 - **Branded Email Templates** - Custom Stytch email templates matching Mukoko Lingo branding
 - **Session Token Management** - SecureStore (native) and AsyncStorage (web) for session persistence
 
 #### API & Infrastructure
+
 - **Vercel Serverless API Routes** - Full REST API backend with Stytch session validation
 - **Auth Middleware** (`api/_lib/auth-middleware.ts`) - `requireAuth()` and `requireAdmin()` for all API routes
 - **CORS Helper** (`api/_lib/cors.ts`) - Cross-origin request handling for API routes
@@ -340,15 +363,18 @@ This release completes the migration from Supabase to Stytch authentication with
 - **Stytch Configuration** (`lib/stytch/config.ts`) - Centralized template IDs, redirect URLs, session settings
 
 #### Build & Deploy
+
 - **Automated Schema Sync** - `prisma db push` runs automatically in `build:web` script on every Vercel deploy
 - **Python Analytics Prototype** - pymongo aggregation pipelines for data analysis
 
 ### Changed
+
 - **Sign-in UX** - Reordered sign-in options: WhatsApp OTP before password for better mobile UX
 - **Brand Alignment** - `Colors.ts` aligned to Mukoko Lingo brand minerals palette
 - **Build Command** - `build:web` now includes `prisma db push --skip-generate` before `expo export`
 
 ### Removed
+
 - **Supabase** - All Supabase dependencies, client libraries, and references completely removed
 - **Legacy Email Templates** - Supabase email templates replaced with Stytch branded templates
 
@@ -367,6 +393,7 @@ This release transforms Mukoko Lingo into an AI-first, skills-based learning pla
 ### Added
 
 #### Phase 2: Skills-Aware AI System
+
 - **Skills-Aware AI Prompts** (`lib/ai/skills-aware-prompts.ts`) - AI reads user proficiency for every interaction
 - **buildSkillsAwarePrompt()** function adapts teaching based on actual assessment scores
 - **Adaptive Teaching Levels**:
@@ -378,6 +405,7 @@ This release transforms Mukoko Lingo into an AI-first, skills-based learning pla
 - **User Skills Utilities** (`lib/utils/user-skills.ts`) - 15+ helper functions for skills management
 
 #### Phase 3: Diagnostic Assessment System
+
 - **50-Question Diagnostic Assessment** (`lib/data/diagnostic-assessment.ts`)
   - 10 questions per skill covering beginner to fluent concepts
   - Shona language focus with cultural expressions
@@ -398,30 +426,36 @@ This release transforms Mukoko Lingo into an AI-first, skills-based learning pla
   - Action buttons for AI Tutor and Phrases
 
 #### Database Migrations
+
 - **Skills Taxonomy** (028): 5 core skills, 25 skill levels
 - **Assessment System** (029): assessments, user_assessments tables with auto-update triggers
 - **Phrases Integration** (030): Skills mapping for phrases
 - **Complete Database Rebuild** (000_v2): Single comprehensive migration script
 
 #### New Components
+
 - `components/ui/radio-group.tsx` - Radix radio group for assessments
 - `components/ui/skeleton.tsx` - Loading skeleton component
 
 #### Navigation Updates
+
 - Skills Dashboard added to sidebar navigation
 - Target icon for skills route
 
 ### Changed
 
 #### AI Integration
+
 - AI chat API now uses `buildSkillsAwarePrompt()` instead of legacy `buildAISystemPrompt()`
 - AI adapts vocabulary, grammar, scaffolding, and error correction based on user_skills table
 
 #### Middleware
+
 - Added onboarding check - new users redirected to diagnostic assessment
 - Excludes diagnostic page and API routes from redirect
 
 #### Documentation
+
 - Updated CLAUDE.md with AI-first architecture documentation
 - Added skills system, adaptive teaching levels, and utility functions
 
@@ -437,6 +471,7 @@ This release transforms Mukoko Lingo into an AI-first, skills-based learning pla
 **Database**: Apply `000_complete_database_rebuild_v2.sql` via Supabase Dashboard SQL Editor
 
 **New User Flow**:
+
 1. Sign up → Login → Redirected to `/app/diagnostic`
 2. Complete 50-question assessment (~15 minutes)
 3. View results with skill breakdown
@@ -453,6 +488,7 @@ This release represents a complete overhaul of the application's layout system a
 ### Added
 
 #### Layout System
+
 - **SidebarLayout Component** - New responsive layout wrapper that automatically adjusts content margin based on sidebar collapse state
 - **AdminLayout Component** - Centralized layout for all admin pages with consistent spacing and max-width constraints
 - **Centered Layout Pattern** - All authenticated pages now use centered content with appropriate max-width constraints:
@@ -461,6 +497,7 @@ This release represents a complete overhaul of the application's layout system a
   - Data/Dashboards: `max-w-6xl` (1152px)
 
 #### Navigation
+
 - **Unified AppSidebar** - All authenticated pages now use AppSidebar for consistent navigation
 - **Collapsible Sidebar** - Desktop users can collapse sidebar to icon-only mode (256px → 64px)
 - **Responsive Sidebar** - Mobile users get overlay sidebar with hamburger menu
@@ -468,10 +505,12 @@ This release represents a complete overhaul of the application's layout system a
 - **Language Switcher in Sidebar** - 4-language UI switcher (English, Shona, Ndebele, Chinese)
 
 #### Hooks
+
 - **useUILanguage()** - Centralized UI language state management with localStorage persistence
 - **useSidebar()** - Global sidebar collapse state management
 
 #### Documentation
+
 - **DEPLOYMENT.md** - Comprehensive deployment guide with Vercel and Supabase instructions
 - **SECURITY.md** - Complete security documentation covering all security layers
 - **CHANGELOG.md** - This file for tracking version history
@@ -480,6 +519,7 @@ This release represents a complete overhaul of the application's layout system a
 ### Changed
 
 #### Page Updates
+
 - **All App Pages** migrated from AppHeader to AppSidebar:
   - `/app/analytics` - Updated to use SidebarLayout with centered max-w-6xl
   - `/app/profile` - Updated to use SidebarLayout with centered max-w-4xl
@@ -496,17 +536,20 @@ This release represents a complete overhaul of the application's layout system a
   - `/admin/activity`
 
 #### Component Refactoring
+
 - **Removed conditional sidebar rendering** - Sidebar now always present on authenticated pages
 - **Removed local language state** - All components now use `useUILanguage()` hook
 - **Unified margin handling** - All pages use `SidebarLayout` instead of hardcoded `lg:ml-64`
 
 #### User Experience
+
 - **Consistent Navigation** - Same navigation pattern across all authenticated pages
 - **Persistent Settings** - Theme and language preferences saved to localStorage
 - **Smooth Transitions** - 300ms animations for sidebar collapse/expand
 - **Mobile Optimization** - Improved mobile navigation with overlay sidebar
 
 ### Fixed
+
 - **Sidebar Overlap Issues** - Content no longer overlaps with sidebar on any page
 - **Language State Persistence** - UI language now persists across page navigation and refresh
 - **Theme Accessibility** - Theme controls now accessible on all authenticated pages
@@ -514,6 +557,7 @@ This release represents a complete overhaul of the application's layout system a
 - **Navigation Inconsistency** - All pages now have identical navigation patterns
 
 ### Documentation
+
 - **Layout Migration Guides**:
   - SIDEBAR_LAYOUT_MIGRATION_COMPLETE.md - SidebarLayout implementation details
   - UNIFIED_LAYOUT_COMPLETE.md - Bookmarks and Progress page updates
@@ -522,6 +566,7 @@ This release represents a complete overhaul of the application's layout system a
   - CENTERED_LAYOUT_APPLIED.md - Admin layout centering implementation
 
 ### Technical Details
+
 - **Component Architecture**: Migrated from prop-based to context-based state management
 - **Code Reduction**: Removed ~200 lines of duplicate code across components
 - **Performance**: Improved re-render efficiency with centralized state
@@ -534,12 +579,14 @@ This release represents a complete overhaul of the application's layout system a
 ### Added - Brand Implementation & Database Improvements
 
 #### Branding
+
 - **Brand Logo** implementation across the application
 - **Warm Purple** theme color (`#5f5873`) for light mode
 - **Ubuntu Blue** theme color (`#7c73e6`) for dark mode
 - **Brand Guidelines** documented in BRANDING.md
 
 #### Database
+
 - **Critical Fixes Migration (027)** applied:
   - Fixed column reference errors in RLS policies
   - Improved admin check functions
@@ -547,16 +594,19 @@ This release represents a complete overhaul of the application's layout system a
   - Added proper error handling
 
 #### Features
+
 - **HelpScout Beacon** integration for customer support
 - **Route-based Admin Navigation** - Converted admin to use dedicated routes
 - **Collapsible Sidebar** - Added collapse/expand functionality
 
 ### Fixed
+
 - **Hydration Errors** - Fixed theme switcher and conditional rendering issues
 - **Mobile Usability** - Improved responsive design across all pages
 - **Admin Navigation** - Integrated admin sections into AppSidebar
 
 ### Documentation
+
 - BRAND_IMPLEMENTATION_COMPLETE.md
 - MIGRATION_027_APPLIED.md
 - HYDRATION_AND_RESPONSIVE_FIXES.md
@@ -568,11 +618,13 @@ This release represents a complete overhaul of the application's layout system a
 ### Added - Learning Standards & Performance
 
 #### Learning Standards
+
 - **Learning Standards Management** - Admin UI for proficiency level definitions
 - **AI-Guided Learning** - Standards inform AI teaching approach
 - **Database Table**: `learning_standards` with 5 levels (beginner → fluent)
 
 #### Performance Optimizations
+
 - **Database Indexes** (Migration 025):
   - Indexes on frequently queried columns
   - Improved query performance by 50-70%
@@ -584,11 +636,13 @@ This release represents a complete overhaul of the application's layout system a
   - Prepared for scale (100k+ users)
 
 #### Database Functions
+
 - **Standardized Admin Checks** across all RLS policies
 - **Activity Summary Function** for admin dashboard analytics
 - **Automatic Study Streak Updates** via database trigger
 
 ### Fixed
+
 - **User ID Column References** - Fixed inconsistent column naming (016-020)
 - **RLS Policy Enforcement** - Ensured all tables properly enforce policies
 - **Function Cascade Issues** - Proper DROP CASCADE before recreating functions
@@ -600,23 +654,27 @@ This release represents a complete overhaul of the application's layout system a
 ### Added - AI Features & Content Moderation
 
 #### AI Integration
+
 - **Anthropic Claude Haiku 4.5** integration via Vercel AI Gateway
 - **AI Chat** - Streaming conversation with practice/scenario/translation_help modes
 - **Scenario Generation** - AI-generated practice scenarios based on proficiency
 - **Phrase Recommendations** - AI-powered phrase suggestions
 
 #### Content Moderation
+
 - **AI-Powered Moderation** - Automatic content screening using Claude Haiku 4.5
 - **Moderation Categories**: sexual, hate, harassment, violence, self-harm, abuse
 - **Admin Moderation Queue** - Review flagged content at `/admin/moderation`
 - **Moderation Alerts Table** - Database storage for flagged content
 
 #### Database Tables
+
 - `ai_conversations` - User AI chat sessions
 - `ai_messages` - Individual chat messages
 - `moderation_alerts` - Flagged content for review
 
 ### Changed
+
 - **All AI Endpoints** now include moderation checks before processing
 - **User Messages** automatically scanned before AI response generation
 
@@ -627,12 +685,14 @@ This release represents a complete overhaul of the application's layout system a
 ### Added - Study Progress & Analytics
 
 #### Progress Tracking
+
 - **Phrase Progress** - Track learning status (learning/practiced/mastered)
 - **Study Sessions** - Daily study session tracking
 - **Study Streaks** - Consecutive day tracking with automatic updates
 - **Database Tables**: `phrase_progress`, `study_sessions`
 
 #### Analytics
+
 - **User Analytics Dashboard** at `/app/analytics`
 - **Admin Overview Dashboard** at `/admin/overview`
 - **Activity Monitoring** at `/admin/activity`
@@ -643,6 +703,7 @@ This release represents a complete overhaul of the application's layout system a
   - AI conversation metrics
 
 #### Admin Features
+
 - **User Management** - View, edit roles, suspend/activate users
 - **Activity Logs** - Monitor user actions and system events
 - **Database Function**: `get_user_activity_summary()`
@@ -654,18 +715,21 @@ This release represents a complete overhaul of the application's layout system a
 ### Added - Core Learning Features
 
 #### Phrase Learning
+
 - **200+ Phrases** in 4 languages (English, Shona, Ndebele, Chinese)
 - **Categories**: Greetings, Travel, Business, Food, Emergency, Daily, Cultural
 - **Phrase Details**: Translation, pronunciation guide, context, category
 - **Search & Filter** functionality
 
 #### User Features
+
 - **Bookmarks** - Save favorite phrases for quick access
 - **User Profiles** - Customizable user profiles with preferences
 - **Profile Settings** at `/app/profile`
 - **Database Tables**: `bookmarks`, `profiles`
 
 #### User Experience
+
 - **Responsive Design** - Mobile, tablet, and desktop optimized
 - **Dark Mode** - Theme switching between light/dark/system
 - **Internationalization** - UI in 4 languages
@@ -677,40 +741,47 @@ This release represents a complete overhaul of the application's layout system a
 ### Initial Release - Foundation
 
 #### Core Framework
+
 - **Next.js 16** - React Server Components, App Router
 - **React 19.2** - Latest React with server components
 - **TypeScript** - Full type safety
 - **Tailwind CSS 4.1** - Utility-first styling
 
 #### Authentication
+
 - **Supabase Auth** - Email/password authentication
 - **Session Management** - HTTP-only cookies with auto-refresh
 - **Dev Mode** - Development authentication bypass
 - **Middleware Protection** - Route-based access control
 
 #### Database
+
 - **Supabase PostgreSQL** - Hosted database
 - **Row Level Security** - User data isolation
 - **Database Schema**: Initial tables (phrases, profiles)
 - **Migration System** - SQL-based migrations in `/scripts/`
 
 #### Infrastructure
+
 - **Vercel Hosting** - Edge network deployment
 - **Vercel Analytics** - Built-in analytics
 - **Environment Configuration** - Secure environment variable management
 
 #### UI Components
+
 - **shadcn/ui** - Radix UI component library
 - **Component Library**: Button, Card, Dialog, Input, Select, etc.
 - **Design System** - Consistent styling and spacing
 
 #### Pages
+
 - **Landing Page** (`/`) - Public marketing page
 - **Auth Pages** - Login, signup, callback
 - **App Pages** - Profile, progress, bookmarks (initial versions)
 - **Admin Pages** - User management, phrase management (initial versions)
 
 #### Documentation
+
 - **README.md** - Project overview and setup
 - **CLAUDE.md** - Development guidelines
 - **DEV_MODE.md** - Development mode documentation
@@ -719,36 +790,36 @@ This release represents a complete overhaul of the application's layout system a
 
 ## Version History Summary
 
-| Version | Date | Focus |
-|---------|------|-------|
-| **3.1.0** | 2026-02-11 | Stytch Auth Integration & Build Automation |
-| **3.0.0** | 2025-12-11 | AI-First Skills-Based Architecture |
+| Version   | Date       | Focus                                           |
+| --------- | ---------- | ----------------------------------------------- |
+| **3.1.0** | 2026-02-11 | Stytch Auth Integration & Build Automation      |
+| **3.0.0** | 2025-12-11 | AI-First Skills-Based Architecture              |
 | **2.0.0** | 2025-11-10 | Layout Standardization & Navigation Unification |
-| **1.5.0** | 2025-11-09 | Brand Implementation & Database Improvements |
-| **1.4.0** | 2025-11-08 | Learning Standards & Performance |
-| **1.3.0** | 2025-11-05 | AI Features & Content Moderation |
-| **1.2.0** | 2025-11-01 | Study Progress & Analytics |
-| **1.1.0** | 2025-10-28 | Core Learning Features |
-| **1.0.0** | 2025-10-25 | Initial Release - Foundation |
+| **1.5.0** | 2025-11-09 | Brand Implementation & Database Improvements    |
+| **1.4.0** | 2025-11-08 | Learning Standards & Performance                |
+| **1.3.0** | 2025-11-05 | AI Features & Content Moderation                |
+| **1.2.0** | 2025-11-01 | Study Progress & Analytics                      |
+| **1.1.0** | 2025-10-28 | Core Learning Features                          |
+| **1.0.0** | 2025-10-25 | Initial Release - Foundation                    |
 
 ---
 
 ## Migration History
 
-| Migration | Description |
-|-----------|-------------|
-| 001-002 | Initial phrases table and seed data |
-| 003-004 | Profiles and preferences |
-| 005-007 | Bookmarks and favorites |
-| 008-009 | Progress tracking |
-| 010-011 | AI conversations and moderation |
-| 012-015 | AI features and learning standards |
-| 016-020 | User ID column fixes |
-| 021 | Phrase categories |
-| 022-024 | Learning standards (final version) |
-| 025 | Performance indexes |
-| 026 | User status and partitioning |
-| 027 | Critical fixes |
+| Migration | Description                         |
+| --------- | ----------------------------------- |
+| 001-002   | Initial phrases table and seed data |
+| 003-004   | Profiles and preferences            |
+| 005-007   | Bookmarks and favorites             |
+| 008-009   | Progress tracking                   |
+| 010-011   | AI conversations and moderation     |
+| 012-015   | AI features and learning standards  |
+| 016-020   | User ID column fixes                |
+| 021       | Phrase categories                   |
+| 022-024   | Learning standards (final version)  |
+| 025       | Performance indexes                 |
+| 026       | User status and partitioning        |
+| 027       | Critical fixes                      |
 
 ---
 
@@ -759,21 +830,25 @@ This release represents a complete overhaul of the application's layout system a
 **Breaking Changes**: None - all changes are additive and maintain backward compatibility.
 
 **New Dependencies**:
+
 - No new npm packages required
 - All changes use existing dependencies
 
 **Database Changes**: None required - all database work completed in 1.x series.
 
 **Configuration Changes**:
+
 - No environment variable changes needed
 - Theme and language now stored in localStorage (automatic)
 
 **Component Updates**:
+
 - All app pages automatically use new layout system
 - No manual migration needed for existing code
 - Old patterns still work but deprecated
 
 **What You Get**:
+
 - ✅ Unified navigation across all pages
 - ✅ Theme switcher in sidebar
 - ✅ Language switcher in sidebar

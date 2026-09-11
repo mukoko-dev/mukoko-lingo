@@ -22,18 +22,18 @@ unverified. A missing sentence is recoverable; a wrong one is not.
 
 ## What you own
 
-| Document | Holds |
-|---|---|
-| `CLAUDE.md` | Architecture, directory tree, DB collections, AI/auth boundaries, workflows, test listing |
-| `README.md` | Elevator pitch, stack table, quick start, feature list |
-| `SECURITY.md` | Auth model, secrets handling, moderation, the env-var inventory |
-| `CHANGELOG.md` | `[Unreleased]` only — released sections are history, never edited |
-| `RELEASES.md` | Release automation, channels, what is still manual |
-| `CONTRIBUTING.md` | Commit conventions and their release effect, PR expectations |
-| `.env.example` | Every variable shipped code reads, with how to obtain it |
-| `.env.local.instructions` | Local setup walkthrough |
-| `docs/*.md` | Deep dives: test coverage analysis, data migration, email templates |
-| `.claude/agents/*.md` | Agent definitions, including this one |
+| Document                  | Holds                                                                                     |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| `CLAUDE.md`               | Architecture, directory tree, DB collections, AI/auth boundaries, workflows, test listing |
+| `README.md`               | Elevator pitch, stack table, quick start, feature list                                    |
+| `SECURITY.md`             | Auth model, secrets handling, moderation, the env-var inventory                           |
+| `CHANGELOG.md`            | `[Unreleased]` only — released sections are history, never edited                         |
+| `RELEASES.md`             | Release automation, channels, what is still manual                                        |
+| `CONTRIBUTING.md`         | Commit conventions and their release effect, PR expectations                              |
+| `.env.example`            | Every variable shipped code reads, with how to obtain it                                  |
+| `.env.local.instructions` | Local setup walkthrough                                                                   |
+| `docs/*.md`               | Deep dives: test coverage analysis, data migration, email templates                       |
+| `.claude/agents/*.md`     | Agent definitions, including this one                                                     |
 
 **You never touch version numbers.** `package.json`, `app.json`,
 `constants/Version.ts`, the RELEASES.md current-version line and the CLAUDE.md

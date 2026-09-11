@@ -38,11 +38,11 @@ See `.env.example` for the complete list.
 
 ## Two Apps, One Backend
 
-| Platform | Technology | For |
-|----------|-----------|-----|
-| **Mobile** (`/app`) | Expo/React Native | Individuals learning on the go (iOS + Android) |
-| **Web** (`/web`) | Next.js + Tailwind | Individuals, schools, businesses on any browser |
-| **API** (`/api`) | Vercel Serverless | Shared backend (52 endpoints) |
+| Platform            | Technology         | For                                             |
+| ------------------- | ------------------ | ----------------------------------------------- |
+| **Mobile** (`/app`) | Expo/React Native  | Individuals learning on the go (iOS + Android)  |
+| **Web** (`/web`)    | Next.js + Tailwind | Individuals, schools, businesses on any browser |
+| **API** (`/api`)    | Vercel Serverless  | Shared backend (52 endpoints)                   |
 
 Both apps call the same API routes. The web app includes all learner features plus admin/org management.
 
@@ -59,26 +59,26 @@ Both apps call the same API routes. The web app includes all learner features pl
 
 ## Mobile App Navigation
 
-| Tab | Purpose |
-|-----|---------|
-| **Learn** | Daily lessons (flash cards + quiz) and phrase browsing |
-| **Shamwari** | AI tutor chat powered by Cloudflare Workers AI |
+| Tab          | Purpose                                                   |
+| ------------ | --------------------------------------------------------- |
+| **Learn**    | Daily lessons (flash cards + quiz) and phrase browsing    |
+| **Shamwari** | AI tutor chat powered by Cloudflare Workers AI            |
 | **Progress** | Dashboard, bookmarks, skill proficiency, mastery tracking |
-| **Profile** | Settings, preferences, theme, sign out |
+| **Profile**  | Settings, preferences, theme, sign out                    |
 
 ## Architecture
 
-| Layer | Technology |
-|-------|-----------|
-| Mobile Frontend | Expo SDK 54 / React Native 0.81 / React 19 |
-| Web Frontend | Next.js 15 / Tailwind CSS / Five African Minerals |
-| Routing | Expo Router 6 (mobile) / Next.js App Router (web) |
-| Backend | Vercel Serverless Functions (TypeScript + Python) |
-| Database | MongoDB (database `lingo` — shared with the Nyuchi ecosystem, see below) |
-| Auth | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow) |
-| AI | Cloudflare Workers AI — Qwen3 30B A3B via AI Gateway (server-side proxy with circuit breaker) |
-| Testing | Jest 29 + jest-expo (24 suites, 298 tests) |
-| CI/CD | GitHub Actions (typecheck → test → build-web) |
+| Layer           | Technology                                                                                    |
+| --------------- | --------------------------------------------------------------------------------------------- |
+| Mobile Frontend | Expo SDK 54 / React Native 0.81 / React 19                                                    |
+| Web Frontend    | Next.js 15 / Tailwind CSS / Five African Minerals                                             |
+| Routing         | Expo Router 6 (mobile) / Next.js App Router (web)                                             |
+| Backend         | Vercel Serverless Functions (TypeScript + Python)                                             |
+| Database        | MongoDB (database `lingo` — shared with the Nyuchi ecosystem, see below)                      |
+| Auth            | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow)                                 |
+| AI              | Cloudflare Workers AI — Qwen3 30B A3B via AI Gateway (server-side proxy with circuit breaker) |
+| Testing         | Jest 29 + jest-expo (24 suites, 298 tests)                                                    |
+| CI/CD           | GitHub Actions (typecheck → test → build-web)                                                 |
 
 ## Development Commands
 
@@ -107,26 +107,26 @@ MongoDB cluster shared across the Nyuchi ecosystem — `lingo` is Lingo's own da
 
 **Shared, not Lingo-owned:**
 
-| Collection | Purpose |
-|------------|---------|
-| `identity.persons` | Real ecosystem user record (UUID `_id`, OIDC claims, `workosUserId`) |
+| Collection                                                                       | Purpose                                                                                                  |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `identity.persons`                                                               | Real ecosystem user record (UUID `_id`, OIDC claims, `workosUserId`)                                     |
 | `lingo.phrases`, `lingo.languages`, `lingo.scenarios`, `lingo.learningStandards` | Real, ecosystem-curated multilingual content (`translations[]` per phrase, not flat per-language fields) |
-| `shamwari.guardrails` | Content moderation rules |
-| `shamwari.conversations`, `shamwari.messages` | Shamwari AI chat (messages are their own collection, not embedded) |
-| `ubuntu.contributions` | Trust/gamification ledger — Lingo mirrors XP events into it (`sourceDomain: "lingo"`) |
-| `platform.apiKeys` | Org-issued developer API keys (`ownerEntityId`, `keyType: internal/external`) |
+| `shamwari.guardrails`                                                            | Content moderation rules                                                                                 |
+| `shamwari.conversations`, `shamwari.messages`                                    | Shamwari AI chat (messages are their own collection, not embedded)                                       |
+| `ubuntu.contributions`                                                           | Trust/gamification ledger — Lingo mirrors XP events into it (`sourceDomain: "lingo"`)                    |
+| `platform.apiKeys`                                                               | Org-issued developer API keys (`ownerEntityId`, `keyType: internal/external`)                            |
 
 **Lingo-local** (`lingo` database, no ecosystem equivalent exists):
 
-| Collection | Purpose |
-|------------|---------|
-| `learner_profiles` | Lingo-specific extension of `identity.persons` (role, learning prefs, push tokens), keyed on `person_id` |
-| `phrase_progress`, `bookmarks`, `phrase_views` | Per-user learning activity |
-| `phraseEngagementLive` | Read-only aggregation view over `bookmarks`/`phrase_views`, not a stored counter |
-| `skills`, `user_skills`, `assessments`, `user_assessments` | Skills-based progression |
-| `classes`, `class_memberships`, `assignments`, `assignment_submissions`, `organization_enrollments` | Schools/orgs |
-| `srs_cards`, `user_xp`, `xp_events`, `study_sessions` | Spaced repetition + XP/streaks |
-| `moderation_alerts` | Flagged content pending review |
+| Collection                                                                                          | Purpose                                                                                                  |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `learner_profiles`                                                                                  | Lingo-specific extension of `identity.persons` (role, learning prefs, push tokens), keyed on `person_id` |
+| `phrase_progress`, `bookmarks`, `phrase_views`                                                      | Per-user learning activity                                                                               |
+| `phraseEngagementLive`                                                                              | Read-only aggregation view over `bookmarks`/`phrase_views`, not a stored counter                         |
+| `skills`, `user_skills`, `assessments`, `user_assessments`                                          | Skills-based progression                                                                                 |
+| `classes`, `class_memberships`, `assignments`, `assignment_submissions`, `organization_enrollments` | Schools/orgs                                                                                             |
+| `srs_cards`, `user_xp`, `xp_events`, `study_sessions`                                               | Spaced repetition + XP/streaks                                                                           |
+| `moderation_alerts`                                                                                 | Flagged content pending review                                                                           |
 
 ## CI/CD Pipeline
 
@@ -157,13 +157,13 @@ chore-only merge releases nothing. See **[RELEASES.md](RELEASES.md)**.
 
 ## Brand — Five African Minerals
 
-| Mineral | Light | Dark | Role |
-|---------|-------|------|------|
-| Cobalt | `#0047AB` | `#00B0FF` | Primary (trust, clarity) |
-| Tanzanite | `#4B0082` | `#B388FF` | Secondary (depth, creativity) |
-| Malachite | `#004D40` | `#64FFDA` | Success (positive actions) |
-| Gold | `#5D4037` | `#FFD740` | Accent (achievement, warmth) |
-| Terracotta | `#8c5f38` | `#D4A574` | Community (warmth) |
+| Mineral    | Light     | Dark      | Role                          |
+| ---------- | --------- | --------- | ----------------------------- |
+| Cobalt     | `#0047AB` | `#00B0FF` | Primary (trust, clarity)      |
+| Tanzanite  | `#4B0082` | `#B388FF` | Secondary (depth, creativity) |
+| Malachite  | `#004D40` | `#64FFDA` | Success (positive actions)    |
+| Gold       | `#5D4037` | `#FFD740` | Accent (achievement, warmth)  |
+| Terracotta | `#8c5f38` | `#D4A574` | Community (warmth)            |
 
 ## License
 
