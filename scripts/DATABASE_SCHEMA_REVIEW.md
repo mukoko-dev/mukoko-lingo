@@ -1,4 +1,5 @@
 # Mukoko Lingo Database Schema Review
+
 **Date:** November 10, 2025
 **Purpose:** Comprehensive schema analysis for million-user scalability
 
@@ -7,6 +8,7 @@
 ## Executive Summary
 
 ### Critical Issues Found
+
 1. **Duplicate Migration Numbers** - Files 001 and 002 exist twice with different content
 2. **Column Reference Mismatch** - `profiles.id` vs `profiles.user_id` inconsistency
 3. **Foreign Key Errors** - AI tables reference `profiles(user_id)` but column is `profiles(id)`
@@ -19,6 +21,7 @@
 ## Migration Files Inventory
 
 ### Duplicate Numbers (CRITICAL)
+
 ```
 001_create_phrases_table.sql (original - 19:01)
 001_add_indexes_for_scale.sql (NEW - 21:56) ⚠️ CONFLICT
@@ -28,6 +31,7 @@
 ```
 
 ### Recommended Renumbering
+
 ```
 001_create_phrases_table.sql → 001 (KEEP)
 002_seed_phrases.sql → 002 (KEEP)
@@ -62,10 +66,12 @@
 ## Database Schema
 
 ### Table: `profiles`
+
 **Purpose:** User profile data and authentication linkage
 **Primary Key:** `id` (UUID, references auth.users)
 
 #### Columns (from various migrations)
+
 ```sql
 id                UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE
 user_id           UUID (added later, creates confusion) ⚠️
@@ -86,11 +92,13 @@ updated_at        TIMESTAMPTZ DEFAULT NOW()
 ```
 
 #### Issues
+
 - **CRITICAL:** Migration 020 adds `user_id` column but most code uses `id`
 - This creates inconsistency in foreign key references
 - Migration 010 (AI tables) references `profiles(user_id)` which doesn't exist initially
 
 #### RLS Policies
+
 ```sql
 ✓ Users can view their own profile (SECURE)
 ✓ Users can update their own profile (SECURE)
@@ -98,6 +106,7 @@ updated_at        TIMESTAMPTZ DEFAULT NOW()
 ```
 
 #### Indexes
+
 ```sql
 ✓ idx_profiles_email
 ✓ idx_profiles_role
@@ -109,10 +118,12 @@ updated_at        TIMESTAMPTZ DEFAULT NOW()
 ---
 
 ### Table: `phrases`
+
 **Purpose:** Core phrase database (Shona, Ndebele, English, Chinese)
 **Primary Key:** `id` (UUID)
 
 #### Columns
+
 ```sql
 id                  UUID PRIMARY KEY DEFAULT gen_random_uuid()
 english             TEXT NOT NULL
@@ -130,6 +141,7 @@ updated_at          TIMESTAMPTZ DEFAULT NOW()
 ```
 
 #### Indexes
+
 ```sql
 ✓ idx_phrases_category
 ✓ idx_phrases_difficulty
@@ -139,6 +151,7 @@ updated_at          TIMESTAMPTZ DEFAULT NOW()
 ```
 
 #### RLS Policies
+
 ```sql
 ✓ Public read access (APPROPRIATE - phrases are public)
 ✓ Admin-only write access (SECURE)
@@ -147,10 +160,12 @@ updated_at          TIMESTAMPTZ DEFAULT NOW()
 ---
 
 ### Table: `phrase_progress`
+
 **Purpose:** Track user progress on phrases
 **Primary Key:** `id` (UUID)
 
 #### Columns
+
 ```sql
 id                  UUID PRIMARY KEY DEFAULT gen_random_uuid()
 user_id             UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
@@ -163,9 +178,11 @@ UNIQUE(user_id, phrase_id)
 ```
 
 #### Issues
+
 - Migration 001 (new) tries to create `idx_user_progress_user_id` but table is `phrase_progress`
 
 #### Indexes
+
 ```sql
 ✓ idx_phrase_progress_user_id
 ✓ idx_phrase_progress_phrase_id
@@ -175,6 +192,7 @@ UNIQUE(user_id, phrase_id)
 ```
 
 #### RLS Policies
+
 ```sql
 ✓ Users can view their own progress (SECURE)
 ✓ Users can insert their own progress (SECURE)
@@ -185,10 +203,12 @@ UNIQUE(user_id, phrase_id)
 ---
 
 ### Table: `bookmarks`
+
 **Purpose:** User-saved phrases
 **Primary Key:** `id` (UUID)
 
 #### Columns
+
 ```sql
 id          UUID PRIMARY KEY DEFAULT gen_random_uuid()
 user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
@@ -198,6 +218,7 @@ UNIQUE(user_id, phrase_id)
 ```
 
 #### Indexes
+
 ```sql
 ✓ idx_bookmarks_user_id
 ✓ idx_bookmarks_phrase_id
@@ -205,6 +226,7 @@ UNIQUE(user_id, phrase_id)
 ```
 
 #### RLS Policies
+
 ```sql
 ✓ Users can manage their own bookmarks (SECURE)
 ✓ Admins can view all bookmarks (SECURE)
@@ -213,10 +235,12 @@ UNIQUE(user_id, phrase_id)
 ---
 
 ### Table: `phrase_views`
+
 **Purpose:** Track phrase view analytics
 **Primary Key:** `id` (UUID)
 
 #### Columns
+
 ```sql
 id          UUID PRIMARY KEY DEFAULT gen_random_uuid()
 user_id     UUID REFERENCES auth.users(id) ON DELETE CASCADE
@@ -225,6 +249,7 @@ viewed_at   TIMESTAMPTZ DEFAULT NOW()
 ```
 
 #### Indexes
+
 ```sql
 ✓ idx_phrase_views_user_id
 ✓ idx_phrase_views_phrase_id
@@ -234,10 +259,12 @@ viewed_at   TIMESTAMPTZ DEFAULT NOW()
 ---
 
 ### Table: `study_sessions`
+
 **Purpose:** Daily study tracking
 **Primary Key:** `id` (UUID)
 
 #### Columns
+
 ```sql
 id                    UUID PRIMARY KEY DEFAULT gen_random_uuid()
 user_id               UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
@@ -249,6 +276,7 @@ UNIQUE(user_id, session_date)
 ```
 
 #### Indexes
+
 ```sql
 ✓ idx_study_sessions_user_id
 ✓ idx_study_sessions_date
@@ -257,10 +285,12 @@ UNIQUE(user_id, session_date)
 ---
 
 ### Table: `ai_generated_phrases`
+
 **Purpose:** User-generated custom phrases via AI
 **Primary Key:** `id` (UUID)
 
 #### Columns
+
 ```sql
 id                      UUID PRIMARY KEY DEFAULT gen_random_uuid()
 user_id                 UUID REFERENCES profiles(user_id) ⚠️ BROKEN FK
@@ -283,9 +313,11 @@ approved_by             UUID REFERENCES profiles(user_id) ⚠️ BROKEN FK
 ```
 
 #### Issues
+
 - **CRITICAL:** References `profiles(user_id)` but should be `profiles(id)` or use the actual user_id column after migration 020
 
 #### Indexes
+
 ```sql
 ✓ ai_generated_phrases_user_id_idx
 ```
@@ -293,10 +325,12 @@ approved_by             UUID REFERENCES profiles(user_id) ⚠️ BROKEN FK
 ---
 
 ### Table: `ai_conversations`
+
 **Purpose:** AI chat session tracking
 **Primary Key:** `id` (UUID)
 
 #### Columns
+
 ```sql
 id          UUID PRIMARY KEY DEFAULT gen_random_uuid()
 user_id     UUID REFERENCES profiles(user_id) ⚠️ BROKEN FK
@@ -308,15 +342,18 @@ updated_at  TIMESTAMPTZ DEFAULT NOW()
 ```
 
 #### Issues
+
 - **CRITICAL:** Same foreign key issue as ai_generated_phrases
 
 ---
 
 ### Table: `ai_messages`
+
 **Purpose:** Messages within AI conversations
 **Primary Key:** `id` (UUID)
 
 #### Columns
+
 ```sql
 id                      UUID PRIMARY KEY DEFAULT gen_random_uuid()
 conversation_id         UUID REFERENCES ai_conversations(id) ON DELETE CASCADE
@@ -330,10 +367,12 @@ created_at              TIMESTAMPTZ DEFAULT NOW()
 ---
 
 ### Table: `moderation_alerts`
+
 **Purpose:** Content moderation tracking
 **Primary Key:** `id` (UUID)
 
 #### Columns
+
 ```sql
 id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
 content_type    TEXT NOT NULL
@@ -349,9 +388,11 @@ created_at      TIMESTAMPTZ DEFAULT NOW()
 ```
 
 #### Issues
+
 - Migration 001 (new) tries to create index on `severity` and `updated_at` columns that don't exist
 
 #### Indexes
+
 ```sql
 ✓ idx_moderation_alerts_status
 ✓ idx_moderation_alerts_content_type
@@ -361,6 +402,7 @@ created_at      TIMESTAMPTZ DEFAULT NOW()
 ```
 
 #### RLS Policies
+
 ```sql
 ⚠️ Users can insert alerts (TOO PERMISSIVE - should be restricted)
 ✓ Users can view their own alerts (SECURE)
@@ -370,10 +412,12 @@ created_at      TIMESTAMPTZ DEFAULT NOW()
 ---
 
 ### Table: `learning_standards`
+
 **Purpose:** AI proficiency level definitions
 **Primary Key:** `id` (UUID)
 
 #### Columns
+
 ```sql
 id                  UUID PRIMARY KEY DEFAULT gen_random_uuid()
 level               TEXT UNIQUE NOT NULL
@@ -394,10 +438,12 @@ updated_at          TIMESTAMPTZ DEFAULT NOW()
 ---
 
 ### Table: `daily_user_stats`
+
 **Purpose:** Aggregated daily analytics (performance optimization)
 **Primary Key:** `id` (BIGSERIAL)
 
 #### Columns
+
 ```sql
 id                  BIGSERIAL PRIMARY KEY
 user_id             UUID NOT NULL REFERENCES profiles(user_id) ⚠️ BROKEN FK
@@ -415,10 +461,12 @@ UNIQUE(user_id, date)
 ---
 
 ### Table: `phrase_stats_cache`
+
 **Purpose:** Cached phrase popularity metrics
 **Primary Key:** `phrase_id`
 
 #### Columns
+
 ```sql
 phrase_id       INT PRIMARY KEY REFERENCES phrases(id) ⚠️ Type mismatch (INT vs UUID)
 view_count      INT DEFAULT 0
@@ -428,11 +476,13 @@ last_updated    TIMESTAMPTZ DEFAULT NOW()
 ```
 
 #### Issues
+
 - **CRITICAL:** References phrases(id) as INT but phrases.id is UUID
 
 ---
 
 ### Materialized View: `user_activity_summary`
+
 **Purpose:** Pre-computed user statistics for admin dashboard
 
 ```sql
@@ -455,6 +505,7 @@ GROUP BY p.user_id, p.email, p.display_name, p.role, p.status;
 ```
 
 #### Issues
+
 - References `user_progress` table but actual table is `phrase_progress`
 
 ---
@@ -464,6 +515,7 @@ GROUP BY p.user_id, p.email, p.display_name, p.role, p.status;
 ### RLS Policy Review
 
 #### ✅ Secure Policies
+
 - User profile access (users see only own data)
 - Phrase progress tracking (users manage only own progress)
 - Bookmarks (users manage only own bookmarks)
@@ -471,6 +523,7 @@ GROUP BY p.user_id, p.email, p.display_name, p.role, p.status;
 - Admin policies use proper role checks
 
 #### ⚠️ Security Concerns
+
 1. **Moderation Alerts** - Any user can insert alerts (should be system-only or restricted)
 2. **Missing DELETE policies** - Several tables allow insert/update but no explicit DELETE policy
 3. **Admin checks** - Some policies use EXISTS subquery which may have performance impact at scale
@@ -480,6 +533,7 @@ GROUP BY p.user_id, p.email, p.display_name, p.role, p.status;
 ## Scalability Analysis
 
 ### Performance Optimizations ✅
+
 - Full-text search indexes on phrases
 - Composite indexes for common query patterns
 - Materialized view for admin dashboard
@@ -488,6 +542,7 @@ GROUP BY p.user_id, p.email, p.display_name, p.role, p.status;
 ### Concerns for Million-User Scale
 
 #### High Priority
+
 1. **Partitioning needed for:**
    - `phrase_views` (will grow to billions of rows)
    - `study_sessions` (partition by date)
@@ -507,15 +562,17 @@ GROUP BY p.user_id, p.email, p.display_name, p.role, p.status;
 ## Data Integrity Issues
 
 ### Foreign Key Problems
-| Table | Column | Issue | Severity |
-|-------|--------|-------|----------|
-| ai_generated_phrases | user_id | References profiles(user_id) but should be profiles(id) | CRITICAL |
-| ai_conversations | user_id | Same as above | CRITICAL |
-| ai_recommendations | user_id | Same as above | CRITICAL |
-| daily_user_stats | user_id | Same as above | CRITICAL |
-| phrase_stats_cache | phrase_id | INT vs UUID type mismatch | CRITICAL |
+
+| Table                | Column    | Issue                                                   | Severity |
+| -------------------- | --------- | ------------------------------------------------------- | -------- |
+| ai_generated_phrases | user_id   | References profiles(user_id) but should be profiles(id) | CRITICAL |
+| ai_conversations     | user_id   | Same as above                                           | CRITICAL |
+| ai_recommendations   | user_id   | Same as above                                           | CRITICAL |
+| daily_user_stats     | user_id   | Same as above                                           | CRITICAL |
+| phrase_stats_cache   | phrase_id | INT vs UUID type mismatch                               | CRITICAL |
 
 ### Missing Constraints
+
 - No CHECK constraint on `profiles.email` format
 - No CHECK constraint on `moderation_alerts.status` values
 - Missing NOT NULL on several important columns
@@ -525,6 +582,7 @@ GROUP BY p.user_id, p.email, p.display_name, p.role, p.status;
 ## Recommended Actions
 
 ### Immediate (Run Before Production)
+
 1. Rename duplicate migration files
 2. Fix all foreign key references
 3. Fix phrase_stats_cache type mismatch
@@ -532,12 +590,14 @@ GROUP BY p.user_id, p.email, p.display_name, p.role, p.status;
 5. Tighten moderation_alerts RLS policy
 
 ### High Priority (Within 1 Month)
+
 1. Implement partitioning for high-volume tables
 2. Add missing indexes
 3. Set up materialized view refresh schedule
 4. Add phrase stats cache auto-update triggers
 
 ### Medium Priority (Within 3 Months)
+
 1. Review and optimize all RLS policies for performance
 2. Add database monitoring for slow queries
 3. Implement connection pooling strategy
@@ -560,6 +620,7 @@ GROUP BY p.user_id, p.email, p.display_name, p.role, p.status;
 ## Monitoring Queries
 
 ### Check for orphaned records
+
 ```sql
 -- AI tables referencing non-existent users
 SELECT COUNT(*) FROM ai_generated_phrases
@@ -567,6 +628,7 @@ WHERE user_id NOT IN (SELECT id FROM profiles);
 ```
 
 ### Check table sizes
+
 ```sql
 SELECT
   schemaname,
@@ -578,6 +640,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ```
 
 ### Check slow queries
+
 ```sql
 SELECT query, calls, total_exec_time, mean_exec_time
 FROM pg_stat_statements
