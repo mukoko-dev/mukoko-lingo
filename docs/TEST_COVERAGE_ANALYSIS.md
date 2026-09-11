@@ -1,7 +1,7 @@
 # Test Coverage Analysis
 
 **Last measured**: September 2026 · **Framework**: Jest 29 + jest-expo
-**Suites**: 48 · **Tests**: 554 · all passing
+**Suites**: 49 · **Tests**: 580 · all passing
 
 Regenerate the numbers below with `npm run test:coverage`. They are a snapshot,
 not a contract — the contract is the threshold block in `package.json`.
@@ -10,17 +10,17 @@ not a contract — the contract is the threshold block in `package.json`.
 
 | Metric | Threshold (`package.json`) | Actual | Margin |
 |---|---|---|---|
-| Statements | 47% | 50.9% | +3.9 |
-| Branches | 42% | 45.4% | +3.4 |
-| Functions | 43% | 43.6% | **+0.6** |
-| Lines | 48% | 52.7% | +4.7 |
+| Statements | 53% | 55.6% | +2.6 |
+| Branches | 47% | 49.5% | +2.5 |
+| Functions | 46% | 48.4% | +2.4 |
+| Lines | 55% | 57.2% | +2.2 |
 
-Functions is the tight one, and it got tighter: **half a percentage point** of
-headroom now, down from two. Moving the question bank and its three fully
-covered helpers out of `lib/data/` into `api/_lib/` is most of the drop — the
-functions are still tested, but `api/**` is not in `collectCoverageFrom`, so
-they no longer count. That is this document's first point happening in
-practice, and the next uncovered module in `lib/**` will turn the build red.
+Functions had fallen to half a point of headroom after the question bank moved
+to `api/_lib/` (still tested, but outside `collectCoverageFrom`). Covering
+`lib/db/identity.ts` recovered it — and the thresholds were raised with it, so
+the gain is locked in rather than available to be spent. Roughly two points of
+margin all round: enough for an ordinary change, not enough to add a
+300-line uncovered module without noticing.
 
 ### By area (statement coverage)
 
@@ -32,7 +32,7 @@ practice, and the next uncovered module in `lib/**` will turn the build red.
 | `lib/hooks` | 89% | Language, theme, UI language |
 | `lib/ai` | 70% | Client chat + moderation pre-check |
 | `lib/auth` | 65% | AuthKit PKCE flow, both platforms |
-| `lib/db` | 48% | Shape mappers covered; `identity.ts` not at all |
+| `lib/db` | 82% | Shape mappers, and the persons ↔ profiles merge |
 | `lib/services` | 43% | SRS, XP, daily lesson, api-client covered; the rest not |
 | `lib/storage` | 41% | Web path covered, native path not |
 | `components` | mixed | Learning components 49–95%; chrome and UI primitives 0% |
@@ -81,23 +81,20 @@ The listing in CLAUDE.md is the current index. The ones worth knowing by name:
 | `api/assessments/__tests__/submit-route.test.ts` | Grading uses the **issued** set, so answering one of four is 25%; a caller-supplied `score`/`passed` is rejected |
 | `api/_lib/__tests__/question-bank-isolation.test.ts` | No client-side file imports the answer key — a bundling property no type check would catch |
 | `api/_lib/__tests__/logger.test.ts` | Request data reaches a log as an argument, never as a `util.format` template |
+| `lib/db/__tests__/identity.test.ts` | A sign-in keys on the WorkOS id, not the email, so a changed address cannot split a learner in two; a profile whose person is missing is dropped rather than merged onto a neighbour |
 | `scripts/release/__tests__/*` | The release automation cannot ship a hollow or half-bumped release |
 
 ## Gaps worth closing, in order
 
-1. **`lib/db/identity.ts` (309 lines, 0%)** — the merge between shared
-   `identity.persons` and Lingo's `learner_profiles`. Every authenticated
-   request goes through it, and a bug here crosses user records. Highest value
-   per test in the repo.
-2. **`lib/storage/database.native.ts` (273 lines, 0%)** — the web path is
+1. **`lib/storage/database.native.ts` (273 lines, 0%)** — the web path is
    covered and the native path is not, so iOS/Android storage divergence is
    invisible. The web suite is a ready-made template: mirror it.
-3. **`lib/services/notifications.ts` (272 lines, 0%)** and `offline.ts` — both
+2. **`lib/services/notifications.ts` (272 lines, 0%)** and `offline.ts` — both
    fail quietly by design, which is exactly the shape of bug tests catch and
    users do not report.
-4. **`components/AppHeader.tsx` (87 statements, 0%)** — the one piece of chrome
+3. **`components/AppHeader.tsx` (87 statements, 0%)** — the one piece of chrome
    on every screen.
-5. **Python analytics** — `api/analytics/tests/` covers helpers and imports;
+4. **Python analytics** — `api/analytics/tests/` covers helpers and imports;
    the four aggregation pipelines themselves are unpinned.
 
 *Closed since the last measurement*: assessment grading. First the score moved
