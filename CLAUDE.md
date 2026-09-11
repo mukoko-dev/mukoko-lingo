@@ -728,7 +728,7 @@ built server-side (see AI Integration above).
   `components/**` — `api/**` and `scripts/**` tests run but do **not** count
   toward the thresholds, so the backend has no coverage floor
 
-**Test Suites** (48 suites, 554 tests). Run `npx jest --listTests` for the
+**Test Suites** (49 suites, 580 tests). Run `npx jest --listTests` for the
 current set; the security-relevant ones are worth knowing by name:
 
 *Backend (`api/**`)* — note these are **not** included in
@@ -781,6 +781,11 @@ current set; the security-relevant ones are worth knowing by name:
 - `lib/data/__tests__/*` - Phrase and translation integrity (the question bank
   moved to `api/_lib/`, and its suite with it)
 - `lib/db/__tests__/*-shape.test.ts` - Document ↔ API shape mapping
+- `lib/db/__tests__/identity.test.ts` - The `identity.persons` ↔
+  `learner_profiles` merge: sign-in keys on the WorkOS id (not the email, which
+  can change and would split a learner in two), a profile whose person is
+  missing is dropped rather than merged onto a neighbour, and
+  `updateLingoProfile` never writes an orphan row or touches the shared record
 - `lib/services/__tests__/*` - API client, SRS, XP, daily lesson
 - `lib/storage/__tests__/database.test.ts` - Bookmarks, progress, skills, sessions
 - `lib/hooks/__tests__/*` - Language, theme and UI-language hooks

@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`lib/db/identity.ts` is covered** (26 tests) — the merge between the shared
+  `identity.persons` record and Lingo's `learner_profiles`, which every
+  authenticated request passes through and which
+  `docs/TEST_COVERAGE_ANALYSIS.md` had named the highest-value gap in the repo.
+  It was at 0%; it is now at 98% statements and 100% functions. The properties
+  pinned are the ones whose failure mode is silent rather than loud: a sign-in
+  keys on the WorkOS id and not the email (which can change, and would split
+  one learner into two people with two histories), a `learner_profiles` row
+  whose person is missing is dropped from lists rather than merged onto a
+  neighbour's identity, and `updateLingoProfile` refuses to create an orphan
+  profile or to touch the ecosystem-owned record.
+
+### Changed
+- **Coverage thresholds raised** to 53/47/46/55 (statements/branches/functions/
+  lines). Functions had drifted to half a point of headroom when the question
+  bank moved to `api/_lib/`, which is outside `collectCoverageFrom`; covering
+  `identity.ts` recovered it, and raising the floor keeps the gain instead of
+  leaving it to be spent by the next uncovered module.
+
+
 _Nothing yet._
 
 ---
