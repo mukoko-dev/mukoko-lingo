@@ -13,6 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Phrase Learning is Primary**: The app's main purpose is to enable learners to become multilingual through native language phrase learning. AI serves as an intelligent tutor that supports and enhances the learning process, not replaces it.
 
 **Skills-Based Progression**: Learning is organized around proficiency skills that naturally progress through assessments:
+
 - **Skills** → Drive the learning structure (5 core skills in the database)
 - **Categories** → Organized by skill level
 - **Phrases** → Mapped to specific skill proficiencies
@@ -22,17 +23,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Shamwari - The AI Mascot
 
 **Shamwari** (meaning "friend" in Shona) is the friendly AI language tutor mascot of Mukoko Lingo. Shamwari is:
+
 - **Who users interact with**: All AI conversations are with Shamwari
 - **Personality**: Warm, patient, encouraging, playful but professional
 - **Voice**: Friendly but knowledgeable, like a supportive teacher
 - **Mascot file**: `/assets/images/icon.png` (app icon)
 
 When implementing AI features, the AI should:
+
 - Introduce itself as "Shamwari"
 - Use occasional hive/friend references naturally
 - Be warm and personable while maintaining educational quality
 
 ### Key Features
+
 1. **Native Phrase Learning** - Core learning experience focused on practical phrases with language selector
 2. **Shamwari AI Tutoring** - AI powered by Cloudflare Workers AI (`@cf/qwen/qwen3-30b-a3b-fp8`), adapts to learner's proficiency level
 3. **Skills-Based Assessments** - Assessment engine with question bank, diagnostic and skill-specific tests
@@ -111,7 +115,7 @@ CLOUDFLARE_AI_GATEWAY_ID=your_gateway_id
 
 1. Copy `.env.example` to `.env.local`
 2. Fill in your MongoDB connection string
-3. Fill in your WorkOS API key and Client ID from https://dashboard.workos.com
+3. Fill in your WorkOS API key and Client ID from <https://dashboard.workos.com>
 4. Run `npx expo start` to start the dev server
 
 ## Directory Structure
@@ -262,21 +266,22 @@ nyuchi-lingo/
 
 ### Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Expo SDK 57 / React Native 0.86 / React 19 (web + iOS + Android) |
-| Styling | NativeWind (Tailwind CSS for React Native) |
-| Routing | Expo Router 6 (file-based routing) |
-| Backend | Vercel Serverless Functions (TypeScript + Python) |
-| Database | MongoDB (database `lingo` — shared with the rest of the Nyuchi ecosystem) |
-| Auth | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow) |
-| AI | Cloudflare Workers AI — Qwen3 30B A3B, via Cloudflare AI Gateway |
-| Testing | Jest 29 + jest-expo + React Testing Library |
-| CI/CD | GitHub Actions — CI (lint, typecheck, test, docs, builds) → Release (auto-tag) |
+| Layer    | Technology                                                                     |
+| -------- | ------------------------------------------------------------------------------ |
+| Frontend | Expo SDK 57 / React Native 0.86 / React 19 (web + iOS + Android)               |
+| Styling  | NativeWind (Tailwind CSS for React Native)                                     |
+| Routing  | Expo Router 6 (file-based routing)                                             |
+| Backend  | Vercel Serverless Functions (TypeScript + Python)                              |
+| Database | MongoDB (database `lingo` — shared with the rest of the Nyuchi ecosystem)      |
+| Auth     | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow)                  |
+| AI       | Cloudflare Workers AI — Qwen3 30B A3B, via Cloudflare AI Gateway               |
+| Testing  | Jest 29 + jest-expo + React Testing Library                                    |
+| CI/CD    | GitHub Actions — CI (lint, typecheck, test, docs, builds) → Release (auto-tag) |
 
 ### Authentication System
 
 **Architecture:**
+
 - **WorkOS AuthKit** hosted sign-in page (email/password, magic auth, social —
   whatever the AuthKit environment has enabled) via the PKCE
   authorization-code flow
@@ -295,6 +300,7 @@ send the access token as a `Bearer` header → an `identity.persons` document is
 found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 
 **Auth API Routes** (`api/auth/`):
+
 - `authorize.ts` - builds the AuthKit hosted sign-in URL + PKCE verifier
 - `callback.ts` - exchanges the authorization code for tokens
 - `refresh.ts` - exchanges a refresh token for a new access token
@@ -302,6 +308,7 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 - `logout.ts` - best-effort session revocation
 
 **Key Files**:
+
 - `lib/auth/workos-client.ts` - Client-side auth
 - `api/_lib/auth-middleware.ts` - Server-side auth validation + admin checks
 - `lib/services/api-client.ts` - REST API client with auth headers
@@ -311,11 +318,13 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 **Database**: `lingo` — the real, shared Nyuchi ecosystem database, accessed via `lib/db/mongo.ts` (client singleton, `getDb(name?)`, `DB_NAME = 'lingo'`) and `lib/db/collections.ts` (typed per-collection accessors). Schemaless — indexes are created via `scripts/create-indexes.ts`. **Never `mukoko-lingo`** — that was an invented, never-populated database from the original Supabase migration; `lingo` already holds the real, ecosystem-curated `phrases`/`languages`/`scenarios`/`standards`/`learningStandards` content (see `docs/ECOSYSTEM_DATA_MIGRATION.md`), and Lingo's own operational collections (bookmarks, progress, profiles, etc.) live there too. The MongoDB cluster is **shared across the Nyuchi ecosystem** — `identity`, `entity`, `lingo`, `engagement`, etc. are sibling databases on the same cluster, each owned by a different domain/app. Lingo must never invent its own parallel user table; it reads/writes the shared `identity` database for user identity (see below).
 
 **User & Authentication** — split across two databases, merged at the API layer (`lib/db/identity.ts`):
+
 - `identity.persons` (shared, ecosystem-wide, **not Lingo-owned**) — the real user record: UUID string `_id` (used as the OIDC `sub` claim), OIDC standard claims (`email`, `givenName`, `familyName`, `name`, `locale`, etc.), `workosUserId` mapping to WorkOS. Other Nyuchi apps (identity, entity, ubuntu, etc.) read and write this same collection.
 - `lingo.learner_profiles` (Lingo-local) — the extension fields the shared schema has no room for: `role` (`user`/`admin`), `status`, `preferred_ui_language`, `learning_goal`, `daily_goal`, push token, streaks. Keyed on `person_id` (== `identity.persons._id`).
 - `lib/db/identity.ts` exports the only sanctioned way to touch either collection: `findOrCreatePersonFromWorkOS`, `getMergedProfile`, `updateLingoProfile`, `listMergedProfiles`, etc. — all API routes go through these rather than querying `persons()`/`lingoProfiles()` directly, so the two collections never drift out of sync.
 
 **Phrase Learning**:
+
 - `phrases` - 200+ phrases, one flat document per phrase carrying all language fields directly (`english`, `shona`, `ndebele`, `swahili`, `chinese` + nested `pronunciation`/`context`). Mapped to skills via `skill_id` and `required_proficiency`. Seeded from `lib/data/phrases-data.ts` via `scripts/seed-phrases.ts`
 - `phrase_progress` - Learning status tracking (`learning`/`practiced`/`mastered`)
 - `bookmarks` - User-saved phrases for review (its own collection, not a flag on `phrase_progress`)
@@ -323,6 +332,7 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 - `study_sessions` - Daily study session metrics
 
 **Skills-Based Learning**:
+
 - `skills` - 5 core skills (pronunciation, vocabulary, grammar, comprehension, conversation) with i18n display names, plus an embedded `levels` array (5 proficiency levels, beginner → fluent)
 - `user_skills` - Current user proficiency per skill (score 0-100, read by AI tutor)
 - `assessments` - Assessment templates (diagnostic/formative/summative) with questions JSON
@@ -332,6 +342,7 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 - `learning_standards` - AI tutor configuration by proficiency level
 
 **AI & Moderation**:
+
 - `ai_conversations` - Chat sessions with type and language, messages embedded directly (capped ~200/conversation)
 - `moderation_alerts` - Flagged content for admin review (pending/reviewed/resolved)
 - `guardrails` - Content moderation rules (6 categories: content/behavior/safety)
@@ -343,6 +354,7 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 **Core Principle**: Learning progression is driven by demonstrated proficiency in specific skills, not just time or phrase count.
 
 **Learning Flow**:
+
 1. **Initial Assessment** → Determine baseline proficiency in each skill
 2. **Phrase Learning** → Practice phrases appropriate to current skill level
 3. **AI Tutoring** → Get contextual help from AI tutor adapted to proficiency
@@ -350,15 +362,17 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 5. **Progressive Unlock** → Access higher-level content as skills improve
 
 **Proficiency Levels** (from `scoreToLevel()` in `lib/ai/skills-aware-prompts.ts`):
-| Level | Score Range | Description |
-|-------|-----------|-------------|
-| Beginner | 0-49 | Basic phrases, simple grammar, maximum AI support |
-| Elementary | 50-64 | Common expressions, guided practice, high support |
-| Intermediate | 65-79 | Conversational fluency, moderate scaffolding |
-| Advanced | 80-89 | Complex phrases, nuanced language, light support |
-| Fluent | 90-100 | Native-like proficiency, peer conversation |
+
+| Level        | Score Range | Description                                       |
+| ------------ | ----------- | ------------------------------------------------- |
+| Beginner     | 0-49        | Basic phrases, simple grammar, maximum AI support |
+| Elementary   | 50-64       | Common expressions, guided practice, high support |
+| Intermediate | 65-79       | Conversational fluency, moderate scaffolding      |
+| Advanced     | 80-89       | Complex phrases, nuanced language, light support  |
+| Fluent       | 90-100      | Native-like proficiency, peer conversation        |
 
 **Skills Taxonomy** (implemented in DB):
+
 - **Pronunciation** - Sound production, tone, rhythm
 - **Vocabulary** - Word knowledge, context usage
 - **Grammar** - Sentence structure, verb forms, particles
@@ -366,6 +380,7 @@ found-or-created (keyed on `workosUserId`, see `lib/db/identity.ts`) if new user
 - **Conversation** - Real-time dialogue, cultural context
 
 **Assessment Types** (in `assessments` collection):
+
 - **Diagnostic** - Initial skill level determination
 - **Formative** - Ongoing progress checks during learning
 - **Summative** - Skill mastery verification before unlock
@@ -410,7 +425,7 @@ Details (`api/_lib/assessment-grading.ts`, `api/_lib/assessment-session.ts`):
   refused. The floor matters: a one-question quiz makes any correct answer a
   perfect score.
 - **A persisted score cannot exceed what the questions could demonstrate.**
-  `ceilingForLevels` caps it at the top of the band *above* the hardest
+  `ceilingForLevels` caps it at the top of the band _above_ the hardest
   question asked: beginner → 64, elementary → 79, intermediate → 89,
   advanced/fluent → 100. `getDiagnosticQuestions` only ever selects
   beginner-level questions, so a perfect diagnostic evidences elementary, and a
@@ -461,6 +476,7 @@ credential; everything goes through `/api/ai/chat` and `/api/ai/moderate`.
   when the route reports the service unconfigured (demo/offline mode)
 
 **Transport** (`api/_lib/ai-provider.ts`):
+
 - `POST https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1/chat/completions`
   with `Authorization: Bearer {CLOUDFLARE_API_TOKEN}` and
   `cf-aig-gateway-id: {CLOUDFLARE_AI_GATEWAY_ID}`. Add
@@ -494,23 +510,25 @@ cannot supply, extend, or replace it; `/api/ai/chat` ignores any
   `normalizeConversationType`, `scoreToLevel`, `toProficiencyMap` and the
   standing `INJECTION_RESISTANCE` block.
 - `api/_lib/tutor-prompt.ts` — `buildSystemPromptForUser({ personId, language,
-  conversationType, clientScores })`, called for EVERY AI interaction.
+conversationType, clientScores })`, called for EVERY AI interaction.
 - `lib/ai/skills-aware-prompts.ts` — client-side helpers (`scoreToLevel`,
   conversation starters). It no longer builds the prompt that reaches a model.
 
 The prompt is assembled from:
-  - User proficiency profile (overall + individual skills)
-  - Vocabulary complexity guidance (simple → native-level)
-  - Grammar complexity guidance (present simple → full grammatical range)
-  - Scaffolding level (maximum support → peer conversation)
-  - Error correction approach (correct everything → no corrections)
-  - Conversation type specific guidance (practice/scenario/translation_help)
+
+- User proficiency profile (overall + individual skills)
+- Vocabulary complexity guidance (simple → native-level)
+- Grammar complexity guidance (present simple → full grammatical range)
+- Scaffolding level (maximum support → peer conversation)
+- Error correction approach (correct everything → no corrections)
+- Conversation type specific guidance (practice/scenario/translation_help)
 
 **Only two request fields influence it**, and both go through allowlists:
 `language` and `conversation_type`. Anything unrecognised falls back to a
 known constant rather than reaching the template.
 
 **Proficiency resolution order** (`api/_lib/tutor-prompt.ts`):
+
 1. `lingo.user_skills` for this person — authoritative when present.
 2. Otherwise the request's `proficiency` map, passed through
    `sanitizeClientScores` (five known skill names, finite numbers only) and
@@ -520,7 +538,7 @@ known constant rather than reaching the template.
 Step 2 exists because practice, mini-quizzes and assessments record scores
 into **device storage** via `updateUserSkill`, and nothing syncs them to
 `lingo.user_skills` — which is empty. Without it the tutor scaffolds every
-learner as an absolute beginner. Only *numbers* cross this boundary, and they
+learner as an absolute beginner. Only _numbers_ cross this boundary, and they
 only select which fixed guidance string the template uses, so it does not
 reopen the injection surface that removing `system_prompt` closed. It
 self-corrects once `user_skills` is populated.
@@ -547,6 +565,7 @@ users who go through the UI; posting straight to the route bypasses it.
   reason, which the client surfaces instead of a generic network error
 
 **AI Message Storage** (`api/ai/conversations/`):
+
 - `POST /api/ai/conversations` - Create conversation
 - `GET /api/ai/conversations/:id/messages` - Get messages
 - `POST /api/ai/conversations/:id/messages` - Store message
@@ -556,12 +575,14 @@ users who go through the UI; posting straight to the route bypasses it.
 ### Navigation System
 
 **Mobile Tab Navigation** (`app/(tabs)/_layout.tsx`):
+
 1. **Learn** (`index.tsx`) - Daily lesson (flash cards + quiz) and phrase browsing with language selector, search, category filters
 2. **Shamwari** (`ai-practice.tsx`) - AI chat tutor powered by Workers AI, accepts phrase context from Learn/Phrase screens
 3. **Progress** (`insights.tsx`) - Dashboard (daily goal, streak, skill proficiency, phrase mastery) + Phrases (bookmarked/tracked phrases)
 4. **Profile** (`profile.tsx`) - User settings and preferences
 
 **Other Routes**:
+
 - `app/assessment/[skill].tsx` - Skill assessment page
 - `app/phrase/[id].tsx` - Phrase detail page
 - `app/onboarding/index.tsx` - New user onboarding
@@ -572,10 +593,12 @@ users who go through the UI; posting straight to the route bypasses it.
 ### Admin System
 
 **Access Control**:
+
 - Server-side: `requireAdmin()` from `api/_lib/auth-middleware.ts` validates the WorkOS access token + admin role
 - Client-side: `useAdmin()` hook from `lib/hooks/useAdmin.ts` checks role via profiles API
 
 **Admin Routes** (`app/admin/`):
+
 - `overview/` - Statistics dashboard (users, phrases, views, bookmarks)
 - `users/` - User management with role toggling and status changes
 - `phrases/` - Phrase CRUD with category/difficulty filters
@@ -586,12 +609,14 @@ users who go through the UI; posting straight to the route bypasses it.
 - `analytics/` - Activity analytics and monitoring
 
 **Admin Features**:
+
 - Admin access check in `app/admin/_layout.tsx`
 - All data fetched from MongoDB via API (no hardcoded data)
 - Pull-to-refresh on admin screens
 - Confirmation dialogs for destructive actions
 
 **Admin API Routes** (`api/admin/`):
+
 - `stats.ts` - Dashboard statistics
 - `activity.ts` - Activity logs
 - `popular-phrases.ts` - Most viewed phrases
@@ -604,6 +629,7 @@ users who go through the UI; posting straight to the route bypasses it.
 - `skills/[id].ts` - Skill management
 
 **Python Analytics** (`api/analytics/`):
+
 - `overview.py` - Growth rates, user funnel, activity trends
 - `learning-velocity.py` - Learning speed metrics
 - `skill-distribution.py` - Skill proficiency distribution
@@ -618,20 +644,22 @@ users who go through the UI; posting straight to the route bypasses it.
 
 Colors are defined in `constants/Colors.ts` and consumed via `lightTheme` / `darkTheme` objects.
 
-| Color | Light Hex | Dark Hex | Usage |
-|-------|-----------|----------|-------|
-| **Cobalt (Primary)** | `#0047AB` | `#00B0FF` | Main CTAs, primary actions, trust |
+| Color                     | Light Hex | Dark Hex  | Usage                                |
+| ------------------------- | --------- | --------- | ------------------------------------ |
+| **Cobalt (Primary)**      | `#0047AB` | `#00B0FF` | Main CTAs, primary actions, trust    |
 | **Tanzanite (Secondary)** | `#4B0082` | `#B388FF` | Depth, creativity, secondary actions |
-| **Gold (Accent)** | `#5D4037` | `#FFD740` | Achievement, warmth, premium |
-| **Army Green (Success)** | `#729B63` | `#8FB47F` | Mastery, progress, success states |
+| **Gold (Accent)**         | `#5D4037` | `#FFD740` | Achievement, warmth, premium         |
+| **Army Green (Success)**  | `#729B63` | `#8FB47F` | Mastery, progress, success states    |
 
 ### Background Colors
+
 - **Light Theme**: `#FAF9F5` (Warm Cream)
 - **Dark Theme**: `#0A0A0A` (Charcoal base)
 - **Cards**: `#FFFFFF` (light) / `#141414` (dark)
 - **Surface**: `#F3F2EE` (light) / `#1E1E1E` (dark elevated)
 
 ### Text Colors
+
 - **Primary**: `#141413` (light) / `#F5F5F4` (dark)
 - **Secondary**: `#52524E` (light) / `#A8A8A3` (dark)
 - **Muted**: `#8C8B87` (light) / `#6B6B66` (dark)
@@ -731,8 +759,9 @@ built server-side (see AI Integration above).
 **Test Suites** (49 suites, 580 tests). Run `npx jest --listTests` for the
 current set; the security-relevant ones are worth knowing by name:
 
-*Backend (`api/**`)* — note these are **not** included in
+_Backend (`api/**`)_ — note these are **not** included in
 `collectCoverageFrom`, so they do not move the coverage thresholds:
+
 - `api/_lib/__tests__/auth-middleware.test.ts` - Token verification; that
   `allowExpired` widens expiry **only** and never rescues a bad signature
 - `api/_lib/__tests__/chat-input.test.ts` - Rejects a client `system` role,
@@ -770,7 +799,8 @@ current set; the security-relevant ones are worth knowing by name:
 - `api/_lib/__tests__/logger.test.ts` - The caller's message is an argument,
   never `console.error`'s format string; control characters cannot forge a line
 
-*Shared (`lib/**`)*:
+_Shared (`lib/**`)_:
+
 - `lib/ai/__tests__/prompt-injection.test.ts` - Allowlists hold against
   injection strings; no caller text reaches the prompt
 - `lib/workos/__tests__/config.test.ts` - Redirect allowlist, including the
@@ -791,7 +821,8 @@ current set; the security-relevant ones are worth knowing by name:
 - `lib/hooks/__tests__/*` - Language, theme and UI-language hooks
 - `components/__tests__/*` - Flash card, mini quiz, daily lesson, celebration
 
-*Tooling (`scripts/**`)* — these guard the automation, not the app:
+_Tooling (`scripts/**`)_ — these guard the automation, not the app:
+
 - `scripts/release/__tests__/version.test.js` - Which commit types release, and
   that a pre-1.0 breaking change stays inside 0.x
 - `scripts/release/__tests__/changelog.test.js` - `[Unreleased]` moves under a
@@ -817,15 +848,15 @@ Modules that read `process.env` into consts at import time (e.g.
 
 **Triggers**: push to `main` or `feature/*`, and every pull request to `main`.
 
-| Job | What it runs |
-|---|---|
-| `lint` | `npm run lint` (mobile) |
-| `typecheck` | `npx tsc --noEmit` |
-| `test` | `npm test -- --ci --coverage`, uploads `coverage/` (7 days) |
-| `docs` | `node scripts/docs/check-docs.js` — dependency-free drift check |
-| `build-mobile-web` | `npx expo export --platform web`, uploads `dist/` (needs lint + typecheck + test) |
-| `lint-web` / `typecheck-web` / `build-web` | The same three for the Next.js app in `web/` |
-| `python` | `ruff check .` + `pytest` for the analytics functions |
+| Job                                        | What it runs                                                                      |
+| ------------------------------------------ | --------------------------------------------------------------------------------- |
+| `lint`                                     | `npm run lint` (mobile)                                                           |
+| `typecheck`                                | `npx tsc --noEmit`                                                                |
+| `test`                                     | `npm test -- --ci --coverage`, uploads `coverage/` (7 days)                       |
+| `docs`                                     | `node scripts/docs/check-docs.js` — dependency-free drift check                   |
+| `build-mobile-web`                         | `npx expo export --platform web`, uploads `dist/` (needs lint + typecheck + test) |
+| `lint-web` / `typecheck-web` / `build-web` | The same three for the Next.js app in `web/`                                      |
+| `python`                                   | `ruff check .` + `pytest` for the analytics functions                             |
 
 Mobile builds (iOS/Android via EAS) are present but commented out — they need
 an `EXPO_TOKEN`.
@@ -839,8 +870,8 @@ retired name to `RETIRED_TERMS` whenever you remove one.
 
 ### Release (`.github/workflows/release.yml`)
 
-Releases are **automatic**. The workflow fires on the CI workflow *completing
-successfully* on `main` (`workflow_run`), so a merge whose tests fail is never
+Releases are **automatic**. The workflow fires on the CI workflow _completing
+successfully_ on `main` (`workflow_run`), so a merge whose tests fail is never
 tagged. It derives the next version from Conventional Commit subjects since the
 last tag, bumps every version file, moves `CHANGELOG.md`'s `[Unreleased]`
 section under the new heading, commits `chore(release): vX.Y.Z [skip ci]`, tags,
@@ -860,11 +891,13 @@ Preview with `npm run release:dry`. Full details, including the failure table:
 ## Common Workflows
 
 ### Adding a New Phrase Category
+
 1. Use the admin web app to create/edit phrases
 2. Phrase metadata in `lingo.phrase`, translations in `lingo.translation`
 3. Adding a new language = INSERT translation rows (no schema change)
 
 ### Adding a New API Route
+
 1. Create file in `api/[feature]/` following Vercel serverless function pattern
 2. Import auth middleware: `import { requireAuth, requireAdmin } from '../_lib/auth-middleware'`
 3. Import Mongo collections: `import { phrases } from '../_lib/mongo'`
@@ -872,12 +905,14 @@ Preview with `npm run release:dry`. Full details, including the failure table:
 5. Add corresponding method to `lib/services/api-client.ts`
 
 ### Adding a New Mobile Screen
+
 1. Create `.tsx` file in appropriate `app/` directory
 2. For tabbed screens: Add to `app/(tabs)/` and update `app/(tabs)/_layout.tsx`
 3. For admin screens: Add to `app/admin/` (auto-protected by admin layout)
 4. Use `useTheme()` hook for theme-aware colors from `constants/Colors.ts`
 
 ### Working with AI Features
+
 1. Chat goes through `/api/ai/chat`; conversation storage lives at
    `api/ai/conversations/`. No provider key ever reaches the client.
 2. Client calls the route via `lib/ai/chat-service.ts` — it may send
@@ -893,6 +928,7 @@ Preview with `npm run release:dry`. Full details, including the failure table:
 6. Failed moderation creates `moderation_alerts` for admin review
 
 ### Modifying Learning Standards
+
 1. Use admin UI at admin → standards
 2. Standards stored in `learning_standards` collection
 3. Standards define vocabulary complexity and explanation depth per proficiency level
@@ -901,12 +937,15 @@ Preview with `npm run release:dry`. Full details, including the failure table:
 ## Special Considerations
 
 ### Authentication Security
+
 Authentication is handled by WorkOS AuthKit. Access/refresh tokens are stored in SecureStore (native) or AsyncStorage (web). All API routes validate the access token locally against WorkOS's JWKS on the server side. Profiles are auto-created on first API call if the WorkOS user doesn't have one.
 
 ### Phrase Languages
+
 The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chinese. Each has corresponding pronunciation and context fields. Swahili is supported by the AI tutor in conversation but does not have a dedicated column in the phrases schema.
 
 ### Build Configuration
+
 - Web build uses Expo export (`npx expo export --platform web`)
 - Deployed to Vercel as static SPA with API routes
 - Deep linking scheme: `mukokolingo://`
@@ -914,12 +953,14 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 - Typed routes enabled via Expo experiments
 
 ### Performance Notes
+
 - Phrases limited to 100-200 per query
 - Client-side filtering for categories/search
 - Python analytics use MongoDB aggregation pipelines (same database the TypeScript API writes to)
 - AI chat uses direct API calls (no streaming on mobile)
 
 ### Technical Debt
+
 - Component library is minimal (basic themed components only)
 - Limited error boundaries
 - No dedicated web layout components (sidebar, etc.)
@@ -938,7 +979,8 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 
 ## Documentation Structure
 
-### Root Directory (Essential documents only):
+### Root Directory (Essential documents only)
+
 - **CLAUDE.md** - Developer guide (this file)
 - **README.md** - Project overview and quick start
 - **BRANDING.md** - Brand guidelines, colors, typography
@@ -947,12 +989,14 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 - **CONTRIBUTING.md** - Commit conventions and their release effect, PR flow
 - **RELEASES.md** - Release automation, channels, what is still manual
 
-### Technical Documentation (`/docs/`):
+### Technical Documentation (`/docs/`)
+
 - **[docs/TEST_COVERAGE_ANALYSIS.md](docs/TEST_COVERAGE_ANALYSIS.md)** - What the suite covers, where the floors are missing
 - **[docs/ECOSYSTEM_DATA_MIGRATION.md](docs/ECOSYSTEM_DATA_MIGRATION.md)** - Moving onto the shared ecosystem collections
 - **[docs/EMAIL_TEMPLATES.md](docs/EMAIL_TEMPLATES.md)** - Branded transactional email, now authored in the WorkOS AuthKit dashboard
 
-### Scripts (`/scripts/`):
+### Scripts (`/scripts/`)
+
 - `scripts/create-indexes.ts` - MongoDB index creation (schemaless DB, indexes are the schema)
 - `scripts/seed-phrases.ts` / `scripts/seed-skills.ts` - Seed content collections
 - `scripts/release/` - Release automation: `version.js` (bump rules),
@@ -962,7 +1006,8 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 - **[scripts/DATABASE_SCHEMA_REVIEW.md](scripts/DATABASE_SCHEMA_REVIEW.md)** - Database schema documentation
 - **[scripts/MIGRATION_SUMMARY.md](scripts/MIGRATION_SUMMARY.md)** - Migration history
 
-### Agents (`/.claude/agents/`):
+### Agents (`/.claude/agents/`)
+
 - `docs-maintainer` - Keeps the written record true; run it whenever a change
   alters something documented, and whenever the drift check fails
 - `admin-experience-guardian` - New features get the admin controls to manage them
@@ -971,6 +1016,7 @@ The `Phrase` model supports **4 languages**: English, Shona, Ndebele, and Chines
 ### Creating New Documentation
 
 When creating new completion summaries, migration docs, or work records:
+
 1. Place technical docs in `/docs/`
 2. Place migration/script docs in `/scripts/`
 3. Keep root directory clean - only essential, frequently-referenced documents belong there
@@ -988,6 +1034,7 @@ When creating new completion summaries, migration docs, or work records:
 **Parent Company**: Nyuchi Africa (nyuchi.com)
 
 **Architecture Highlights**:
+
 - Skills-based learning system fully modeled in MongoDB collections
 - Adaptive AI tutor reads user proficiency for every interaction
 - Multi-platform: single codebase for web, iOS, and Android

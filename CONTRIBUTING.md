@@ -14,13 +14,13 @@ Thank you for your interest in contributing to Mukoko Lingo! This project is par
 
 This is a monorepo with two apps sharing a single API layer:
 
-| Directory | Purpose |
-|-----------|---------|
-| `app/` | Expo/React Native mobile app (iOS + Android) |
-| `web/` | Next.js web app (browser) |
-| `api/` | Shared Vercel serverless API routes |
-| `lib/` | Shared business logic |
-| `components/` | Mobile React Native components |
+| Directory     | Purpose                                      |
+| ------------- | -------------------------------------------- |
+| `app/`        | Expo/React Native mobile app (iOS + Android) |
+| `web/`        | Next.js web app (browser)                    |
+| `api/`        | Shared Vercel serverless API routes          |
+| `lib/`        | Shared business logic                        |
+| `components/` | Mobile React Native components               |
 
 See [CLAUDE.md](CLAUDE.md) for the architecture reference, including the
 5-layer component hierarchy used in the web app.
@@ -65,14 +65,14 @@ refactor: extract PhraseCard to L2 component
 **Your commit type picks the next version.** Releases are cut automatically
 from these subjects after a merge to `main` (see [RELEASES.md](RELEASES.md)):
 
-| Type | Effect on the next release |
-|---|---|
-| `feat:` | minor bump — listed under **Added** |
-| `fix:` | patch bump — listed under **Fixed** |
-| `perf:`, `refactor:`, `revert:` | patch bump — listed under **Changed** |
-| `type(security):` | patch bump — listed under **Security** |
-| `docs:`, `chore:`, `ci:`, `test:`, `style:`, `build:` | no release |
-| `type!:` or a `BREAKING CHANGE:` footer | major (minor while the version is below 1.0) |
+| Type                                                  | Effect on the next release                   |
+| ----------------------------------------------------- | -------------------------------------------- |
+| `feat:`                                               | minor bump — listed under **Added**          |
+| `fix:`                                                | patch bump — listed under **Fixed**          |
+| `perf:`, `refactor:`, `revert:`                       | patch bump — listed under **Changed**        |
+| `type(security):`                                     | patch bump — listed under **Security**       |
+| `docs:`, `chore:`, `ci:`, `test:`, `style:`, `build:` | no release                                   |
+| `type!:` or a `BREAKING CHANGE:` footer               | major (minor while the version is below 1.0) |
 
 A subject that does not match `type(scope): description` — a bare
 "updated some files", a merge commit — releases nothing, so squash-merge with a

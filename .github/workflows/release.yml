@@ -109,7 +109,8 @@ jobs:
             # Protected branch, or main moved on while CI ran. The release
             # itself still happens — it just points at the merged commit and
             # the version files stay to be bumped by hand.
-            echo "::warning::Could not push the version bump to main; tagging $VALIDATED_SHA instead. Check that the org secret RELEASE_BUMP_TOKEN is granted to this repository and that its owner can push to main."
+            echo "::warning::Could not push the version bump to main; tagging $VALIDATED_SHA instead." \
+              "Check that the org secret RELEASE_BUMP_TOKEN is granted to this repo and its owner can push to main."
             target="$VALIDATED_SHA"
           fi
 

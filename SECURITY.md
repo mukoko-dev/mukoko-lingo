@@ -17,7 +17,7 @@ Mukoko Lingo takes security seriously. This document outlines our security pract
 If you discover a security vulnerability, please report it responsibly:
 
 1. **Do NOT** open a public issue
-2. Email security concerns to: security@mukoko.com
+2. Email security concerns to: <security@mukoko.com>
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
@@ -93,6 +93,7 @@ EXPO_PUBLIC_API_BASE_URL=        # API base URL
 ### Security Headers
 
 Implemented via `vercel.json`:
+
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `X-XSS-Protection: 1; mode=block`
@@ -117,17 +118,17 @@ Implemented via `vercel.json`:
 
 ### Table Access Control
 
-| Table | Read | Write | Delete |
-|-------|------|-------|--------|
-| `identity.person` | Own or Admin | Own or Admin | Admin only |
-| `lingo.phrase` | Public | Admin only | Admin only |
-| `lingo.translation` | Public | Admin only | Admin only |
-| `lingo.phrase_progress` | Own only | Own only | Own only |
-| `lingo.study_session` | Own only | Own only | N/A |
-| `lingo.ai_conversation` | Own only | Own only | N/A |
-| `lingo.class` | Members only | Teacher only | Teacher only |
-| `lingo.assignment` | Class members | Teacher only | Teacher only |
-| `system.guardrail` | Admin only | Admin only | N/A |
+| Table                   | Read          | Write        | Delete       |
+| ----------------------- | ------------- | ------------ | ------------ |
+| `identity.person`       | Own or Admin  | Own or Admin | Admin only   |
+| `lingo.phrase`          | Public        | Admin only   | Admin only   |
+| `lingo.translation`     | Public        | Admin only   | Admin only   |
+| `lingo.phrase_progress` | Own only      | Own only     | Own only     |
+| `lingo.study_session`   | Own only      | Own only     | N/A          |
+| `lingo.ai_conversation` | Own only      | Own only     | N/A          |
+| `lingo.class`           | Members only  | Teacher only | Teacher only |
+| `lingo.assignment`      | Class members | Teacher only | Teacher only |
+| `system.guardrail`      | Admin only    | Admin only   | N/A          |
 
 ## Mobile App Security
 
