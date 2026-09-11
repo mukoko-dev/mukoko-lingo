@@ -53,9 +53,15 @@ describe('applyVersion', () => {
     const out = applyVersion('RELEASES.md', read('RELEASES.md'), '9.9.9', '2026-09-01')
 
     expect(out).toContain('### Current Version: 9.9.9')
-    const rows = out.slice(out.indexOf('| Version | Date | Highlights |')).split('\n')
+    // The table is Prettier-formatted, so the header carries padding. Find it
+    // by shape rather than by an exact string.
+    const rows = out.slice(out.search(/\|[ \t]*Version[ \t]*\|[ \t]*Date[ \t]*\|/)).split('\n')
     // Newest release sits directly under the header separator.
-    expect(rows[2]).toBe('| 9.9.9 | 2026-09-01 | See [CHANGELOG](CHANGELOG.md) |')
+    const cells = rows[2].split('|').slice(1, -1).map((cell) => cell.trim())
+    expect(cells).toEqual(['9.9.9', '2026-09-01', 'See [CHANGELOG](CHANGELOG.md)'])
+    // ...padded to the same width as the header, so the row we write stays
+    // clean under `prettier --check` and markdownlint MD060.
+    expect(rows[2]).toHaveLength(rows[0].length)
   })
 
   it('updates the project status line in CLAUDE.md', () => {
