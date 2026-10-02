@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   ScrollView,
@@ -8,126 +8,163 @@ import {
   RefreshControl,
   FlatList,
   TextInput,
-} from 'react-native'
-import { useRouter } from 'expo-router'
-import { BookOpen, ChevronRight, Bookmark, Search, X, CheckCircle2, Circle, Target, Flame } from 'lucide-react-native'
+} from "react-native";
+import { useRouter } from "expo-router";
+import {
+  BookOpen,
+  ChevronRight,
+  Bookmark,
+  Search,
+  X,
+  CheckCircle2,
+  Circle,
+  Target,
+  Flame,
+} from "lucide-react-native";
 
-import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { phrases, categories, Phrase } from '@/lib/data/phrases-data'
-import { getBookmarks, addBookmark, removeBookmark, getProgress, getStudyStreak } from '@/lib/storage/database'
-import { useLearningLanguage, LEARNING_LANGUAGES, LearningLanguage } from '@/lib/hooks/useLearningLanguage'
-import { DailyLessonCard } from '@/components/DailyLessonCard'
-import { MiniQuiz } from '@/components/MiniQuiz'
-import { CelebrationCard } from '@/components/CelebrationCard'
+import { useTheme } from "@/lib/hooks/useTheme";
+import { lightTheme, darkTheme, Colors } from "@/constants/Colors";
+import { phrases, categories, Phrase } from "@/lib/data/phrases-data";
+import {
+  getBookmarks,
+  addBookmark,
+  removeBookmark,
+  getProgress,
+  getStudyStreak,
+} from "@/lib/storage/database";
+import {
+  useLearningLanguage,
+  LEARNING_LANGUAGES,
+  LearningLanguage,
+} from "@/lib/hooks/useLearningLanguage";
+import { DailyLessonCard } from "@/components/DailyLessonCard";
+import { MiniQuiz } from "@/components/MiniQuiz";
+import { CelebrationCard } from "@/components/CelebrationCard";
 
-export { RouteErrorBoundary as ErrorBoundary } from '@/components/RouteErrorBoundary'
+export { RouteErrorBoundary as ErrorBoundary } from "@/components/RouteErrorBoundary";
 
-type LearnView = 'lesson' | 'browse'
+type LearnView = "lesson" | "browse";
 
 export default function LearnScreen() {
-  const { isDark } = useTheme()
-  const theme = isDark ? darkTheme : lightTheme
-  const router = useRouter()
-  const { learningLanguage, setLearningLanguage, learningLanguageOption } = useLearningLanguage()
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
+  const router = useRouter();
+  const { learningLanguage, setLearningLanguage, learningLanguageOption } =
+    useLearningLanguage();
 
-  const [activeView, setActiveView] = useState<LearnView>('lesson')
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([])
-  const [progress, setProgress] = useState<Record<string, { status: string; lastPracticed: string }>>({})
-  const [refreshing, setRefreshing] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
-  const [streak, setStreak] = useState(0)
+  const [activeView, setActiveView] = useState<LearnView>("lesson");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([]);
+  const [progress, setProgress] = useState<
+    Record<string, { status: string; lastPracticed: string }>
+  >({});
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [streak, setStreak] = useState(0);
 
   // Quiz/Celebration state
-  const [quizPhrases, setQuizPhrases] = useState<Phrase[] | null>(null)
-  const [celebration, setCelebration] = useState<{ type: 'daily-goal' | 'quiz-complete'; score?: number; total?: number } | null>(null)
+  const [quizPhrases, setQuizPhrases] = useState<Phrase[] | null>(null);
+  const [celebration, setCelebration] = useState<{
+    type: "daily-goal" | "quiz-complete";
+    score?: number;
+    total?: number;
+  } | null>(null);
 
   const loadData = useCallback(async () => {
     const [bookmarks, progressData, studyStreak] = await Promise.all([
       getBookmarks(),
       getProgress(),
       getStudyStreak(),
-    ])
-    setBookmarkedIds(bookmarks)
-    setProgress(progressData)
-    setStreak(studyStreak)
-  }, [])
+    ]);
+    setBookmarkedIds(bookmarks);
+    setProgress(progressData);
+    setStreak(studyStreak);
+  }, []);
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    loadData();
+  }, [loadData]);
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true)
-    await loadData()
-    setRefreshing(false)
-  }, [loadData])
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   const toggleBookmark = async (phraseId: string) => {
     if (bookmarkedIds.includes(phraseId)) {
-      await removeBookmark(phraseId)
-      setBookmarkedIds(prev => prev.filter(id => id !== phraseId))
+      await removeBookmark(phraseId);
+      setBookmarkedIds((prev) => prev.filter((id) => id !== phraseId));
     } else {
-      await addBookmark(phraseId)
-      setBookmarkedIds(prev => [...prev, phraseId])
+      await addBookmark(phraseId);
+      setBookmarkedIds((prev) => [...prev, phraseId]);
     }
-  }
+  };
 
   const handleStartQuiz = (lessonPhrases: Phrase[]) => {
-    setQuizPhrases(lessonPhrases)
-  }
+    setQuizPhrases(lessonPhrases);
+  };
 
-  const handleQuizComplete = (score: number, total: number, justCompletedGoal: boolean) => {
-    setQuizPhrases(null)
+  const handleQuizComplete = (
+    score: number,
+    total: number,
+    justCompletedGoal: boolean,
+  ) => {
+    setQuizPhrases(null);
     if (justCompletedGoal) {
-      setCelebration({ type: 'daily-goal' })
+      setCelebration({ type: "daily-goal" });
     } else {
-      setCelebration({ type: 'quiz-complete', score, total })
+      setCelebration({ type: "quiz-complete", score, total });
     }
-  }
+  };
 
   const handlePracticeWithShamwari = (phrasesToPractice?: Phrase[]) => {
-    setCelebration(null)
-    setQuizPhrases(null)
+    setCelebration(null);
+    setQuizPhrases(null);
     if (phrasesToPractice && phrasesToPractice.length > 0) {
       router.push({
-        pathname: '/(tabs)/ai-practice',
-        params: { phraseContext: phrasesToPractice.map(p => p.english).join(', ') },
-      })
+        pathname: "/(tabs)/ai-practice",
+        params: {
+          phraseContext: phrasesToPractice.map((p) => p.english).join(", "),
+        },
+      });
     } else {
-      router.push('/(tabs)/ai-practice')
+      router.push("/(tabs)/ai-practice");
     }
-  }
+  };
 
   const handleDismissCelebration = () => {
-    setCelebration(null)
-    loadData()
-  }
+    setCelebration(null);
+    loadData();
+  };
 
-  const filteredPhrases = phrases.filter(p => {
-    const matchesCategory = !selectedCategory || p.category === selectedCategory
-    if (!searchQuery.trim()) return matchesCategory
+  const filteredPhrases = phrases.filter((p) => {
+    const matchesCategory =
+      !selectedCategory || p.category === selectedCategory;
+    if (!searchQuery.trim()) return matchesCategory;
 
-    const query = searchQuery.toLowerCase()
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
       p.english.toLowerCase().includes(query) ||
       p[learningLanguage].toLowerCase().includes(query) ||
       p.shona.toLowerCase().includes(query) ||
       p.ndebele.toLowerCase().includes(query) ||
       p.swahili.toLowerCase().includes(query) ||
-      p.chinese.toLowerCase().includes(query)
+      p.chinese.toLowerCase().includes(query);
 
-    return matchesCategory && matchesSearch
-  })
+    return matchesCategory && matchesSearch;
+  });
 
-  const styles = createStyles(theme, isDark)
+  const styles = createStyles(theme, isDark);
 
   // If quiz is active, show quiz
   if (quizPhrases) {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.quizContainer}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.quizContainer}
+      >
         <View style={styles.quizHeader}>
           <TouchableOpacity onPress={() => setQuizPhrases(null)}>
             <X size={24} color={theme.text} />
@@ -141,13 +178,16 @@ export default function LearnScreen() {
           onPracticeWithShamwari={(p) => handlePracticeWithShamwari(p)}
         />
       </ScrollView>
-    )
+    );
   }
 
   // If celebration is active, show it
   if (celebration) {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.celebrationContainer}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.celebrationContainer}
+      >
         <CelebrationCard
           type={celebration.type}
           score={celebration.score}
@@ -158,7 +198,7 @@ export default function LearnScreen() {
           onDismiss={handleDismissCelebration}
         />
       </ScrollView>
-    )
+    );
   }
 
   return (
@@ -167,40 +207,58 @@ export default function LearnScreen() {
       {streak > 1 && (
         <View style={styles.streakBanner}>
           <Flame size={16} color={Colors.accent[isDark ? 300 : 800]} />
-          <Text style={styles.streakBannerText}>{streak} day streak! Keep it going!</Text>
+          <Text style={styles.streakBannerText}>
+            {streak} day streak! Keep it going!
+          </Text>
         </View>
       )}
 
       {/* View Toggle: Lesson / Browse */}
       <View style={styles.viewToggle}>
         <TouchableOpacity
-          style={[styles.viewToggleItem, activeView === 'lesson' && styles.viewToggleItemActive]}
-          onPress={() => setActiveView('lesson')}
+          style={[
+            styles.viewToggleItem,
+            activeView === "lesson" && styles.viewToggleItemActive,
+          ]}
+          onPress={() => setActiveView("lesson")}
         >
-          <Text style={[styles.viewToggleText, activeView === 'lesson' && styles.viewToggleTextActive]}>
+          <Text
+            style={[
+              styles.viewToggleText,
+              activeView === "lesson" && styles.viewToggleTextActive,
+            ]}
+          >
             Today's Lesson
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.viewToggleItem, activeView === 'browse' && styles.viewToggleItemActive]}
-          onPress={() => setActiveView('browse')}
+          style={[
+            styles.viewToggleItem,
+            activeView === "browse" && styles.viewToggleItemActive,
+          ]}
+          onPress={() => setActiveView("browse")}
         >
-          <Text style={[styles.viewToggleText, activeView === 'browse' && styles.viewToggleTextActive]}>
+          <Text
+            style={[
+              styles.viewToggleText,
+              activeView === "browse" && styles.viewToggleTextActive,
+            ]}
+          >
             Browse All
           </Text>
         </TouchableOpacity>
       </View>
 
-      {activeView === 'lesson' ? (
+      {activeView === "lesson" ? (
         <ScrollView
           style={styles.lessonScroll}
           contentContainerStyle={styles.lessonContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           {/* Daily Lesson Card */}
-          <DailyLessonCard
-            onStartQuiz={handleStartQuiz}
-          />
+          <DailyLessonCard onStartQuiz={handleStartQuiz} />
 
           {/* Language Selector */}
           <View style={styles.languageSectionCard}>
@@ -210,7 +268,7 @@ export default function LearnScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.languageContent}
             >
-              {LEARNING_LANGUAGES.map(lang => (
+              {LEARNING_LANGUAGES.map((lang) => (
                 <TouchableOpacity
                   key={lang.key}
                   style={[
@@ -223,7 +281,8 @@ export default function LearnScreen() {
                   <Text
                     style={[
                       styles.languageText,
-                      learningLanguage === lang.key && styles.languageTextActive,
+                      learningLanguage === lang.key &&
+                        styles.languageTextActive,
                     ]}
                   >
                     {lang.name}
@@ -244,7 +303,7 @@ export default function LearnScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.languageContent}
             >
-              {LEARNING_LANGUAGES.map(lang => (
+              {LEARNING_LANGUAGES.map((lang) => (
                 <TouchableOpacity
                   key={lang.key}
                   style={[
@@ -257,7 +316,8 @@ export default function LearnScreen() {
                   <Text
                     style={[
                       styles.languageText,
-                      learningLanguage === lang.key && styles.languageTextActive,
+                      learningLanguage === lang.key &&
+                        styles.languageTextActive,
                     ]}
                   >
                     {lang.name}
@@ -282,15 +342,18 @@ export default function LearnScreen() {
                 />
                 <TouchableOpacity
                   onPress={() => {
-                    setSearchQuery('')
-                    setShowSearch(false)
+                    setSearchQuery("");
+                    setShowSearch(false);
                   }}
                 >
                   <X size={18} color={theme.textMuted} />
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity style={styles.searchButton} onPress={() => setShowSearch(true)}>
+              <TouchableOpacity
+                style={styles.searchButton}
+                onPress={() => setShowSearch(true)}
+              >
                 <Search size={18} color={theme.textMuted} />
                 <Text style={styles.searchButtonText}>Search phrases...</Text>
               </TouchableOpacity>
@@ -320,7 +383,7 @@ export default function LearnScreen() {
                 All
               </Text>
             </TouchableOpacity>
-            {categories.map(cat => (
+            {categories.map((cat) => (
               <TouchableOpacity
                 key={cat.id}
                 style={[
@@ -345,7 +408,7 @@ export default function LearnScreen() {
           {/* Phrase List */}
           <FlatList
             data={filteredPhrases}
-            keyExtractor={item => item.id}
+            keyExtractor={(item) => item.id}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
@@ -356,7 +419,13 @@ export default function LearnScreen() {
                 theme={theme}
                 learningLanguage={learningLanguage}
                 isBookmarked={bookmarkedIds.includes(item.id)}
-                progressStatus={progress[item.id]?.status as 'learning' | 'practiced' | 'mastered' | undefined}
+                progressStatus={
+                  progress[item.id]?.status as
+                    | "learning"
+                    | "practiced"
+                    | "mastered"
+                    | undefined
+                }
                 onToggleBookmark={() => toggleBookmark(item.id)}
                 onPress={() => router.push(`/phrase/${item.id}`)}
               />
@@ -365,10 +434,12 @@ export default function LearnScreen() {
               <View style={styles.emptyState}>
                 <BookOpen size={48} color={theme.textMuted} />
                 <Text style={styles.emptyText}>
-                  {searchQuery ? 'No phrases match your search' : 'No phrases found'}
+                  {searchQuery
+                    ? "No phrases match your search"
+                    : "No phrases found"}
                 </Text>
                 {searchQuery ? (
-                  <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <TouchableOpacity onPress={() => setSearchQuery("")}>
                     <Text style={styles.emptyAction}>Clear search</Text>
                   </TouchableOpacity>
                 ) : null}
@@ -378,25 +449,29 @@ export default function LearnScreen() {
         </>
       )}
     </View>
-  )
+  );
 }
 
 interface PhraseCardProps {
-  phrase: Phrase
-  theme: typeof lightTheme
-  learningLanguage: LearningLanguage
-  isBookmarked: boolean
-  progressStatus?: 'learning' | 'practiced' | 'mastered'
-  onToggleBookmark: () => void
-  onPress: () => void
+  phrase: Phrase;
+  theme: typeof lightTheme;
+  learningLanguage: LearningLanguage;
+  isBookmarked: boolean;
+  progressStatus?: "learning" | "practiced" | "mastered";
+  onToggleBookmark: () => void;
+  onPress: () => void;
 }
 
 function getStatusColor(status: string, theme: typeof lightTheme) {
   switch (status) {
-    case 'mastered': return Colors.success[500]
-    case 'practiced': return theme.secondary
-    case 'learning': return theme.accent
-    default: return Colors.neutral[400]
+    case "mastered":
+      return Colors.success[500];
+    case "practiced":
+      return theme.secondary;
+    case "learning":
+      return theme.accent;
+    default:
+      return Colors.neutral[400];
   }
 }
 
@@ -409,13 +484,17 @@ function PhraseCard({
   onToggleBookmark,
   onPress,
 }: PhraseCardProps) {
-  const styles = createStyles(theme, false)
-  const langOption = LEARNING_LANGUAGES.find(l => l.key === learningLanguage)
+  const styles = createStyles(theme, false);
+  const langOption = LEARNING_LANGUAGES.find((l) => l.key === learningLanguage);
 
-  const StatusIcon = progressStatus === 'mastered' ? CheckCircle2
-    : progressStatus === 'practiced' ? Target
-    : progressStatus === 'learning' ? Circle
-    : null
+  const StatusIcon =
+    progressStatus === "mastered"
+      ? CheckCircle2
+      : progressStatus === "practiced"
+        ? Target
+        : progressStatus === "learning"
+          ? Circle
+          : null;
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
@@ -424,7 +503,9 @@ function PhraseCard({
           <Text style={styles.cardEnglish}>{phrase.english}</Text>
           <View style={styles.translationRow}>
             <Text style={styles.translationFlag}>{langOption?.flag}</Text>
-            <Text style={styles.cardTranslation}>{phrase[learningLanguage]}</Text>
+            <Text style={styles.cardTranslation}>
+              {phrase[learningLanguage]}
+            </Text>
           </View>
         </View>
         <TouchableOpacity
@@ -434,7 +515,7 @@ function PhraseCard({
           <Bookmark
             size={20}
             color={isBookmarked ? theme.accent : theme.textMuted}
-            fill={isBookmarked ? theme.accent : 'transparent'}
+            fill={isBookmarked ? theme.accent : "transparent"}
           />
         </TouchableOpacity>
       </View>
@@ -442,14 +523,31 @@ function PhraseCard({
         <View style={styles.cardFooterLeft}>
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryBadgeText}>
-              {categories.find(c => c.id === phrase.category)?.name || phrase.category}
+              {categories.find((c) => c.id === phrase.category)?.name ||
+                phrase.category}
             </Text>
           </View>
           {progressStatus && StatusIcon && (
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(progressStatus, theme) + '20' }]}>
-              <StatusIcon size={12} color={getStatusColor(progressStatus, theme)} />
-              <Text style={[styles.statusBadgeText, { color: getStatusColor(progressStatus, theme) }]}>
-                {progressStatus.charAt(0).toUpperCase() + progressStatus.slice(1)}
+            <View
+              style={[
+                styles.statusBadge,
+                {
+                  backgroundColor: getStatusColor(progressStatus, theme) + "20",
+                },
+              ]}
+            >
+              <StatusIcon
+                size={12}
+                color={getStatusColor(progressStatus, theme)}
+              />
+              <Text
+                style={[
+                  styles.statusBadgeText,
+                  { color: getStatusColor(progressStatus, theme) },
+                ]}
+              >
+                {progressStatus.charAt(0).toUpperCase() +
+                  progressStatus.slice(1)}
               </Text>
             </View>
           )}
@@ -457,7 +555,7 @@ function PhraseCard({
         <ChevronRight size={16} color={theme.textMuted} />
       </View>
     </TouchableOpacity>
-  )
+  );
 }
 
 const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
@@ -468,23 +566,27 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     // Streak banner
     streakBanner: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       gap: 6,
-      backgroundColor: isDark ? Colors.accent[300] + '15' : Colors.accent[800] + '10',
+      backgroundColor: isDark
+        ? Colors.accent[300] + "15"
+        : Colors.accent[800] + "10",
       paddingVertical: 8,
       borderBottomWidth: 1,
-      borderBottomColor: isDark ? Colors.accent[300] + '20' : Colors.accent[800] + '15',
+      borderBottomColor: isDark
+        ? Colors.accent[300] + "20"
+        : Colors.accent[800] + "15",
     },
     streakBannerText: {
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: "600",
       color: Colors.accent[isDark ? 300 : 800],
     },
     // View toggle
     viewToggle: {
-      flexDirection: 'row',
+      flexDirection: "row",
       backgroundColor: theme.card,
       margin: 16,
       marginBottom: 0,
@@ -495,18 +597,18 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       flex: 1,
       paddingVertical: 10,
       borderRadius: 8,
-      alignItems: 'center',
+      alignItems: "center",
     },
     viewToggleItemActive: {
       backgroundColor: theme.primary,
     },
     viewToggleText: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.textMuted,
     },
     viewToggleTextActive: {
-      color: '#ffffff',
+      color: "#ffffff",
     },
     // Lesson view
     lessonScroll: {
@@ -531,20 +633,20 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       paddingBottom: 32,
     },
     quizHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
       paddingHorizontal: 16,
       paddingBottom: 16,
     },
     quizHeaderTitle: {
       fontSize: 18,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
     },
     celebrationContainer: {
       flex: 1,
-      justifyContent: 'center',
+      justifyContent: "center",
       paddingBottom: 32,
     },
     // Browse view styles (same as before)
@@ -558,21 +660,21 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     languageSectionLabel: {
       fontSize: 12,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.textMuted,
       marginBottom: 8,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
       letterSpacing: 0.5,
     },
     languageContent: {
       gap: 8,
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       paddingBottom: 4,
     },
     languagePill: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       paddingHorizontal: 14,
       paddingVertical: 8,
       borderRadius: 20,
@@ -590,11 +692,11 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     languageText: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: "500",
       color: theme.text,
     },
     languageTextActive: {
-      color: '#ffffff',
+      color: "#ffffff",
     },
     searchSection: {
       paddingHorizontal: 16,
@@ -604,8 +706,8 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       borderBottomColor: theme.border,
     },
     searchBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       backgroundColor: theme.background,
       borderRadius: 10,
       paddingHorizontal: 12,
@@ -621,8 +723,8 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       paddingVertical: 2,
     },
     searchButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       backgroundColor: theme.background,
       borderRadius: 10,
       paddingHorizontal: 12,
@@ -646,12 +748,12 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       paddingHorizontal: 16,
       paddingVertical: 14,
       gap: 8,
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
     },
     categoryPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       paddingHorizontal: 16,
       paddingVertical: 10,
       borderRadius: 20,
@@ -671,12 +773,12 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     categoryText: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: "500",
       color: theme.text,
       lineHeight: 20,
     },
     categoryTextActive: {
-      color: '#ffffff',
+      color: "#ffffff",
     },
     listContent: {
       padding: 16,
@@ -687,16 +789,16 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       borderRadius: 12,
       padding: 16,
       marginBottom: 12,
-      shadowColor: '#000',
+      shadowColor: "#000",
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.1,
       shadowRadius: 2,
       elevation: 2,
     },
     cardHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
       marginBottom: 12,
     },
     cardLanguages: {
@@ -705,13 +807,13 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     cardEnglish: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
       marginBottom: 6,
     },
     translationRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 6,
     },
     translationFlag: {
@@ -720,23 +822,23 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     cardTranslation: {
       fontSize: 15,
       color: theme.primary,
-      fontStyle: 'italic',
+      fontStyle: "italic",
       flex: 1,
     },
     cardFooter: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
     },
     cardFooterLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 8,
       flex: 1,
     },
     statusBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: 12,
@@ -744,22 +846,22 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     statusBadgeText: {
       fontSize: 11,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     categoryBadge: {
-      backgroundColor: theme.secondary + '20',
+      backgroundColor: theme.secondary + "20",
       paddingHorizontal: 10,
       paddingVertical: 4,
       borderRadius: 12,
     },
     categoryBadgeText: {
       fontSize: 12,
-      fontWeight: '500',
+      fontWeight: "500",
       color: Colors.secondary[600],
     },
     emptyState: {
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       paddingVertical: 60,
     },
     emptyText: {
@@ -771,6 +873,6 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       marginTop: 8,
       fontSize: 14,
       color: theme.primary,
-      fontWeight: '600',
+      fontWeight: "600",
     },
-  })
+  });

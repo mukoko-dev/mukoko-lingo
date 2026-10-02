@@ -1,8 +1,8 @@
 // Learn more https://docs.expo.dev/guides/customizing-metro
-const { getDefaultConfig } = require('expo/metro-config')
+const { getDefaultConfig } = require("expo/metro-config");
 
 /** @type {import('expo/metro-config').MetroConfig} */
-const config = getDefaultConfig(__dirname)
+const config = getDefaultConfig(__dirname);
 
 // ---------------------------------------------------------------------------
 // Suppress "SES Removing unpermitted intrinsics" in web builds.
@@ -14,27 +14,27 @@ const config = getDefaultConfig(__dirname)
 // with an empty shim for web builds only — native builds are unaffected and
 // server-side security is enforced by the API layer.
 // ---------------------------------------------------------------------------
-const originalResolveRequest = config.resolver?.resolveRequest
+const originalResolveRequest = config.resolver?.resolveRequest;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (platform === 'web') {
+  if (platform === "web") {
     if (
-      moduleName === 'ses' ||
-      moduleName === 'ses/lockdown' ||
-      moduleName === '@endo/ses-compat' ||
-      moduleName === '@endo/lockdown' ||
-      moduleName.endsWith('/lockdown-install.js') ||
-      moduleName.endsWith('/lockdown.js')
+      moduleName === "ses" ||
+      moduleName === "ses/lockdown" ||
+      moduleName === "@endo/ses-compat" ||
+      moduleName === "@endo/lockdown" ||
+      moduleName.endsWith("/lockdown-install.js") ||
+      moduleName.endsWith("/lockdown.js")
     ) {
       // Return an empty module — prevents lockdown() from running in the browser
-      return { type: 'empty' }
+      return { type: "empty" };
     }
   }
 
   if (originalResolveRequest) {
-    return originalResolveRequest(context, moduleName, platform)
+    return originalResolveRequest(context, moduleName, platform);
   }
-  return context.resolveRequest(context, moduleName, platform)
-}
+  return context.resolveRequest(context, moduleName, platform);
+};
 
-module.exports = config
+module.exports = config;

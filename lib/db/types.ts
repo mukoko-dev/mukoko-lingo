@@ -13,34 +13,34 @@
  * parallel user table — see `LingoProfile` below for Lingo-specific fields.
  */
 export interface Person {
-  _id: string
-  _schemaVersion: 'v3.1'
-  email: string | null
-  emailVerified: boolean
-  phoneNumber?: string | null
-  phoneNumberVerified: boolean
-  givenName?: string | null
-  familyName?: string | null
-  additionalName?: string | null
-  name?: string | null
-  nickname?: string | null
-  preferredUsername?: string | null
-  picture?: string | null
-  locale?: string | null
-  zoneinfo?: string | null
-  gender?: string | null
-  birthdate?: Date | null
-  workosUserId?: string | null
-  isActive: boolean
-  lastSeenAt?: Date | null
-  createdAt: Date
-  updatedAt: Date
+  _id: string;
+  _schemaVersion: "v3.1";
+  email: string | null;
+  emailVerified: boolean;
+  phoneNumber?: string | null;
+  phoneNumberVerified: boolean;
+  givenName?: string | null;
+  familyName?: string | null;
+  additionalName?: string | null;
+  name?: string | null;
+  nickname?: string | null;
+  preferredUsername?: string | null;
+  picture?: string | null;
+  locale?: string | null;
+  zoneinfo?: string | null;
+  gender?: string | null;
+  birthdate?: Date | null;
+  workosUserId?: string | null;
+  isActive: boolean;
+  lastSeenAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
   bundu?: {
-    familyMembership?: Record<string, unknown>
-    defaultFamilyEntityId?: string
-    verificationTier?: number
-    preferredLanguages?: string[]
-  }
+    familyMembership?: Record<string, unknown>;
+    defaultFamilyEntityId?: string;
+    verificationTier?: number;
+    preferredLanguages?: string[];
+  };
 }
 
 /**
@@ -50,27 +50,27 @@ export interface Person {
  * database, collection `learner_profiles`.
  */
 export interface LingoProfile {
-  _id?: any
-  person_id: string
-  role: 'user' | 'admin'
-  status: 'active' | 'inactive' | 'banned' | 'pending'
-  created_at: Date
-  last_active?: Date
-  deleted_at?: Date | null
-  preferred_ui_language?: string
-  learning_goal?: string
-  daily_goal?: number
-  push_token?: string
-  push_token_platform?: string
-  push_token_updated_at?: Date
-  last_study_date?: string
+  _id?: any;
+  person_id: string;
+  role: "user" | "admin";
+  status: "active" | "inactive" | "banned" | "pending";
+  created_at: Date;
+  last_active?: Date;
+  deleted_at?: Date | null;
+  preferred_ui_language?: string;
+  learning_goal?: string;
+  daily_goal?: number;
+  push_token?: string;
+  push_token_platform?: string;
+  push_token_updated_at?: Date;
+  last_study_date?: string;
 }
 
 export interface PhraseTranslation {
-  languageTag: string
-  text: string
-  pronunciation?: string | null
-  context?: string | null
+  languageTag: string;
+  text: string;
+  pronunciation?: string | null;
+  context?: string | null;
 }
 
 /**
@@ -81,52 +81,63 @@ export interface PhraseTranslation {
  * (entity.entities, slug `mukoko-lingo`) for anything Lingo authors.
  */
 export interface Phrase {
-  _id: string
-  _schemaVersion: 'v3.1'
-  category: string
-  contentType: 'phrase' | 'sentence' | 'word' | 'expression' | 'idiom' | 'proverb'
-  difficulty: 'beginner' | 'elementary' | 'intermediate' | 'advanced' | 'fluent'
-  cefrLevel?: string | null
-  creatorEntityId: string
-  scenarioIds?: string[]
-  tags?: string[]
-  slug?: string | null
-  source?: string | null
-  isActive: boolean
-  viewCount: number
-  bookmarkCount: number
-  translations: PhraseTranslation[]
-  createdAt: Date
-  updatedAt: Date
-  mukoko?: Record<string, unknown>
+  _id: string;
+  _schemaVersion: "v3.1";
+  category: string;
+  contentType:
+    | "phrase"
+    | "sentence"
+    | "word"
+    | "expression"
+    | "idiom"
+    | "proverb";
+  difficulty:
+    | "beginner"
+    | "elementary"
+    | "intermediate"
+    | "advanced"
+    | "fluent";
+  cefrLevel?: string | null;
+  creatorEntityId: string;
+  scenarioIds?: string[];
+  tags?: string[];
+  slug?: string | null;
+  source?: string | null;
+  isActive: boolean;
+  viewCount: number;
+  bookmarkCount: number;
+  translations: PhraseTranslation[];
+  createdAt: Date;
+  updatedAt: Date;
+  mukoko?: Record<string, unknown>;
 }
 
 /** The real, pre-existing Mukoko Lingo product entity (entity.entities). */
-export const MUKOKO_LINGO_ENTITY_ID = '0192e000-c000-7000-8000-000000000002'
+export const MUKOKO_LINGO_ENTITY_ID = "0192e000-c000-7000-8000-000000000002";
 
 export interface PhraseProgress {
-  _id?: any
-  user_id: string
-  phrase_id: string
-  status: 'learning' | 'practiced' | 'mastered'
-  times_practiced: number
-  last_practiced_at?: Date
-  created_at: Date
-  updated_at?: Date
+  _id?: any;
+  user_id: string;
+  phrase_id: string;
+  status: "learning" | "practiced" | "mastered";
+  times_practiced: number;
+  last_practiced_at?: Date;
+  created_at: Date;
+  updated_at?: Date;
 }
 
 export interface Bookmark {
-  _id?: any
-  user_id: string
-  phrase_id: string
-  created_at: Date
+  _id?: any;
+  user_id: string;
+  phrase_id: string;
+  created_at: Date;
 }
 
 export interface PhraseView {
-  _id?: any
-  phrase_id: string
-  user_id?: string
-  viewed_at: Date
+  _id?: any;
+  phrase_id: string;
+  user_id?: string;
+  viewed_at: Date;
 }
 
 /**
@@ -137,18 +148,18 @@ export interface PhraseView {
  * docs/ECOSYSTEM_DATA_MIGRATION.md.
  */
 export interface PhraseEngagement {
-  phraseId: string
-  bookmarkCount: number
-  viewCount: number
+  phraseId: string;
+  bookmarkCount: number;
+  viewCount: number;
 }
 
 export interface SkillLevel {
   /** Proficiency band slug — beginner | elementary | intermediate | advanced | fluent. */
-  level?: string
-  sort_order: number
+  level?: string;
+  sort_order: number;
   /** Inclusive lower bound of the band; mirrors scoreToLevel() in lib/ai/skills-aware-prompts.ts. */
-  min_score: number
-  name?: string
+  min_score: number;
+  name?: string;
 }
 
 /**
@@ -158,48 +169,48 @@ export interface SkillLevel {
  * Seeded from lib/data/skills-data.ts via scripts/seed-skills.ts.
  */
 export interface Skill {
-  _id: string
-  name: string
+  _id: string;
+  name: string;
   /** i18n by UI language tag (en, sn, nd, sw, zh). */
-  display_name: Record<string, string>
-  description?: Record<string, string>
-  icon?: string
-  is_active: boolean
-  sort_order: number
-  levels?: SkillLevel[]
-  created_at?: Date
-  updated_at?: Date
+  display_name: Record<string, string>;
+  description?: Record<string, string>;
+  icon?: string;
+  is_active: boolean;
+  sort_order: number;
+  levels?: SkillLevel[];
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 export interface UserSkill {
-  _id?: any
-  user_id: string
-  skill_id: string
-  current_score: number
-  current_level: string
-  level_achieved_at?: Date
+  _id?: any;
+  user_id: string;
+  skill_id: string;
+  current_score: number;
+  current_level: string;
+  level_achieved_at?: Date;
 }
 
 export interface Assessment {
-  _id?: any
-  is_active: boolean
-  created_at: Date
-  type: 'diagnostic' | 'formative' | 'summative'
-  skill_id: string
-  target_level: string
-  questions?: any[]
+  _id?: any;
+  is_active: boolean;
+  created_at: Date;
+  type: "diagnostic" | "formative" | "summative";
+  skill_id: string;
+  target_level: string;
+  questions?: any[];
 }
 
 export interface UserAssessment {
-  _id?: any
-  user_id: string
-  skill_id: string
-  assessment_id: string
-  answers: any
-  score: number
-  passed: boolean
-  time_taken?: number
-  completed_at: Date
+  _id?: any;
+  user_id: string;
+  skill_id: string;
+  assessment_id: string;
+  answers: any;
+  score: number;
+  passed: boolean;
+  time_taken?: number;
+  completed_at: Date;
 }
 
 /**
@@ -212,17 +223,17 @@ export interface UserAssessment {
  * `api/_lib/assessment-session.ts`.
  */
 export interface AssessmentSession {
-  _id: string
-  user_id: string
-  skill_id: string
-  resolved_skill_id: string | null
-  assessment_id: string | null
-  question_ids: string[]
-  is_diagnostic: boolean
-  language: string | null
-  created_at: Date
-  expires_at: Date
-  submitted_at: Date | null
+  _id: string;
+  user_id: string;
+  skill_id: string;
+  resolved_skill_id: string | null;
+  assessment_id: string | null;
+  question_ids: string[];
+  is_diagnostic: boolean;
+  language: string | null;
+  created_at: Date;
+  expires_at: Date;
+  submitted_at: Date | null;
 }
 
 /**
@@ -236,41 +247,41 @@ export interface AssessmentSession {
  * the five-rung score bands in lib/ai/skills-aware-prompts.ts.
  */
 export interface LearningStandardCriteria {
-  vocabularySize?: number
-  sentenceComplexity?: string
-  conversationLength?: string
-  comprehensionLevel?: string
-  pronunciationFocus?: string
+  vocabularySize?: number;
+  sentenceComplexity?: string;
+  conversationLength?: string;
+  comprehensionLevel?: string;
+  pronunciationFocus?: string;
 }
 
 export interface LearningStandard {
-  _id: string
-  _schemaVersion: 'v3.1'
-  level: 'beginner' | 'novice' | 'advanced' | 'fluent'
-  levelOrder: number
-  title: string
-  description: string
-  criteria?: LearningStandardCriteria
-  vocabularyRange?: string
-  conversationTypes?: string[]
-  grammarConcepts?: string[]
-  aiPromptTemplate?: string
-  examplePhrases?: string[]
-  cefrMapping?: string | null
-  isActive: boolean
-  createdAt: Date
-  updatedAt: Date
-  mukoko?: Record<string, unknown>
+  _id: string;
+  _schemaVersion: "v3.1";
+  level: "beginner" | "novice" | "advanced" | "fluent";
+  levelOrder: number;
+  title: string;
+  description: string;
+  criteria?: LearningStandardCriteria;
+  vocabularyRange?: string;
+  conversationTypes?: string[];
+  grammarConcepts?: string[];
+  aiPromptTemplate?: string;
+  examplePhrases?: string[];
+  cefrMapping?: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  mukoko?: Record<string, unknown>;
 }
 
 export interface ModerationAlert {
-  _id?: any
-  status: 'pending' | 'reviewed' | 'resolved'
-  admin_notes?: string
-  reviewed_by?: string
-  reviewed_at?: Date
-  resolved_by?: string
-  created_at: Date
+  _id?: any;
+  status: "pending" | "reviewed" | "resolved";
+  admin_notes?: string;
+  reviewed_by?: string;
+  reviewed_at?: Date;
+  resolved_by?: string;
+  created_at: Date;
 }
 
 /**
@@ -283,9 +294,9 @@ export interface ModerationAlert {
 
 /** One Anthropic Messages API content block, e.g. `{ type: 'text', text: '...' }`. */
 export interface AnthropicContentBlock {
-  type: string
-  text?: string
-  [key: string]: unknown
+  type: string;
+  text?: string;
+  [key: string]: unknown;
 }
 
 /**
@@ -299,126 +310,132 @@ export interface AnthropicContentBlock {
  * generic chat fields.
  */
 export interface ShamwariConversation {
-  _id: string
-  _schemaVersion: 'v3.1'
-  ownerPersonId: string
-  ownerEntityId: string
-  surfaceContext: string
+  _id: string;
+  _schemaVersion: "v3.1";
+  ownerPersonId: string;
+  ownerEntityId: string;
+  surfaceContext: string;
   // `cloudflare` is Lingo's addition: inference moved to Workers AI, and
   // recording the old `anthropic` value would misattribute every new
   // conversation. Needs ratifying in the shared shamwari schema.
-  modelProvider: 'anthropic' | 'openai' | 'google' | 'shamwari' | 'ollama' | 'cloudflare'
-  modelVersion: string
-  messageCount: number
-  isActive: boolean
-  lastMessageAt: Date
-  createdAt: Date
-  updatedAt: Date
-  title?: string | null
-  systemPromptHash?: string | null
+  modelProvider:
+    | "anthropic"
+    | "openai"
+    | "google"
+    | "shamwari"
+    | "ollama"
+    | "cloudflare";
+  modelVersion: string;
+  messageCount: number;
+  isActive: boolean;
+  lastMessageAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  title?: string | null;
+  systemPromptHash?: string | null;
   shamwari?: {
-    conversationContext?: Record<string, unknown>
-    retrievalState?: Record<string, unknown>
-  }
+    conversationContext?: Record<string, unknown>;
+    retrievalState?: Record<string, unknown>;
+  };
 }
 
 /** shamwari.messages — `content` is an array of Anthropic content blocks, not a plain string. */
 export interface ShamwariMessage {
-  _id: string
-  _schemaVersion: 'v3.1'
-  conversationId: string
-  role: 'user' | 'assistant' | 'system' | 'tool'
-  content: AnthropicContentBlock[]
-  sequence: number
-  createdAt: Date
-  inputTokens?: number | null
-  outputTokens?: number | null
-  modelInvocationId?: string | null
-  stopReason?: string | null
+  _id: string;
+  _schemaVersion: "v3.1";
+  conversationId: string;
+  role: "user" | "assistant" | "system" | "tool";
+  content: AnthropicContentBlock[];
+  sequence: number;
+  createdAt: Date;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  modelInvocationId?: string | null;
+  stopReason?: string | null;
 }
 
 export interface SrsCard {
-  _id?: any
-  user_id: string
-  phrase_id: string
-  easiness_factor: number
-  interval_days: number
-  repetition_count: number
-  next_review_date: string
-  last_review_date?: string | null
-  last_quality?: number
-  total_reviews: number
+  _id?: any;
+  user_id: string;
+  phrase_id: string;
+  easiness_factor: number;
+  interval_days: number;
+  repetition_count: number;
+  next_review_date: string;
+  last_review_date?: string | null;
+  last_quality?: number;
+  total_reviews: number;
 }
 
 export interface UserXp {
-  _id?: any
-  user_id: string
-  total_xp: number
-  level: number
-  daily_goal_xp: number
+  _id?: any;
+  user_id: string;
+  total_xp: number;
+  level: number;
+  daily_goal_xp: number;
 }
 
 export interface XpEvent {
-  _id?: any
-  user_id: string
-  source: string
-  amount: number
-  event_date: string
-  metadata?: any
-  created_at: Date
+  _id?: any;
+  user_id: string;
+  source: string;
+  amount: number;
+  event_date: string;
+  metadata?: any;
+  created_at: Date;
 }
 
 export interface Class {
-  _id?: any
-  name: string
-  description?: string
-  organization_id: string
-  language_id?: string
-  created_by: string
-  status: string
-  oneroster_sourced_id?: string
-  created_at: Date
+  _id?: any;
+  name: string;
+  description?: string;
+  organization_id: string;
+  language_id?: string;
+  created_by: string;
+  status: string;
+  oneroster_sourced_id?: string;
+  created_at: Date;
 }
 
 export interface ClassMembership {
-  _id?: any
-  class_id: string
-  person_id: string
-  role: 'teacher' | 'student' | 'ta'
-  joined_at: Date
+  _id?: any;
+  class_id: string;
+  person_id: string;
+  role: "teacher" | "student" | "ta";
+  joined_at: Date;
 }
 
 export interface Assignment {
-  _id?: any
-  class_id: string
-  title: string
-  description?: string
-  phrase_ids: string[]
-  due_date?: string
-  status: string
-  created_by: string
-  created_at: Date
+  _id?: any;
+  class_id: string;
+  title: string;
+  description?: string;
+  phrase_ids: string[];
+  due_date?: string;
+  status: string;
+  created_by: string;
+  created_at: Date;
 }
 
 export interface AssignmentSubmission {
-  _id?: any
-  assignment_id: string
-  person_id: string
-  answers: any
-  score?: number
-  time_taken?: number
-  status: string
-  submitted_at: Date
+  _id?: any;
+  assignment_id: string;
+  person_id: string;
+  answers: any;
+  score?: number;
+  time_taken?: number;
+  status: string;
+  submitted_at: Date;
 }
 
 export interface OrganizationEnrollment {
-  _id?: any
-  organization_id: string
-  plan: string
-  seat_count: number
-  enrolled_by: string
-  status: string
-  enrolled_at: Date
+  _id?: any;
+  organization_id: string;
+  plan: string;
+  seat_count: number;
+  enrolled_by: string;
+  status: string;
+  enrolled_at: Date;
 }
 
 /**
@@ -430,41 +447,41 @@ export interface OrganizationEnrollment {
  * once at creation time and never persisted.
  */
 export interface PlatformApiKey {
-  _id: string
-  _schemaVersion: 'v3.1'
-  keyType: 'internal' | 'external'
-  ownerEntityId: string
-  ownerPersonId?: string | null
-  createdByPersonId: string
-  name: string
-  keyPrefix: string
-  keyHashedSecret: string
-  scopes: string[]
-  surfaceContext: string
-  isActive: boolean
-  billingReferenceId?: string | null
-  planTier?: 'free' | 'starter' | 'growth' | 'enterprise' | null
-  expiresAt?: Date | null
-  lastUsedAt?: Date | null
-  monthlyRequestCount?: number
-  monthlyRequestLimit?: number | null
-  revokedAt?: Date | null
-  revokedReason?: string | null
-  rotationSchedule?: string | null
-  createdAt: Date
-  updatedAt: Date
+  _id: string;
+  _schemaVersion: "v3.1";
+  keyType: "internal" | "external";
+  ownerEntityId: string;
+  ownerPersonId?: string | null;
+  createdByPersonId: string;
+  name: string;
+  keyPrefix: string;
+  keyHashedSecret: string;
+  scopes: string[];
+  surfaceContext: string;
+  isActive: boolean;
+  billingReferenceId?: string | null;
+  planTier?: "free" | "starter" | "growth" | "enterprise" | null;
+  expiresAt?: Date | null;
+  lastUsedAt?: Date | null;
+  monthlyRequestCount?: number;
+  monthlyRequestLimit?: number | null;
+  revokedAt?: Date | null;
+  revokedReason?: string | null;
+  rotationSchedule?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /** surfaceContext used for every Lingo-issued platform.apiKeys document — matches the domain-prefix convention seen elsewhere in the cluster (e.g. `lingo_phrase`, `shamwari_conversation_turn` targetReferenceTypes). */
-export const LINGO_SURFACE_CONTEXT = 'lingo'
+export const LINGO_SURFACE_CONTEXT = "lingo";
 
 export interface StudySession {
-  _id?: any
-  user_id: string
-  session_date: string
-  phrases_studied: number
-  time_spent_minutes: number
-  created_at?: Date
+  _id?: any;
+  user_id: string;
+  session_date: string;
+  phrases_studied: number;
+  time_spent_minutes: number;
+  created_at?: Date;
 }
 
 /**
@@ -476,18 +493,18 @@ export interface StudySession {
  * and cannot be disabled by individual apps.
  */
 export interface SharedGuardrail {
-  _id: string
-  _schemaVersion: 'v3.1'
-  category: string
-  name: string
-  description: string
-  severity: 'critical' | 'high' | 'medium' | 'low'
-  isEnabled: boolean
-  isCore: boolean
-  promptGuidance?: string | null
-  appliesTo: string[]
-  createdAt: Date
-  updatedAt: Date
+  _id: string;
+  _schemaVersion: "v3.1";
+  category: string;
+  name: string;
+  description: string;
+  severity: "critical" | "high" | "medium" | "low";
+  isEnabled: boolean;
+  isCore: boolean;
+  promptGuidance?: string | null;
+  appliesTo: string[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /**
@@ -501,15 +518,15 @@ export interface SharedGuardrail {
  * as the closest fit (oral tradition / language preservation).
  */
 export interface UbuntuContribution {
-  _id: string
-  _schemaVersion: 'v3.1'
-  contributorPersonId: string
-  contributorEntityId: string
-  contributionType: string
-  sourceDomain: 'lingo'
-  sourceRecordId: string
-  category: 'cultural'
-  weight: number
-  occurredAt: Date
-  createdAt: Date
+  _id: string;
+  _schemaVersion: "v3.1";
+  contributorPersonId: string;
+  contributorEntityId: string;
+  contributionType: string;
+  sourceDomain: "lingo";
+  sourceRecordId: string;
+  category: "cultural";
+  weight: number;
+  occurredAt: Date;
+  createdAt: Date;
 }

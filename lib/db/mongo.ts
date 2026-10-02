@@ -9,42 +9,44 @@
  * separate clients/pools.
  */
 
-import { MongoClient, type Db } from 'mongodb'
+import { MongoClient, type Db } from "mongodb";
 
-const MONGODB_URI = process.env.MONGODB_URI || ''
+const MONGODB_URI = process.env.MONGODB_URI || "";
 // The shared Nyuchi cluster's real Lingo database — never 'mukoko-lingo',
 // which was an invented, never-populated database from the original
 // Supabase migration. `lingo` already holds the real, ecosystem-shared
 // phrases/languages/scenarios/standards content; Lingo-local operational
 // collections (bookmarks, progress, profiles, etc.) live here too.
-const DB_NAME = 'lingo'
+const DB_NAME = "lingo";
 
 if (!MONGODB_URI) {
-  console.error('[mukoko][db] Missing credentials: MONGODB_URI must be set')
+  console.error("[mukoko][db] Missing credentials: MONGODB_URI must be set");
 }
 
-let _client: MongoClient | null = null
-let _clientPromise: Promise<MongoClient> | null = null
+let _client: MongoClient | null = null;
+let _clientPromise: Promise<MongoClient> | null = null;
 
 async function getClient(): Promise<MongoClient> {
-  if (_client) return _client
+  if (_client) return _client;
   if (!_clientPromise) {
-    _clientPromise = new MongoClient(MONGODB_URI, { appName: 'mukoko-api' }).connect()
+    _clientPromise = new MongoClient(MONGODB_URI, {
+      appName: "mukoko-api",
+    }).connect();
   }
   try {
-    _client = await _clientPromise
+    _client = await _clientPromise;
   } catch (error) {
     // Never leave a rejected promise cached: a warm instance that lost its
     // first connect (bad URI, DNS blip, Atlas failover) would otherwise
     // replay that same rejection for the rest of its life instead of
     // retrying on the next request.
-    _clientPromise = null
-    throw error
+    _clientPromise = null;
+    throw error;
   }
-  return _client
+  return _client;
 }
 
 export async function getDb(name: string = DB_NAME): Promise<Db> {
-  const client = await getClient()
-  return client.db(name)
+  const client = await getClient();
+  return client.db(name);
 }

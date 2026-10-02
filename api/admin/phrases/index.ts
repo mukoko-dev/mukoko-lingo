@@ -1,29 +1,36 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { handleCors } from '../../_lib/cors'
-import { requireAdmin } from '../../_lib/auth-middleware'
-import { phrases } from '../../_lib/mongo'
-import { buildPhraseDoc, toApiPhrase } from '../../../lib/db/phrase-shape'
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { handleCors } from "../../_lib/cors";
+import { requireAdmin } from "../../_lib/auth-middleware";
+import { phrases } from "../../_lib/mongo";
+import { buildPhraseDoc, toApiPhrase } from "../../../lib/db/phrase-shape";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (handleCors(req, res)) return
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  if (handleCors(req, res)) return;
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    await requireAdmin(req)
+    await requireAdmin(req);
 
-    const { english, shona, ndebele, chinese } = req.body || {}
+    const { english, shona, ndebele, chinese } = req.body || {};
     if (!english || !shona || !ndebele || !chinese) {
-      return res.status(400).json({ error: 'All language translations are required' })
+      return res
+        .status(400)
+        .json({ error: "All language translations are required" });
     }
 
-    const col = await phrases()
-    const doc = buildPhraseDoc(req.body || {})
+    const col = await phrases();
+    const doc = buildPhraseDoc(req.body || {});
 
-    await col.insertOne(doc)
-    return res.status(201).json({ data: toApiPhrase(doc) })
+    await col.insertOne(doc);
+    return res.status(201).json({ data: toApiPhrase(doc) });
   } catch (error: any) {
-    if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
-    if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })
-    return res.status(500).json({ error: error.message || 'Internal server error' })
+    if (error.message === "Unauthorized")
+      return res.status(401).json({ error: "Unauthorized" });
+    if (error.message === "Forbidden")
+      return res.status(403).json({ error: "Forbidden" });
+    return res
+      .status(500)
+      .json({ error: error.message || "Internal server error" });
   }
 }

@@ -11,13 +11,13 @@
  * ecosystem-wide — nothing to compute from yet, for any app).
  */
 
-import { randomUUID } from 'crypto'
-import { MUKOKO_LINGO_ENTITY_ID } from './types'
-import type { Person, UbuntuContribution, XpEvent } from './types'
+import { randomUUID } from "crypto";
+import { MUKOKO_LINGO_ENTITY_ID } from "./types";
+import type { Person, UbuntuContribution, XpEvent } from "./types";
 
 /** Weight bounds enforced by the `ubuntu.contributions` schema validator. */
-const MIN_WEIGHT = 0.1
-const MAX_WEIGHT = 10.0
+const MIN_WEIGHT = 0.1;
+const MAX_WEIGHT = 10.0;
 
 /**
  * Map a Lingo XP amount onto the shared `weight` field (typically
@@ -29,9 +29,9 @@ const MAX_WEIGHT = 10.0
  * or a zero/negative amount never produces an invalid document.
  */
 export function xpAmountToWeight(amount: number): number {
-  if (!Number.isFinite(amount)) return MIN_WEIGHT
-  const scaled = amount / 10
-  return Math.min(MAX_WEIGHT, Math.max(MIN_WEIGHT, scaled))
+  if (!Number.isFinite(amount)) return MIN_WEIGHT;
+  const scaled = amount / 10;
+  return Math.min(MAX_WEIGHT, Math.max(MIN_WEIGHT, scaled));
 }
 
 /**
@@ -41,8 +41,10 @@ export function xpAmountToWeight(amount: number): number {
  * this migration already uses for `Phrase.creatorEntityId` (see
  * `phrase-shape.ts`) for the same "no real per-user entity yet" ambiguity.
  */
-export function resolveContributorEntityId(person: Pick<Person, 'bundu'> | null | undefined): string {
-  return person?.bundu?.defaultFamilyEntityId || MUKOKO_LINGO_ENTITY_ID
+export function resolveContributorEntityId(
+  person: Pick<Person, "bundu"> | null | undefined,
+): string {
+  return person?.bundu?.defaultFamilyEntityId || MUKOKO_LINGO_ENTITY_ID;
 }
 
 /**
@@ -51,25 +53,26 @@ export function resolveContributorEntityId(person: Pick<Person, 'bundu'> | null 
  * just inserted — a dereferenceable pointer, not a placeholder.
  */
 export function buildUbuntuContribution(params: {
-  contributorPersonId: string
-  contributorEntityId: string
-  xpEventId: string
-  xpEvent: Pick<XpEvent, 'source' | 'amount' | 'created_at'>
+  contributorPersonId: string;
+  contributorEntityId: string;
+  xpEventId: string;
+  xpEvent: Pick<XpEvent, "source" | "amount" | "created_at">;
 }): UbuntuContribution {
-  const { contributorPersonId, contributorEntityId, xpEventId, xpEvent } = params
-  const now = new Date()
+  const { contributorPersonId, contributorEntityId, xpEventId, xpEvent } =
+    params;
+  const now = new Date();
 
   return {
     _id: randomUUID(),
-    _schemaVersion: 'v3.1',
+    _schemaVersion: "v3.1",
     contributorPersonId,
     contributorEntityId,
-    contributionType: xpEvent.source || 'xp_event',
-    sourceDomain: 'lingo',
+    contributionType: xpEvent.source || "xp_event",
+    sourceDomain: "lingo",
     sourceRecordId: xpEventId,
-    category: 'cultural',
+    category: "cultural",
     weight: xpAmountToWeight(xpEvent.amount),
     occurredAt: xpEvent.created_at || now,
     createdAt: now,
-  }
+  };
 }

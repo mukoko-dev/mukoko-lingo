@@ -1,25 +1,29 @@
-import Link from 'next/link'
+import Link from "next/link";
 
 const navItems = [
-  { href: '/learn', label: 'Learn', icon: '📚' },
-  { href: '/chat', label: 'Shamwari', icon: '🐝' },
-  { href: '/progress', label: 'Progress', icon: '📈' },
-  { href: '/classes', label: 'Classes', icon: '🏫' },
-  { href: '/profile', label: 'Profile', icon: '👤' },
-]
+  { href: "/learn", label: "Learn", icon: "📚" },
+  { href: "/chat", label: "Shamwari", icon: "🐝" },
+  { href: "/progress", label: "Progress", icon: "📈" },
+  { href: "/classes", label: "Classes", icon: "🏫" },
+  { href: "/profile", label: "Profile", icon: "👤" },
+];
 
 const adminItems = [
-  { href: '/admin/overview', label: 'Dashboard' },
-  { href: '/admin/users', label: 'Users' },
-  { href: '/admin/phrases', label: 'Phrases' },
-  { href: '/admin/moderation', label: 'Moderation' },
-  { href: '/admin/guardrails', label: 'Guardrails' },
-  { href: '/admin/standards', label: 'Standards' },
-  { href: '/admin/analytics', label: 'Analytics' },
-  { href: '/admin/api-keys', label: 'API Keys' },
-]
+  { href: "/admin/overview", label: "Dashboard" },
+  { href: "/admin/users", label: "Users" },
+  { href: "/admin/phrases", label: "Phrases" },
+  { href: "/admin/moderation", label: "Moderation" },
+  { href: "/admin/guardrails", label: "Guardrails" },
+  { href: "/admin/standards", label: "Standards" },
+  { href: "/admin/analytics", label: "Analytics" },
+  { href: "/admin/api-keys", label: "API Keys" },
+];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
@@ -27,7 +31,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="border-b border-[var(--border)] px-6 py-4">
-            <Link href="/" className="text-lg font-bold text-[var(--foreground)]">
+            <Link
+              href="/"
+              className="text-lg font-bold text-[var(--foreground)]"
+            >
               mukoko lingo
             </Link>
           </div>
@@ -71,5 +78,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </main>
     </div>
-  )
+  );
 }

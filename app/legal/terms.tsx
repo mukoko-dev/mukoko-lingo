@@ -5,20 +5,20 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-} from 'react-native'
-import { useRouter, Stack } from 'expo-router'
-import { ArrowLeft, ExternalLink, FileText, Mail } from 'lucide-react-native'
+} from "react-native";
+import { useRouter, Stack } from "expo-router";
+import { ArrowLeft, ExternalLink, FileText, Mail } from "lucide-react-native";
 
-import { useColorScheme } from '@/components/useColorScheme'
-import { lightTheme, darkTheme } from '@/constants/Colors'
+import { useColorScheme } from "@/components/useColorScheme";
+import { lightTheme, darkTheme } from "@/constants/Colors";
 
 const SECTIONS = [
   {
-    title: 'Acceptance of Terms',
+    title: "Acceptance of Terms",
     content: `By accessing or using Mukoko Lingo, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the app.`,
   },
   {
-    title: 'Description of Service',
+    title: "Description of Service",
     content: `Mukoko Lingo is an AI-powered language learning platform that provides:
 • Native phrase learning in multiple languages
 • AI tutoring with Shamwari, our language assistant
@@ -28,7 +28,7 @@ const SECTIONS = [
 The service may be updated, modified, or discontinued at any time.`,
   },
   {
-    title: 'User Accounts',
+    title: "User Accounts",
     content: `When creating an account, you agree to:
 • Provide accurate and complete information
 • Maintain the security of your account credentials
@@ -38,7 +38,7 @@ The service may be updated, modified, or discontinued at any time.`,
 We reserve the right to suspend or terminate accounts that violate these terms.`,
   },
   {
-    title: 'Acceptable Use',
+    title: "Acceptable Use",
     content: `You agree NOT to:
 • Use the service for any unlawful purpose
 • Attempt to gain unauthorized access to the service
@@ -49,13 +49,13 @@ We reserve the right to suspend or terminate accounts that violate these terms.`
 • Reverse engineer or copy the service`,
   },
   {
-    title: 'Intellectual Property',
+    title: "Intellectual Property",
     content: `All content, features, and functionality of Mukoko Lingo are owned by Nyuchi Africa and are protected by international copyright, trademark, and other intellectual property laws.
 
 You may not reproduce, distribute, or create derivative works without our express written permission.`,
   },
   {
-    title: 'AI Features & Content',
+    title: "AI Features & Content",
     content: `Our AI tutor (Shamwari) is designed to assist with language learning. By using AI features, you understand that:
 • AI responses are generated and may not always be perfect
 • AI should not be used for professional translation services
@@ -63,7 +63,7 @@ You may not reproduce, distribute, or create derivative works without our expres
 • You should not share sensitive personal information with AI`,
   },
   {
-    title: 'User Content',
+    title: "User Content",
     content: `Any content you create or submit through the service:
 • Remains your intellectual property
 • Grants us a license to use it for service improvement
@@ -71,7 +71,7 @@ You may not reproduce, distribute, or create derivative works without our expres
 • May be moderated for safety and appropriateness`,
   },
   {
-    title: 'Disclaimers',
+    title: "Disclaimers",
     content: `THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. We do not guarantee:
 • Uninterrupted or error-free service
 • Accuracy of all educational content
@@ -79,55 +79,58 @@ You may not reproduce, distribute, or create derivative works without our expres
 • Compatibility with all devices`,
   },
   {
-    title: 'Limitation of Liability',
+    title: "Limitation of Liability",
     content: `To the maximum extent permitted by law, Nyuchi Africa shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service.`,
   },
   {
-    title: 'Changes to Terms',
+    title: "Changes to Terms",
     content: `We may modify these terms at any time. Continued use of the service after changes constitutes acceptance of the new terms. We will notify users of significant changes via email or in-app notification.`,
   },
   {
-    title: 'Governing Law',
+    title: "Governing Law",
     content: `These terms shall be governed by and construed in accordance with applicable laws. Any disputes shall be resolved through appropriate legal channels.`,
   },
-]
+];
 
-const CONTACT_EMAIL = 'legal@mukoko.com'
-const FULL_TERMS_URL = 'https://lingo.mukoko.com/terms'
+const CONTACT_EMAIL = "legal@mukoko.com";
+const FULL_TERMS_URL = "https://lingo.mukoko.com/terms";
 
 export default function TermsOfServiceScreen() {
-  const router = useRouter()
-  const colorScheme = useColorScheme()
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
-  const styles = createStyles(theme)
+  const styles = createStyles(theme);
 
   const openFullTerms = async () => {
     try {
-      await Linking.openURL(FULL_TERMS_URL)
+      await Linking.openURL(FULL_TERMS_URL);
     } catch (error) {
-      console.error('Error opening URL:', error)
+      console.error("Error opening URL:", error);
     }
-  }
+  };
 
   const openEmail = async () => {
     try {
-      await Linking.openURL(`mailto:${CONTACT_EMAIL}`)
+      await Linking.openURL(`mailto:${CONTACT_EMAIL}`);
     } catch (error) {
-      console.error('Error opening email:', error)
+      console.error("Error opening email:", error);
     }
-  }
+  };
 
   return (
     <>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: 'Terms of Service',
+          headerTitle: "Terms of Service",
           headerStyle: { backgroundColor: theme.card },
           headerTintColor: theme.text,
           headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 8 }}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ marginLeft: 8 }}
+            >
               <ArrowLeft size={24} color={theme.text} />
             </TouchableOpacity>
           ),
@@ -163,7 +166,8 @@ export default function TermsOfServiceScreen() {
         <View style={styles.contactSection}>
           <Text style={styles.contactTitle}>Questions?</Text>
           <Text style={styles.contactText}>
-            If you have any questions about these Terms of Service, please contact us:
+            If you have any questions about these Terms of Service, please
+            contact us:
           </Text>
           <TouchableOpacity style={styles.contactButton} onPress={openEmail}>
             <Mail size={20} color={theme.primary} />
@@ -172,7 +176,10 @@ export default function TermsOfServiceScreen() {
         </View>
 
         {/* Full Terms Link */}
-        <TouchableOpacity style={styles.fullTermsButton} onPress={openFullTerms}>
+        <TouchableOpacity
+          style={styles.fullTermsButton}
+          onPress={openFullTerms}
+        >
           <Text style={styles.fullTermsText}>View Full Terms of Service</Text>
           <ExternalLink size={16} color={theme.primary} />
         </TouchableOpacity>
@@ -183,7 +190,7 @@ export default function TermsOfServiceScreen() {
         </Text>
       </ScrollView>
     </>
-  )
+  );
 }
 
 const createStyles = (theme: typeof lightTheme) =>
@@ -196,7 +203,7 @@ const createStyles = (theme: typeof lightTheme) =>
       paddingBottom: 40,
     },
     header: {
-      alignItems: 'center',
+      alignItems: "center",
       paddingVertical: 32,
       paddingHorizontal: 24,
       backgroundColor: theme.card,
@@ -207,21 +214,21 @@ const createStyles = (theme: typeof lightTheme) =>
       width: 64,
       height: 64,
       borderRadius: 16,
-      backgroundColor: theme.secondary + '15',
-      alignItems: 'center',
-      justifyContent: 'center',
+      backgroundColor: theme.secondary + "15",
+      alignItems: "center",
+      justifyContent: "center",
       marginBottom: 16,
     },
     headerTitle: {
       fontSize: 24,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
       marginBottom: 12,
     },
     headerSubtitle: {
       fontSize: 15,
       color: theme.textSecondary,
-      textAlign: 'center',
+      textAlign: "center",
       lineHeight: 22,
       marginBottom: 12,
     },
@@ -237,13 +244,13 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     sectionNumber: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.primary,
       marginBottom: 4,
     },
     sectionTitle: {
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
       marginBottom: 12,
     },
@@ -263,7 +270,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     contactTitle: {
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
       marginBottom: 8,
     },
@@ -274,19 +281,19 @@ const createStyles = (theme: typeof lightTheme) =>
       lineHeight: 20,
     },
     contactButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 8,
     },
     contactButtonText: {
       fontSize: 15,
       color: theme.primary,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     fullTermsButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       gap: 8,
       paddingVertical: 16,
       marginHorizontal: 24,
@@ -299,13 +306,13 @@ const createStyles = (theme: typeof lightTheme) =>
     fullTermsText: {
       fontSize: 16,
       color: theme.primary,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     footer: {
       fontSize: 12,
       color: theme.textMuted,
-      textAlign: 'center',
+      textAlign: "center",
       marginTop: 24,
       paddingHorizontal: 24,
     },
-  })
+  });

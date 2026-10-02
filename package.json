@@ -2,6 +2,7 @@
   "name": "mukoko-lingo",
   "main": "expo-router/entry",
   "version": "0.4.0",
+  "packageManager": "npm@11.12.1",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -17,7 +18,10 @@
     "postinstall": "echo 'Dependencies installed'",
     "release:dry": "node scripts/release/prepare-release.js --dry-run",
     "release:prepare": "node scripts/release/prepare-release.js",
-    "lint": "eslint ."
+    "lint": "vp lint",
+    "lint:eslint": "eslint .",
+    "check": "vp check",
+    "fmt": "vp fmt"
   },
   "jest": {
     "preset": "jest-expo",

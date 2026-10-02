@@ -7,18 +7,19 @@
  * the shared `/api/auth/*` Vercel functions do the actual token exchange.
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { getApiBaseUrl } from '@/lib/config/api-base'
-import * as SecureStore from 'expo-secure-store'
-import * as WebBrowser from 'expo-web-browser'
-import { Platform } from 'react-native'
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getApiBaseUrl } from "@/lib/config/api-base";
+import * as SecureStore from "expo-secure-store";
+import * as WebBrowser from "expo-web-browser";
+import { Platform } from "react-native";
 
-const NATIVE_REDIRECT_URI = process.env.EXPO_PUBLIC_WORKOS_REDIRECT_URI || 'mukokolingo://auth/callback'
-const WEB_REDIRECT_URI = process.env.EXPO_PUBLIC_WORKOS_REDIRECT_URI_WEB || ''
-const WEB_REDIRECT_FALLBACK = 'https://lingo.mukoko.com/auth/callback'
+const NATIVE_REDIRECT_URI =
+  process.env.EXPO_PUBLIC_WORKOS_REDIRECT_URI || "mukokolingo://auth/callback";
+const WEB_REDIRECT_URI = process.env.EXPO_PUBLIC_WORKOS_REDIRECT_URI_WEB || "";
+const WEB_REDIRECT_FALLBACK = "https://lingo.mukoko.com/auth/callback";
 
 // Check if we're running in a browser/client environment
-const isClient = typeof window !== 'undefined'
+const isClient = typeof window !== "undefined";
 
 /**
  * Where WorkOS should send the browser back to after sign-in.
@@ -34,10 +35,11 @@ const isClient = typeof window !== 'undefined'
  * registered on the WorkOS AuthKit application).
  */
 export function getRedirectUri(): string {
-  if (Platform.OS !== 'web') return NATIVE_REDIRECT_URI
-  if (WEB_REDIRECT_URI) return WEB_REDIRECT_URI
-  if (isClient && window.location?.origin) return `${window.location.origin}/auth/callback`
-  return WEB_REDIRECT_FALLBACK
+  if (Platform.OS !== "web") return NATIVE_REDIRECT_URI;
+  if (WEB_REDIRECT_URI) return WEB_REDIRECT_URI;
+  if (isClient && window.location?.origin)
+    return `${window.location.origin}/auth/callback`;
+  return WEB_REDIRECT_FALLBACK;
 }
 
 // =============================================================================
@@ -46,128 +48,143 @@ export function getRedirectUri(): string {
 
 const SecureStorageAdapter = {
   getItem: async (key: string): Promise<string | null> => {
-    if (!isClient) return null
-    if (Platform.OS === 'web') {
-      return AsyncStorage.getItem(key)
+    if (!isClient) return null;
+    if (Platform.OS === "web") {
+      return AsyncStorage.getItem(key);
     }
-    return SecureStore.getItemAsync(key)
+    return SecureStore.getItemAsync(key);
   },
   setItem: async (key: string, value: string): Promise<void> => {
-    if (!isClient) return
-    if (Platform.OS === 'web') {
-      await AsyncStorage.setItem(key, value)
-      return
+    if (!isClient) return;
+    if (Platform.OS === "web") {
+      await AsyncStorage.setItem(key, value);
+      return;
     }
-    await SecureStore.setItemAsync(key, value)
+    await SecureStore.setItemAsync(key, value);
   },
   removeItem: async (key: string): Promise<void> => {
-    if (!isClient) return
-    if (Platform.OS === 'web') {
-      await AsyncStorage.removeItem(key)
-      return
+    if (!isClient) return;
+    if (Platform.OS === "web") {
+      await AsyncStorage.removeItem(key);
+      return;
     }
-    await SecureStore.deleteItemAsync(key)
+    await SecureStore.deleteItemAsync(key);
   },
-}
+};
 
 // Storage keys
-const ACCESS_TOKEN_KEY = '@mukoko_workos_access_token'
-const REFRESH_TOKEN_KEY = '@mukoko_workos_refresh_token'
-const USER_KEY = '@mukoko_workos_user'
-const PENDING_AUTH_KEY = '@mukoko_workos_pending_auth'
+const ACCESS_TOKEN_KEY = "@mukoko_workos_access_token";
+const REFRESH_TOKEN_KEY = "@mukoko_workos_refresh_token";
+const USER_KEY = "@mukoko_workos_user";
+const PENDING_AUTH_KEY = "@mukoko_workos_pending_auth";
 
 // =============================================================================
 // Types
 // =============================================================================
 
 export interface WorkOSUser {
-  user_id: string
-  email: string
+  user_id: string;
+  email: string;
   name?: {
-    first_name?: string
-    last_name?: string
-  }
-  created_at?: string
+    first_name?: string;
+    last_name?: string;
+  };
+  created_at?: string;
 }
 
 export interface WorkOSSession {
-  access_token: string
-  refresh_token: string
-  user: WorkOSUser
+  access_token: string;
+  refresh_token: string;
+  user: WorkOSUser;
 }
 
 export interface AuthResult {
   data: {
-    user?: WorkOSUser | null
-    session?: WorkOSSession | null
-  } | null
-  error: Error | null
+    user?: WorkOSUser | null;
+    session?: WorkOSSession | null;
+  } | null;
+  error: Error | null;
 }
 
-type AuthStateCallback = (event: string, session: WorkOSSession | null) => void
-let _authStateListeners: AuthStateCallback[] = []
+type AuthStateCallback = (event: string, session: WorkOSSession | null) => void;
+let _authStateListeners: AuthStateCallback[] = [];
 
 // =============================================================================
 // Internal Helpers
 // =============================================================================
 
-async function apiCall(endpoint: string, body: Record<string, any>): Promise<any> {
+async function apiCall(
+  endpoint: string,
+  body: Record<string, any>,
+): Promise<any> {
   // On web this falls back to the browser's origin (the SPA and the API ship
   // in the same Vercel deployment), so only a native build can end up here
   // with nothing configured.
-  const apiBase = getApiBaseUrl()
+  const apiBase = getApiBaseUrl();
   if (!apiBase) {
-    throw new Error('App not configured: missing API URL. Please set EXPO_PUBLIC_API_BASE_URL.')
+    throw new Error(
+      "App not configured: missing API URL. Please set EXPO_PUBLIC_API_BASE_URL.",
+    );
   }
 
-  const url = `${apiBase}/api/auth${endpoint}`
+  const url = `${apiBase}/api/auth${endpoint}`;
 
-  let response: Response
+  let response: Response;
   try {
     response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-    })
+    });
   } catch (networkError: any) {
     // Network-level failure (DNS, connection refused, CORS, offline)
-    throw new Error('Unable to reach the server. Please check your internet connection and try again.')
+    throw new Error(
+      "Unable to reach the server. Please check your internet connection and try again.",
+    );
   }
 
-  let data: any
+  let data: any;
   try {
-    data = await response.json()
+    data = await response.json();
   } catch {
-    throw new Error(`Server error (${response.status}). Please try again later.`)
+    throw new Error(
+      `Server error (${response.status}). Please try again later.`,
+    );
   }
 
   if (!response.ok) {
-    const err = new Error(data.error || data.message || `Auth request failed (${response.status})`)
-    ;(err as any).statusCode = response.status
-    throw err
+    const err = new Error(
+      data.error || data.message || `Auth request failed (${response.status})`,
+    );
+    (err as any).statusCode = response.status;
+    throw err;
   }
 
-  return data
+  return data;
 }
 
 function notifyAuthStateChange(event: string, session: WorkOSSession | null) {
-  _authStateListeners.forEach(cb => {
-    try { cb(event, session) } catch (e) { console.error('Auth listener error:', e) }
-  })
+  _authStateListeners.forEach((cb) => {
+    try {
+      cb(event, session);
+    } catch (e) {
+      console.error("Auth listener error:", e);
+    }
+  });
 }
 
 async function persistSession(session: WorkOSSession): Promise<void> {
-  await SecureStorageAdapter.setItem(ACCESS_TOKEN_KEY, session.access_token)
-  await SecureStorageAdapter.setItem(REFRESH_TOKEN_KEY, session.refresh_token)
-  await SecureStorageAdapter.setItem(USER_KEY, JSON.stringify(session.user))
+  await SecureStorageAdapter.setItem(ACCESS_TOKEN_KEY, session.access_token);
+  await SecureStorageAdapter.setItem(REFRESH_TOKEN_KEY, session.refresh_token);
+  await SecureStorageAdapter.setItem(USER_KEY, JSON.stringify(session.user));
 }
 
 async function clearPersistedSession(): Promise<void> {
-  await SecureStorageAdapter.removeItem(ACCESS_TOKEN_KEY)
-  await SecureStorageAdapter.removeItem(REFRESH_TOKEN_KEY)
-  await SecureStorageAdapter.removeItem(USER_KEY)
+  await SecureStorageAdapter.removeItem(ACCESS_TOKEN_KEY);
+  await SecureStorageAdapter.removeItem(REFRESH_TOKEN_KEY);
+  await SecureStorageAdapter.removeItem(USER_KEY);
 }
 
 // =============================================================================
@@ -179,38 +196,43 @@ async function clearPersistedSession(): Promise<void> {
  * Opens WorkOS's hosted login page and completes the PKCE code exchange
  * once the browser redirects back to this app.
  */
-export async function signInWithAuthKit(screenHint?: 'sign-in' | 'sign-up'): Promise<AuthResult> {
+export async function signInWithAuthKit(
+  screenHint?: "sign-in" | "sign-up",
+): Promise<AuthResult> {
   try {
-    const redirectUri = getRedirectUri()
-    const { url, state, code_verifier } = await apiCall('/authorize', {
+    const redirectUri = getRedirectUri();
+    const { url, state, code_verifier } = await apiCall("/authorize", {
       redirect_uri: redirectUri,
       screen_hint: screenHint,
-    })
+    });
 
     // Persist the PKCE verifier in case the app is backgrounded/reloaded
     // before the redirect lands (e.g. the OS hands control back via a cold
     // start deep link instead of resolving openAuthSessionAsync directly).
     // On web this is what carries the verifier across the full-page navigation
     // below, so it must be written before we leave the page.
-    await SecureStorageAdapter.setItem(PENDING_AUTH_KEY, JSON.stringify({ state, code_verifier }))
+    await SecureStorageAdapter.setItem(
+      PENDING_AUTH_KEY,
+      JSON.stringify({ state, code_verifier }),
+    );
 
-    if (Platform.OS === 'web' && isClient) {
+    if (Platform.OS === "web" && isClient) {
       // Navigate the whole page rather than opening an auth session popup:
       // AuthKit returns to /auth/callback in this same tab, and that route
       // finishes the exchange. Nothing after this line runs.
-      window.location.assign(url)
-      return { data: null, error: null }
+      window.location.assign(url);
+      return { data: null, error: null };
     }
 
-    const result = await WebBrowser.openAuthSessionAsync(url, redirectUri)
+    const result = await WebBrowser.openAuthSessionAsync(url, redirectUri);
 
-    if (result.type !== 'success' || !result.url) {
-      return { data: null, error: null } // user cancelled — not an error
+    if (result.type !== "success" || !result.url) {
+      return { data: null, error: null }; // user cancelled — not an error
     }
 
-    return handleAuthCallback(result.url)
+    return handleAuthCallback(result.url);
   } catch (error: any) {
-    return { data: null, error }
+    return { data: null, error };
   }
 }
 
@@ -220,36 +242,49 @@ export async function signInWithAuthKit(screenHint?: 'sign-in' | 'sign-up'): Pro
  */
 export async function handleAuthCallback(url: string): Promise<AuthResult> {
   try {
-    const parsed = new URL(url)
-    const code = parsed.searchParams.get('code')
-    const authError = parsed.searchParams.get('error_description') || parsed.searchParams.get('error')
+    const parsed = new URL(url);
+    const code = parsed.searchParams.get("code");
+    const authError =
+      parsed.searchParams.get("error_description") ||
+      parsed.searchParams.get("error");
 
     if (authError) {
-      return { data: null, error: new Error(authError) }
+      return { data: null, error: new Error(authError) };
     }
     if (!code) {
-      return { data: null, error: new Error('No authorization code found in the sign-in redirect.') }
+      return {
+        data: null,
+        error: new Error(
+          "No authorization code found in the sign-in redirect.",
+        ),
+      };
     }
 
-    const pendingJson = await SecureStorageAdapter.getItem(PENDING_AUTH_KEY)
-    const pending = pendingJson ? JSON.parse(pendingJson) : null
+    const pendingJson = await SecureStorageAdapter.getItem(PENDING_AUTH_KEY);
+    const pending = pendingJson ? JSON.parse(pendingJson) : null;
     if (!pending?.code_verifier) {
-      return { data: null, error: new Error('Sign-in session expired. Please try again.') }
+      return {
+        data: null,
+        error: new Error("Sign-in session expired. Please try again."),
+      };
     }
 
-    const data = await apiCall('/callback', { code, code_verifier: pending.code_verifier })
-    await SecureStorageAdapter.removeItem(PENDING_AUTH_KEY)
+    const data = await apiCall("/callback", {
+      code,
+      code_verifier: pending.code_verifier,
+    });
+    await SecureStorageAdapter.removeItem(PENDING_AUTH_KEY);
 
     const session: WorkOSSession = {
       access_token: data.access_token,
       refresh_token: data.refresh_token,
       user: data.user,
-    }
-    await persistSession(session)
-    notifyAuthStateChange('SIGNED_IN', session)
-    return { data: { user: data.user, session }, error: null }
+    };
+    await persistSession(session);
+    notifyAuthStateChange("SIGNED_IN", session);
+    return { data: { user: data.user, session }, error: null };
   } catch (error: any) {
-    return { data: null, error }
+    return { data: null, error };
   }
 }
 
@@ -258,94 +293,111 @@ export async function handleAuthCallback(url: string): Promise<AuthResult> {
  */
 export async function signOut(): Promise<{ error: Error | null }> {
   try {
-    const accessToken = await SecureStorageAdapter.getItem(ACCESS_TOKEN_KEY)
+    const accessToken = await SecureStorageAdapter.getItem(ACCESS_TOKEN_KEY);
     if (accessToken) {
       try {
-        await apiCall('/logout', { access_token: accessToken })
+        await apiCall("/logout", { access_token: accessToken });
       } catch {
         // Ignore server errors during logout - still clear local state
       }
     }
-    await clearPersistedSession()
-    notifyAuthStateChange('SIGNED_OUT', null)
-    return { error: null }
+    await clearPersistedSession();
+    notifyAuthStateChange("SIGNED_OUT", null);
+    return { error: null };
   } catch (error: any) {
-    await clearPersistedSession()
-    notifyAuthStateChange('SIGNED_OUT', null)
-    return { error }
+    await clearPersistedSession();
+    notifyAuthStateChange("SIGNED_OUT", null);
+    return { error };
   }
 }
 
 /**
  * Get the current authenticated user
  */
-export async function getCurrentUser(): Promise<{ user: WorkOSUser | null; error: Error | null }> {
+export async function getCurrentUser(): Promise<{
+  user: WorkOSUser | null;
+  error: Error | null;
+}> {
   try {
-    const userJson = await SecureStorageAdapter.getItem(USER_KEY)
-    if (!userJson) return { user: null, error: null }
+    const userJson = await SecureStorageAdapter.getItem(USER_KEY);
+    if (!userJson) return { user: null, error: null };
 
-    const user = JSON.parse(userJson) as WorkOSUser
-    return { user, error: null }
+    const user = JSON.parse(userJson) as WorkOSUser;
+    return { user, error: null };
   } catch (error: any) {
-    return { user: null, error }
+    return { user: null, error };
   }
 }
 
 /**
  * Get current session, refreshing the access token if it's expired.
  */
-export async function getSession(): Promise<{ session: WorkOSSession | null; error: Error | null }> {
+export async function getSession(): Promise<{
+  session: WorkOSSession | null;
+  error: Error | null;
+}> {
   try {
-    const accessToken = await SecureStorageAdapter.getItem(ACCESS_TOKEN_KEY)
-    const refreshToken = await SecureStorageAdapter.getItem(REFRESH_TOKEN_KEY)
-    const userJson = await SecureStorageAdapter.getItem(USER_KEY)
-    if (!accessToken || !refreshToken || !userJson) return { session: null, error: null }
+    const accessToken = await SecureStorageAdapter.getItem(ACCESS_TOKEN_KEY);
+    const refreshToken = await SecureStorageAdapter.getItem(REFRESH_TOKEN_KEY);
+    const userJson = await SecureStorageAdapter.getItem(USER_KEY);
+    if (!accessToken || !refreshToken || !userJson)
+      return { session: null, error: null };
 
-    const user = JSON.parse(userJson) as WorkOSUser
-    const session: WorkOSSession = { access_token: accessToken, refresh_token: refreshToken, user }
+    const user = JSON.parse(userJson) as WorkOSUser;
+    const session: WorkOSSession = {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user,
+    };
 
     // Check whether the access token still validates
     try {
-      const url = `${getApiBaseUrl()}/api/auth/session/validate`
+      const url = `${getApiBaseUrl()}/api/auth/session/validate`;
       const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ access_token: accessToken }),
-      })
+      });
 
       if (response.ok) {
-        return { session, error: null }
+        return { session, error: null };
       }
 
       if (response.status === 401) {
         // Access token expired — try to refresh it
         try {
-          const refreshed = await apiCall('/refresh', { refresh_token: refreshToken })
+          const refreshed = await apiCall("/refresh", {
+            refresh_token: refreshToken,
+          });
           const newSession: WorkOSSession = {
             access_token: refreshed.access_token,
             refresh_token: refreshed.refresh_token,
             user,
-          }
-          await persistSession(newSession)
-          return { session: newSession, error: null }
+          };
+          await persistSession(newSession);
+          return { session: newSession, error: null };
         } catch {
           // Refresh token is also invalid — genuinely signed out
-          await clearPersistedSession()
-          notifyAuthStateChange('TOKEN_REFRESHED', null)
-          return { session: null, error: null }
+          await clearPersistedSession();
+          notifyAuthStateChange("TOKEN_REFRESHED", null);
+          return { session: null, error: null };
         }
       }
 
       // Server error (5xx) — keep the local session, don't log out
-      console.warn(`[mukoko][auth] Session validation returned ${response.status}, keeping local session`)
-      return { session, error: null }
+      console.warn(
+        `[mukoko][auth] Session validation returned ${response.status}, keeping local session`,
+      );
+      return { session, error: null };
     } catch {
       // Network error — keep the local session, don't log out
-      console.warn('[mukoko][auth] Session validation network error, keeping local session')
-      return { session, error: null }
+      console.warn(
+        "[mukoko][auth] Session validation network error, keeping local session",
+      );
+      return { session, error: null };
     }
   } catch (error: any) {
-    return { session: null, error }
+    return { session: null, error };
   }
 }
 
@@ -353,28 +405,30 @@ export async function getSession(): Promise<{ session: WorkOSSession | null; err
  * Subscribe to auth state changes
  */
 export function onAuthStateChange(callback: AuthStateCallback) {
-  _authStateListeners.push(callback)
+  _authStateListeners.push(callback);
   return {
     data: {
       subscription: {
         unsubscribe: () => {
-          _authStateListeners = _authStateListeners.filter(cb => cb !== callback)
+          _authStateListeners = _authStateListeners.filter(
+            (cb) => cb !== callback,
+          );
         },
       },
     },
-  }
+  };
 }
 
 /**
  * Get the current access token for API calls
  */
 export async function getSessionToken(): Promise<string | null> {
-  return SecureStorageAdapter.getItem(ACCESS_TOKEN_KEY)
+  return SecureStorageAdapter.getItem(ACCESS_TOKEN_KEY);
 }
 
 /**
  * Check if WorkOS AuthKit is configured
  */
 export function isAuthConfigured(): boolean {
-  return !!getApiBaseUrl()
+  return !!getApiBaseUrl();
 }

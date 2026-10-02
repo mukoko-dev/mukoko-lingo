@@ -1,43 +1,66 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { aiApi } from '@/lib/api-client'
+import { useState } from "react";
+import { aiApi } from "@/lib/api-client";
 
 interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
+  id: string;
+  role: "user" | "assistant";
+  content: string;
 }
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function sendMessage() {
-    if (!input.trim() || loading) return
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input.trim() }
-    const updated = [...messages, userMsg]
-    setMessages(updated)
-    setInput('')
-    setLoading(true)
+    if (!input.trim() || loading) return;
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: input.trim(),
+    };
+    const updated = [...messages, userMsg];
+    setMessages(updated);
+    setInput("");
+    setLoading(true);
 
-    const apiMessages = updated.map(m => ({ role: m.role, content: m.content }))
-    const { data, error } = await aiApi.chat(apiMessages)
+    const apiMessages = updated.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+    const { data, error } = await aiApi.chat(apiMessages);
 
     if (data?.message) {
-      setMessages([...updated, { id: (Date.now() + 1).toString(), role: 'assistant', content: data.message }])
+      setMessages([
+        ...updated,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: data.message,
+        },
+      ]);
     } else {
-      setMessages([...updated, { id: (Date.now() + 1).toString(), role: 'assistant', content: error || 'Something went wrong.' }])
+      setMessages([
+        ...updated,
+        {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: error || "Something went wrong.",
+        },
+      ]);
     }
-    setLoading(false)
+    setLoading(false);
   }
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
       <div>
         <h1 className="text-2xl font-bold">Shamwari AI Tutor</h1>
-        <p className="text-sm text-[var(--muted-foreground)]">Your friendly language learning companion</p>
+        <p className="text-sm text-[var(--muted-foreground)]">
+          Your friendly language learning companion
+        </p>
       </div>
 
       {/* Messages */}
@@ -48,13 +71,22 @@ export default function ChatPage() {
           </div>
         )}
         {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm ${
-              msg.role === 'user'
-                ? 'bg-cobalt-600 text-white'
-                : 'bg-[var(--muted)] text-[var(--foreground)]'
-            }`}>
-              {msg.role === 'assistant' && <span className="mb-1 block text-xs font-semibold text-cobalt-400">Shamwari</span>}
+          <div
+            key={msg.id}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm ${
+                msg.role === "user"
+                  ? "bg-cobalt-600 text-white"
+                  : "bg-[var(--muted)] text-[var(--foreground)]"
+              }`}
+            >
+              {msg.role === "assistant" && (
+                <span className="mb-1 block text-xs font-semibold text-cobalt-400">
+                  Shamwari
+                </span>
+              )}
               <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
           </div>
@@ -74,7 +106,7 @@ export default function ChatPage() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           placeholder="Ask Shamwari anything about languages..."
           className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[var(--ring)]"
         />
@@ -87,5 +119,5 @@ export default function ChatPage() {
         </button>
       </div>
     </div>
-  )
+  );
 }

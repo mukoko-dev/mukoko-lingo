@@ -1,44 +1,44 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 @config '../tailwind.config.ts';
 
 @layer base {
   :root {
-    --background: #FAF9F5;
+    --background: #faf9f5;
     --foreground: #141413;
-    --card: #FFFFFF;
+    --card: #ffffff;
     --card-foreground: #141413;
-    --primary: #0047AB;
-    --primary-foreground: #FFFFFF;
-    --secondary: #4B0082;
-    --secondary-foreground: #FFFFFF;
-    --muted: #F3F2EE;
-    --muted-foreground: #8C8B87;
-    --accent: #5D4037;
-    --accent-foreground: #FFFFFF;
-    --destructive: #B3261E;
-    --destructive-foreground: #FFFFFF;
-    --border: #E5E5E2;
-    --ring: #0047AB;
+    --primary: #0047ab;
+    --primary-foreground: #ffffff;
+    --secondary: #4b0082;
+    --secondary-foreground: #ffffff;
+    --muted: #f3f2ee;
+    --muted-foreground: #8c8b87;
+    --accent: #5d4037;
+    --accent-foreground: #ffffff;
+    --destructive: #b3261e;
+    --destructive-foreground: #ffffff;
+    --border: #e5e5e2;
+    --ring: #0047ab;
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: #0A0A0A;
-    --foreground: #F5F5F4;
+    --background: #0a0a0a;
+    --foreground: #f5f5f4;
     --card: #141414;
-    --card-foreground: #F5F5F4;
-    --primary: #00B0FF;
-    --primary-foreground: #0A0A0A;
-    --secondary: #B388FF;
-    --secondary-foreground: #0A0A0A;
-    --muted: #1E1E1E;
-    --muted-foreground: #6B6B66;
-    --accent: #FFD740;
-    --accent-foreground: #0A0A0A;
-    --destructive: #F2B8B5;
-    --destructive-foreground: #0A0A0A;
-    --border: #2A2A28;
-    --ring: #00B0FF;
+    --card-foreground: #f5f5f4;
+    --primary: #00b0ff;
+    --primary-foreground: #0a0a0a;
+    --secondary: #b388ff;
+    --secondary-foreground: #0a0a0a;
+    --muted: #1e1e1e;
+    --muted-foreground: #6b6b66;
+    --accent: #ffd740;
+    --accent-foreground: #0a0a0a;
+    --destructive: #f2b8b5;
+    --destructive-foreground: #0a0a0a;
+    --border: #2a2a28;
+    --ring: #00b0ff;
   }
 }
 

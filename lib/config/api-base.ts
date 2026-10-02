@@ -10,7 +10,7 @@
  * (tests, dynamic config) is still picked up.
  */
 
-import { Platform } from 'react-native'
+import { Platform } from "react-native";
 
 /**
  * Base URL for `/api/*` requests — no trailing slash.
@@ -19,17 +19,21 @@ import { Platform } from 'react-native'
  * web → empty string (native without configuration, callers decide).
  */
 export function getApiBaseUrl(): string {
-  const configured = process.env.EXPO_PUBLIC_API_BASE_URL
-  if (configured) return configured.replace(/\/+$/, '')
+  const configured = process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (configured) return configured.replace(/\/+$/, "");
 
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin
+  if (
+    Platform.OS === "web" &&
+    typeof window !== "undefined" &&
+    window.location?.origin
+  ) {
+    return window.location.origin;
   }
 
-  return ''
+  return "";
 }
 
 /** True when API calls can be made — i.e. `getApiBaseUrl()` resolved to something. */
 export function hasApiBaseUrl(): boolean {
-  return getApiBaseUrl() !== ''
+  return getApiBaseUrl() !== "";
 }

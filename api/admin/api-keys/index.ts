@@ -17,43 +17,55 @@
  * unrelated role mint a live API key attributed to an arbitrary org.
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { handleCors } from '../../_lib/cors'
-import { requireAdmin } from '../../_lib/auth-middleware'
-import { platformApiKeys, getDb } from '../../_lib/mongo'
-import { buildApiKeyDoc, toApiKeySummaries } from '../../../lib/db/api-key-shape'
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { handleCors } from "../../_lib/cors";
+import { requireAdmin } from "../../_lib/auth-middleware";
+import { platformApiKeys, getDb } from "../../_lib/mongo";
+import {
+  buildApiKeyDoc,
+  toApiKeySummaries,
+} from "../../../lib/db/api-key-shape";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (handleCors(req, res)) return
+  if (handleCors(req, res)) return;
 
   try {
-    const user = await requireAdmin(req)
+    const user = await requireAdmin(req);
 
-    const col = await platformApiKeys()
+    const col = await platformApiKeys();
 
-    if (req.method === 'GET') {
+    if (req.method === "GET") {
       const keys = await col
-        .find({ createdByPersonId: user.personId, surfaceContext: 'lingo' })
+        .find({ createdByPersonId: user.personId, surfaceContext: "lingo" })
         .sort({ createdAt: -1 })
-        .toArray()
+        .toArray();
 
-      return res.status(200).json({ data: toApiKeySummaries(keys) })
+      return res.status(200).json({ data: toApiKeySummaries(keys) });
     }
 
-    if (req.method === 'POST') {
-      const { name, organization_id: ownerEntityId, scopes, expires_in_days: expiresInDays } = req.body || {}
+    if (req.method === "POST") {
+      const {
+        name,
+        organization_id: ownerEntityId,
+        scopes,
+        expires_in_days: expiresInDays,
+      } = req.body || {};
       if (!name || !ownerEntityId) {
-        return res.status(400).json({ error: 'name and organization_id are required' })
+        return res
+          .status(400)
+          .json({ error: "name and organization_id are required" });
       }
 
       // organization_id must reference a real entity.entities document.
       // Caller-org membership isn't checked because the caller is already
       // a platform admin (requireAdmin above) — trusted to issue keys for
       // any org, same as every other api/admin/** route.
-      const entitiesCol = (await getDb('entity')).collection('entities')
-      const entity = await entitiesCol.findOne({ _id: ownerEntityId })
+      const entitiesCol = (await getDb("entity")).collection("entities");
+      const entity = await entitiesCol.findOne({ _id: ownerEntityId });
       if (!entity) {
-        return res.status(400).json({ error: 'organization_id does not reference a known entity' })
+        return res
+          .status(400)
+          .json({ error: "organization_id does not reference a known entity" });
       }
 
       const { doc, plainKey } = buildApiKeyDoc({
@@ -62,9 +74,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         createdByPersonId: user.personId,
         scopes,
         expiresInDays,
-      })
+      });
 
-      await col.insertOne(doc as any)
+      await col.insertOne(doc as any);
 
       // Return the plain key only once — it's stored hashed
       return res.status(201).json({
@@ -78,14 +90,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           expires_at: doc.expiresAt ? doc.expiresAt.toISOString() : null,
           key: plainKey,
         },
-        warning: 'Save this API key — it will not be shown again.',
-      })
+        warning: "Save this API key — it will not be shown again.",
+      });
     }
 
-    return res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({ error: "Method not allowed" });
   } catch (error: any) {
-    if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
-    if (error.message === 'Forbidden') return res.status(403).json({ error: 'Forbidden' })
-    return res.status(500).json({ error: error.message || 'Internal server error' })
+    if (error.message === "Unauthorized")
+      return res.status(401).json({ error: "Unauthorized" });
+    if (error.message === "Forbidden")
+      return res.status(403).json({ error: "Forbidden" });
+    return res
+      .status(500)
+      .json({ error: error.message || "Internal server error" });
   }
 }
