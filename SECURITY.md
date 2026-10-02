@@ -17,7 +17,7 @@ Mukoko Lingo takes security seriously. This document outlines our security pract
 If you discover a security vulnerability, please report it responsibly:
 
 1. **Do NOT** open a public issue
-2. Email security concerns to: <security@mukoko.com>
+2. Email security concerns to: <security@nyuchi.com>
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce

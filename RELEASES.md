@@ -192,4 +192,4 @@ git checkout -b hotfix/short-description
 ## Contact
 
 - Engineering: <dev@mukoko.com>
-- Security: <security@mukoko.com>
+- Security: <security@nyuchi.com>
