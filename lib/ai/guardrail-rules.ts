@@ -8,20 +8,20 @@
  */
 
 export type ModerationCategory =
-  | 'harassment'
-  | 'hate_speech'
-  | 'sexual_content'
-  | 'violence'
-  | 'self_harm'
-  | 'off_topic'
-  | 'personal_info'
+  | "harassment"
+  | "hate_speech"
+  | "sexual_content"
+  | "violence"
+  | "self_harm"
+  | "off_topic"
+  | "personal_info";
 
 export interface GuardrailVerdict {
-  flagged: boolean
-  categories: ModerationCategory[]
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  confidence: number
-  reason?: string
+  flagged: boolean;
+  categories: ModerationCategory[];
+  severity: "low" | "medium" | "high" | "critical";
+  confidence: number;
+  reason?: string;
 }
 
 // Prompt injection detection patterns
@@ -39,31 +39,39 @@ export const PROMPT_INJECTION_PATTERNS = [
   /what\s+(is|are)\s+your\s+(system|initial)\s+instructions/i,
   /repeat\s+(your|the)\s+(system|initial)\s+prompt/i,
   /output\s+(your|the)\s+instructions/i,
-  /\]\s*\}\s*\{/,  // JSON injection attempt
-]
+  /\]\s*\}\s*\{/, // JSON injection attempt
+];
 
 // Core guardrail rules applied locally (no API needed)
 export const LOCAL_GUARDRAILS = [
   {
-    category: 'personal_info' as ModerationCategory,
+    category: "personal_info" as ModerationCategory,
     patterns: [
-      /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/,  // phone numbers
-      /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,  // emails
-      /\b\d{3}-\d{2}-\d{4}\b/,  // SSN-like
+      /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/, // phone numbers
+      /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/, // emails
+      /\b\d{3}-\d{2}-\d{4}\b/, // SSN-like
     ],
-    severity: 'medium' as const,
-    message: 'Please avoid sharing personal information like phone numbers, emails, or IDs in chat.',
+    severity: "medium" as const,
+    message:
+      "Please avoid sharing personal information like phone numbers, emails, or IDs in chat.",
   },
   {
-    category: 'off_topic' as ModerationCategory,
+    category: "off_topic" as ModerationCategory,
     keywords: [
-      'hack', 'exploit', 'malware', 'ransomware', 'ddos',
-      'bomb', 'weapon', 'drug deal',
+      "hack",
+      "exploit",
+      "malware",
+      "ransomware",
+      "ddos",
+      "bomb",
+      "weapon",
+      "drug deal",
     ],
-    severity: 'high' as const,
-    message: 'This topic is outside the scope of language learning. Let\'s focus on learning!',
+    severity: "high" as const,
+    message:
+      "This topic is outside the scope of language learning. Let's focus on learning!",
   },
-]
+];
 
 /**
  * Check content against the local guardrails. Returns null when nothing
@@ -75,15 +83,16 @@ export function evaluateGuardrails(content: string): GuardrailVerdict | null {
     if (pattern.test(content)) {
       return {
         flagged: true,
-        categories: ['off_topic'],
-        severity: 'critical',
+        categories: ["off_topic"],
+        severity: "critical",
         confidence: 0.9,
-        reason: 'Message appears to contain instruction manipulation. Let\'s keep our conversation focused on language learning!',
-      }
+        reason:
+          "Message appears to contain instruction manipulation. Let's keep our conversation focused on language learning!",
+      };
     }
   }
 
-  const lowerContent = content.toLowerCase()
+  const lowerContent = content.toLowerCase();
 
   for (const guardrail of LOCAL_GUARDRAILS) {
     if (guardrail.patterns) {
@@ -95,7 +104,7 @@ export function evaluateGuardrails(content: string): GuardrailVerdict | null {
             severity: guardrail.severity,
             confidence: 0.95,
             reason: guardrail.message,
-          }
+          };
         }
       }
     }
@@ -109,11 +118,11 @@ export function evaluateGuardrails(content: string): GuardrailVerdict | null {
             severity: guardrail.severity,
             confidence: 0.8,
             reason: guardrail.message,
-          }
+          };
         }
       }
     }
   }
 
-  return null
+  return null;
 }

@@ -17,48 +17,72 @@
 
 /** C0 controls plus DEL — anything that can break a line or move a cursor. */
 function safe(message: string): string {
-  if (typeof message !== 'string') return String(message)
-  let out = ''
+  if (typeof message !== "string") return String(message);
+  let out = "";
   for (const ch of message) {
-    const code = ch.codePointAt(0) ?? 0
-    out += code < 0x20 || code === 0x7f ? ' ' : ch
+    const code = ch.codePointAt(0) ?? 0;
+    out += code < 0x20 || code === 0x7f ? " " : ch;
   }
-  return out
+  return out;
 }
 
 export function createLogger(module: string) {
-  const prefix = `[mukoko][${module}]`
+  const prefix = `[mukoko][${module}]`;
 
   return {
     info: (message: string, data?: any) => {
-      console.log('%s %s', prefix, safe(message), data !== undefined ? data : '')
+      console.log(
+        "%s %s",
+        prefix,
+        safe(message),
+        data !== undefined ? data : "",
+      );
     },
     warn: (message: string, data?: any) => {
-      console.warn('%s %s', prefix, safe(message), data !== undefined ? data : '')
+      console.warn(
+        "%s %s",
+        prefix,
+        safe(message),
+        data !== undefined ? data : "",
+      );
     },
     error: (message: string, data?: any) => {
-      console.error('%s %s', prefix, safe(message), data !== undefined ? data : '')
+      console.error(
+        "%s %s",
+        prefix,
+        safe(message),
+        data !== undefined ? data : "",
+      );
     },
     debug: (message: string, data?: any) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('%s [DEBUG] %s', prefix, safe(message), data !== undefined ? data : '')
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "%s [DEBUG] %s",
+          prefix,
+          safe(message),
+          data !== undefined ? data : "",
+        );
       }
     },
-  }
+  };
 }
 
 /**
  * Measure execution time of an async function
  */
-export async function measure<T>(label: string, fn: () => Promise<T>, module?: string): Promise<T> {
-  const start = Date.now()
-  const log = createLogger(module || 'perf')
+export async function measure<T>(
+  label: string,
+  fn: () => Promise<T>,
+  module?: string,
+): Promise<T> {
+  const start = Date.now();
+  const log = createLogger(module || "perf");
   try {
-    const result = await fn()
-    log.info(`${label} completed in ${Date.now() - start}ms`)
-    return result
+    const result = await fn();
+    log.info(`${label} completed in ${Date.now() - start}ms`);
+    return result;
   } catch (error) {
-    log.error(`${label} failed after ${Date.now() - start}ms`, error)
-    throw error
+    log.error(`${label} failed after ${Date.now() - start}ms`, error);
+    throw error;
   }
 }

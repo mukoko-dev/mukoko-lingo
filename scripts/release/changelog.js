@@ -8,22 +8,28 @@
  * list of subjects is a worse changelog than a considered one.
  */
 
-const UNRELEASED_HEADING = '## [Unreleased]'
-const EMPTY_MARKER = '_Nothing yet._'
+const UNRELEASED_HEADING = "## [Unreleased]";
+const EMPTY_MARKER = "_Nothing yet._";
 
 const GROUPS = [
-  ['Added', ['feat']],
-  ['Changed', ['perf', 'refactor', 'revert']],
-  ['Fixed', ['fix']],
-  ['Security', ['security']],
-]
+  ["Added", ["feat"]],
+  ["Changed", ["perf", "refactor", "revert"]],
+  ["Fixed", ["fix"]],
+  ["Security", ["security"]],
+];
 
 /** `fix(auth): unbreak sign-in` → `{ type, scope, subject }`, or null. */
 function parseSubject(message) {
-  const subject = String(message || '').split('\n')[0].trim()
-  const match = subject.match(/^([a-zA-Z]+)(?:\(([^)]*)\))?!?:\s*(.+)$/)
-  if (!match) return null
-  return { type: match[1].toLowerCase(), scope: match[2] || null, subject: match[3].trim() }
+  const subject = String(message || "")
+    .split("\n")[0]
+    .trim();
+  const match = subject.match(/^([a-zA-Z]+)(?:\(([^)]*)\))?!?:\s*(.+)$/);
+  if (!match) return null;
+  return {
+    type: match[1].toLowerCase(),
+    scope: match[2] || null,
+    subject: match[3].trim(),
+  };
 }
 
 /**
@@ -31,43 +37,46 @@ function parseSubject(message) {
  * `{ message, sha }` — the sha is rendered short so an entry stays traceable.
  */
 function sectionFromCommits(commits) {
-  const buckets = new Map(GROUPS.map(([name]) => [name, []]))
+  const buckets = new Map(GROUPS.map(([name]) => [name, []]));
 
   for (const commit of commits || []) {
-    const parsed = parseSubject(commit.message)
-    if (!parsed) continue
+    const parsed = parseSubject(commit.message);
+    if (!parsed) continue;
 
     const group =
-      parsed.scope === 'security'
-        ? 'Security'
-        : (GROUPS.find(([, types]) => types.includes(parsed.type)) || [])[0]
-    if (!group) continue
+      parsed.scope === "security"
+        ? "Security"
+        : (GROUPS.find(([, types]) => types.includes(parsed.type)) || [])[0];
+    if (!group) continue;
 
-    const sha = commit.sha ? ` (\`${String(commit.sha).slice(0, 7)}\`)` : ''
-    const scope = parsed.scope && parsed.scope !== 'security' ? `**${parsed.scope}**: ` : ''
-    buckets.get(group).push(`- ${scope}${parsed.subject}${sha}`)
+    const sha = commit.sha ? ` (\`${String(commit.sha).slice(0, 7)}\`)` : "";
+    const scope =
+      parsed.scope && parsed.scope !== "security"
+        ? `**${parsed.scope}**: `
+        : "";
+    buckets.get(group).push(`- ${scope}${parsed.subject}${sha}`);
   }
 
   return GROUPS.map(([name]) => [name, buckets.get(name)])
     .filter(([, entries]) => entries.length > 0)
-    .map(([name, entries]) => `### ${name}\n${entries.join('\n')}`)
-    .join('\n\n')
+    .map(([name, entries]) => `### ${name}\n${entries.join("\n")}`)
+    .join("\n\n");
 }
 
 function findUnreleased(markdown) {
-  const start = markdown.indexOf(UNRELEASED_HEADING)
-  if (start === -1) return null
+  const start = markdown.indexOf(UNRELEASED_HEADING);
+  if (start === -1) return null;
 
-  const afterHeading = start + UNRELEASED_HEADING.length
-  const next = markdown.slice(afterHeading).search(/\n## \[/)
-  const end = next === -1 ? markdown.length : afterHeading + next + 1
+  const afterHeading = start + UNRELEASED_HEADING.length;
+  const next = markdown.slice(afterHeading).search(/\n## \[/);
+  const end = next === -1 ? markdown.length : afterHeading + next + 1;
 
-  return { start, afterHeading, end, body: markdown.slice(afterHeading, end) }
+  return { start, afterHeading, end, body: markdown.slice(afterHeading, end) };
 }
 
 /** Strip the `---` rule the file puts between version sections. */
 function stripTrailingRule(body) {
-  return body.replace(/\n+---\s*$/, '').trim()
+  return body.replace(/\n+---\s*$/, "").trim();
 }
 
 /**
@@ -78,24 +87,33 @@ function stripTrailingRule(body) {
  * caller should skip the release rather than tag an empty version.
  */
 function cutRelease(markdown, { version, date, fallbackCommits } = {}) {
-  if (!version) throw new Error('cutRelease needs a version')
-  const section = findUnreleased(markdown)
-  if (!section) throw new Error(`CHANGELOG.md has no "${UNRELEASED_HEADING}" section`)
+  if (!version) throw new Error("cutRelease needs a version");
+  const section = findUnreleased(markdown);
+  if (!section)
+    throw new Error(`CHANGELOG.md has no "${UNRELEASED_HEADING}" section`);
 
-  const written = stripTrailingRule(section.body).replace(EMPTY_MARKER, '').trim()
-  const notes = written || sectionFromCommits(fallbackCommits)
+  const written = stripTrailingRule(section.body)
+    .replace(EMPTY_MARKER, "")
+    .trim();
+  const notes = written || sectionFromCommits(fallbackCommits);
 
-  if (!notes) return { changelog: markdown, notes: '', released: false }
+  if (!notes) return { changelog: markdown, notes: "", released: false };
 
-  const heading = `## [${version}] — ${date || new Date().toISOString().slice(0, 10)}`
+  const heading = `## [${version}] — ${date || new Date().toISOString().slice(0, 10)}`;
   // The trailing blank line matters: `section.end` lands on the next heading,
   // so without it the rule and that heading end up on consecutive lines, which
   // is not how the rest of the file separates versions.
-  const rebuilt =
-    `${UNRELEASED_HEADING}\n\n${EMPTY_MARKER}\n\n---\n\n${heading}\n\n${notes}\n\n---\n\n`
+  const rebuilt = `${UNRELEASED_HEADING}\n\n${EMPTY_MARKER}\n\n---\n\n${heading}\n\n${notes}\n\n---\n\n`;
 
-  const changelog = markdown.slice(0, section.start) + rebuilt + markdown.slice(section.end)
-  return { changelog, notes, released: true }
+  const changelog =
+    markdown.slice(0, section.start) + rebuilt + markdown.slice(section.end);
+  return { changelog, notes, released: true };
 }
 
-module.exports = { cutRelease, sectionFromCommits, parseSubject, UNRELEASED_HEADING, EMPTY_MARKER }
+module.exports = {
+  cutRelease,
+  sectionFromCommits,
+  parseSubject,
+  UNRELEASED_HEADING,
+  EMPTY_MARKER,
+};

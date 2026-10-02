@@ -9,16 +9,22 @@
  *   export { RouteErrorBoundary as ErrorBoundary } from '@/components/RouteErrorBoundary'
  */
 
-import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native'
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+} from "react-native";
 
 interface ErrorBoundaryProps {
-  error: Error
-  retry: () => void
+  error: Error;
+  retry: () => void;
 }
 
 export function RouteErrorBoundary({ error, retry }: ErrorBoundaryProps) {
-  console.error(`[mukoko][error-boundary] Route error: ${error.message}`)
+  console.error(`[mukoko][error-boundary] Route error: ${error.message}`);
 
   return (
     <View style={styles.container}>
@@ -32,16 +38,16 @@ export function RouteErrorBoundary({ error, retry }: ErrorBoundaryProps) {
         <Text style={styles.retryText}>Try Again</Text>
       </TouchableOpacity>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 32,
-    backgroundColor: '#FAF9F5',
+    backgroundColor: "#FAF9F5",
   },
   emoji: {
     fontSize: 48,
@@ -49,35 +55,34 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#141413',
+    fontWeight: "700",
+    color: "#141413",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   message: {
     fontSize: 15,
-    color: '#52524E',
-    textAlign: 'center',
+    color: "#52524E",
+    textAlign: "center",
     marginBottom: 12,
     lineHeight: 22,
   },
   error: {
     fontSize: 12,
-    color: '#8C8B87',
-    textAlign: 'center',
+    color: "#8C8B87",
+    textAlign: "center",
     marginBottom: 24,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
   },
   retryButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: '#0047AB',
+    backgroundColor: "#0047AB",
     borderRadius: 12,
   },
   retryText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-})
-
+});

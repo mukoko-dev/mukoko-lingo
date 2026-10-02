@@ -1,11 +1,17 @@
-const { defineConfig } = require('eslint/config')
-const expoConfig = require('eslint-config-expo/flat')
-const globals = require('globals')
+const { defineConfig } = require("eslint/config");
+const expoConfig = require("eslint-config-expo/flat");
+const globals = require("globals");
 
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*', 'web/**', '.claude/worktrees/**', 'coverage/**', '.venv-ci-test/**'],
+    ignores: [
+      "dist/*",
+      "web/**",
+      ".claude/worktrees/**",
+      "coverage/**",
+      ".venv-ci-test/**",
+    ],
   },
   {
     // eslint-plugin-import's TypeScript resolver (bundled by
@@ -14,16 +20,16 @@ module.exports = defineConfig([
     // resolution is already verified by `tsc --noEmit` in CI, so these
     // rules are redundant with — and currently broken by — that mismatch.
     rules: {
-      'import/no-unresolved': 'off',
-      'import/named': 'off',
-      'import/namespace': 'off',
-      'import/default': 'off',
-      'import/export': 'off',
-      'import/no-duplicates': 'off',
+      "import/no-unresolved": "off",
+      "import/named": "off",
+      "import/namespace": "off",
+      "import/default": "off",
+      "import/export": "off",
+      "import/no-duplicates": "off",
     },
   },
   {
-    files: ['**/__tests__/**', '**/*.test.{js,jsx,ts,tsx}'],
+    files: ["**/__tests__/**", "**/*.test.{js,jsx,ts,tsx}"],
     languageOptions: {
       globals: globals.jest,
     },
@@ -31,9 +37,9 @@ module.exports = defineConfig([
   {
     // scripts/ is Node tooling (release automation, docs drift check), not app
     // code: CommonJS, with __dirname and process available.
-    files: ['scripts/**/*.js'],
+    files: ["scripts/**/*.js"],
     languageOptions: {
-      sourceType: 'commonjs',
+      sourceType: "commonjs",
       globals: globals.node,
     },
   },
@@ -48,14 +54,14 @@ module.exports = defineConfig([
     // to warnings so they stay visible without blocking the pipeline on
     // a codebase-wide refactor.
     rules: {
-      'react-hooks/refs': 'warn',
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/immutability': 'warn',
-      'react-hooks/preserve-manual-memoization': 'warn',
+      "react-hooks/refs": "warn",
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/preserve-manual-memoization": "warn",
       // Purely cosmetic (unescaped apostrophes/quotes in JSX text), no
       // functional impact — common to disable outright rather than mass-
       // edit dozens of files' rendered copy for an HTML-entity preference.
-      'react/no-unescaped-entities': 'off',
+      "react/no-unescaped-entities": "off",
     },
   },
-])
+]);

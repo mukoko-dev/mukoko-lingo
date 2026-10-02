@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -6,64 +6,73 @@ import {
   TouchableOpacity,
   Animated,
   useWindowDimensions,
-} from 'react-native'
-import { RotateCcw, Volume2, Check } from 'lucide-react-native'
+} from "react-native";
+import { RotateCcw, Volume2, Check } from "lucide-react-native";
 
-import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import type { Phrase } from '@/lib/data/phrases-data'
-import type { LearningLanguage } from '@/lib/hooks/useLearningLanguage'
+import { useTheme } from "@/lib/hooks/useTheme";
+import { lightTheme, darkTheme, Colors } from "@/constants/Colors";
+import type { Phrase } from "@/lib/data/phrases-data";
+import type { LearningLanguage } from "@/lib/hooks/useLearningLanguage";
 
 interface FlashCardProps {
-  phrase: Phrase
-  language: LearningLanguage
-  isViewed: boolean
-  onView: () => void
+  phrase: Phrase;
+  language: LearningLanguage;
+  isViewed: boolean;
+  onView: () => void;
 }
 
-export function FlashCard({ phrase, language, isViewed, onView }: FlashCardProps) {
-  const { isDark } = useTheme()
-  const theme = isDark ? darkTheme : lightTheme
-  const { width } = useWindowDimensions()
-  const [flipped, setFlipped] = useState(false)
-  const flipAnim = useRef(new Animated.Value(0)).current
+export function FlashCard({
+  phrase,
+  language,
+  isViewed,
+  onView,
+}: FlashCardProps) {
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
+  const { width } = useWindowDimensions();
+  const [flipped, setFlipped] = useState(false);
+  const flipAnim = useRef(new Animated.Value(0)).current;
 
-  const isTablet = width >= 768
-  const cardWidth = isTablet ? 260 : 220
+  const isTablet = width >= 768;
+  const cardWidth = isTablet ? 260 : 220;
 
   useEffect(() => {
     if (flipped && !isViewed) {
-      onView()
+      onView();
     }
-  }, [flipped, isViewed, onView])
+  }, [flipped, isViewed, onView]);
 
   const handleFlip = () => {
-    const toValue = flipped ? 0 : 1
+    const toValue = flipped ? 0 : 1;
     Animated.spring(flipAnim, {
       toValue,
       friction: 8,
       tension: 60,
       useNativeDriver: true,
-    }).start()
-    setFlipped(!flipped)
-  }
+    }).start();
+    setFlipped(!flipped);
+  };
 
   const frontInterpolate = flipAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  })
+    outputRange: ["0deg", "180deg"],
+  });
   const backInterpolate = flipAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['180deg', '360deg'],
-  })
+    outputRange: ["180deg", "360deg"],
+  });
 
-  const translation = phrase[language]
-  const pronunciation = phrase.pronunciation[language]
+  const translation = phrase[language];
+  const pronunciation = phrase.pronunciation[language];
 
-  const styles = createStyles(theme, isDark, cardWidth)
+  const styles = createStyles(theme, isDark, cardWidth);
 
   return (
-    <TouchableOpacity activeOpacity={0.9} onPress={handleFlip} style={styles.container}>
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={handleFlip}
+      style={styles.container}
+    >
       {/* Front - English */}
       <Animated.View
         style={[
@@ -94,7 +103,9 @@ export function FlashCard({ phrase, language, isViewed, onView }: FlashCardProps
           { transform: [{ rotateY: backInterpolate }] },
         ]}
       >
-        <Text style={styles.label}>{language.charAt(0).toUpperCase() + language.slice(1)}</Text>
+        <Text style={styles.label}>
+          {language.charAt(0).toUpperCase() + language.slice(1)}
+        </Text>
         <Text style={styles.phraseText}>{translation}</Text>
         {pronunciation && (
           <View style={styles.pronunciationRow}>
@@ -108,10 +119,14 @@ export function FlashCard({ phrase, language, isViewed, onView }: FlashCardProps
         </View>
       </Animated.View>
     </TouchableOpacity>
-  )
+  );
 }
 
-const createStyles = (theme: typeof lightTheme, isDark: boolean, cardWidth: number) =>
+const createStyles = (
+  theme: typeof lightTheme,
+  isDark: boolean,
+  cardWidth: number,
+) =>
   StyleSheet.create({
     container: {
       width: cardWidth,
@@ -119,14 +134,14 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, cardWidth: numb
       marginRight: 12,
     },
     card: {
-      position: 'absolute',
-      width: '100%',
-      height: '100%',
+      position: "absolute",
+      width: "100%",
+      height: "100%",
       borderRadius: 16,
       padding: 20,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backfaceVisibility: 'hidden',
+      justifyContent: "center",
+      alignItems: "center",
+      backfaceVisibility: "hidden",
       borderWidth: 1,
       borderColor: theme.border,
     },
@@ -134,49 +149,53 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, cardWidth: numb
       backgroundColor: theme.card,
     },
     cardBack: {
-      backgroundColor: isDark ? Colors.primary[800] + '40' : Colors.primary[50],
-      borderColor: isDark ? Colors.primary[400] + '30' : Colors.primary[200],
+      backgroundColor: isDark ? Colors.primary[800] + "40" : Colors.primary[50],
+      borderColor: isDark ? Colors.primary[400] + "30" : Colors.primary[200],
     },
     cardViewed: {
-      borderColor: isDark ? Colors.success[400] + '50' : Colors.success[500] + '40',
+      borderColor: isDark
+        ? Colors.success[400] + "50"
+        : Colors.success[500] + "40",
     },
     label: {
-      position: 'absolute',
+      position: "absolute",
       top: 12,
       left: 16,
       fontSize: 11,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.textMuted,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
       letterSpacing: 1,
     },
     phraseText: {
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
-      textAlign: 'center',
+      textAlign: "center",
       lineHeight: 26,
     },
     pronunciationRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 6,
       marginTop: 12,
       paddingHorizontal: 12,
       paddingVertical: 6,
-      backgroundColor: isDark ? Colors.primary[400] + '10' : Colors.primary[600] + '08',
+      backgroundColor: isDark
+        ? Colors.primary[400] + "10"
+        : Colors.primary[600] + "08",
       borderRadius: 8,
     },
     pronunciationText: {
       fontSize: 13,
       color: theme.primary,
-      fontStyle: 'italic',
+      fontStyle: "italic",
     },
     tapHint: {
-      position: 'absolute',
+      position: "absolute",
       bottom: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 4,
     },
     tapHintText: {
@@ -184,14 +203,14 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, cardWidth: numb
       color: theme.textMuted,
     },
     viewedBadge: {
-      position: 'absolute',
+      position: "absolute",
       top: 10,
       right: 10,
       width: 22,
       height: 22,
       borderRadius: 11,
       backgroundColor: Colors.success[500],
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
-  })
+  });

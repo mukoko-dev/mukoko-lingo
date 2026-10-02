@@ -1,15 +1,15 @@
-import * as SQLite from 'expo-sqlite'
-import { Phrase } from '../data/phrases-data'
+import * as SQLite from "expo-sqlite";
+import { Phrase } from "../data/phrases-data";
 
 // Daily lesson operations - use AsyncStorage for simplicity (small data)
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Native uses SQLite for storage
 
-let db: SQLite.SQLiteDatabase | null = null
+let db: SQLite.SQLiteDatabase | null = null;
 
 export async function initDatabase() {
-  db = await SQLite.openDatabaseAsync('mukoko-lingo.db')
+  db = await SQLite.openDatabaseAsync("mukoko-lingo.db");
 
   // Create tables
   await db.execAsync(`
@@ -58,14 +58,14 @@ export async function initDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_phrases_category ON phrases(category);
     CREATE INDEX IF NOT EXISTS idx_progress_status ON progress(status);
-  `)
+  `);
 
-  if (__DEV__) console.log('SQLite database initialized')
+  if (__DEV__) console.log("SQLite database initialized");
 }
 
 // Phrase operations
 export async function savePhrases(phrases: Phrase[]) {
-  if (!db) await initDatabase()
+  if (!db) await initDatabase();
 
   for (const phrase of phrases) {
     await db!.runAsync(
@@ -81,69 +81,70 @@ export async function savePhrases(phrases: Phrase[]) {
         phrase.chinese,
         JSON.stringify(phrase.pronunciation),
         JSON.stringify(phrase.context),
-      ]
-    )
+      ],
+    );
   }
 }
 
 export async function getPhrases(): Promise<Phrase[]> {
-  if (!db) await initDatabase()
+  if (!db) await initDatabase();
 
-  const rows = await db!.getAllAsync<any>('SELECT * FROM phrases')
-  return rows.map(row => ({
+  const rows = await db!.getAllAsync<any>("SELECT * FROM phrases");
+  return rows.map((row) => ({
     ...row,
     pronunciation: JSON.parse(row.pronunciation),
     context: JSON.parse(row.context),
-  }))
+  }));
 }
 
-export async function getPhrasesByCategory(category: string): Promise<Phrase[]> {
-  if (!db) await initDatabase()
+export async function getPhrasesByCategory(
+  category: string,
+): Promise<Phrase[]> {
+  if (!db) await initDatabase();
 
   const rows = await db!.getAllAsync<any>(
-    'SELECT * FROM phrases WHERE category = ?',
-    [category]
-  )
-  return rows.map(row => ({
+    "SELECT * FROM phrases WHERE category = ?",
+    [category],
+  );
+  return rows.map((row) => ({
     ...row,
     pronunciation: JSON.parse(row.pronunciation),
     context: JSON.parse(row.context),
-  }))
+  }));
 }
 
 // Bookmark operations
 export async function addBookmark(phraseId: string) {
-  if (!db) await initDatabase()
-  await db!.runAsync(
-    'INSERT OR IGNORE INTO bookmarks (phrase_id) VALUES (?)',
-    [phraseId]
-  )
+  if (!db) await initDatabase();
+  await db!.runAsync("INSERT OR IGNORE INTO bookmarks (phrase_id) VALUES (?)", [
+    phraseId,
+  ]);
 }
 
 export async function removeBookmark(phraseId: string) {
-  if (!db) await initDatabase()
-  await db!.runAsync('DELETE FROM bookmarks WHERE phrase_id = ?', [phraseId])
+  if (!db) await initDatabase();
+  await db!.runAsync("DELETE FROM bookmarks WHERE phrase_id = ?", [phraseId]);
 }
 
 export async function getBookmarks(): Promise<string[]> {
-  if (!db) await initDatabase()
+  if (!db) await initDatabase();
   const rows = await db!.getAllAsync<{ phrase_id: string }>(
-    'SELECT phrase_id FROM bookmarks'
-  )
-  return rows.map(r => r.phrase_id)
+    "SELECT phrase_id FROM bookmarks",
+  );
+  return rows.map((r) => r.phrase_id);
 }
 
 export async function isBookmarked(phraseId: string): Promise<boolean> {
-  const bookmarks = await getBookmarks()
-  return bookmarks.includes(phraseId)
+  const bookmarks = await getBookmarks();
+  return bookmarks.includes(phraseId);
 }
 
 // Progress operations
 export async function updateProgress(
   phraseId: string,
-  status: 'learning' | 'practiced' | 'mastered'
+  status: "learning" | "practiced" | "mastered",
 ) {
-  if (!db) await initDatabase()
+  if (!db) await initDatabase();
   await db!.runAsync(
     `INSERT INTO progress (phrase_id, status, times_practiced, last_practiced)
      VALUES (?, ?, 1, datetime('now'))
@@ -151,123 +152,144 @@ export async function updateProgress(
        status = excluded.status,
        times_practiced = times_practiced + 1,
        last_practiced = datetime('now')`,
-    [phraseId, status]
-  )
+    [phraseId, status],
+  );
 }
 
-export async function getProgress(): Promise<Record<string, { status: string; lastPracticed: string }>> {
-  if (!db) await initDatabase()
-  const rows = await db!.getAllAsync<any>('SELECT * FROM progress')
-  const progress: Record<string, { status: string; lastPracticed: string }> = {}
+export async function getProgress(): Promise<
+  Record<string, { status: string; lastPracticed: string }>
+> {
+  if (!db) await initDatabase();
+  const rows = await db!.getAllAsync<any>("SELECT * FROM progress");
+  const progress: Record<string, { status: string; lastPracticed: string }> =
+    {};
   for (const row of rows) {
     progress[row.phrase_id] = {
       status: row.status,
       lastPracticed: row.last_practiced,
-    }
+    };
   }
-  return progress
+  return progress;
 }
 
 // User skills operations
 export async function updateUserSkill(skillName: string, score: number) {
-  if (!db) await initDatabase()
+  if (!db) await initDatabase();
   await db!.runAsync(
     `INSERT INTO user_skills (skill_name, proficiency_score, last_assessed)
      VALUES (?, ?, datetime('now'))
      ON CONFLICT(skill_name) DO UPDATE SET
        proficiency_score = excluded.proficiency_score,
        last_assessed = datetime('now')`,
-    [skillName, score]
-  )
+    [skillName, score],
+  );
 }
 
-export async function getUserSkills(): Promise<Record<string, { score: number; lastAssessed: string }>> {
-  if (!db) await initDatabase()
-  const rows = await db!.getAllAsync<any>('SELECT * FROM user_skills')
-  const skills: Record<string, { score: number; lastAssessed: string }> = {}
+export async function getUserSkills(): Promise<
+  Record<string, { score: number; lastAssessed: string }>
+> {
+  if (!db) await initDatabase();
+  const rows = await db!.getAllAsync<any>("SELECT * FROM user_skills");
+  const skills: Record<string, { score: number; lastAssessed: string }> = {};
   for (const row of rows) {
     skills[row.skill_name] = {
       score: row.proficiency_score,
       lastAssessed: row.last_assessed,
-    }
+    };
   }
-  return skills
+  return skills;
 }
 
 // Study session operations
-export async function recordStudySession(phrasesPracticed: number, durationMinutes: number) {
-  const today = new Date().toISOString().split('T')[0]
+export async function recordStudySession(
+  phrasesPracticed: number,
+  durationMinutes: number,
+) {
+  const today = new Date().toISOString().split("T")[0];
 
-  if (!db) await initDatabase()
+  if (!db) await initDatabase();
   await db!.runAsync(
-    'INSERT INTO study_sessions (date, phrases_practiced, duration_minutes) VALUES (?, ?, ?)',
-    [today, phrasesPracticed, durationMinutes]
-  )
+    "INSERT INTO study_sessions (date, phrases_practiced, duration_minutes) VALUES (?, ?, ?)",
+    [today, phrasesPracticed, durationMinutes],
+  );
 }
 
-export async function getStudySessions(): Promise<{ date: string; phrasesPracticed: number; durationMinutes: number }[]> {
-  if (!db) await initDatabase()
+export async function getStudySessions(): Promise<
+  { date: string; phrasesPracticed: number; durationMinutes: number }[]
+> {
+  if (!db) await initDatabase();
   const rows = await db!.getAllAsync<any>(
-    'SELECT * FROM study_sessions ORDER BY date DESC LIMIT 30'
-  )
-  return rows.map(r => ({
+    "SELECT * FROM study_sessions ORDER BY date DESC LIMIT 30",
+  );
+  return rows.map((r) => ({
     date: r.date,
     phrasesPracticed: r.phrases_practiced,
     durationMinutes: r.duration_minutes,
-  }))
+  }));
 }
 
 // Calculate study streak
 export async function getStudyStreak(): Promise<number> {
-  const sessions = await getStudySessions()
-  if (sessions.length === 0) return 0
+  const sessions = await getStudySessions();
+  if (sessions.length === 0) return 0;
 
-  let streak = 0
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   for (let i = 0; i < 365; i++) {
-    const checkDate = new Date(today)
-    checkDate.setDate(checkDate.getDate() - i)
-    const dateStr = checkDate.toISOString().split('T')[0]
+    const checkDate = new Date(today);
+    checkDate.setDate(checkDate.getDate() - i);
+    const dateStr = checkDate.toISOString().split("T")[0];
 
-    const hasSession = sessions.some(s => s.date === dateStr)
+    const hasSession = sessions.some((s) => s.date === dateStr);
 
     if (hasSession) {
-      streak++
+      streak++;
     } else if (i > 0) {
-      break
+      break;
     }
   }
 
-  return streak
+  return streak;
 }
 
-const DAILY_LESSON_KEY = 'dailyLesson_'
-const DAILY_GOAL_KEY = 'dailyGoal_'
-const DEFAULT_DAILY_GOAL = 5
+const DAILY_LESSON_KEY = "dailyLesson_";
+const DAILY_GOAL_KEY = "dailyGoal_";
+const DEFAULT_DAILY_GOAL = 5;
 
 export async function getDailyLesson(date: string): Promise<string[] | null> {
-  const data = await AsyncStorage.getItem(DAILY_LESSON_KEY + date)
-  return data ? JSON.parse(data) : null
+  const data = await AsyncStorage.getItem(DAILY_LESSON_KEY + date);
+  return data ? JSON.parse(data) : null;
 }
 
-export async function setDailyLesson(date: string, phraseIds: string[]): Promise<void> {
-  await AsyncStorage.setItem(DAILY_LESSON_KEY + date, JSON.stringify(phraseIds))
+export async function setDailyLesson(
+  date: string,
+  phraseIds: string[],
+): Promise<void> {
+  await AsyncStorage.setItem(
+    DAILY_LESSON_KEY + date,
+    JSON.stringify(phraseIds),
+  );
 }
 
-export async function getDailyGoalProgress(date: string): Promise<{ learned: number; goal: number; completed: boolean }> {
-  const data = await AsyncStorage.getItem(DAILY_GOAL_KEY + date)
-  if (data) return JSON.parse(data)
-  return { learned: 0, goal: DEFAULT_DAILY_GOAL, completed: false }
+export async function getDailyGoalProgress(
+  date: string,
+): Promise<{ learned: number; goal: number; completed: boolean }> {
+  const data = await AsyncStorage.getItem(DAILY_GOAL_KEY + date);
+  if (data) return JSON.parse(data);
+  return { learned: 0, goal: DEFAULT_DAILY_GOAL, completed: false };
 }
 
-export async function updateDailyGoalProgress(date: string, learned: number): Promise<void> {
-  const current = await getDailyGoalProgress(date)
+export async function updateDailyGoalProgress(
+  date: string,
+  learned: number,
+): Promise<void> {
+  const current = await getDailyGoalProgress(date);
   const updated = {
     learned,
     goal: current.goal,
     completed: learned >= current.goal,
-  }
-  await AsyncStorage.setItem(DAILY_GOAL_KEY + date, JSON.stringify(updated))
+  };
+  await AsyncStorage.setItem(DAILY_GOAL_KEY + date, JSON.stringify(updated));
 }

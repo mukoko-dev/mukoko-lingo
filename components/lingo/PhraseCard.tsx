@@ -5,22 +5,22 @@
  * Used by L3 orchestrators (PhraseGrid, DailyLesson).
  */
 
-import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import { Bookmark, BookmarkCheck, ChevronRight } from 'lucide-react-native'
-import { lightTheme, darkTheme } from '@/constants/Colors'
-import { useTheme } from '@/lib/hooks/useTheme'
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Bookmark, BookmarkCheck, ChevronRight } from "lucide-react-native";
+import { lightTheme, darkTheme } from "@/constants/Colors";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface PhraseCardProps {
-  id: string
-  category: string
-  english: string
-  translation: string
-  translationLanguage: string
-  pronunciation?: string
-  bookmarked?: boolean
-  onPress?: () => void
-  onBookmark?: () => void
+  id: string;
+  category: string;
+  english: string;
+  translation: string;
+  translationLanguage: string;
+  pronunciation?: string;
+  bookmarked?: boolean;
+  onPress?: () => void;
+  onBookmark?: () => void;
 }
 
 export function PhraseCard({
@@ -33,14 +33,17 @@ export function PhraseCard({
   onPress,
   onBookmark,
 }: PhraseCardProps) {
-  const { isDark } = useTheme()
-  const theme = isDark ? darkTheme : lightTheme
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
 
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
-      style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}
+      style={[
+        styles.card,
+        { backgroundColor: theme.card, borderColor: theme.border },
+      ]}
     >
       <View style={styles.header}>
         <Text style={[styles.category, { color: theme.textMuted }]}>
@@ -76,7 +79,7 @@ export function PhraseCard({
 
       <ChevronRight size={16} color={theme.textMuted} style={styles.chevron} />
     </TouchableOpacity>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -87,24 +90,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 6,
   },
   category: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.8,
   },
   english: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 8,
   },
   translationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   langLabel: {
@@ -113,17 +116,17 @@ const styles = StyleSheet.create({
   },
   translationText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: "500",
     flex: 1,
   },
   pronunciation: {
     fontSize: 12,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginTop: 4,
   },
   chevron: {
-    position: 'absolute',
+    position: "absolute",
     right: 14,
-    top: '50%',
+    top: "50%",
   },
-})
+});

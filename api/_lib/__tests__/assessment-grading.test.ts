@@ -21,229 +21,284 @@ import {
   DEFAULT_PASSING_SCORE,
   MAX_ANSWERS,
   MAX_ANSWER_CHARS,
-} from '../assessment-grading'
+} from "../assessment-grading";
 
 const KEY = [
-  { questionId: 'q1', correctAnswer: 'Hello', skill: 'vocabulary' },
-  { questionId: 'q2', correctAnswer: 'Thank you', skill: 'vocabulary' },
-  { questionId: 'q3', correctAnswer: 'Goodbye', skill: 'grammar' },
-  { questionId: 'q4', correctAnswer: 'Please', skill: 'grammar' },
-]
+  { questionId: "q1", correctAnswer: "Hello", skill: "vocabulary" },
+  { questionId: "q2", correctAnswer: "Thank you", skill: "vocabulary" },
+  { questionId: "q3", correctAnswer: "Goodbye", skill: "grammar" },
+  { questionId: "q4", correctAnswer: "Please", skill: "grammar" },
+];
 
-describe('ceilingForLevels', () => {
-  it('lets a question set evidence the level above its difficulty, no further', () => {
-    expect(ceilingForLevels(['beginner'])).toBe(64)
-    expect(ceilingForLevels(['elementary'])).toBe(79)
-    expect(ceilingForLevels(['intermediate'])).toBe(89)
-    expect(ceilingForLevels(['advanced'])).toBe(100)
-    expect(ceilingForLevels(['fluent'])).toBe(100)
-  })
+describe("ceilingForLevels", () => {
+  it("lets a question set evidence the level above its difficulty, no further", () => {
+    expect(ceilingForLevels(["beginner"])).toBe(64);
+    expect(ceilingForLevels(["elementary"])).toBe(79);
+    expect(ceilingForLevels(["intermediate"])).toBe(89);
+    expect(ceilingForLevels(["advanced"])).toBe(100);
+    expect(ceilingForLevels(["fluent"])).toBe(100);
+  });
 
-  it('takes the hardest question in the set', () => {
-    expect(ceilingForLevels(['beginner', 'intermediate', 'beginner'])).toBe(89)
-  })
+  it("takes the hardest question in the set", () => {
+    expect(ceilingForLevels(["beginner", "intermediate", "beginner"])).toBe(89);
+  });
 
-  it('treats an unknown or missing difficulty as the easiest', () => {
+  it("treats an unknown or missing difficulty as the easiest", () => {
     // The safe reading: a question of unknown difficulty proves the least.
-    expect(ceilingForLevels([])).toBe(DEFAULT_LEVEL_CEILING)
-    expect(ceilingForLevels([undefined, 'not-a-level'])).toBe(DEFAULT_LEVEL_CEILING)
-  })
-})
+    expect(ceilingForLevels([])).toBe(DEFAULT_LEVEL_CEILING);
+    expect(ceilingForLevels([undefined, "not-a-level"])).toBe(
+      DEFAULT_LEVEL_CEILING,
+    );
+  });
+});
 
-describe('sanitizeAnswers', () => {
-  it('accepts a flat map of strings', () => {
-    expect(sanitizeAnswers({ q1: 'Hello', q2: '' })).toEqual({ q1: 'Hello', q2: '' })
-  })
+describe("sanitizeAnswers", () => {
+  it("accepts a flat map of strings", () => {
+    expect(sanitizeAnswers({ q1: "Hello", q2: "" })).toEqual({
+      q1: "Hello",
+      q2: "",
+    });
+  });
 
-  it('rejects anything that is not an object of strings', () => {
+  it("rejects anything that is not an object of strings", () => {
     // Without this, a nested object would never match a key entry but would
     // still be written verbatim into user_assessments.
-    expect(() => sanitizeAnswers({ q1: { cheat: true } })).toThrow(InvalidSubmissionError)
-    expect(() => sanitizeAnswers({ q1: 100 })).toThrow(InvalidSubmissionError)
-    expect(() => sanitizeAnswers(['Hello'])).toThrow(InvalidSubmissionError)
-    expect(() => sanitizeAnswers('Hello')).toThrow(InvalidSubmissionError)
-    expect(() => sanitizeAnswers(null)).toThrow(InvalidSubmissionError)
-  })
+    expect(() => sanitizeAnswers({ q1: { cheat: true } })).toThrow(
+      InvalidSubmissionError,
+    );
+    expect(() => sanitizeAnswers({ q1: 100 })).toThrow(InvalidSubmissionError);
+    expect(() => sanitizeAnswers(["Hello"])).toThrow(InvalidSubmissionError);
+    expect(() => sanitizeAnswers("Hello")).toThrow(InvalidSubmissionError);
+    expect(() => sanitizeAnswers(null)).toThrow(InvalidSubmissionError);
+  });
 
-  it('rejects an empty submission rather than grading it as zero', () => {
-    expect(() => sanitizeAnswers({})).toThrow(/cannot be empty/)
-  })
+  it("rejects an empty submission rather than grading it as zero", () => {
+    expect(() => sanitizeAnswers({})).toThrow(/cannot be empty/);
+  });
 
-  it('caps the number and size of answers', () => {
+  it("caps the number and size of answers", () => {
     const tooMany = Object.fromEntries(
-      Array.from({ length: MAX_ANSWERS + 1 }, (_, i) => [`q${i}`, 'a'])
-    )
-    expect(() => sanitizeAnswers(tooMany)).toThrow(/cannot exceed/)
-    expect(() => sanitizeAnswers({ q1: 'x'.repeat(MAX_ANSWER_CHARS + 1) })).toThrow(/exceeds/)
-  })
-})
+      Array.from({ length: MAX_ANSWERS + 1 }, (_, i) => [`q${i}`, "a"]),
+    );
+    expect(() => sanitizeAnswers(tooMany)).toThrow(/cannot exceed/);
+    expect(() =>
+      sanitizeAnswers({ q1: "x".repeat(MAX_ANSWER_CHARS + 1) }),
+    ).toThrow(/exceeds/);
+  });
+});
 
-describe('gradeAnswers', () => {
-  it('scores from the answers, not from anything the caller claims', () => {
-    const result = gradeAnswers(KEY, { q1: 'Hello', q2: 'Thank you', q3: 'wrong', q4: 'wrong' })
+describe("gradeAnswers", () => {
+  it("scores from the answers, not from anything the caller claims", () => {
+    const result = gradeAnswers(KEY, {
+      q1: "Hello",
+      q2: "Thank you",
+      q3: "wrong",
+      q4: "wrong",
+    });
 
-    expect(result.score).toBe(2)
-    expect(result.total).toBe(4)
-    expect(result.percentage).toBe(50)
-    expect(result.passed).toBe(false)
-  })
+    expect(result.score).toBe(2);
+    expect(result.total).toBe(4);
+    expect(result.percentage).toBe(50);
+    expect(result.passed).toBe(false);
+  });
 
-  it('counts an unanswered question as wrong, using the key for the total', () => {
+  it("counts an unanswered question as wrong, using the key for the total", () => {
     // The attack this closes: submit one correct answer and call it 100%.
-    const result = gradeAnswers(KEY, { q1: 'Hello' })
+    const result = gradeAnswers(KEY, { q1: "Hello" });
 
-    expect(result.total).toBe(4)
-    expect(result.score).toBe(1)
-    expect(result.percentage).toBe(25)
-    expect(result.perQuestion.find((q) => q.questionId === 'q2')?.userAnswer).toBe('')
-  })
+    expect(result.total).toBe(4);
+    expect(result.score).toBe(1);
+    expect(result.percentage).toBe(25);
+    expect(
+      result.perQuestion.find((q) => q.questionId === "q2")?.userAnswer,
+    ).toBe("");
+  });
 
-  it('ignores answers to questions the key does not contain', () => {
+  it("ignores answers to questions the key does not contain", () => {
     // Padding the map with invented ids must not move the score in either
     // direction.
     const result = gradeAnswers(KEY, {
-      q1: 'Hello',
-      q2: 'Thank you',
-      q3: 'Goodbye',
-      q4: 'Please',
-      'made-up-1': 'Hello',
-      'made-up-2': 'Hello',
-    })
+      q1: "Hello",
+      q2: "Thank you",
+      q3: "Goodbye",
+      q4: "Please",
+      "made-up-1": "Hello",
+      "made-up-2": "Hello",
+    });
 
-    expect(result.total).toBe(4)
-    expect(result.percentage).toBe(100)
-    expect(result.perQuestion).toHaveLength(4)
-  })
+    expect(result.total).toBe(4);
+    expect(result.percentage).toBe(100);
+    expect(result.perQuestion).toHaveLength(4);
+  });
 
-  it('compares trimmed and case-insensitively', () => {
+  it("compares trimmed and case-insensitively", () => {
     // More forgiving than the old client-side `===`, which failed a learner
     // for a capital letter on a free-text answer.
-    const result = gradeAnswers(KEY, { q1: '  hello ', q2: 'THANK YOU', q3: 'Goodbye', q4: 'Please' })
+    const result = gradeAnswers(KEY, {
+      q1: "  hello ",
+      q2: "THANK YOU",
+      q3: "Goodbye",
+      q4: "Please",
+    });
 
-    expect(result.percentage).toBe(100)
-  })
+    expect(result.percentage).toBe(100);
+  });
 
-  it('honours the pass mark it is given', () => {
-    const answers = { q1: 'Hello', q2: 'Thank you', q3: 'Goodbye', q4: 'wrong' } // 75%
+  it("honours the pass mark it is given", () => {
+    const answers = {
+      q1: "Hello",
+      q2: "Thank you",
+      q3: "Goodbye",
+      q4: "wrong",
+    }; // 75%
 
-    expect(gradeAnswers(KEY, answers, DEFAULT_PASSING_SCORE).passed).toBe(true)
-    expect(gradeAnswers(KEY, answers, 80).passed).toBe(false)
-  })
+    expect(gradeAnswers(KEY, answers, DEFAULT_PASSING_SCORE).passed).toBe(true);
+    expect(gradeAnswers(KEY, answers, 80).passed).toBe(false);
+  });
 
-  it('breaks a diagnostic down per skill', () => {
-    const result = gradeAnswers(KEY, { q1: 'Hello', q2: 'Thank you', q3: 'wrong', q4: 'wrong' })
+  it("breaks a diagnostic down per skill", () => {
+    const result = gradeAnswers(KEY, {
+      q1: "Hello",
+      q2: "Thank you",
+      q3: "wrong",
+      q4: "wrong",
+    });
 
-    expect(result.perSkill).toEqual({ vocabulary: 100, grammar: 0 })
-  })
+    expect(result.perSkill).toEqual({ vocabulary: 100, grammar: 0 });
+  });
 
-  it('reports a ceiling per skill, from that skill\'s hardest question', () => {
+  it("reports a ceiling per skill, from that skill's hardest question", () => {
     // A diagnostic can ask one skill something harder than another; each
     // score is limited by its own evidence, not by the set's best question.
     const mixed = [
-      { questionId: 'q1', correctAnswer: 'a', skill: 'vocabulary', level: 'beginner' },
-      { questionId: 'q2', correctAnswer: 'b', skill: 'grammar', level: 'advanced' },
-    ]
+      {
+        questionId: "q1",
+        correctAnswer: "a",
+        skill: "vocabulary",
+        level: "beginner",
+      },
+      {
+        questionId: "q2",
+        correctAnswer: "b",
+        skill: "grammar",
+        level: "advanced",
+      },
+    ];
 
-    const result = gradeAnswers(mixed, { q1: 'a', q2: 'b' })
+    const result = gradeAnswers(mixed, { q1: "a", q2: "b" });
 
-    expect(result.perSkillCeiling).toEqual({ vocabulary: 64, grammar: 100 })
-    expect(result.ceiling).toBe(100)
-  })
+    expect(result.perSkillCeiling).toEqual({ vocabulary: 64, grammar: 100 });
+    expect(result.ceiling).toBe(100);
+  });
 
-  it('never passes an empty key', () => {
-    const result = gradeAnswers([], { q1: 'Hello' })
+  it("never passes an empty key", () => {
+    const result = gradeAnswers([], { q1: "Hello" });
 
-    expect(result).toMatchObject({ score: 0, total: 0, percentage: 0, passed: false })
-  })
-})
+    expect(result).toMatchObject({
+      score: 0,
+      total: 0,
+      percentage: 0,
+      passed: false,
+    });
+  });
+});
 
-describe('answerKeyFromAssessment', () => {
-  it('reads both the bank camelCase and the database snake_case spellings', () => {
+describe("answerKeyFromAssessment", () => {
+  it("reads both the bank camelCase and the database snake_case spellings", () => {
     // lingo.assessments is empty and has no seeder yet, so neither spelling is
     // established; betting on one would fail silently at seed time.
     const key = answerKeyFromAssessment({
       questions: [
-        { id: 'q1', correctAnswer: 'Hello', skill: 'vocabulary' },
-        { question_id: 'q2', correct_answer: 'Thank you' },
+        { id: "q1", correctAnswer: "Hello", skill: "vocabulary" },
+        { question_id: "q2", correct_answer: "Thank you" },
       ],
-    })
+    });
 
     expect(key).toEqual([
-      { questionId: 'q1', correctAnswer: 'Hello', skill: 'vocabulary' },
-      { questionId: 'q2', correctAnswer: 'Thank you', skill: undefined },
-    ])
-  })
+      { questionId: "q1", correctAnswer: "Hello", skill: "vocabulary" },
+      { questionId: "q2", correctAnswer: "Thank you", skill: undefined },
+    ]);
+  });
 
-  it('skips entries that cannot be graded rather than counting them wrong', () => {
+  it("skips entries that cannot be graded rather than counting them wrong", () => {
     const key = answerKeyFromAssessment({
       questions: [
-        { id: 'q1', correctAnswer: 'Hello' },
-        { id: 'q2' }, // no answer — ungradeable
-        { correctAnswer: 'orphan' }, // no id
-        'not an object',
+        { id: "q1", correctAnswer: "Hello" },
+        { id: "q2" }, // no answer — ungradeable
+        { correctAnswer: "orphan" }, // no id
+        "not an object",
         null,
       ],
-    })
+    });
 
-    expect(key).toHaveLength(1)
-    expect(key[0].questionId).toBe('q1')
-  })
+    expect(key).toHaveLength(1);
+    expect(key[0].questionId).toBe("q1");
+  });
 
-  it('returns nothing for an assessment with no questions', () => {
-    expect(answerKeyFromAssessment(null)).toEqual([])
-    expect(answerKeyFromAssessment({})).toEqual([])
-    expect(answerKeyFromAssessment({ questions: 'nope' as any })).toEqual([])
-  })
-})
+  it("returns nothing for an assessment with no questions", () => {
+    expect(answerKeyFromAssessment(null)).toEqual([]);
+    expect(answerKeyFromAssessment({})).toEqual([]);
+    expect(answerKeyFromAssessment({ questions: "nope" as any })).toEqual([]);
+  });
+});
 
-describe('answerKeyFromBank', () => {
+describe("answerKeyFromBank", () => {
   const bank = [
-    { id: 'vocab-b-1', correctAnswer: 'Hello', skill: 'vocabulary' },
-    { id: 'vocab-b-2', correctAnswer: 'Hello', skill: 'vocabulary' },
-    { id: 'gram-b-1', correctAnswer: 'Ndiri', skill: 'grammar' },
-  ]
+    { id: "vocab-b-1", correctAnswer: "Hello", skill: "vocabulary" },
+    { id: "vocab-b-2", correctAnswer: "Hello", skill: "vocabulary" },
+    { id: "gram-b-1", correctAnswer: "Ndiri", skill: "grammar" },
+  ];
 
-  it('keys only the questions the submission actually names', () => {
-    const key = answerKeyFromBank(bank, ['vocab-b-1', 'gram-b-1'])
+  it("keys only the questions the submission actually names", () => {
+    const key = answerKeyFromBank(bank, ["vocab-b-1", "gram-b-1"]);
 
-    expect(key.map((k) => k.questionId)).toEqual(['vocab-b-1', 'gram-b-1'])
-  })
+    expect(key.map((k) => k.questionId)).toEqual(["vocab-b-1", "gram-b-1"]);
+  });
 
-  it('drops ids the bank does not know', () => {
-    expect(answerKeyFromBank(bank, ['invented'])).toEqual([])
-  })
-})
+  it("drops ids the bank does not know", () => {
+    expect(answerKeyFromBank(bank, ["invented"])).toEqual([]);
+  });
+});
 
-describe('resolvePassingScore', () => {
-  it('uses the assessment threshold when it is sane', () => {
-    expect(resolvePassingScore({ passing_score: 80 })).toBe(80)
-    expect(resolvePassingScore({ passing_score: 0 })).toBe(0)
-  })
+describe("resolvePassingScore", () => {
+  it("uses the assessment threshold when it is sane", () => {
+    expect(resolvePassingScore({ passing_score: 80 })).toBe(80);
+    expect(resolvePassingScore({ passing_score: 0 })).toBe(0);
+  });
 
-  it('falls back to the default for a missing or impossible threshold', () => {
-    expect(resolvePassingScore(null)).toBe(DEFAULT_PASSING_SCORE)
-    expect(resolvePassingScore({})).toBe(DEFAULT_PASSING_SCORE)
-    expect(resolvePassingScore({ passing_score: -5 })).toBe(DEFAULT_PASSING_SCORE)
-    expect(resolvePassingScore({ passing_score: 150 })).toBe(DEFAULT_PASSING_SCORE)
-    expect(resolvePassingScore({ passing_score: 'high' })).toBe(DEFAULT_PASSING_SCORE)
-  })
-})
+  it("falls back to the default for a missing or impossible threshold", () => {
+    expect(resolvePassingScore(null)).toBe(DEFAULT_PASSING_SCORE);
+    expect(resolvePassingScore({})).toBe(DEFAULT_PASSING_SCORE);
+    expect(resolvePassingScore({ passing_score: -5 })).toBe(
+      DEFAULT_PASSING_SCORE,
+    );
+    expect(resolvePassingScore({ passing_score: 150 })).toBe(
+      DEFAULT_PASSING_SCORE,
+    );
+    expect(resolvePassingScore({ passing_score: "high" })).toBe(
+      DEFAULT_PASSING_SCORE,
+    );
+  });
+});
 
-describe('resolveSkillUpdate', () => {
-  it('promotes only when a real assessment names a target level', () => {
+describe("resolveSkillUpdate", () => {
+  it("promotes only when a real assessment names a target level", () => {
     const promoted = resolveSkillUpdate({
-      existing: { current_score: 40, current_level: 'beginner' },
+      existing: { current_score: 40, current_level: "beginner" },
       percentage: 90,
       passed: true,
-      assessment: { target_level: 'intermediate' },
+      assessment: { target_level: "intermediate" },
       ceiling: 100,
-    })
+    });
 
-    expect(promoted).toMatchObject({ current_score: 90, current_level: 'intermediate' })
-    expect(promoted?.level_achieved_at).toBeInstanceOf(Date)
-  })
+    expect(promoted).toMatchObject({
+      current_score: 90,
+      current_level: "intermediate",
+    });
+    expect(promoted?.level_achieved_at).toBeInstanceOf(Date);
+  });
 
-  it('caps what a set of questions can claim', () => {
+  it("caps what a set of questions can claim", () => {
     // The probe that found this: a perfect run on beginner questions was
     // writing 100 — "fluent" — which the tutor then reads on every turn.
     const update = resolveSkillUpdate({
@@ -252,18 +307,23 @@ describe('resolveSkillUpdate', () => {
       passed: true,
       assessment: null,
       ceiling: 64,
-    })
+    });
 
-    expect(update).toEqual({ current_score: 64 })
-  })
+    expect(update).toEqual({ current_score: 64 });
+  });
 
-  it('defaults to the safest ceiling when none is given', () => {
-    const update = resolveSkillUpdate({ existing: null, percentage: 100, passed: true, assessment: null })
+  it("defaults to the safest ceiling when none is given", () => {
+    const update = resolveSkillUpdate({
+      existing: null,
+      percentage: 100,
+      passed: true,
+      assessment: null,
+    });
 
-    expect(update).toEqual({ current_score: DEFAULT_LEVEL_CEILING })
-  })
+    expect(update).toEqual({ current_score: DEFAULT_LEVEL_CEILING });
+  });
 
-  it('does not revoke a higher score earned on harder questions', () => {
+  it("does not revoke a higher score earned on harder questions", () => {
     // The cap limits what this attempt may claim; it is not a demotion.
     const update = resolveSkillUpdate({
       existing: { current_score: 92 },
@@ -271,69 +331,72 @@ describe('resolveSkillUpdate', () => {
       passed: true,
       assessment: null,
       ceiling: 64,
-    })
+    });
 
-    expect(update).toBeNull()
-  })
+    expect(update).toBeNull();
+  });
 
-  it('records the score but never a level for a bank-graded quiz', () => {
+  it("records the score but never a level for a bank-graded quiz", () => {
     // The bank has no notion of a target level, so a pass on a
     // client-assembled quiz must not invent a promotion — that is the hole.
     const update = resolveSkillUpdate({
-      existing: { current_score: 40, current_level: 'beginner' },
+      existing: { current_score: 40, current_level: "beginner" },
       percentage: 90,
       passed: true,
       assessment: null,
       ceiling: 100,
-    })
+    });
 
-    expect(update).toEqual({ current_score: 90 })
-    expect(update).not.toHaveProperty('current_level')
-  })
+    expect(update).toEqual({ current_score: 90 });
+    expect(update).not.toHaveProperty("current_level");
+  });
 
-  it('does not promote on a failing score even with a target level', () => {
+  it("does not promote on a failing score even with a target level", () => {
     const update = resolveSkillUpdate({
-      existing: { current_score: 40, current_level: 'beginner' },
+      existing: { current_score: 40, current_level: "beginner" },
       percentage: 50,
       passed: false,
-      assessment: { target_level: 'intermediate' },
-    })
+      assessment: { target_level: "intermediate" },
+    });
 
-    expect(update).toEqual({ current_score: 50 })
-  })
+    expect(update).toEqual({ current_score: 50 });
+  });
 
-  it('keeps the best score when a retake goes worse', () => {
+  it("keeps the best score when a retake goes worse", () => {
     const update = resolveSkillUpdate({
-      existing: { current_score: 80, current_level: 'intermediate' },
+      existing: { current_score: 80, current_level: "intermediate" },
       percentage: 30,
       passed: false,
       assessment: null,
-    })
+    });
 
     // Nothing to write at all: the learner has not un-learned what they showed.
-    expect(update).toBeNull()
-  })
+    expect(update).toBeNull();
+  });
 
-  it('still promotes on a retake that passes but scores lower than the best', () => {
+  it("still promotes on a retake that passes but scores lower than the best", () => {
     const update = resolveSkillUpdate({
-      existing: { current_score: 95, current_level: 'beginner' },
+      existing: { current_score: 95, current_level: "beginner" },
       percentage: 75,
       passed: true,
-      assessment: { target_level: 'intermediate' },
+      assessment: { target_level: "intermediate" },
       ceiling: 100,
-    })
+    });
 
-    expect(update).toMatchObject({ current_score: 95, current_level: 'intermediate' })
-  })
+    expect(update).toMatchObject({
+      current_score: 95,
+      current_level: "intermediate",
+    });
+  });
 
-  it('writes a first row for a learner with no skill record', () => {
+  it("writes a first row for a learner with no skill record", () => {
     const update = resolveSkillUpdate({
       existing: null,
       percentage: 0,
       passed: false,
       assessment: null,
-    })
+    });
 
-    expect(update).toEqual({ current_score: 0 })
-  })
-})
+    expect(update).toEqual({ current_score: 0 });
+  });
+});

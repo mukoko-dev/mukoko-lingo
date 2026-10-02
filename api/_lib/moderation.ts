@@ -11,14 +11,17 @@
  * and records an alert so flagged content actually reaches the admin queue.
  */
 
-import { randomUUID } from 'crypto'
-import { evaluateGuardrails, type GuardrailVerdict } from '../../lib/ai/guardrail-rules'
-import { moderationAlerts } from './mongo'
-import { createLogger } from './logger'
+import { randomUUID } from "crypto";
+import {
+  evaluateGuardrails,
+  type GuardrailVerdict,
+} from "../../lib/ai/guardrail-rules";
+import { moderationAlerts } from "./mongo";
+import { createLogger } from "./logger";
 
-const log = createLogger('moderation')
+const log = createLogger("moderation");
 
-export type { GuardrailVerdict }
+export type { GuardrailVerdict };
 
 /**
  * Persist a flagged item for admin review.
@@ -29,31 +32,32 @@ export type { GuardrailVerdict }
  * and the analytics pending-count both read from it.
  */
 export async function recordModerationAlert(params: {
-  personId: string
-  contentType: string
-  contentText: string
-  verdict: GuardrailVerdict
+  personId: string;
+  contentType: string;
+  contentText: string;
+  verdict: GuardrailVerdict;
 }): Promise<void> {
   try {
-    const col = await moderationAlerts()
+    const col = await moderationAlerts();
     await col.insertOne({
       _id: randomUUID(),
-      status: 'pending',
+      status: "pending",
       person_id: params.personId,
       content_type: params.contentType,
       // Truncated: the queue needs enough to judge the message, not an
       // unbounded copy of whatever was submitted.
       content_text: params.contentText.slice(0, 2000),
-      flagged_reason: params.verdict.reason || params.verdict.categories.join(', '),
+      flagged_reason:
+        params.verdict.reason || params.verdict.categories.join(", "),
       categories: params.verdict.categories,
       severity: params.verdict.severity,
       confidence: params.verdict.confidence,
       created_at: new Date(),
-    } as any)
+    } as any);
   } catch (error: any) {
     // Never let alert-writing failure decide whether content is allowed —
     // the caller has already made that call.
-    log.error(`Failed to record moderation alert: ${error?.message || error}`)
+    log.error(`Failed to record moderation alert: ${error?.message || error}`);
   }
 }
 
@@ -62,19 +66,21 @@ export async function recordModerationAlert(params: {
  * an alert is recorded and the verdict returned; otherwise null.
  */
 export async function moderateUserContent(params: {
-  personId: string
-  content: string
-  contentType?: string
+  personId: string;
+  content: string;
+  contentType?: string;
 }): Promise<GuardrailVerdict | null> {
-  const verdict = evaluateGuardrails(params.content)
-  if (!verdict?.flagged) return null
+  const verdict = evaluateGuardrails(params.content);
+  if (!verdict?.flagged) return null;
 
-  log.warn(`Blocked ${params.contentType || 'chat_message'}: ${verdict.categories.join(', ')} (${verdict.severity})`)
+  log.warn(
+    `Blocked ${params.contentType || "chat_message"}: ${verdict.categories.join(", ")} (${verdict.severity})`,
+  );
   await recordModerationAlert({
     personId: params.personId,
-    contentType: params.contentType || 'chat_message',
+    contentType: params.contentType || "chat_message",
     contentText: params.content,
     verdict,
-  })
-  return verdict
+  });
+  return verdict;
 }

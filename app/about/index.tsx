@@ -9,8 +9,8 @@ import {
   StatusBar,
   useWindowDimensions,
   Image,
-} from 'react-native'
-import { useRouter, Stack } from 'expo-router'
+} from "react-native";
+import { useRouter, Stack } from "expo-router";
 import {
   ArrowRight,
   Globe,
@@ -24,209 +24,289 @@ import {
   GraduationCap,
   Home,
   ExternalLink,
-} from 'lucide-react-native'
+} from "lucide-react-native";
 
-import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme } from '@/constants/Colors'
-import { AppHeader } from '@/components/AppHeader'
+import { useTheme } from "@/lib/hooks/useTheme";
+import { lightTheme, darkTheme } from "@/constants/Colors";
+import { AppHeader } from "@/components/AppHeader";
 
 const URLS = {
-  WEBSITE: 'https://lingo.mukoko.com',
-  MUKOKO_PLATFORM: 'https://mukoko.com',
-}
+  WEBSITE: "https://lingo.mukoko.com",
+  MUKOKO_PLATFORM: "https://mukoko.com",
+};
 
 export default function AboutScreen() {
-  const router = useRouter()
-  const { isDark } = useTheme()
-  const theme = isDark ? darkTheme : lightTheme
-  const { width } = useWindowDimensions()
+  const router = useRouter();
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
+  const { width } = useWindowDimensions();
 
-  const isTablet = width >= 768
-  const isDesktop = width >= 1024
+  const isTablet = width >= 768;
+  const isDesktop = width >= 1024;
 
   const AUDIENCES = [
-    { icon: Plane, title: 'Tourists', description: 'Exploring Zimbabwe', color: theme.accent },
-    { icon: Briefcase, title: 'Expats', description: 'Living & working in Africa', color: theme.primary },
-    { icon: Briefcase, title: 'Business Professionals', description: 'Conducting commerce', color: theme.secondary },
-    { icon: GraduationCap, title: 'Students', description: 'Pursuing education', color: theme.primary },
-    { icon: Home, title: 'Immigrants', description: 'Settling into new homes', color: theme.accent },
-    { icon: Users, title: 'Locals', description: 'Expanding multilingual abilities', color: theme.secondary },
-  ]
+    {
+      icon: Plane,
+      title: "Tourists",
+      description: "Exploring Zimbabwe",
+      color: theme.accent,
+    },
+    {
+      icon: Briefcase,
+      title: "Expats",
+      description: "Living & working in Africa",
+      color: theme.primary,
+    },
+    {
+      icon: Briefcase,
+      title: "Business Professionals",
+      description: "Conducting commerce",
+      color: theme.secondary,
+    },
+    {
+      icon: GraduationCap,
+      title: "Students",
+      description: "Pursuing education",
+      color: theme.primary,
+    },
+    {
+      icon: Home,
+      title: "Immigrants",
+      description: "Settling into new homes",
+      color: theme.accent,
+    },
+    {
+      icon: Users,
+      title: "Locals",
+      description: "Expanding multilingual abilities",
+      color: theme.secondary,
+    },
+  ];
 
   const DIFFERENTIATORS = [
     {
       icon: MessageCircle,
-      title: 'Colloquial Focus',
-      description: 'Teaching authentic everyday communication rather than formal textbook language.',
+      title: "Colloquial Focus",
+      description:
+        "Teaching authentic everyday communication rather than formal textbook language.",
       color: theme.primary,
     },
     {
       icon: Globe,
-      title: 'Side-by-Side Comparison',
-      description: 'Presenting all four languages simultaneously with pronunciation guides and cultural context.',
+      title: "Side-by-Side Comparison",
+      description:
+        "Presenting all four languages simultaneously with pronunciation guides and cultural context.",
       color: theme.secondary,
     },
     {
       icon: Heart,
-      title: 'Built for Africa',
-      description: 'Designed specifically for African learners with cultural and linguistic understanding.',
+      title: "Built for Africa",
+      description:
+        "Designed specifically for African learners with cultural and linguistic understanding.",
       color: theme.accent,
     },
-  ]
+  ];
 
-  const styles = createStyles(theme, isDark, isTablet, isDesktop)
+  const styles = createStyles(theme, isDark, isTablet, isDesktop);
 
   const openURL = async (url: string) => {
     try {
-      await Linking.openURL(url)
+      await Linking.openURL(url);
     } catch (error) {
-      console.error('Error opening URL:', error)
+      console.error("Error opening URL:", error);
     }
-  }
+  };
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
         {/* Shared Header Component */}
         <AppHeader isAuthenticated={false} />
 
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.contentWrapper}>
-          {/* Hero Section */}
-          <View style={styles.hero}>
-            <View style={styles.heroLogoContainer}>
-              <Image
-                source={require('@/assets/images/icon.png')}
-                style={styles.heroIcon}
-                resizeMode="contain"
-              />
-              <Text style={styles.heroTitle}>Mukoko Lingo</Text>
-            </View>
-            <Text style={styles.heroTagline}>Part of the Mukoko Ecosystem</Text>
-          </View>
-
-          {/* Mission Section */}
-          <View style={styles.section}>
-            <View style={styles.missionCard}>
-              <View style={styles.missionIcon}>
-                <Target size={28} color={theme.primary} />
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.contentWrapper}>
+            {/* Hero Section */}
+            <View style={styles.hero}>
+              <View style={styles.heroLogoContainer}>
+                <Image
+                  source={require("@/assets/images/icon.png")}
+                  style={styles.heroIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.heroTitle}>Mukoko Lingo</Text>
               </View>
-              <Text style={styles.missionTitle}>Our Mission</Text>
-              <Text style={styles.missionText}>
-                To empower everyone—tourists, business professionals, students, immigrants, and locals—to communicate effectively across English, Shona, Ndebele, and Chinese.
+              <Text style={styles.heroTagline}>
+                Part of the Mukoko Ecosystem
+              </Text>
+            </View>
+
+            {/* Mission Section */}
+            <View style={styles.section}>
+              <View style={styles.missionCard}>
+                <View style={styles.missionIcon}>
+                  <Target size={28} color={theme.primary} />
+                </View>
+                <Text style={styles.missionTitle}>Our Mission</Text>
+                <Text style={styles.missionText}>
+                  To empower everyone—tourists, business professionals,
+                  students, immigrants, and locals—to communicate effectively
+                  across English, Shona, Ndebele, and Chinese.
+                </Text>
+              </View>
+            </View>
+
+            {/* Who We Serve Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Who We Serve</Text>
+              <View style={styles.audienceGrid}>
+                {AUDIENCES.map((audience, index) => {
+                  const Icon = audience.icon;
+                  return (
+                    <View key={index} style={styles.audienceCard}>
+                      <View
+                        style={[
+                          styles.audienceIcon,
+                          { backgroundColor: audience.color + "20" },
+                        ]}
+                      >
+                        <Icon size={22} color={audience.color} />
+                      </View>
+                      <View style={styles.audienceContent}>
+                        <Text style={styles.audienceTitle}>
+                          {audience.title}
+                        </Text>
+                        <Text style={styles.audienceDescription}>
+                          {audience.description}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Story Section */}
+            <View style={[styles.section, styles.storySection]}>
+              <Text style={styles.sectionTitle}>Our Story</Text>
+              <Text style={styles.storyText}>
+                Mukoko Lingo was founded to address practical language education
+                needs across Zimbabwe and Southern Africa. Whether you're
+                navigating Victoria Falls as a tourist or negotiating business
+                deals in Harare, we provide the language skills you need.
+              </Text>
+              <Text style={styles.storyText}>
+                Language learning should be accessible to everyone, regardless
+                of whether you're visiting for a week, conducting business for a
+                month, studying for a semester, or building a life here
+                permanently.
+              </Text>
+            </View>
+
+            {/* Differentiators Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>What Makes Us Different</Text>
+              <View style={styles.differentiatorsList}>
+                {DIFFERENTIATORS.map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <View key={index} style={styles.differentiatorCard}>
+                      <View
+                        style={[
+                          styles.differentiatorIcon,
+                          { backgroundColor: item.color + "20" },
+                        ]}
+                      >
+                        <Icon size={24} color={item.color} />
+                      </View>
+                      <View style={styles.differentiatorContent}>
+                        <Text style={styles.differentiatorTitle}>
+                          {item.title}
+                        </Text>
+                        <Text style={styles.differentiatorDescription}>
+                          {item.description}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Links Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Learn More</Text>
+              <View style={styles.linksList}>
+                <TouchableOpacity
+                  style={styles.linkCard}
+                  onPress={() => openURL(URLS.WEBSITE)}
+                >
+                  <View style={styles.linkIcon}>
+                    <Globe size={22} color={theme.primary} />
+                  </View>
+                  <Text style={styles.linkText}>Visit Website</Text>
+                  <ExternalLink size={18} color={theme.textMuted} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.linkCard}
+                  onPress={() => openURL(URLS.MUKOKO_PLATFORM)}
+                >
+                  <View style={styles.linkIcon}>
+                    <Heart size={22} color={theme.accent} />
+                  </View>
+                  <Text style={styles.linkText}>Mukoko Platform</Text>
+                  <ExternalLink size={18} color={theme.textMuted} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.linkCard}
+                  onPress={() => router.push("/features")}
+                >
+                  <View style={styles.linkIcon}>
+                    <Target size={22} color={theme.secondary} />
+                  </View>
+                  <Text style={styles.linkText}>Explore Features</Text>
+                  <ArrowRight size={18} color={theme.textMuted} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.linkCard}
+                  onPress={() => router.push("/why")}
+                >
+                  <View style={styles.linkIcon}>
+                    <MessageCircle size={22} color={theme.primary} />
+                  </View>
+                  <Text style={styles.linkText}>Why Mukoko Lingo</Text>
+                  <ArrowRight size={18} color={theme.textMuted} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.version}>Version 1.0.0</Text>
+              <Text style={styles.copyright}>© 2025 Nyuchi Learning</Text>
+              <Text style={styles.tagline}>
+                Language learning, built for Africa.
               </Text>
             </View>
           </View>
-
-          {/* Who We Serve Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Who We Serve</Text>
-            <View style={styles.audienceGrid}>
-              {AUDIENCES.map((audience, index) => {
-                const Icon = audience.icon
-                return (
-                  <View key={index} style={styles.audienceCard}>
-                    <View style={[styles.audienceIcon, { backgroundColor: audience.color + '20' }]}>
-                      <Icon size={22} color={audience.color} />
-                    </View>
-                    <View style={styles.audienceContent}>
-                      <Text style={styles.audienceTitle}>{audience.title}</Text>
-                      <Text style={styles.audienceDescription}>{audience.description}</Text>
-                    </View>
-                  </View>
-                )
-              })}
-            </View>
-          </View>
-
-          {/* Story Section */}
-          <View style={[styles.section, styles.storySection]}>
-            <Text style={styles.sectionTitle}>Our Story</Text>
-            <Text style={styles.storyText}>
-              Mukoko Lingo was founded to address practical language education needs across Zimbabwe and Southern Africa. Whether you're navigating Victoria Falls as a tourist or negotiating business deals in Harare, we provide the language skills you need.
-            </Text>
-            <Text style={styles.storyText}>
-              Language learning should be accessible to everyone, regardless of whether you're visiting for a week, conducting business for a month, studying for a semester, or building a life here permanently.
-            </Text>
-          </View>
-
-          {/* Differentiators Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>What Makes Us Different</Text>
-            <View style={styles.differentiatorsList}>
-              {DIFFERENTIATORS.map((item, index) => {
-                const Icon = item.icon
-                return (
-                  <View key={index} style={styles.differentiatorCard}>
-                    <View style={[styles.differentiatorIcon, { backgroundColor: item.color + '20' }]}>
-                      <Icon size={24} color={item.color} />
-                    </View>
-                    <View style={styles.differentiatorContent}>
-                      <Text style={styles.differentiatorTitle}>{item.title}</Text>
-                      <Text style={styles.differentiatorDescription}>{item.description}</Text>
-                    </View>
-                  </View>
-                )
-              })}
-            </View>
-          </View>
-
-          {/* Links Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Learn More</Text>
-            <View style={styles.linksList}>
-              <TouchableOpacity style={styles.linkCard} onPress={() => openURL(URLS.WEBSITE)}>
-                <View style={styles.linkIcon}>
-                  <Globe size={22} color={theme.primary} />
-                </View>
-                <Text style={styles.linkText}>Visit Website</Text>
-                <ExternalLink size={18} color={theme.textMuted} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.linkCard} onPress={() => openURL(URLS.MUKOKO_PLATFORM)}>
-                <View style={styles.linkIcon}>
-                  <Heart size={22} color={theme.accent} />
-                </View>
-                <Text style={styles.linkText}>Mukoko Platform</Text>
-                <ExternalLink size={18} color={theme.textMuted} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.linkCard} onPress={() => router.push('/features')}>
-                <View style={styles.linkIcon}>
-                  <Target size={22} color={theme.secondary} />
-                </View>
-                <Text style={styles.linkText}>Explore Features</Text>
-                <ArrowRight size={18} color={theme.textMuted} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.linkCard} onPress={() => router.push('/why')}>
-                <View style={styles.linkIcon}>
-                  <MessageCircle size={22} color={theme.primary} />
-                </View>
-                <Text style={styles.linkText}>Why Mukoko Lingo</Text>
-                <ArrowRight size={18} color={theme.textMuted} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.version}>Version 1.0.0</Text>
-            <Text style={styles.copyright}>© 2025 Nyuchi Learning</Text>
-            <Text style={styles.tagline}>Language learning, built for Africa.</Text>
-          </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
       </SafeAreaView>
     </>
-  )
+  );
 }
 
-const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boolean, isDesktop: boolean) =>
+const createStyles = (
+  theme: typeof lightTheme,
+  isDark: boolean,
+  isTablet: boolean,
+  isDesktop: boolean,
+) =>
   StyleSheet.create({
     safeArea: {
       flex: 1,
@@ -240,12 +320,12 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       paddingBottom: 40,
     },
     contentWrapper: {
-      maxWidth: isDesktop ? 1200 : isTablet ? 900 : '100%',
-      alignSelf: 'center',
-      width: '100%',
+      maxWidth: isDesktop ? 1200 : isTablet ? 900 : "100%",
+      alignSelf: "center",
+      width: "100%",
     },
     hero: {
-      alignItems: 'center',
+      alignItems: "center",
       paddingVertical: isTablet ? 48 : 32,
       paddingHorizontal: isTablet ? 48 : 24,
       backgroundColor: theme.card,
@@ -253,8 +333,8 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       borderBottomColor: theme.border,
     },
     heroLogoContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 12,
       marginBottom: 16,
     },
@@ -264,13 +344,13 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     },
     heroTitle: {
       fontSize: isTablet ? 36 : 28,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
     },
     heroTagline: {
       fontSize: isTablet ? 18 : 16,
       color: theme.primary,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     section: {
       paddingHorizontal: isTablet ? 48 : 24,
@@ -281,65 +361,65 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     },
     sectionTitle: {
       fontSize: isTablet ? 28 : 22,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
       marginBottom: 16,
-      textAlign: isTablet ? 'center' : 'left',
+      textAlign: isTablet ? "center" : "left",
     },
     missionCard: {
       backgroundColor: theme.card,
       borderRadius: 16,
       padding: isTablet ? 32 : 24,
-      alignItems: 'center',
+      alignItems: "center",
       borderWidth: 1,
       borderColor: theme.border,
       maxWidth: isTablet ? 700 : undefined,
-      alignSelf: isTablet ? 'center' : 'stretch',
+      alignSelf: isTablet ? "center" : "stretch",
     },
     missionIcon: {
       width: isTablet ? 72 : 60,
       height: isTablet ? 72 : 60,
       borderRadius: 16,
-      backgroundColor: theme.primary + '15',
-      alignItems: 'center',
-      justifyContent: 'center',
+      backgroundColor: theme.primary + "15",
+      alignItems: "center",
+      justifyContent: "center",
       marginBottom: 16,
     },
     missionTitle: {
       fontSize: isTablet ? 24 : 20,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
       marginBottom: 12,
     },
     missionText: {
       fontSize: isTablet ? 17 : 16,
       color: theme.textSecondary,
-      textAlign: 'center',
+      textAlign: "center",
       lineHeight: isTablet ? 26 : 24,
     },
     audienceGrid: {
       gap: 12,
-      flexDirection: isTablet ? 'row' : 'column',
-      flexWrap: 'wrap',
-      justifyContent: 'center',
+      flexDirection: isTablet ? "row" : "column",
+      flexWrap: "wrap",
+      justifyContent: "center",
     },
     audienceCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       backgroundColor: theme.card,
       borderRadius: 12,
       padding: 14,
       borderWidth: 1,
       borderColor: theme.border,
-      width: isTablet ? '48%' : '100%',
+      width: isTablet ? "48%" : "100%",
       maxWidth: isTablet ? 380 : undefined,
     },
     audienceIcon: {
       width: 44,
       height: 44,
       borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       marginRight: 14,
     },
     audienceContent: {
@@ -347,7 +427,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     },
     audienceTitle: {
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
     },
     audienceDescription: {
@@ -359,17 +439,17 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       color: theme.textSecondary,
       lineHeight: isTablet ? 26 : 24,
       marginBottom: 16,
-      textAlign: isTablet ? 'center' : 'left',
+      textAlign: isTablet ? "center" : "left",
       maxWidth: 700,
-      alignSelf: isTablet ? 'center' : 'flex-start',
+      alignSelf: isTablet ? "center" : "flex-start",
     },
     differentiatorsList: {
       gap: 12,
-      flexDirection: isTablet ? 'row' : 'column',
-      justifyContent: 'center',
+      flexDirection: isTablet ? "row" : "column",
+      justifyContent: "center",
     },
     differentiatorCard: {
-      flexDirection: 'row',
+      flexDirection: "row",
       backgroundColor: theme.card,
       borderRadius: 12,
       padding: 16,
@@ -382,8 +462,8 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       width: 48,
       height: 48,
       borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       marginRight: 16,
     },
     differentiatorContent: {
@@ -391,7 +471,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     },
     differentiatorTitle: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
       marginBottom: 4,
     },
@@ -402,19 +482,19 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     },
     linksList: {
       gap: 12,
-      flexDirection: isTablet ? 'row' : 'column',
-      flexWrap: 'wrap',
-      justifyContent: 'center',
+      flexDirection: isTablet ? "row" : "column",
+      flexWrap: "wrap",
+      justifyContent: "center",
     },
     linkCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       backgroundColor: theme.card,
       borderRadius: 12,
       padding: 16,
       borderWidth: 1,
       borderColor: theme.border,
-      width: isTablet ? '48%' : '100%',
+      width: isTablet ? "48%" : "100%",
       maxWidth: isTablet ? 350 : undefined,
     },
     linkIcon: {
@@ -422,18 +502,18 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
       height: 40,
       borderRadius: 10,
       backgroundColor: theme.background,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       marginRight: 14,
     },
     linkText: {
       flex: 1,
       fontSize: 16,
       color: theme.text,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     footer: {
-      alignItems: 'center',
+      alignItems: "center",
       paddingVertical: 24,
       paddingHorizontal: 24,
     },
@@ -450,6 +530,6 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean, isTablet: boole
     tagline: {
       fontSize: 14,
       color: theme.textSecondary,
-      fontStyle: 'italic',
+      fontStyle: "italic",
     },
-  })
+  });

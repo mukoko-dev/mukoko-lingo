@@ -1,4 +1,4 @@
-import { ScrollViewStyleReset } from 'expo-router/html';
+import { ScrollViewStyleReset } from "expo-router/html";
 
 // This file is web-only and used to configure the root HTML for every
 // web page during static rendering.
@@ -16,14 +16,31 @@ export default function Root({ children }: { children: React.ReactNode }) {
           scripts load — and filters that specific log line so the DevTools
           console stays clean without affecting any other logging.
         */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){var L=console.log;console.log=function(){if(arguments.length>0&&typeof arguments[0]==='string'&&arguments[0].indexOf('SES Removing')===0)return;L.apply(console,arguments)};})();` }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var L=console.log;console.log=function(){if(arguments.length>0&&typeof arguments[0]==='string'&&arguments[0].indexOf('SES Removing')===0)return;L.apply(console,arguments)};})();`,
+          }}
+        />
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
 
         {/* Favicon — SVG with theme-aware variants */}
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" media="(prefers-color-scheme: light)" />
-        <link rel="icon" type="image/svg+xml" href="/favicon-dark.svg" media="(prefers-color-scheme: dark)" />
+        <link
+          rel="icon"
+          type="image/svg+xml"
+          href="/favicon.svg"
+          media="(prefers-color-scheme: light)"
+        />
+        <link
+          rel="icon"
+          type="image/svg+xml"
+          href="/favicon-dark.svg"
+          media="(prefers-color-scheme: dark)"
+        />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
         {/*

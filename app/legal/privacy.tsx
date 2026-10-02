@@ -5,107 +5,110 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-} from 'react-native'
-import { useRouter, Stack } from 'expo-router'
-import { ArrowLeft, ExternalLink, Shield, Mail } from 'lucide-react-native'
+} from "react-native";
+import { useRouter, Stack } from "expo-router";
+import { ArrowLeft, ExternalLink, Shield, Mail } from "lucide-react-native";
 
-import { useColorScheme } from '@/components/useColorScheme'
-import { lightTheme, darkTheme } from '@/constants/Colors'
+import { useColorScheme } from "@/components/useColorScheme";
+import { lightTheme, darkTheme } from "@/constants/Colors";
 
 const SECTIONS = [
   {
-    title: 'Information We Collect',
+    title: "Information We Collect",
     content: [
-      'Account information (email, name) when you create an account',
-      'Learning progress and activity data',
-      'Device information for app functionality',
-      'Usage analytics to improve the app experience',
+      "Account information (email, name) when you create an account",
+      "Learning progress and activity data",
+      "Device information for app functionality",
+      "Usage analytics to improve the app experience",
     ],
   },
   {
-    title: 'How We Use Your Information',
+    title: "How We Use Your Information",
     content: [
-      'To provide personalized language learning experiences',
-      'To track your learning progress across devices',
-      'To improve our AI tutoring capabilities',
-      'To send you relevant learning reminders (if enabled)',
-      'To analyze and improve app performance',
+      "To provide personalized language learning experiences",
+      "To track your learning progress across devices",
+      "To improve our AI tutoring capabilities",
+      "To send you relevant learning reminders (if enabled)",
+      "To analyze and improve app performance",
     ],
   },
   {
-    title: 'Data Storage & Security',
+    title: "Data Storage & Security",
     content: [
-      'Your data is stored securely using industry-standard encryption',
-      'We use WorkOS AuthKit for secure authentication and MongoDB Atlas for data storage',
-      'AI conversations are processed securely and not shared with third parties',
-      'We implement appropriate security measures to protect your information',
+      "Your data is stored securely using industry-standard encryption",
+      "We use WorkOS AuthKit for secure authentication and MongoDB Atlas for data storage",
+      "AI conversations are processed securely and not shared with third parties",
+      "We implement appropriate security measures to protect your information",
     ],
   },
   {
-    title: 'Your Rights',
+    title: "Your Rights",
     content: [
-      'Access your personal data at any time',
-      'Request correction of inaccurate data',
-      'Delete your account and associated data',
-      'Export your learning progress data',
-      'Opt out of analytics and marketing communications',
+      "Access your personal data at any time",
+      "Request correction of inaccurate data",
+      "Delete your account and associated data",
+      "Export your learning progress data",
+      "Opt out of analytics and marketing communications",
     ],
   },
   {
-    title: 'Third-Party Services',
+    title: "Third-Party Services",
     content: [
-      'We use analytics services to understand app usage',
-      'AI features are powered by secure cloud services',
-      'We do not sell your personal information to third parties',
-      'Third-party services comply with applicable privacy regulations',
+      "We use analytics services to understand app usage",
+      "AI features are powered by secure cloud services",
+      "We do not sell your personal information to third parties",
+      "Third-party services comply with applicable privacy regulations",
     ],
   },
   {
-    title: 'Children\'s Privacy',
+    title: "Children's Privacy",
     content: [
-      'Our service is not directed to children under 13',
-      'We do not knowingly collect data from children under 13',
-      'Parents should supervise their children\'s use of the app',
+      "Our service is not directed to children under 13",
+      "We do not knowingly collect data from children under 13",
+      "Parents should supervise their children's use of the app",
     ],
   },
-]
+];
 
-const CONTACT_EMAIL = 'privacy@mukoko.com'
-const FULL_POLICY_URL = 'https://lingo.mukoko.com/privacy'
+const CONTACT_EMAIL = "privacy@mukoko.com";
+const FULL_POLICY_URL = "https://lingo.mukoko.com/privacy";
 
 export default function PrivacyPolicyScreen() {
-  const router = useRouter()
-  const colorScheme = useColorScheme()
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
-  const styles = createStyles(theme)
+  const styles = createStyles(theme);
 
   const openFullPolicy = async () => {
     try {
-      await Linking.openURL(FULL_POLICY_URL)
+      await Linking.openURL(FULL_POLICY_URL);
     } catch (error) {
-      console.error('Error opening URL:', error)
+      console.error("Error opening URL:", error);
     }
-  }
+  };
 
   const openEmail = async () => {
     try {
-      await Linking.openURL(`mailto:${CONTACT_EMAIL}`)
+      await Linking.openURL(`mailto:${CONTACT_EMAIL}`);
     } catch (error) {
-      console.error('Error opening email:', error)
+      console.error("Error opening email:", error);
     }
-  }
+  };
 
   return (
     <>
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: 'Privacy Policy',
+          headerTitle: "Privacy Policy",
           headerStyle: { backgroundColor: theme.card },
           headerTintColor: theme.text,
           headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 8 }}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ marginLeft: 8 }}
+            >
               <ArrowLeft size={24} color={theme.text} />
             </TouchableOpacity>
           ),
@@ -123,7 +126,8 @@ export default function PrivacyPolicyScreen() {
           </View>
           <Text style={styles.headerTitle}>Privacy Policy</Text>
           <Text style={styles.headerSubtitle}>
-            Your privacy is important to us. This policy explains how we collect, use, and protect your information.
+            Your privacy is important to us. This policy explains how we
+            collect, use, and protect your information.
           </Text>
           <Text style={styles.lastUpdated}>Last updated: December 2024</Text>
         </View>
@@ -145,7 +149,8 @@ export default function PrivacyPolicyScreen() {
         <View style={styles.contactSection}>
           <Text style={styles.contactTitle}>Questions or Concerns?</Text>
           <Text style={styles.contactText}>
-            If you have any questions about this Privacy Policy, please contact us:
+            If you have any questions about this Privacy Policy, please contact
+            us:
           </Text>
           <TouchableOpacity style={styles.contactButton} onPress={openEmail}>
             <Mail size={20} color={theme.primary} />
@@ -154,7 +159,10 @@ export default function PrivacyPolicyScreen() {
         </View>
 
         {/* Full Policy Link */}
-        <TouchableOpacity style={styles.fullPolicyButton} onPress={openFullPolicy}>
+        <TouchableOpacity
+          style={styles.fullPolicyButton}
+          onPress={openFullPolicy}
+        >
           <Text style={styles.fullPolicyText}>View Full Privacy Policy</Text>
           <ExternalLink size={16} color={theme.primary} />
         </TouchableOpacity>
@@ -165,7 +173,7 @@ export default function PrivacyPolicyScreen() {
         </Text>
       </ScrollView>
     </>
-  )
+  );
 }
 
 const createStyles = (theme: typeof lightTheme) =>
@@ -178,7 +186,7 @@ const createStyles = (theme: typeof lightTheme) =>
       paddingBottom: 40,
     },
     header: {
-      alignItems: 'center',
+      alignItems: "center",
       paddingVertical: 32,
       paddingHorizontal: 24,
       backgroundColor: theme.card,
@@ -189,21 +197,21 @@ const createStyles = (theme: typeof lightTheme) =>
       width: 64,
       height: 64,
       borderRadius: 16,
-      backgroundColor: theme.primary + '15',
-      alignItems: 'center',
-      justifyContent: 'center',
+      backgroundColor: theme.primary + "15",
+      alignItems: "center",
+      justifyContent: "center",
       marginBottom: 16,
     },
     headerTitle: {
       fontSize: 24,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
       marginBottom: 12,
     },
     headerSubtitle: {
       fontSize: 15,
       color: theme.textSecondary,
-      textAlign: 'center',
+      textAlign: "center",
       lineHeight: 22,
       marginBottom: 12,
     },
@@ -219,12 +227,12 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     sectionTitle: {
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
       marginBottom: 12,
     },
     bulletItem: {
-      flexDirection: 'row',
+      flexDirection: "row",
       marginBottom: 8,
     },
     bullet: {
@@ -250,7 +258,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     contactTitle: {
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
       marginBottom: 8,
     },
@@ -261,19 +269,19 @@ const createStyles = (theme: typeof lightTheme) =>
       lineHeight: 20,
     },
     contactButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 8,
     },
     contactButtonText: {
       fontSize: 15,
       color: theme.primary,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     fullPolicyButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       gap: 8,
       paddingVertical: 16,
       marginHorizontal: 24,
@@ -286,13 +294,13 @@ const createStyles = (theme: typeof lightTheme) =>
     fullPolicyText: {
       fontSize: 16,
       color: theme.primary,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     footer: {
       fontSize: 12,
       color: theme.textMuted,
-      textAlign: 'center',
+      textAlign: "center",
       marginTop: 24,
       paddingHorizontal: 24,
     },
-  })
+  });

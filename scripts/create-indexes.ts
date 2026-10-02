@@ -10,36 +10,58 @@
  * schema and shouldn't add indexes to it.
  */
 
-import { getDb } from '../lib/db/mongo'
+import { getDb } from "../lib/db/mongo";
 
 async function main() {
-  const db = await getDb()
+  const db = await getDb();
 
-  await db.collection('learner_profiles').createIndex({ person_id: 1 }, { unique: true })
-  await db.collection('phrase_progress').createIndex({ user_id: 1, phrase_id: 1 }, { unique: true })
-  await db.collection('srs_cards').createIndex({ user_id: 1, phrase_id: 1 }, { unique: true })
-  await db.collection('user_xp').createIndex({ user_id: 1 }, { unique: true })
-  await db.collection('bookmarks').createIndex({ user_id: 1, phrase_id: 1 }, { unique: true })
-  await db.collection('user_skills').createIndex({ user_id: 1, skill_id: 1 }, { unique: true })
-  await db.collection('assignment_submissions').createIndex({ assignment_id: 1, person_id: 1 }, { unique: true })
-  await db.collection('class_memberships').createIndex({ class_id: 1, person_id: 1 }, { unique: true })
-  await db.collection('class_memberships').createIndex({ person_id: 1 })
-  await db.collection('phrase_views').createIndex({ phrase_id: 1 })
-  await db.collection('xp_events').createIndex({ user_id: 1, event_date: 1 })
-  await db.collection('study_sessions').createIndex({ user_id: 1, session_date: 1 })
+  await db
+    .collection("learner_profiles")
+    .createIndex({ person_id: 1 }, { unique: true });
+  await db
+    .collection("phrase_progress")
+    .createIndex({ user_id: 1, phrase_id: 1 }, { unique: true });
+  await db
+    .collection("srs_cards")
+    .createIndex({ user_id: 1, phrase_id: 1 }, { unique: true });
+  await db.collection("user_xp").createIndex({ user_id: 1 }, { unique: true });
+  await db
+    .collection("bookmarks")
+    .createIndex({ user_id: 1, phrase_id: 1 }, { unique: true });
+  await db
+    .collection("user_skills")
+    .createIndex({ user_id: 1, skill_id: 1 }, { unique: true });
+  await db
+    .collection("assignment_submissions")
+    .createIndex({ assignment_id: 1, person_id: 1 }, { unique: true });
+  await db
+    .collection("class_memberships")
+    .createIndex({ class_id: 1, person_id: 1 }, { unique: true });
+  await db.collection("class_memberships").createIndex({ person_id: 1 });
+  await db.collection("phrase_views").createIndex({ phrase_id: 1 });
+  await db.collection("xp_events").createIndex({ user_id: 1, event_date: 1 });
+  await db
+    .collection("study_sessions")
+    .createIndex({ user_id: 1, session_date: 1 });
 
   // Issued quizzes: looked up by _id on submit, and swept once they expire.
   // The TTL index is what keeps the collection from growing without bound —
   // a session is worthless the moment it lapses.
-  await db.collection('assessment_sessions').createIndex({ user_id: 1, created_at: -1 })
-  await db.collection('assessment_sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 86400 })
-  await db.collection('user_assessments').createIndex({ user_id: 1, completed_at: -1 })
+  await db
+    .collection("assessment_sessions")
+    .createIndex({ user_id: 1, created_at: -1 });
+  await db
+    .collection("assessment_sessions")
+    .createIndex({ expires_at: 1 }, { expireAfterSeconds: 86400 });
+  await db
+    .collection("user_assessments")
+    .createIndex({ user_id: 1, completed_at: -1 });
 
-  console.log('Indexes created.')
-  process.exit(0)
+  console.log("Indexes created.");
+  process.exit(0);
 }
 
 main().catch((error) => {
-  console.error('Failed to create indexes:', error)
-  process.exit(1)
-})
+  console.error("Failed to create indexes:", error);
+  process.exit(1);
+});

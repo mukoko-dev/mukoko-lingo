@@ -3,4 +3,4 @@
  * Re-exports the shared Mongo client + collection accessors.
  */
 
-export * from '../../lib/db/collections'
+export * from "../../lib/db/collections";
