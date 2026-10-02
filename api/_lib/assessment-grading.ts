@@ -15,36 +15,36 @@
 
 /** One question's key, from either the DB assessment or the shared bank. */
 export interface AnswerKeyEntry {
-  questionId: string
-  correctAnswer: string
+  questionId: string;
+  correctAnswer: string;
   /** Skill this question tests, when known — diagnostics span several. */
-  skill?: string
+  skill?: string;
   /** Why that answer is right. Released with the result, never before it. */
-  explanation?: string
+  explanation?: string;
   /** Difficulty of the question — caps what answering it can demonstrate. */
-  level?: string
+  level?: string;
 }
 
 export interface GradedQuestion {
-  questionId: string
-  correctAnswer: string
-  userAnswer: string
-  correct: boolean
-  skill?: string
-  explanation?: string
+  questionId: string;
+  correctAnswer: string;
+  userAnswer: string;
+  correct: boolean;
+  skill?: string;
+  explanation?: string;
 }
 
 export interface GradeResult {
-  score: number
-  total: number
-  percentage: number
-  passed: boolean
-  perQuestion: GradedQuestion[]
+  score: number;
+  total: number;
+  percentage: number;
+  passed: boolean;
+  perQuestion: GradedQuestion[];
   /** Percentage per skill, for a diagnostic that spans several. */
-  perSkill: Record<string, number>
+  perSkill: Record<string, number>;
   /** Highest score this question set can support, overall and per skill. */
-  ceiling: number
-  perSkillCeiling: Record<string, number>
+  ceiling: number;
+  perSkillCeiling: Record<string, number>;
 }
 
 /**
@@ -70,31 +70,32 @@ const LEVEL_CEILING: Record<string, number> = {
   intermediate: 89, // top of advanced
   advanced: 100,
   fluent: 100,
-}
+};
 
 /** Unknown or missing difficulty is treated as the easiest — the safe reading. */
-export const DEFAULT_LEVEL_CEILING = LEVEL_CEILING.beginner
+export const DEFAULT_LEVEL_CEILING = LEVEL_CEILING.beginner;
 
 export function ceilingForLevels(levels: (string | undefined)[]): number {
-  let ceiling = DEFAULT_LEVEL_CEILING
+  let ceiling = DEFAULT_LEVEL_CEILING;
   for (const level of levels) {
-    const candidate = level ? LEVEL_CEILING[level] : undefined
-    if (typeof candidate === 'number' && candidate > ceiling) ceiling = candidate
+    const candidate = level ? LEVEL_CEILING[level] : undefined;
+    if (typeof candidate === "number" && candidate > ceiling)
+      ceiling = candidate;
   }
-  return ceiling
+  return ceiling;
 }
 
 /** Used when the assessment document does not set its own `passing_score`. */
-export const DEFAULT_PASSING_SCORE = 70
+export const DEFAULT_PASSING_SCORE = 70;
 
 /** Guard rails on a submission body; mirrors `api/_lib/chat-input.ts`. */
-export const MAX_ANSWERS = 200
-export const MAX_ANSWER_CHARS = 500
+export const MAX_ANSWERS = 200;
+export const MAX_ANSWER_CHARS = 500;
 
 export class InvalidSubmissionError extends Error {
   constructor(message: string) {
-    super(message)
-    this.name = 'InvalidSubmissionError'
+    super(message);
+    this.name = "InvalidSubmissionError";
   }
 }
 
@@ -106,27 +107,36 @@ export class InvalidSubmissionError extends Error {
  * key entry, but they would be stored verbatim in `user_assessments`.
  */
 export function sanitizeAnswers(raw: unknown): Record<string, string> {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    throw new InvalidSubmissionError('answers must be an object of questionId → answer')
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new InvalidSubmissionError(
+      "answers must be an object of questionId → answer",
+    );
   }
 
-  const entries = Object.entries(raw as Record<string, unknown>)
-  if (entries.length === 0) throw new InvalidSubmissionError('answers cannot be empty')
+  const entries = Object.entries(raw as Record<string, unknown>);
+  if (entries.length === 0)
+    throw new InvalidSubmissionError("answers cannot be empty");
   if (entries.length > MAX_ANSWERS) {
-    throw new InvalidSubmissionError(`answers cannot exceed ${MAX_ANSWERS} questions`)
+    throw new InvalidSubmissionError(
+      `answers cannot exceed ${MAX_ANSWERS} questions`,
+    );
   }
 
-  const clean: Record<string, string> = {}
+  const clean: Record<string, string> = {};
   for (const [questionId, answer] of entries) {
-    if (typeof answer !== 'string') {
-      throw new InvalidSubmissionError(`answer for ${questionId} must be a string`)
+    if (typeof answer !== "string") {
+      throw new InvalidSubmissionError(
+        `answer for ${questionId} must be a string`,
+      );
     }
     if (answer.length > MAX_ANSWER_CHARS) {
-      throw new InvalidSubmissionError(`answer for ${questionId} exceeds ${MAX_ANSWER_CHARS} characters`)
+      throw new InvalidSubmissionError(
+        `answer for ${questionId} exceeds ${MAX_ANSWER_CHARS} characters`,
+      );
     }
-    clean[questionId] = answer
+    clean[questionId] = answer;
   }
-  return clean
+  return clean;
 }
 
 /**
@@ -137,29 +147,42 @@ export function sanitizeAnswers(raw: unknown): Record<string, string> {
  * betting on one. A question with no id or no correct answer is skipped: a key
  * entry that cannot be graded would silently count against the learner.
  */
-export function answerKeyFromAssessment(assessment: { questions?: unknown } | null): AnswerKeyEntry[] {
-  const questions = assessment?.questions
-  if (!Array.isArray(questions)) return []
+export function answerKeyFromAssessment(
+  assessment: { questions?: unknown } | null,
+): AnswerKeyEntry[] {
+  const questions = assessment?.questions;
+  if (!Array.isArray(questions)) return [];
 
-  const key: AnswerKeyEntry[] = []
+  const key: AnswerKeyEntry[] = [];
   for (const raw of questions) {
-    if (!raw || typeof raw !== 'object') continue
-    const q = raw as Record<string, unknown>
-    const questionId = typeof q.id === 'string' ? q.id : typeof q.question_id === 'string' ? q.question_id : null
+    if (!raw || typeof raw !== "object") continue;
+    const q = raw as Record<string, unknown>;
+    const questionId =
+      typeof q.id === "string"
+        ? q.id
+        : typeof q.question_id === "string"
+          ? q.question_id
+          : null;
     const correctAnswer =
-      typeof q.correctAnswer === 'string'
+      typeof q.correctAnswer === "string"
         ? q.correctAnswer
-        : typeof q.correct_answer === 'string'
+        : typeof q.correct_answer === "string"
           ? q.correct_answer
-          : null
-    if (!questionId || !correctAnswer) continue
+          : null;
+    if (!questionId || !correctAnswer) continue;
 
-    const skill = typeof q.skill === 'string' ? q.skill : undefined
-    const explanation = typeof q.explanation === 'string' ? q.explanation : undefined
-    const level = typeof q.level === 'string' ? q.level : typeof q.difficulty === 'string' ? q.difficulty : undefined
-    key.push({ questionId, correctAnswer, skill, explanation, level })
+    const skill = typeof q.skill === "string" ? q.skill : undefined;
+    const explanation =
+      typeof q.explanation === "string" ? q.explanation : undefined;
+    const level =
+      typeof q.level === "string"
+        ? q.level
+        : typeof q.difficulty === "string"
+          ? q.difficulty
+          : undefined;
+    key.push({ questionId, correctAnswer, skill, explanation, level });
   }
-  return key
+  return key;
 }
 
 /**
@@ -172,10 +195,16 @@ export function answerKeyFromAssessment(assessment: { questions?: unknown } | nu
  * to answer, which would let it pick its own denominator.
  */
 export function answerKeyFromBank(
-  bank: { id: string; correctAnswer: string; skill?: string; explanation?: string; level?: string }[],
-  questionIds: string[]
+  bank: {
+    id: string;
+    correctAnswer: string;
+    skill?: string;
+    explanation?: string;
+    level?: string;
+  }[],
+  questionIds: string[],
 ): AnswerKeyEntry[] {
-  const wanted = new Set(questionIds)
+  const wanted = new Set(questionIds);
   return bank
     .filter((q) => wanted.has(q.id))
     .map((q) => ({
@@ -184,7 +213,7 @@ export function answerKeyFromBank(
       skill: q.skill,
       explanation: q.explanation,
       level: q.level,
-    }))
+    }));
 }
 
 /**
@@ -195,9 +224,12 @@ export function answerKeyFromBank(
  * types it is deliberately more forgiving than the old client-side `===`,
  * which failed a learner for a capital letter.
  */
-function matches(userAnswer: string | undefined, correctAnswer: string): boolean {
-  if (typeof userAnswer !== 'string') return false
-  return userAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
+function matches(
+  userAnswer: string | undefined,
+  correctAnswer: string,
+): boolean {
+  if (typeof userAnswer !== "string") return false;
+  return userAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
 }
 
 /**
@@ -210,43 +242,47 @@ function matches(userAnswer: string | undefined, correctAnswer: string): boolean
 export function gradeAnswers(
   answerKey: AnswerKeyEntry[],
   answers: Record<string, string>,
-  passingScore: number = DEFAULT_PASSING_SCORE
+  passingScore: number = DEFAULT_PASSING_SCORE,
 ): GradeResult {
   const perQuestion: GradedQuestion[] = answerKey.map((entry) => {
-    const userAnswer = answers[entry.questionId]
+    const userAnswer = answers[entry.questionId];
     return {
       questionId: entry.questionId,
       correctAnswer: entry.correctAnswer,
-      userAnswer: typeof userAnswer === 'string' ? userAnswer : '',
+      userAnswer: typeof userAnswer === "string" ? userAnswer : "",
       correct: matches(userAnswer, entry.correctAnswer),
       skill: entry.skill,
       explanation: entry.explanation,
-    }
-  })
+    };
+  });
 
-  const total = perQuestion.length
-  const score = perQuestion.filter((q) => q.correct).length
-  const percentage = total > 0 ? Math.round((score / total) * 100) : 0
+  const total = perQuestion.length;
+  const score = perQuestion.filter((q) => q.correct).length;
+  const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
 
-  const bySkill: Record<string, { correct: number; total: number }> = {}
+  const bySkill: Record<string, { correct: number; total: number }> = {};
   for (const q of perQuestion) {
-    if (!q.skill) continue
-    if (!bySkill[q.skill]) bySkill[q.skill] = { correct: 0, total: 0 }
-    bySkill[q.skill].total++
-    if (q.correct) bySkill[q.skill].correct++
+    if (!q.skill) continue;
+    if (!bySkill[q.skill]) bySkill[q.skill] = { correct: 0, total: 0 };
+    bySkill[q.skill].total++;
+    if (q.correct) bySkill[q.skill].correct++;
   }
-  const perSkill: Record<string, number> = {}
+  const perSkill: Record<string, number> = {};
   for (const [skill, tally] of Object.entries(bySkill)) {
-    perSkill[skill] = Math.round((tally.correct / tally.total) * 100)
+    perSkill[skill] = Math.round((tally.correct / tally.total) * 100);
   }
 
   // What each set of questions can support, by its hardest question.
-  const levelByQuestion = new Map(answerKey.map((entry) => [entry.questionId, entry.level]))
-  const perSkillCeiling: Record<string, number> = {}
+  const levelByQuestion = new Map(
+    answerKey.map((entry) => [entry.questionId, entry.level]),
+  );
+  const perSkillCeiling: Record<string, number> = {};
   for (const skill of Object.keys(bySkill)) {
     perSkillCeiling[skill] = ceilingForLevels(
-      perQuestion.filter((q) => q.skill === skill).map((q) => levelByQuestion.get(q.questionId))
-    )
+      perQuestion
+        .filter((q) => q.skill === skill)
+        .map((q) => levelByQuestion.get(q.questionId)),
+    );
   }
 
   return {
@@ -258,15 +294,18 @@ export function gradeAnswers(
     perSkill,
     ceiling: ceilingForLevels(answerKey.map((entry) => entry.level)),
     perSkillCeiling,
-  }
+  };
 }
 
 /** The assessment's own threshold, when it sets a sane one. */
-export function resolvePassingScore(assessment: { passing_score?: unknown } | null): number {
-  const raw = assessment?.passing_score
-  if (typeof raw !== 'number' || !Number.isFinite(raw)) return DEFAULT_PASSING_SCORE
-  if (raw < 0 || raw > 100) return DEFAULT_PASSING_SCORE
-  return raw
+export function resolvePassingScore(
+  assessment: { passing_score?: unknown } | null,
+): number {
+  const raw = assessment?.passing_score;
+  if (typeof raw !== "number" || !Number.isFinite(raw))
+    return DEFAULT_PASSING_SCORE;
+  if (raw < 0 || raw > 100) return DEFAULT_PASSING_SCORE;
+  return raw;
 }
 
 /**
@@ -289,30 +328,43 @@ export function resolvePassingScore(assessment: { passing_score?: unknown } | nu
  *   promotion from a client-assembled quiz is exactly the hole this closes.
  */
 export function resolveSkillUpdate(params: {
-  existing: { current_score?: number; current_level?: string } | null
-  percentage: number
-  passed: boolean
-  assessment: { target_level?: unknown } | null
+  existing: { current_score?: number; current_level?: string } | null;
+  percentage: number;
+  passed: boolean;
+  assessment: { target_level?: unknown } | null;
   /** Highest score these questions can support; defaults to the safest. */
-  ceiling?: number
-}): { current_score: number; current_level?: string; level_achieved_at?: Date } | null {
-  const { existing, percentage, passed, assessment } = params
+  ceiling?: number;
+}): {
+  current_score: number;
+  current_level?: string;
+  level_achieved_at?: Date;
+} | null {
+  const { existing, percentage, passed, assessment } = params;
 
-  const ceiling = typeof params.ceiling === 'number' ? params.ceiling : DEFAULT_LEVEL_CEILING
-  const claimed = Math.min(percentage, ceiling)
-  const bestScore = Math.max(existing?.current_score ?? 0, claimed)
-  const targetLevel = typeof assessment?.target_level === 'string' ? assessment.target_level : null
-  const promote = passed && Boolean(targetLevel)
+  const ceiling =
+    typeof params.ceiling === "number" ? params.ceiling : DEFAULT_LEVEL_CEILING;
+  const claimed = Math.min(percentage, ceiling);
+  const bestScore = Math.max(existing?.current_score ?? 0, claimed);
+  const targetLevel =
+    typeof assessment?.target_level === "string"
+      ? assessment.target_level
+      : null;
+  const promote = passed && Boolean(targetLevel);
 
   // Nothing to write: no promotion, and the new score is not an improvement.
-  if (!promote && bestScore === (existing?.current_score ?? 0) && existing) return null
+  if (!promote && bestScore === (existing?.current_score ?? 0) && existing)
+    return null;
 
-  const update: { current_score: number; current_level?: string; level_achieved_at?: Date } = {
+  const update: {
+    current_score: number;
+    current_level?: string;
+    level_achieved_at?: Date;
+  } = {
     current_score: bestScore,
-  }
+  };
   if (promote && targetLevel) {
-    update.current_level = targetLevel
-    update.level_achieved_at = new Date()
+    update.current_level = targetLevel;
+    update.level_achieved_at = new Date();
   }
-  return update
+  return update;
 }

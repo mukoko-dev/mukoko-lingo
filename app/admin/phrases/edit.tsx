@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -10,177 +10,196 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native'
-import { useRouter, useLocalSearchParams, Stack } from 'expo-router'
-import { ChevronDown, Save, X } from 'lucide-react-native'
+} from "react-native";
+import { useRouter, useLocalSearchParams, Stack } from "expo-router";
+import { ChevronDown, Save, X } from "lucide-react-native";
 
-import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { phrasesApi, adminPhrasesApi } from '@/lib/services/api-client'
+import { useTheme } from "@/lib/hooks/useTheme";
+import { lightTheme, darkTheme, Colors } from "@/constants/Colors";
+import { phrasesApi, adminPhrasesApi } from "@/lib/services/api-client";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const CATEGORIES = [
-  'greetings', 'family', 'shopping', 'food', 'directions',
-  'work', 'home', 'social', 'health', 'transport', 'emotions',
-  'school', 'money', 'weather',
-]
+  "greetings",
+  "family",
+  "shopping",
+  "food",
+  "directions",
+  "work",
+  "home",
+  "social",
+  "health",
+  "transport",
+  "emotions",
+  "school",
+  "money",
+  "weather",
+];
 
-const DIFFICULTIES = ['beginner', 'elementary', 'intermediate', 'advanced', 'fluent']
+const DIFFICULTIES = [
+  "beginner",
+  "elementary",
+  "intermediate",
+  "advanced",
+  "fluent",
+];
 
 const LANGUAGES = [
-  { key: 'english', label: 'English', flag: '🇬🇧' },
-  { key: 'shona', label: 'Shona', flag: '🇿🇼' },
-  { key: 'ndebele', label: 'Ndebele', flag: '🇿🇼' },
-  { key: 'chinese', label: 'Chinese', flag: '🇨🇳' },
-] as const
+  { key: "english", label: "English", flag: "🇬🇧" },
+  { key: "shona", label: "Shona", flag: "🇿🇼" },
+  { key: "ndebele", label: "Ndebele", flag: "🇿🇼" },
+  { key: "chinese", label: "Chinese", flag: "🇨🇳" },
+] as const;
 
-type LanguageKey = typeof LANGUAGES[number]['key']
+type LanguageKey = (typeof LANGUAGES)[number]["key"];
 
 // ---------------------------------------------------------------------------
 // Form state shape
 // ---------------------------------------------------------------------------
 
 interface PhraseForm {
-  category: string
-  difficulty: string
-  english: string
-  shona: string
-  ndebele: string
-  chinese: string
-  english_pronunciation: string
-  shona_pronunciation: string
-  ndebele_pronunciation: string
-  chinese_pronunciation: string
-  english_context: string
-  shona_context: string
-  ndebele_context: string
-  chinese_context: string
+  category: string;
+  difficulty: string;
+  english: string;
+  shona: string;
+  ndebele: string;
+  chinese: string;
+  english_pronunciation: string;
+  shona_pronunciation: string;
+  ndebele_pronunciation: string;
+  chinese_pronunciation: string;
+  english_context: string;
+  shona_context: string;
+  ndebele_context: string;
+  chinese_context: string;
 }
 
 const EMPTY_FORM: PhraseForm = {
-  category: 'greetings',
-  difficulty: 'beginner',
-  english: '',
-  shona: '',
-  ndebele: '',
-  chinese: '',
-  english_pronunciation: '',
-  shona_pronunciation: '',
-  ndebele_pronunciation: '',
-  chinese_pronunciation: '',
-  english_context: '',
-  shona_context: '',
-  ndebele_context: '',
-  chinese_context: '',
-}
+  category: "greetings",
+  difficulty: "beginner",
+  english: "",
+  shona: "",
+  ndebele: "",
+  chinese: "",
+  english_pronunciation: "",
+  shona_pronunciation: "",
+  ndebele_pronunciation: "",
+  chinese_pronunciation: "",
+  english_context: "",
+  shona_context: "",
+  ndebele_context: "",
+  chinese_context: "",
+};
 
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 
 export default function AdminPhraseEditScreen() {
-  const { isDark } = useTheme()
-  const theme = isDark ? darkTheme : lightTheme
-  const router = useRouter()
-  const { id } = useLocalSearchParams<{ id?: string }>()
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string }>();
 
-  const isEditing = !!id
+  const isEditing = !!id;
 
-  const [form, setForm] = useState<PhraseForm>(EMPTY_FORM)
-  const [loading, setLoading] = useState(isEditing)
-  const [saving, setSaving] = useState(false)
-  const [errors, setErrors] = useState<Partial<Record<keyof PhraseForm, string>>>({})
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false)
-  const [showDifficultyPicker, setShowDifficultyPicker] = useState(false)
+  const [form, setForm] = useState<PhraseForm>(EMPTY_FORM);
+  const [loading, setLoading] = useState(isEditing);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof PhraseForm, string>>
+  >({});
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [showDifficultyPicker, setShowDifficultyPicker] = useState(false);
 
   // -----------------------------------------------------------------------
   // Load existing phrase for editing
   // -----------------------------------------------------------------------
 
   const loadPhrase = useCallback(async () => {
-    if (!id) return
+    if (!id) return;
     try {
-      const { data, error } = await phrasesApi.getPhrase(id)
+      const { data, error } = await phrasesApi.getPhrase(id);
       if (error || !data) {
-        Alert.alert('Error', error || 'Phrase not found')
-        router.back()
-        return
+        Alert.alert("Error", error || "Phrase not found");
+        router.back();
+        return;
       }
       setForm({
-        category: data.category || 'greetings',
-        difficulty: data.difficulty || 'beginner',
-        english: data.english || '',
-        shona: data.shona || '',
-        ndebele: data.ndebele || '',
-        chinese: data.chinese || '',
-        english_pronunciation: data.englishPronunciation || '',
-        shona_pronunciation: data.shonaPronunciation || '',
-        ndebele_pronunciation: data.ndebelePronunciation || '',
-        chinese_pronunciation: data.chinesePronunciation || '',
-        english_context: data.englishContext || '',
-        shona_context: data.shonaContext || '',
-        ndebele_context: data.ndebeleContext || '',
-        chinese_context: data.chineseContext || '',
-      })
+        category: data.category || "greetings",
+        difficulty: data.difficulty || "beginner",
+        english: data.english || "",
+        shona: data.shona || "",
+        ndebele: data.ndebele || "",
+        chinese: data.chinese || "",
+        english_pronunciation: data.englishPronunciation || "",
+        shona_pronunciation: data.shonaPronunciation || "",
+        ndebele_pronunciation: data.ndebelePronunciation || "",
+        chinese_pronunciation: data.chinesePronunciation || "",
+        english_context: data.englishContext || "",
+        shona_context: data.shonaContext || "",
+        ndebele_context: data.ndebeleContext || "",
+        chinese_context: data.chineseContext || "",
+      });
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to load phrase')
-      router.back()
+      Alert.alert("Error", err.message || "Failed to load phrase");
+      router.back();
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [id, router])
+  }, [id, router]);
 
   useEffect(() => {
-    if (isEditing) loadPhrase()
-  }, [isEditing, loadPhrase])
+    if (isEditing) loadPhrase();
+  }, [isEditing, loadPhrase]);
 
   // -----------------------------------------------------------------------
   // Form helpers
   // -----------------------------------------------------------------------
 
   const updateField = (field: keyof PhraseForm, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }))
+    setForm((prev) => ({ ...prev, [field]: value }));
     // Clear error on change
     if (errors[field]) {
-      setErrors(prev => {
-        const next = { ...prev }
-        delete next[field]
-        return next
-      })
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
     }
-  }
+  };
 
   // -----------------------------------------------------------------------
   // Validation
   // -----------------------------------------------------------------------
 
   const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof PhraseForm, string>> = {}
+    const newErrors: Partial<Record<keyof PhraseForm, string>> = {};
 
     if (!form.english.trim()) {
-      newErrors.english = 'English text is required'
+      newErrors.english = "English text is required";
     }
 
     // At least one translation besides English is required
     const hasTranslation =
       form.shona.trim().length > 0 ||
       form.ndebele.trim().length > 0 ||
-      form.chinese.trim().length > 0
+      form.chinese.trim().length > 0;
 
     if (!hasTranslation) {
-      newErrors.shona = 'At least one translation is required'
+      newErrors.shona = "At least one translation is required";
     }
 
     if (!form.category) {
-      newErrors.category = 'Category is required'
+      newErrors.category = "Category is required";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // -----------------------------------------------------------------------
   // Submit
@@ -189,71 +208,73 @@ export default function AdminPhraseEditScreen() {
   const handleSave = async () => {
     if (!validate()) {
       // Scroll up would be nice but Alert works for now
-      Alert.alert('Validation Error', 'Please fix the highlighted fields.')
-      return
+      Alert.alert("Validation Error", "Please fix the highlighted fields.");
+      return;
     }
 
-    setSaving(true)
+    setSaving(true);
     try {
-      const payload: Record<string, any> = { ...form }
+      const payload: Record<string, any> = { ...form };
       // Strip empty strings to null for optional fields
       for (const lang of LANGUAGES) {
-        const pronKey = `${lang.key}_pronunciation` as keyof PhraseForm
-        const ctxKey = `${lang.key}_context` as keyof PhraseForm
-        if (!payload[pronKey]) payload[pronKey] = null
-        if (!payload[ctxKey]) payload[ctxKey] = null
+        const pronKey = `${lang.key}_pronunciation` as keyof PhraseForm;
+        const ctxKey = `${lang.key}_context` as keyof PhraseForm;
+        if (!payload[pronKey]) payload[pronKey] = null;
+        if (!payload[ctxKey]) payload[ctxKey] = null;
       }
 
-      let result
+      let result;
       if (isEditing) {
-        result = await adminPhrasesApi.updatePhrase(id!, payload)
+        result = await adminPhrasesApi.updatePhrase(id!, payload);
       } else {
-        result = await adminPhrasesApi.createPhrase(payload)
+        result = await adminPhrasesApi.createPhrase(payload);
       }
 
       if (result.error) {
-        Alert.alert('Error', result.error)
-        return
+        Alert.alert("Error", result.error);
+        return;
       }
 
       Alert.alert(
-        'Success',
-        isEditing ? 'Phrase updated successfully.' : 'Phrase created successfully.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      )
+        "Success",
+        isEditing
+          ? "Phrase updated successfully."
+          : "Phrase created successfully.",
+        [{ text: "OK", onPress: () => router.back() }],
+      );
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to save phrase')
+      Alert.alert("Error", err.message || "Failed to save phrase");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   // -----------------------------------------------------------------------
   // Render helpers
   // -----------------------------------------------------------------------
 
-  const styles = createStyles(theme, isDark)
+  const styles = createStyles(theme, isDark);
 
   if (loading) {
     return (
       <>
-        <Stack.Screen options={{ headerTitle: 'Loading...' }} />
+        <Stack.Screen options={{ headerTitle: "Loading..." }} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
           <Text style={styles.loadingText}>Loading phrase...</Text>
         </View>
       </>
-    )
+    );
   }
 
   return (
     <>
       <Stack.Screen
-        options={{ headerTitle: isEditing ? 'Edit Phrase' : 'New Phrase' }}
+        options={{ headerTitle: isEditing ? "Edit Phrase" : "New Phrase" }}
       />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={100}
       >
         <ScrollView
@@ -269,21 +290,27 @@ export default function AdminPhraseEditScreen() {
             <View style={styles.fieldContainer}>
               <Text style={styles.label}>Category *</Text>
               <TouchableOpacity
-                style={[styles.pickerButton, errors.category ? styles.inputError : null]}
+                style={[
+                  styles.pickerButton,
+                  errors.category ? styles.inputError : null,
+                ]}
                 onPress={() => {
-                  setShowCategoryPicker(!showCategoryPicker)
-                  setShowDifficultyPicker(false)
+                  setShowCategoryPicker(!showCategoryPicker);
+                  setShowDifficultyPicker(false);
                 }}
               >
                 <Text style={styles.pickerButtonText}>
-                  {form.category.charAt(0).toUpperCase() + form.category.slice(1)}
+                  {form.category.charAt(0).toUpperCase() +
+                    form.category.slice(1)}
                 </Text>
                 <ChevronDown size={18} color={theme.textMuted} />
               </TouchableOpacity>
-              {errors.category && <Text style={styles.errorText}>{errors.category}</Text>}
+              {errors.category && (
+                <Text style={styles.errorText}>{errors.category}</Text>
+              )}
               {showCategoryPicker && (
                 <View style={styles.pickerDropdown}>
-                  {CATEGORIES.map(cat => (
+                  {CATEGORIES.map((cat) => (
                     <TouchableOpacity
                       key={cat}
                       style={[
@@ -291,14 +318,15 @@ export default function AdminPhraseEditScreen() {
                         form.category === cat && styles.pickerOptionActive,
                       ]}
                       onPress={() => {
-                        updateField('category', cat)
-                        setShowCategoryPicker(false)
+                        updateField("category", cat);
+                        setShowCategoryPicker(false);
                       }}
                     >
                       <Text
                         style={[
                           styles.pickerOptionText,
-                          form.category === cat && styles.pickerOptionTextActive,
+                          form.category === cat &&
+                            styles.pickerOptionTextActive,
                         ]}
                       >
                         {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -315,18 +343,19 @@ export default function AdminPhraseEditScreen() {
               <TouchableOpacity
                 style={styles.pickerButton}
                 onPress={() => {
-                  setShowDifficultyPicker(!showDifficultyPicker)
-                  setShowCategoryPicker(false)
+                  setShowDifficultyPicker(!showDifficultyPicker);
+                  setShowCategoryPicker(false);
                 }}
               >
                 <Text style={styles.pickerButtonText}>
-                  {form.difficulty.charAt(0).toUpperCase() + form.difficulty.slice(1)}
+                  {form.difficulty.charAt(0).toUpperCase() +
+                    form.difficulty.slice(1)}
                 </Text>
                 <ChevronDown size={18} color={theme.textMuted} />
               </TouchableOpacity>
               {showDifficultyPicker && (
                 <View style={styles.pickerDropdown}>
-                  {DIFFICULTIES.map(diff => (
+                  {DIFFICULTIES.map((diff) => (
                     <TouchableOpacity
                       key={diff}
                       style={[
@@ -334,14 +363,15 @@ export default function AdminPhraseEditScreen() {
                         form.difficulty === diff && styles.pickerOptionActive,
                       ]}
                       onPress={() => {
-                        updateField('difficulty', diff)
-                        setShowDifficultyPicker(false)
+                        updateField("difficulty", diff);
+                        setShowDifficultyPicker(false);
                       }}
                     >
                       <Text
                         style={[
                           styles.pickerOptionText,
-                          form.difficulty === diff && styles.pickerOptionTextActive,
+                          form.difficulty === diff &&
+                            styles.pickerOptionTextActive,
                         ]}
                       >
                         {diff.charAt(0).toUpperCase() + diff.slice(1)}
@@ -354,22 +384,23 @@ export default function AdminPhraseEditScreen() {
           </View>
 
           {/* ---- Language Sections ---- */}
-          {LANGUAGES.map(lang => {
-            const textKey = lang.key as keyof PhraseForm
-            const pronKey = `${lang.key}_pronunciation` as keyof PhraseForm
-            const ctxKey = `${lang.key}_context` as keyof PhraseForm
-            const isRequired = lang.key === 'english'
+          {LANGUAGES.map((lang) => {
+            const textKey = lang.key as keyof PhraseForm;
+            const pronKey = `${lang.key}_pronunciation` as keyof PhraseForm;
+            const ctxKey = `${lang.key}_context` as keyof PhraseForm;
+            const isRequired = lang.key === "english";
 
             return (
               <View key={lang.key}>
                 <Text style={styles.sectionTitle}>
-                  {lang.flag}  {lang.label}{isRequired ? ' *' : ''}
+                  {lang.flag} {lang.label}
+                  {isRequired ? " *" : ""}
                 </Text>
                 <View style={styles.sectionCard}>
                   {/* Text */}
                   <View style={styles.fieldContainer}>
                     <Text style={styles.label}>
-                      Phrase text{isRequired ? ' *' : ''}
+                      Phrase text{isRequired ? " *" : ""}
                     </Text>
                     <TextInput
                       style={[
@@ -377,7 +408,7 @@ export default function AdminPhraseEditScreen() {
                         errors[textKey] ? styles.inputError : null,
                       ]}
                       value={form[textKey]}
-                      onChangeText={v => updateField(textKey, v)}
+                      onChangeText={(v) => updateField(textKey, v)}
                       placeholder={`Enter ${lang.label} phrase...`}
                       placeholderTextColor={theme.textMuted}
                       multiline
@@ -393,7 +424,7 @@ export default function AdminPhraseEditScreen() {
                     <TextInput
                       style={styles.textInput}
                       value={form[pronKey]}
-                      onChangeText={v => updateField(pronKey, v)}
+                      onChangeText={(v) => updateField(pronKey, v)}
                       placeholder={`Pronunciation guide...`}
                       placeholderTextColor={theme.textMuted}
                     />
@@ -405,7 +436,7 @@ export default function AdminPhraseEditScreen() {
                     <TextInput
                       style={[styles.textInput, styles.textArea]}
                       value={form[ctxKey]}
-                      onChangeText={v => updateField(ctxKey, v)}
+                      onChangeText={(v) => updateField(ctxKey, v)}
                       placeholder={`When/how to use this phrase...`}
                       placeholderTextColor={theme.textMuted}
                       multiline
@@ -415,7 +446,7 @@ export default function AdminPhraseEditScreen() {
                   </View>
                 </View>
               </View>
-            )
+            );
           })}
 
           {/* ---- Action Buttons ---- */}
@@ -441,7 +472,11 @@ export default function AdminPhraseEditScreen() {
                 <Save size={18} color="#ffffff" />
               )}
               <Text style={styles.saveButtonText}>
-                {saving ? 'Saving...' : isEditing ? 'Update Phrase' : 'Create Phrase'}
+                {saving
+                  ? "Saving..."
+                  : isEditing
+                    ? "Update Phrase"
+                    : "Create Phrase"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -451,7 +486,7 @@ export default function AdminPhraseEditScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </>
-  )
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -472,8 +507,8 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     loadingContainer: {
       flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
       backgroundColor: theme.background,
       gap: 12,
     },
@@ -485,7 +520,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     // Section
     sectionTitle: {
       fontSize: 16,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
       marginBottom: 8,
       marginTop: 20,
@@ -504,10 +539,10 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     label: {
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.textSecondary,
       marginBottom: 6,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
       letterSpacing: 0.3,
     },
     textInput: {
@@ -537,9 +572,9 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
 
     // Picker
     pickerButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
       backgroundColor: theme.background,
       borderRadius: 10,
       paddingHorizontal: 14,
@@ -558,7 +593,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       marginTop: 4,
       borderWidth: 1,
       borderColor: theme.border,
-      overflow: 'hidden',
+      overflow: "hidden",
       maxHeight: 240,
     },
     pickerOption: {
@@ -568,7 +603,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       borderBottomColor: theme.border,
     },
     pickerOptionActive: {
-      backgroundColor: theme.primary + '15',
+      backgroundColor: theme.primary + "15",
     },
     pickerOptionText: {
       fontSize: 14,
@@ -576,20 +611,20 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     pickerOptionTextActive: {
       color: theme.primary,
-      fontWeight: '600',
+      fontWeight: "600",
     },
 
     // Buttons
     buttonRow: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 12,
       marginTop: 28,
     },
     cancelButton: {
       flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       paddingVertical: 14,
       borderRadius: 12,
       backgroundColor: theme.card,
@@ -599,14 +634,14 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     cancelButtonText: {
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
     },
     saveButton: {
       flex: 2,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       paddingVertical: 14,
       borderRadius: 12,
       backgroundColor: theme.primary,
@@ -617,7 +652,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     saveButtonText: {
       fontSize: 15,
-      fontWeight: '600',
-      color: '#ffffff',
+      fontWeight: "600",
+      color: "#ffffff",
     },
-  })
+  });

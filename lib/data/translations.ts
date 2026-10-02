@@ -1,4 +1,4 @@
-export type UILanguage = "en" | "sn" | "nd" | "sw" | "zh"
+export type UILanguage = "en" | "sn" | "nd" | "sw" | "zh";
 
 export const translations = {
   en: {
@@ -61,7 +61,8 @@ export const translations = {
     yourStudyActivityLast30Days: "Your study activity over the last 30 days",
     noStudySessionsYet: "No study sessions yet. Start learning today!",
     aiPractice: "AI Conversation Practice",
-    aiPracticeSubtitle: "Practice real conversations with AI tutors in your target language",
+    aiPracticeSubtitle:
+      "Practice real conversations with AI tutors in your target language",
     settings: "Settings",
     practiceLanguage: "Practice Language",
     conversationType: "Conversation Type",
@@ -101,7 +102,8 @@ export const translations = {
     navPrivacyDesc: "Your data protection",
     // Welcome/Landing page
     welcomeTitle: "Language learning,\nbuilt for Africa",
-    welcomeDescription: "Master Shona, Ndebele, English, and Chinese with AI-powered tools. Perfect for tourists, expats, business professionals, and locals.",
+    welcomeDescription:
+      "Master Shona, Ndebele, English, and Chinese with AI-powered tools. Perfect for tourists, expats, business professionals, and locals.",
     startForFree: "Start for free",
     exploreFeatures: "Explore features",
     features: "Features",
@@ -126,7 +128,8 @@ export const translations = {
     terms: "Terms",
     // Feature descriptions
     feat4Languages: "4 Languages Side-by-Side",
-    feat4LanguagesDesc: "Learn Shona, Ndebele, English, and Chinese with comparisons",
+    feat4LanguagesDesc:
+      "Learn Shona, Ndebele, English, and Chinese with comparisons",
     featAIConversation: "AI Conversation Practice",
     featAIConversationDesc: "Adaptive tutoring matching your skill level",
     featPhrases: "200+ Essential Phrases",
@@ -231,7 +234,8 @@ export const translations = {
     yourStudyActivityLast30Days: "Kuita kwako kwekudzidza mumazuva 30 apfuura",
     noStudySessionsYet: "Hapana zvekudzidza. Tanga nhasi!",
     aiPractice: "Kudzidzira AI Nhaurirano",
-    aiPracticeSubtitle: "Dzidzira nhaurirano chaidzodzo nemadzidisi e-AI mumutauro wako",
+    aiPracticeSubtitle:
+      "Dzidzira nhaurirano chaidzodzo nemadzidisi e-AI mumutauro wako",
     settings: "Zvigadziriso",
     practiceLanguage: "Mutauro Wekudzidzira",
     conversationType: "Rudzi Rwenhaurirano",
@@ -240,7 +244,8 @@ export const translations = {
     help: "Rubatsiro",
     newConversation: "Nhaurirano Itsva",
     startChatting: "Tanga kutaura nemudzidzisi wako we-AI",
-    chatHint: "Bvunza mibvunzo, dzidzira mashoko, kana kufananidzira nhaurirano chaidzo",
+    chatHint:
+      "Bvunza mibvunzo, dzidzira mashoko, kana kufananidzira nhaurirano chaidzo",
     typeMessage: "Nyora meseji yako...",
     aiTutor: "Mudzidzisi we AI",
     categories: {
@@ -270,7 +275,8 @@ export const translations = {
     navPrivacy: "Mutemo Wezakavanzika",
     navPrivacyDesc: "Kuchengetedzwa kwedatha yako",
     welcomeTitle: "Kudzidza mutauro,\nkwakavakirwa Africa",
-    welcomeDescription: "Dzidza chiShona, isiNdebele, ChiRungu, uye chiChinese nematurusi eAI. Zvakakodzera kune vaenzi, vashandi, mabhizinesi, nevagari.",
+    welcomeDescription:
+      "Dzidza chiShona, isiNdebele, ChiRungu, uye chiChinese nematurusi eAI. Zvakakodzera kune vaenzi, vashandi, mabhizinesi, nevagari.",
     startForFree: "Tanga mahara",
     exploreFeatures: "Tarisa zvinhu",
     features: "Zvinhu",
@@ -293,7 +299,8 @@ export const translations = {
     privacy: "Zvakavanzika",
     terms: "Mitemo",
     feat4Languages: "Mitauro 4 Pamwe Chete",
-    feat4LanguagesDesc: "Dzidza chiShona, isiNdebele, ChiRungu, nechiChinese uchienganisa",
+    feat4LanguagesDesc:
+      "Dzidza chiShona, isiNdebele, ChiRungu, nechiChinese uchienganisa",
     featAIConversation: "Kudzidzira neAI",
     featAIConversationDesc: "Kudzidziswa kunochinja maererano nehumhizha hwako",
     featPhrases: "200+ Mashoko Anokosha",
@@ -393,10 +400,12 @@ export const translations = {
     mostViewedPhrases: "Amazwi Abukwa Kakhulu",
     phrasesYouViewMost: "Amazwi owabuka kakhulu",
     studyActivity: "Umsebenzi Wokufunda",
-    yourStudyActivityLast30Days: "Umsebenzi wakho wokufunda ezinsukwini ezingu-30 ezedlule",
+    yourStudyActivityLast30Days:
+      "Umsebenzi wakho wokufunda ezinsukwini ezingu-30 ezedlule",
     noStudySessionsYet: "Akukho zikhathi zokufunda. Qala namuhla!",
     aiPractice: "Ukuqeqesha Ngokukhuluma Kwe-AI",
-    aiPracticeSubtitle: "Qeqesha izingxoxo zangempela ngabafundisi be-AI ngolimi lwakho",
+    aiPracticeSubtitle:
+      "Qeqesha izingxoxo zangempela ngabafundisi be-AI ngolimi lwakho",
     settings: "Izilungiselelo",
     practiceLanguage: "Ulimi Lokuqeqesha",
     conversationType: "Uhlobo Lwengxoxo",
@@ -435,7 +444,8 @@ export const translations = {
     navPrivacy: "Inqubomgomo Yobumfihlo",
     navPrivacyDesc: "Ukuvikelwa kwedatha yakho",
     welcomeTitle: "Ukufunda ulimi,\nkwakhelwa i-Afrika",
-    welcomeDescription: "Funda isiShona, isiNdebele, isiNgisi, lesiShayina ngamathuluzi e-AI. Kulungele abavakatshi, abasebenzi, amabhizinisi, labakhileyo.",
+    welcomeDescription:
+      "Funda isiShona, isiNdebele, isiNgisi, lesiShayina ngamathuluzi e-AI. Kulungele abavakatshi, abasebenzi, amabhizinisi, labakhileyo.",
     startForFree: "Qala mahala",
     exploreFeatures: "Hlola izinto",
     features: "Izinto",
@@ -458,7 +468,8 @@ export const translations = {
     privacy: "Ubumfihlo",
     terms: "Imithetho",
     feat4Languages: "Izilimi Ezingu-4 Ndawonye",
-    feat4LanguagesDesc: "Funda isiShona, isiNdebele, isiNgisi, lesiShayina uqathanisa",
+    feat4LanguagesDesc:
+      "Funda isiShona, isiNdebele, isiNgisi, lesiShayina uqathanisa",
     featAIConversation: "Ukuzilolonga Ngengxoxo ye-AI",
     featAIConversationDesc: "Ukufundisa okuzijayeleyo ngokwezinga lakho",
     featPhrases: "200+ Amazwi Aqakathekileyo",
@@ -470,9 +481,11 @@ export const translations = {
     featCulture: "Isiko Lenhlalo",
     featCultureDesc: "Izibonelo zokusetshenziswa kanye lokufaneleyo kwesimo",
     useCaseTourists: "Abavakatshi Labahambayo",
-    useCaseTouristsDesc: "Ukuhamba, izibingelelo, ukuthenga, izimo eziphuthumayo",
+    useCaseTouristsDesc:
+      "Ukuhamba, izibingelelo, ukuthenga, izimo eziphuthumayo",
     useCaseBusiness: "Ibhizinisi Labasebenzi",
-    useCaseBusinessDesc: "Ukuxhumana kwebhizinisi kanye lokuhlanganiswa kwesiko",
+    useCaseBusinessDesc:
+      "Ukuxhumana kwebhizinisi kanye lokuhlanganiswa kwesiko",
     useCaseLocals: "Abakhileyo",
     useCaseLocalsDesc: "Ukwazi ulimi ngokugcweleyo kanye lokwakha amakhono",
     navProgress: "Inqubekela Phambili",
@@ -493,7 +506,8 @@ export const translations = {
     takeAssessment: "Yenza Ukuhlolwa",
     phraseProgress: "Inqubekela Phambili Yemitsho",
     noPhraseYet: "Akukho Mitsho Okwamanje",
-    bookmarkOrPractice: "Beka uphawu emitshweni noma uqale ukuzijwayeza ukubona lapha",
+    bookmarkOrPractice:
+      "Beka uphawu emitshweni noma uqale ukuzijwayeza ukubona lapha",
     startLearning: "Qala Ukufunda",
     translateTo: "Humusha ku",
     correct: "Kuhle!",
@@ -503,7 +517,8 @@ export const translations = {
   },
   zh: {
     heroTitle: "掌握跨文化日常对话",
-    heroSubtitle: "学习和比较英语、绍纳语、恩德贝莱语、斯瓦希里语和中文的口语短语。打破语言障碍，与非洲及其他地区的人们建立联系。",
+    heroSubtitle:
+      "学习和比较英语、绍纳语、恩德贝莱语、斯瓦希里语和中文的口语短语。打破语言障碍，与非洲及其他地区的人们建立联系。",
     english: "英语",
     shona: "绍纳语",
     ndebele: "恩德贝莱语",
@@ -599,7 +614,8 @@ export const translations = {
     navPrivacy: "隐私政策",
     navPrivacyDesc: "您的数据保护",
     welcomeTitle: "语言学习，\n为非洲而建",
-    welcomeDescription: "使用AI工具学习绍纳语、恩德贝莱语、英语和中文。适合游客、外籍人士、商务人士和当地人。",
+    welcomeDescription:
+      "使用AI工具学习绍纳语、恩德贝莱语、英语和中文。适合游客、外籍人士、商务人士和当地人。",
     startForFree: "免费开始",
     exploreFeatures: "探索功能",
     features: "功能",
@@ -722,10 +738,12 @@ export const translations = {
     mostViewedPhrases: "Misemo Inayoangaliwa Zaidi",
     phrasesYouViewMost: "Misemo unayoangalia zaidi",
     studyActivity: "Shughuli za Kusoma",
-    yourStudyActivityLast30Days: "Shughuli zako za kusoma katika siku 30 zilizopita",
+    yourStudyActivityLast30Days:
+      "Shughuli zako za kusoma katika siku 30 zilizopita",
     noStudySessionsYet: "Hakuna vipindi vya kusoma bado. Anza leo!",
     aiPractice: "Mazoezi ya Mazungumzo na AI",
-    aiPracticeSubtitle: "Fanya mazoezi ya mazungumzo halisi na wakufunzi wa AI katika lugha yako lengwa",
+    aiPracticeSubtitle:
+      "Fanya mazoezi ya mazungumzo halisi na wakufunzi wa AI katika lugha yako lengwa",
     settings: "Mipangilio",
     practiceLanguage: "Lugha ya Mazoezi",
     conversationType: "Aina ya Mazungumzo",
@@ -734,7 +752,8 @@ export const translations = {
     help: "Msaada",
     newConversation: "Mazungumzo Mapya",
     startChatting: "Anza kuzungumza na mkufunzi wako wa AI",
-    chatHint: "Uliza maswali, fanya mazoezi ya misemo, au igiza mazungumzo halisi",
+    chatHint:
+      "Uliza maswali, fanya mazoezi ya misemo, au igiza mazungumzo halisi",
     typeMessage: "Andika ujumbe wako...",
     aiTutor: "Mkufunzi wa AI",
     categories: {
@@ -764,7 +783,8 @@ export const translations = {
     navPrivacy: "Sera ya Faragha",
     navPrivacyDesc: "Ulinzi wa data yako",
     welcomeTitle: "Kujifunza lugha,\niliyojengwa kwa Afrika",
-    welcomeDescription: "Jifunze Kishona, Kindebele, Kiingereza, na Kichina kwa zana za AI. Inafaa kwa watalii, wageni, wafanyabiashara, na wakazi.",
+    welcomeDescription:
+      "Jifunze Kishona, Kindebele, Kiingereza, na Kichina kwa zana za AI. Inafaa kwa watalii, wageni, wafanyabiashara, na wakazi.",
     startForFree: "Anza bure",
     exploreFeatures: "Chunguza vipengele",
     features: "Vipengele",
@@ -787,9 +807,11 @@ export const translations = {
     privacy: "Faragha",
     terms: "Masharti",
     feat4Languages: "Lugha 4 Pamoja",
-    feat4LanguagesDesc: "Jifunze Kishona, Kindebele, Kiingereza, na Kichina kwa kulinganisha",
+    feat4LanguagesDesc:
+      "Jifunze Kishona, Kindebele, Kiingereza, na Kichina kwa kulinganisha",
     featAIConversation: "Mazoezi ya Mazungumzo ya AI",
-    featAIConversationDesc: "Ufundishaji unaobadilika kulingana na kiwango chako",
+    featAIConversationDesc:
+      "Ufundishaji unaobadilika kulingana na kiwango chako",
     featPhrases: "200+ Misemo Muhimu",
     featPhrasesDesc: "Msamiati wa ulimwengu halisi katika muktadha mbalimbali",
     featPronunciation: "Miongozo ya Matamshi",
@@ -801,7 +823,8 @@ export const translations = {
     useCaseTourists: "Watalii na Wasafiri",
     useCaseTouristsDesc: "Urambazaji, salamu, ununuzi, dharura",
     useCaseBusiness: "Biashara na Wageni",
-    useCaseBusinessDesc: "Mawasiliano ya kitaalamu na ujumuishaji wa kitamaduni",
+    useCaseBusinessDesc:
+      "Mawasiliano ya kitaalamu na ujumuishaji wa kitamaduni",
     useCaseLocals: "Wakazi",
     useCaseLocalsDesc: "Umilisi kamili wa lugha na kujenga ujuzi",
     navProgress: "Maendeleo",
@@ -830,4 +853,4 @@ export const translations = {
     excellent: "Bora sana!",
     goodJob: "Kazi nzuri!",
   },
-}
+};

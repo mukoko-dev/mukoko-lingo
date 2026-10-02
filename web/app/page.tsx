@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -47,15 +47,27 @@ export default function HomePage() {
         />
       </section>
     </div>
-  )
+  );
 }
 
-function FeatureCard({ title, description, icon }: { title: string; description: string; icon: string }) {
+function FeatureCard({
+  title,
+  description,
+  icon,
+}: {
+  title: string;
+  description: string;
+  icon: string;
+}) {
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm">
       <div className="text-3xl">{icon}</div>
-      <h3 className="mt-3 text-lg font-semibold text-[var(--foreground)]">{title}</h3>
-      <p className="mt-2 text-sm text-[var(--muted-foreground)]">{description}</p>
+      <h3 className="mt-3 text-lg font-semibold text-[var(--foreground)]">
+        {title}
+      </h3>
+      <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+        {description}
+      </p>
     </div>
-  )
+  );
 }

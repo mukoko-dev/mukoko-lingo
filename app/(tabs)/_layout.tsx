@@ -1,34 +1,34 @@
-import React from 'react'
-import { View, StyleSheet } from 'react-native'
-import { Tabs, useRouter } from 'expo-router'
-import { BookOpen, MessageCircle, TrendingUp, User } from 'lucide-react-native'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { Tabs, useRouter } from "expo-router";
+import { BookOpen, MessageCircle, TrendingUp, User } from "lucide-react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { lightTheme, darkTheme } from '@/constants/Colors'
-import { useTheme } from '@/lib/hooks/useTheme'
-import { AppHeader } from '@/components/AppHeader'
-import { useAuth } from '@/app/_layout'
-import { signOut } from '@/lib/auth/workos-client'
+import { lightTheme, darkTheme } from "@/constants/Colors";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { AppHeader } from "@/components/AppHeader";
+import { useAuth } from "@/app/_layout";
+import { signOut } from "@/lib/auth/workos-client";
 
-const ONBOARDING_KEY = '@mukoko_onboarding_complete'
+const ONBOARDING_KEY = "@mukoko_onboarding_complete";
 
 export default function TabLayout() {
-  const { isDark } = useTheme()
-  const theme = isDark ? darkTheme : lightTheme
-  const router = useRouter()
-  const { isAuthenticated } = useAuth()
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   const handleLogout = async () => {
     // Sign out the WorkOS session
-    await signOut()
+    await signOut();
     // Clear onboarding status so user sees welcome on next visit
     try {
-      await AsyncStorage.removeItem(ONBOARDING_KEY)
+      await AsyncStorage.removeItem(ONBOARDING_KEY);
     } catch (error) {
-      console.error('Error clearing onboarding status:', error)
+      console.error("Error clearing onboarding status:", error);
     }
-    router.replace('/welcome')
-  }
+    router.replace("/welcome");
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -50,7 +50,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Learn',
+            title: "Learn",
             tabBarIcon: ({ color, size }) => (
               <BookOpen size={size} color={color} />
             ),
@@ -59,7 +59,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="ai-practice"
           options={{
-            title: 'Shamwari',
+            title: "Shamwari",
             tabBarIcon: ({ color, size }) => (
               <MessageCircle size={size} color={color} />
             ),
@@ -68,7 +68,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="insights"
           options={{
-            title: 'Progress',
+            title: "Progress",
             tabBarIcon: ({ color, size }) => (
               <TrendingUp size={size} color={color} />
             ),
@@ -77,19 +77,17 @@ export default function TabLayout() {
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Profile',
-            tabBarIcon: ({ color, size }) => (
-              <User size={size} color={color} />
-            ),
+            title: "Profile",
+            tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
           }}
         />
       </Tabs>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-})
+});

@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
   Text,
   ActivityIndicator,
   Platform,
-} from 'react-native'
-import { useRouter, Stack, useLocalSearchParams } from 'expo-router'
+} from "react-native";
+import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 
-import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme } from '@/constants/Colors'
-import { handleAuthCallback } from '@/lib/auth/workos-client'
+import { useTheme } from "@/lib/hooks/useTheme";
+import { lightTheme, darkTheme } from "@/constants/Colors";
+import { handleAuthCallback } from "@/lib/auth/workos-client";
 
 /**
  * Auth Callback Page
@@ -22,63 +22,76 @@ import { handleAuthCallback } from '@/lib/auth/workos-client'
  * URL pattern: /auth/callback?code=<authorization_code>&state=<state>
  */
 export default function AuthCallbackScreen() {
-  const router = useRouter()
-  const { isDark } = useTheme()
-  const theme = isDark ? darkTheme : lightTheme
-  const params = useLocalSearchParams<{ code?: string; state?: string; error?: string; error_description?: string }>()
+  const router = useRouter();
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
+  const params = useLocalSearchParams<{
+    code?: string;
+    state?: string;
+    error?: string;
+    error_description?: string;
+  }>();
 
-  const [status, setStatus] = useState<'loading' | 'error'>('loading')
-  const [errorMessage, setErrorMessage] = useState('')
+  const [status, setStatus] = useState<"loading" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const handleCallback = async () => {
-      const { code } = params
+      const { code } = params;
       if (!code) {
-        setStatus('error')
-        setErrorMessage('No authorization code found. Please try signing in again.')
-        setTimeout(() => router.replace('/auth'), 3000)
-        return
+        setStatus("error");
+        setErrorMessage(
+          "No authorization code found. Please try signing in again.",
+        );
+        setTimeout(() => router.replace("/auth"), 3000);
+        return;
       }
 
       try {
         // On web this route IS the redirect target, so the browser's own URL
         // already carries `code`/`state`. Only native arrives here as a
         // reconstructed deep link.
-        const query = new URLSearchParams(params as Record<string, string>).toString()
+        const query = new URLSearchParams(
+          params as Record<string, string>,
+        ).toString();
         const callbackUrl =
-          Platform.OS === 'web' && typeof window !== 'undefined'
+          Platform.OS === "web" && typeof window !== "undefined"
             ? window.location.href
-            : `mukokolingo://auth/callback?${query}`
-        const { data, error } = await handleAuthCallback(callbackUrl)
+            : `mukokolingo://auth/callback?${query}`;
+        const { data, error } = await handleAuthCallback(callbackUrl);
 
-        if (error) throw error
+        if (error) throw error;
 
         if (data?.session) {
-          router.replace('/(tabs)')
+          router.replace("/(tabs)");
         } else {
-          throw new Error('Authentication failed. Please try again.')
+          throw new Error("Authentication failed. Please try again.");
         }
       } catch (error: any) {
-        setStatus('error')
-        setErrorMessage(error.message || 'Authentication failed. The link may have expired.')
-        setTimeout(() => router.replace('/auth'), 3000)
+        setStatus("error");
+        setErrorMessage(
+          error.message || "Authentication failed. The link may have expired.",
+        );
+        setTimeout(() => router.replace("/auth"), 3000);
       }
-    }
+    };
 
-    handleCallback()
-  }, [params.code])
+    handleCallback();
+  }, [params.code]);
 
-  const styles = createStyles(theme)
+  const styles = createStyles(theme);
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
-        {status === 'loading' ? (
+        {status === "loading" ? (
           <View style={styles.content}>
             <ActivityIndicator size="large" color={theme.primary} />
             <Text style={styles.title}>Authenticating...</Text>
-            <Text style={styles.subtitle}>Please wait while we verify your identity</Text>
+            <Text style={styles.subtitle}>
+              Please wait while we verify your identity
+            </Text>
           </View>
         ) : (
           <View style={styles.content}>
@@ -89,7 +102,7 @@ export default function AuthCallbackScreen() {
         )}
       </View>
     </>
-  )
+  );
 }
 
 const createStyles = (theme: typeof lightTheme) =>
@@ -97,17 +110,17 @@ const createStyles = (theme: typeof lightTheme) =>
     container: {
       flex: 1,
       backgroundColor: theme.background,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
       padding: 24,
     },
     content: {
-      alignItems: 'center',
+      alignItems: "center",
       maxWidth: 400,
     },
     title: {
       fontSize: 20,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
       marginTop: 24,
     },
@@ -115,24 +128,24 @@ const createStyles = (theme: typeof lightTheme) =>
       fontSize: 15,
       color: theme.textSecondary,
       marginTop: 8,
-      textAlign: 'center',
+      textAlign: "center",
     },
     errorTitle: {
       fontSize: 20,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
       marginBottom: 12,
     },
     errorText: {
       fontSize: 15,
       color: theme.textSecondary,
-      textAlign: 'center',
+      textAlign: "center",
       marginBottom: 16,
       lineHeight: 22,
     },
     redirectText: {
       fontSize: 14,
       color: theme.textMuted,
-      fontStyle: 'italic',
+      fontStyle: "italic",
     },
-  })
+  });

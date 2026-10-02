@@ -6,12 +6,15 @@
  */
 
 export const WORKOS_REDIRECTS = {
-  WEB: process.env.WORKOS_REDIRECT_URI_WEB || 'https://lingo.mukoko.com/auth/callback',
-  MOBILE: process.env.WORKOS_REDIRECT_URI_MOBILE || 'mukokolingo://auth/callback',
-} as const
+  WEB:
+    process.env.WORKOS_REDIRECT_URI_WEB ||
+    "https://lingo.mukoko.com/auth/callback",
+  MOBILE:
+    process.env.WORKOS_REDIRECT_URI_MOBILE || "mukokolingo://auth/callback",
+} as const;
 
 /** Every accepted redirect ends here — nothing else on the app is a callback. */
-const CALLBACK_PATH = '/auth/callback'
+const CALLBACK_PATH = "/auth/callback";
 
 /**
  * Vercel branch previews, e.g.
@@ -20,17 +23,17 @@ const CALLBACK_PATH = '/auth/callback'
  * under this project on this Vercel team — a substring check would accept
  * `mukoko-lingo-.evil.com` or `evil.com/?x=-nyuchi.vercel.app`.
  */
-const PREVIEW_HOST = /^mukoko-lingo-[a-z0-9-]+-nyuchi\.vercel\.app$/
+const PREVIEW_HOST = /^mukoko-lingo-[a-z0-9-]+-nyuchi\.vercel\.app$/;
 
 /** Local dev servers (Expo web defaults to 8081, older SDKs to 19006). */
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1'])
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);
 
 /**
  * Private LAN addresses, so Expo web served on a machine's network IP (the
  * usual way to test on a phone) isn't rejected before it reaches WorkOS.
  */
 const PRIVATE_LAN_HOST =
-  /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})$/
+  /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})$/;
 
 /**
  * The project's default Vercel hostname. The client derives its redirect from
@@ -38,7 +41,7 @@ const PRIVATE_LAN_HOST =
  * the custom domain would otherwise be rejected locally before WorkOS ever
  * saw it.
  */
-const PRODUCTION_ALIAS_HOSTS = new Set(['mukoko-lingo.vercel.app'])
+const PRODUCTION_ALIAS_HOSTS = new Set(["mukoko-lingo.vercel.app"]);
 
 /**
  * Whether a client-supplied redirect URI may be handed to WorkOS.
@@ -52,34 +55,35 @@ const PRODUCTION_ALIAS_HOSTS = new Set(['mukoko-lingo.vercel.app'])
  * configuration staying tight.
  */
 export function isAllowedRedirectUri(uri: unknown): uri is string {
-  if (typeof uri !== 'string' || uri === '') return false
+  if (typeof uri !== "string" || uri === "") return false;
 
   // Exact matches for the configured web/mobile targets, including the custom
   // scheme, which has no meaningful URL structure to validate.
-  if (uri === WORKOS_REDIRECTS.WEB || uri === WORKOS_REDIRECTS.MOBILE) return true
+  if (uri === WORKOS_REDIRECTS.WEB || uri === WORKOS_REDIRECTS.MOBILE)
+    return true;
 
-  let parsed: URL
+  let parsed: URL;
   try {
-    parsed = new URL(uri)
+    parsed = new URL(uri);
   } catch {
-    return false
+    return false;
   }
 
-  if (parsed.pathname !== CALLBACK_PATH) return false
+  if (parsed.pathname !== CALLBACK_PATH) return false;
   // A query string or fragment on the redirect target is never something we
   // send, and is the shape used to smuggle extra parameters into the callback.
-  if (parsed.search !== '' || parsed.hash !== '') return false
+  if (parsed.search !== "" || parsed.hash !== "") return false;
   // Credentials in the authority section can disguise the real host.
-  if (parsed.username !== '' || parsed.password !== '') return false
+  if (parsed.username !== "" || parsed.password !== "") return false;
 
-  if (parsed.protocol === 'https:') {
-    if (PREVIEW_HOST.test(parsed.hostname)) return true
-    if (PRODUCTION_ALIAS_HOSTS.has(parsed.hostname)) return true
+  if (parsed.protocol === "https:") {
+    if (PREVIEW_HOST.test(parsed.hostname)) return true;
+    if (PRODUCTION_ALIAS_HOSTS.has(parsed.hostname)) return true;
   }
-  if (parsed.protocol === 'http:') {
-    if (LOCAL_HOSTS.has(parsed.hostname)) return true
-    if (PRIVATE_LAN_HOST.test(parsed.hostname)) return true
+  if (parsed.protocol === "http:") {
+    if (LOCAL_HOSTS.has(parsed.hostname)) return true;
+    if (PRIVATE_LAN_HOST.test(parsed.hostname)) return true;
   }
 
-  return false
+  return false;
 }

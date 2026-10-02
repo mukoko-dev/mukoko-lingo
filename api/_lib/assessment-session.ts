@@ -18,41 +18,41 @@
  * Pure functions — no database, no HTTP.
  */
 
-import { randomUUID } from 'crypto'
+import { randomUUID } from "crypto";
 
 /** How long an issued quiz stays valid. Long enough to think, short enough to expire. */
-export const SESSION_TTL_MS = 2 * 60 * 60 * 1000
+export const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
 
 /** Bounds on an issued quiz. The client asks; these decide. */
-export const MIN_QUESTIONS = 3
-export const MAX_QUESTIONS = 25
-export const DEFAULT_SKILL_QUESTIONS = 5
-export const DEFAULT_DIAGNOSTIC_QUESTIONS = 8
+export const MIN_QUESTIONS = 3;
+export const MAX_QUESTIONS = 25;
+export const DEFAULT_SKILL_QUESTIONS = 5;
+export const DEFAULT_DIAGNOSTIC_QUESTIONS = 8;
 
 export interface AssessmentSessionDoc {
-  _id: string
-  user_id: string
+  _id: string;
+  user_id: string;
   /** As the caller named it — a `skills._id`, a skill name, or `diagnostic`. */
-  skill_id: string
+  skill_id: string;
   /** Resolved `skills._id`, when the catalogue knows this skill. */
-  resolved_skill_id: string | null
-  assessment_id: string | null
-  question_ids: string[]
-  is_diagnostic: boolean
-  language: string | null
-  created_at: Date
-  expires_at: Date
-  submitted_at: Date | null
+  resolved_skill_id: string | null;
+  assessment_id: string | null;
+  question_ids: string[];
+  is_diagnostic: boolean;
+  language: string | null;
+  created_at: Date;
+  expires_at: Date;
+  submitted_at: Date | null;
 }
 
 export class InvalidSessionError extends Error {
   /** HTTP status this maps to: 400 for a bad ask, 404/409/410 for a bad session. */
-  readonly status: number
+  readonly status: number;
 
   constructor(message: string, status = 400) {
-    super(message)
-    this.name = 'InvalidSessionError'
-    this.status = status
+    super(message);
+    this.name = "InvalidSessionError";
+    this.status = status;
   }
 }
 
@@ -63,25 +63,37 @@ export class InvalidSessionError extends Error {
  * (which would make any single correct answer a perfect score), is clamped
  * rather than refused, because neither is worth failing a learner over.
  */
-export function resolveQuestionCount(requested: unknown, isDiagnostic: boolean): number {
-  const fallback = isDiagnostic ? DEFAULT_DIAGNOSTIC_QUESTIONS : DEFAULT_SKILL_QUESTIONS
-  if (typeof requested !== 'number' || !Number.isFinite(requested)) return fallback
-  return Math.min(MAX_QUESTIONS, Math.max(MIN_QUESTIONS, Math.round(requested)))
+export function resolveQuestionCount(
+  requested: unknown,
+  isDiagnostic: boolean,
+): number {
+  const fallback = isDiagnostic
+    ? DEFAULT_DIAGNOSTIC_QUESTIONS
+    : DEFAULT_SKILL_QUESTIONS;
+  if (typeof requested !== "number" || !Number.isFinite(requested))
+    return fallback;
+  return Math.min(
+    MAX_QUESTIONS,
+    Math.max(MIN_QUESTIONS, Math.round(requested)),
+  );
 }
 
 export function buildSessionDoc(params: {
-  userId: string
-  skillId: string
-  resolvedSkillId: string | null
-  assessmentId?: string | null
-  questionIds: string[]
-  isDiagnostic: boolean
-  language?: string | null
-  now?: Date
+  userId: string;
+  skillId: string;
+  resolvedSkillId: string | null;
+  assessmentId?: string | null;
+  questionIds: string[];
+  isDiagnostic: boolean;
+  language?: string | null;
+  now?: Date;
 }): AssessmentSessionDoc {
-  const now = params.now ?? new Date()
+  const now = params.now ?? new Date();
   if (params.questionIds.length === 0) {
-    throw new InvalidSessionError('No questions available for this assessment', 422)
+    throw new InvalidSessionError(
+      "No questions available for this assessment",
+      422,
+    );
   }
 
   return {
@@ -96,7 +108,7 @@ export function buildSessionDoc(params: {
     created_at: now,
     expires_at: new Date(now.getTime() + SESSION_TTL_MS),
     submitted_at: null,
-  }
+  };
 }
 
 /**
@@ -108,18 +120,27 @@ export function buildSessionDoc(params: {
 export function assertSessionUsable(
   session: AssessmentSessionDoc | null,
   userId: string,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): AssessmentSessionDoc {
   if (!session || session.user_id !== userId) {
-    throw new InvalidSessionError('Assessment session not found', 404)
+    throw new InvalidSessionError("Assessment session not found", 404);
   }
   if (session.submitted_at) {
     // Single use: a session that could be graded twice is a session that can be
     // retried until the answers come out right.
-    throw new InvalidSessionError('This assessment has already been submitted', 409)
+    throw new InvalidSessionError(
+      "This assessment has already been submitted",
+      409,
+    );
   }
-  if (session.expires_at instanceof Date && session.expires_at.getTime() <= now.getTime()) {
-    throw new InvalidSessionError('This assessment has expired; start a new one', 410)
+  if (
+    session.expires_at instanceof Date &&
+    session.expires_at.getTime() <= now.getTime()
+  ) {
+    throw new InvalidSessionError(
+      "This assessment has expired; start a new one",
+      410,
+    );
   }
-  return session
+  return session;
 }

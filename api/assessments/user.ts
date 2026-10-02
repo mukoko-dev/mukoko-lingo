@@ -1,48 +1,62 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { handleCors } from '../_lib/cors'
-import { requireAuth } from '../_lib/auth-middleware'
-import { idsFilter } from '../_lib/doc-id'
-import { userAssessments, assessments, skills } from '../_lib/mongo'
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { handleCors } from "../_lib/cors";
+import { requireAuth } from "../_lib/auth-middleware";
+import { idsFilter } from "../_lib/doc-id";
+import { userAssessments, assessments, skills } from "../_lib/mongo";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (handleCors(req, res)) return
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+  if (handleCors(req, res)) return;
+  if (req.method !== "GET")
+    return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    const user = await requireAuth(req)
+    const user = await requireAuth(req);
 
-    const col = await userAssessments()
-    const rows = await col.find({ user_id: user.personId }).sort({ completed_at: -1 }).toArray()
+    const col = await userAssessments();
+    const rows = await col
+      .find({ user_id: user.personId })
+      .sort({ completed_at: -1 })
+      .toArray();
 
-    const assessmentsCol = await assessments()
-    const skillsCol = await skills()
+    const assessmentsCol = await assessments();
+    const skillsCol = await skills();
     // `assessments._id` may be a UUID string; the old ObjectId filter dropped
     // every such id, so a history row never carried its assessment.
     const assessmentIds = rows
       .map((r: any) => r.assessment_id)
-      .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+      .filter(
+        (id: unknown): id is string => typeof id === "string" && id.length > 0,
+      );
     const assessmentDocs = assessmentIds.length
       ? await assessmentsCol.find(idsFilter(assessmentIds) as any).toArray()
-      : []
+      : [];
     // `skills._id` is a UUID string, so the ObjectId filter dropped them all.
-    const skillIds = assessmentDocs.map((a: any) => a.skill_id).filter(Boolean)
+    const skillIds = assessmentDocs.map((a: any) => a.skill_id).filter(Boolean);
     const skillDocs = skillIds.length
       ? await skillsCol.find({ _id: { $in: skillIds } } as any).toArray()
-      : []
-    const skillById = new Map(skillDocs.map((s: any) => [String(s._id), { ...s, id: String(s._id) }]))
+      : [];
+    const skillById = new Map(
+      skillDocs.map((s: any) => [String(s._id), { ...s, id: String(s._id) }]),
+    );
     const assessmentById = new Map(
-      assessmentDocs.map((a: any) => [String(a._id), { ...a, id: String(a._id), skill: skillById.get(a.skill_id) || null }])
-    )
+      assessmentDocs.map((a: any) => [
+        String(a._id),
+        { ...a, id: String(a._id), skill: skillById.get(a.skill_id) || null },
+      ]),
+    );
 
     const data = rows.map((r: any) => ({
       ...r,
       id: String(r._id),
       assessment: assessmentById.get(r.assessment_id) || null,
-    }))
+    }));
 
-    return res.status(200).json({ data })
+    return res.status(200).json({ data });
   } catch (error: any) {
-    if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
-    return res.status(500).json({ error: error.message || 'Internal server error' })
+    if (error.message === "Unauthorized")
+      return res.status(401).json({ error: "Unauthorized" });
+    return res
+      .status(500)
+      .json({ error: error.message || "Internal server error" });
   }
 }

@@ -21,13 +21,19 @@
  *   diagnostic evidences elementary, not fluency — see `ceilingForLevels`.
  */
 
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { handleCors } from '../_lib/cors'
-import { requireAuth } from '../_lib/auth-middleware'
-import { createLogger } from '../_lib/logger'
-import { findById } from '../_lib/doc-id'
-import { resolveSkillIds } from '../_lib/skill-ids'
-import { assessmentSessions, userAssessments, assessments, userSkills, skills } from '../_lib/mongo'
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { handleCors } from "../_lib/cors";
+import { requireAuth } from "../_lib/auth-middleware";
+import { createLogger } from "../_lib/logger";
+import { findById } from "../_lib/doc-id";
+import { resolveSkillIds } from "../_lib/skill-ids";
+import {
+  assessmentSessions,
+  userAssessments,
+  assessments,
+  userSkills,
+  skills,
+} from "../_lib/mongo";
 import {
   sanitizeAnswers,
   answerKeyFromAssessment,
@@ -36,96 +42,126 @@ import {
   resolvePassingScore,
   resolveSkillUpdate,
   InvalidSubmissionError,
-} from '../_lib/assessment-grading'
-import { assertSessionUsable, InvalidSessionError } from '../_lib/assessment-session'
-import { assessmentQuestions } from '../_lib/question-bank'
+} from "../_lib/assessment-grading";
+import {
+  assertSessionUsable,
+  InvalidSessionError,
+} from "../_lib/assessment-session";
+import { assessmentQuestions } from "../_lib/question-bank";
 
-const log = createLogger('assessments')
+const log = createLogger("assessments");
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (handleCors(req, res)) return
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  if (handleCors(req, res)) return;
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    const user = await requireAuth(req)
-    const body = (req.body || {}) as Record<string, unknown>
+    const user = await requireAuth(req);
+    const body = (req.body || {}) as Record<string, unknown>;
 
-    if ('score' in body || 'passed' in body) {
+    if ("score" in body || "passed" in body) {
       return res.status(400).json({
-        error: 'score and passed are computed server-side; submit answers only',
-      })
+        error: "score and passed are computed server-side; submit answers only",
+      });
     }
 
-    const sessionId = typeof body.session_id === 'string' ? body.session_id : null
+    const sessionId =
+      typeof body.session_id === "string" ? body.session_id : null;
     if (!sessionId) {
       return res.status(400).json({
-        error: 'session_id is required; start the assessment with POST /api/assessments/start',
-      })
+        error:
+          "session_id is required; start the assessment with POST /api/assessments/start",
+      });
     }
 
     const timeTaken =
-      typeof body.time_taken === 'number' && Number.isFinite(body.time_taken)
+      typeof body.time_taken === "number" && Number.isFinite(body.time_taken)
         ? Math.max(0, Math.round(body.time_taken))
-        : null
+        : null;
 
-    let answers: Record<string, string>
+    let answers: Record<string, string>;
     try {
-      answers = sanitizeAnswers(body.answers)
+      answers = sanitizeAnswers(body.answers);
     } catch (error) {
       if (error instanceof InvalidSubmissionError) {
-        return res.status(400).json({ error: error.message })
+        return res.status(400).json({ error: error.message });
       }
-      throw error
+      throw error;
     }
 
-    const sessionsCol = await assessmentSessions()
-    let session
+    const sessionsCol = await assessmentSessions();
+    let session;
     try {
-      session = assertSessionUsable((await sessionsCol.findOne({ _id: sessionId })) as any, user.personId)
+      session = assertSessionUsable(
+        (await sessionsCol.findOne({ _id: sessionId })) as any,
+        user.personId,
+      );
     } catch (error) {
       if (error instanceof InvalidSessionError) {
-        return res.status(error.status).json({ error: error.message })
+        return res.status(error.status).json({ error: error.message });
       }
-      throw error
+      throw error;
     }
 
     // Claim the session before grading. A concurrent second submit finds it
     // already claimed and is refused, rather than both grading the same quiz.
     const claim = await sessionsCol.findOneAndUpdate(
       { _id: sessionId, submitted_at: null },
-      { $set: { submitted_at: new Date() } }
-    )
-    if (!claim || (typeof claim === 'object' && 'value' in claim && !claim.value)) {
-      return res.status(409).json({ error: 'This assessment has already been submitted' })
+      { $set: { submitted_at: new Date() } },
+    );
+    if (
+      !claim ||
+      (typeof claim === "object" && "value" in claim && !claim.value)
+    ) {
+      return res
+        .status(409)
+        .json({ error: "This assessment has already been submitted" });
     }
 
-    const assessmentsCol = await assessments()
-    const assessment = session.assessment_id ? await findById<any>(assessmentsCol, session.assessment_id) : null
+    const assessmentsCol = await assessments();
+    const assessment = session.assessment_id
+      ? await findById<any>(assessmentsCol, session.assessment_id)
+      : null;
 
     // The key covers exactly what was issued: an unanswered question is wrong,
     // and an id that was never issued is not graded at all.
-    const issued = new Set(session.question_ids)
-    const fromAssessment = answerKeyFromAssessment(assessment).filter((entry) => issued.has(entry.questionId))
+    const issued = new Set(session.question_ids);
+    const fromAssessment = answerKeyFromAssessment(assessment).filter((entry) =>
+      issued.has(entry.questionId),
+    );
     const answerKey =
-      fromAssessment.length > 0 ? fromAssessment : answerKeyFromBank(assessmentQuestions, session.question_ids)
+      fromAssessment.length > 0
+        ? fromAssessment
+        : answerKeyFromBank(assessmentQuestions, session.question_ids);
 
     if (answerKey.length === 0) {
       // The session named questions neither source can grade — a bank edited
       // between issue and submit. Recording a hollow zero would look like a
       // failed attempt the learner made.
       log.error(
-        `No answer key for session ${sessionId} (${session.question_ids.length} issued, assessment=${session.assessment_id ?? 'none'})`
-      )
-      return res.status(422).json({ error: 'No answer key found for these questions' })
+        `No answer key for session ${sessionId} (${session.question_ids.length} issued, assessment=${session.assessment_id ?? "none"})`,
+      );
+      return res
+        .status(422)
+        .json({ error: "No answer key found for these questions" });
     }
 
-    const result = gradeAnswers(answerKey, answers, resolvePassingScore(assessment))
-    const now = new Date()
+    const result = gradeAnswers(
+      answerKey,
+      answers,
+      resolvePassingScore(assessment),
+    );
+    const now = new Date();
 
-    const skillsCol = await skills()
-    const perSkillNames = Object.keys(result.perSkill)
-    const resolved = await resolveSkillIds(skillsCol, [session.skill_id, ...perSkillNames])
-    const primarySkillId = session.resolved_skill_id ?? resolved.get(session.skill_id) ?? null
+    const skillsCol = await skills();
+    const perSkillNames = Object.keys(result.perSkill);
+    const resolved = await resolveSkillIds(skillsCol, [
+      session.skill_id,
+      ...perSkillNames,
+    ]);
+    const primarySkillId =
+      session.resolved_skill_id ?? resolved.get(session.skill_id) ?? null;
 
     // A diagnostic spans several skills, so score each one the key covers.
     const skillResults =
@@ -138,9 +174,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // question than another, and each score is capped by its own.
             ceiling: result.perSkillCeiling[name],
           }))
-        : [{ name: session.skill_id, skillId: primarySkillId, percentage: result.percentage, ceiling: result.ceiling }]
+        : [
+            {
+              name: session.skill_id,
+              skillId: primarySkillId,
+              percentage: result.percentage,
+              ceiling: result.ceiling,
+            },
+          ];
 
-    const userAssessmentsCol = await userAssessments()
+    const userAssessmentsCol = await userAssessments();
     const insertResult = await userAssessmentsCol.insertOne({
       user_id: user.personId,
       session_id: sessionId,
@@ -151,40 +194,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       passed: result.passed,
       time_taken: timeTaken,
       completed_at: now,
-    } as any)
+    } as any);
 
-    const userSkillsCol = await userSkills()
-    const updatedSkills: string[] = []
-    let levelAchieved: string | null = null
+    const userSkillsCol = await userSkills();
+    const updatedSkills: string[] = [];
+    let levelAchieved: string | null = null;
 
     for (const entry of skillResults) {
       if (!entry.skillId) {
         // The attempt is still recorded; only the skill row is skipped.
-        log.error(`Cannot resolve skill "${entry.name}" to a skills._id — not updating user_skills`)
-        continue
+        log.error(
+          `Cannot resolve skill "${entry.name}" to a skills._id — not updating user_skills`,
+        );
+        continue;
       }
 
       // Only the skill the assessment was taken for can be promoted: one
       // `target_level` says nothing about the other skills a diagnostic
       // happened to touch.
-      const promotable = entry.skillId === primarySkillId ? assessment : null
-      const existing = await userSkillsCol.findOne({ user_id: user.personId, skill_id: entry.skillId })
+      const promotable = entry.skillId === primarySkillId ? assessment : null;
+      const existing = await userSkillsCol.findOne({
+        user_id: user.personId,
+        skill_id: entry.skillId,
+      });
       const update = resolveSkillUpdate({
         existing,
         percentage: entry.percentage,
         passed: entry.percentage >= resolvePassingScore(assessment),
         assessment: promotable,
         ceiling: entry.ceiling,
-      })
-      if (!update) continue
+      });
+      if (!update) continue;
 
       await userSkillsCol.findOneAndUpdate(
         { user_id: user.personId, skill_id: entry.skillId },
-        { $set: update, $setOnInsert: { user_id: user.personId, skill_id: entry.skillId } },
-        { upsert: true }
-      )
-      updatedSkills.push(entry.skillId)
-      if (update.current_level) levelAchieved = update.current_level
+        {
+          $set: update,
+          $setOnInsert: { user_id: user.personId, skill_id: entry.skillId },
+        },
+        { upsert: true },
+      );
+      updatedSkills.push(entry.skillId);
+      if (update.current_level) levelAchieved = update.current_level;
     }
 
     return res.status(201).json({
@@ -211,10 +262,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         time_taken: timeTaken,
         completed_at: now,
       },
-    })
+    });
   } catch (error: any) {
-    if (error.message === 'Unauthorized') return res.status(401).json({ error: 'Unauthorized' })
-    log.error(`Assessment submission failed: ${error?.message || error}`)
-    return res.status(500).json({ error: 'Internal server error' })
+    if (error.message === "Unauthorized")
+      return res.status(401).json({ error: "Unauthorized" });
+    log.error(`Assessment submission failed: ${error?.message || error}`);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }

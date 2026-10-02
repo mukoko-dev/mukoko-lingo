@@ -5,7 +5,7 @@
  * used by the Python analytics side (api/analytics/_helpers.py).
  */
 
-import { getDb } from './mongo'
+import { getDb } from "./mongo";
 import type {
   Person,
   LingoProfile,
@@ -35,55 +35,80 @@ import type {
   SharedGuardrail,
   PlatformApiKey,
   UbuntuContribution,
-} from './types'
+} from "./types";
 
 /** identity.persons — shared ecosystem user record, not Lingo-owned. */
-export const persons = async () => (await getDb('identity')).collection<Person>('persons')
+export const persons = async () =>
+  (await getDb("identity")).collection<Person>("persons");
 /** Lingo-local extension of a person (role, learning prefs, push tokens). */
-export const lingoProfiles = async () => (await getDb()).collection<LingoProfile>('learner_profiles')
-export const phrases = async () => (await getDb()).collection<Phrase>('phrases')
-export const phraseProgress = async () => (await getDb()).collection<PhraseProgress>('phrase_progress')
-export const bookmarks = async () => (await getDb()).collection<Bookmark>('bookmarks')
-export const phraseViews = async () => (await getDb()).collection<PhraseView>('phrase_views')
+export const lingoProfiles = async () =>
+  (await getDb()).collection<LingoProfile>("learner_profiles");
+export const phrases = async () =>
+  (await getDb()).collection<Phrase>("phrases");
+export const phraseProgress = async () =>
+  (await getDb()).collection<PhraseProgress>("phrase_progress");
+export const bookmarks = async () =>
+  (await getDb()).collection<Bookmark>("bookmarks");
+export const phraseViews = async () =>
+  (await getDb()).collection<PhraseView>("phrase_views");
 /**
  * Read-only view aggregating bookmarks/phrase_views by phrase_id — live,
  * not stored. Never write through this accessor. See Phase 4 of
  * docs/ECOSYSTEM_DATA_MIGRATION.md.
  */
 export const phraseEngagementLive = async () =>
-  (await getDb()).collection<PhraseEngagement>('phraseEngagementLive')
-export const skills = async () => (await getDb()).collection<Skill>('skills')
-export const userSkills = async () => (await getDb()).collection<UserSkill>('user_skills')
-export const assessments = async () => (await getDb()).collection<Assessment>('assessments')
-export const userAssessments = async () => (await getDb()).collection<UserAssessment>('user_assessments')
+  (await getDb()).collection<PhraseEngagement>("phraseEngagementLive");
+export const skills = async () => (await getDb()).collection<Skill>("skills");
+export const userSkills = async () =>
+  (await getDb()).collection<UserSkill>("user_skills");
+export const assessments = async () =>
+  (await getDb()).collection<Assessment>("assessments");
+export const userAssessments = async () =>
+  (await getDb()).collection<UserAssessment>("user_assessments");
 /** Quizzes the server has issued — see `api/_lib/assessment-session.ts`. */
 export const assessmentSessions = async () =>
-  (await getDb()).collection<AssessmentSession>('assessment_sessions')
+  (await getDb()).collection<AssessmentSession>("assessment_sessions");
 /**
  * lingo.learningStandards — the real, ecosystem-curated collection. The old
  * `learning_standards` name was a Postgres-era invention that never held a
  * single document, so the admin standards editor read an empty list.
  */
-export const learningStandards = async () => (await getDb()).collection<LearningStandard>('learningStandards')
-export const moderationAlerts = async () => (await getDb()).collection<ModerationAlert>('moderation_alerts')
+export const learningStandards = async () =>
+  (await getDb()).collection<LearningStandard>("learningStandards");
+export const moderationAlerts = async () =>
+  (await getDb()).collection<ModerationAlert>("moderation_alerts");
 /** shamwari.conversations — shared ecosystem AI conversation store, not Lingo-owned. */
-export const shamwariConversations = async () => (await getDb('shamwari')).collection<ShamwariConversation>('conversations')
+export const shamwariConversations = async () =>
+  (await getDb("shamwari")).collection<ShamwariConversation>("conversations");
 /** shamwari.messages — shared ecosystem AI message store, not Lingo-owned. */
-export const shamwariMessages = async () => (await getDb('shamwari')).collection<ShamwariMessage>('messages')
-export const srsCards = async () => (await getDb()).collection<SrsCard>('srs_cards')
-export const userXp = async () => (await getDb()).collection<UserXp>('user_xp')
-export const xpEvents = async () => (await getDb()).collection<XpEvent>('xp_events')
-export const classes = async () => (await getDb()).collection<Class>('classes')
-export const classMemberships = async () => (await getDb()).collection<ClassMembership>('class_memberships')
-export const assignments = async () => (await getDb()).collection<Assignment>('assignments')
-export const assignmentSubmissions = async () => (await getDb()).collection<AssignmentSubmission>('assignment_submissions')
-export const organizationEnrollments = async () => (await getDb()).collection<OrganizationEnrollment>('organization_enrollments')
-export const studySessions = async () => (await getDb()).collection<StudySession>('study_sessions')
+export const shamwariMessages = async () =>
+  (await getDb("shamwari")).collection<ShamwariMessage>("messages");
+export const srsCards = async () =>
+  (await getDb()).collection<SrsCard>("srs_cards");
+export const userXp = async () => (await getDb()).collection<UserXp>("user_xp");
+export const xpEvents = async () =>
+  (await getDb()).collection<XpEvent>("xp_events");
+export const classes = async () => (await getDb()).collection<Class>("classes");
+export const classMemberships = async () =>
+  (await getDb()).collection<ClassMembership>("class_memberships");
+export const assignments = async () =>
+  (await getDb()).collection<Assignment>("assignments");
+export const assignmentSubmissions = async () =>
+  (await getDb()).collection<AssignmentSubmission>("assignment_submissions");
+export const organizationEnrollments = async () =>
+  (await getDb()).collection<OrganizationEnrollment>(
+    "organization_enrollments",
+  );
+export const studySessions = async () =>
+  (await getDb()).collection<StudySession>("study_sessions");
 /** shamwari.guardrails — shared ecosystem moderation policy, not Lingo-owned. */
-export const sharedGuardrails = async () => (await getDb('shamwari')).collection<SharedGuardrail>('guardrails')
+export const sharedGuardrails = async () =>
+  (await getDb("shamwari")).collection<SharedGuardrail>("guardrails");
 /** platform.apiKeys — shared ecosystem API-key registry, not Lingo-owned. */
-export const platformApiKeys = async () => (await getDb('platform')).collection<PlatformApiKey>('apiKeys')
+export const platformApiKeys = async () =>
+  (await getDb("platform")).collection<PlatformApiKey>("apiKeys");
 /** ubuntu.contributions — shared ecosystem trust/gamification ledger, not Lingo-owned. */
-export const ubuntuContributions = async () => (await getDb('ubuntu')).collection<UbuntuContribution>('contributions')
+export const ubuntuContributions = async () =>
+  (await getDb("ubuntu")).collection<UbuntuContribution>("contributions");
 
-export { getDb }
+export { getDb };

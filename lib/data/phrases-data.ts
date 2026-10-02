@@ -1,25 +1,25 @@
 export interface Phrase {
-  id: string
-  category: string
-  english: string
-  shona: string
-  ndebele: string
-  swahili: string
-  chinese: string
+  id: string;
+  category: string;
+  english: string;
+  shona: string;
+  ndebele: string;
+  swahili: string;
+  chinese: string;
   pronunciation: {
-    english: string
-    shona: string
-    ndebele: string
-    swahili: string
-    chinese: string
-  }
+    english: string;
+    shona: string;
+    ndebele: string;
+    swahili: string;
+    chinese: string;
+  };
   context: {
-    en: string
-    sn: string
-    nd: string
-    sw: string
-    zh: string
-  }
+    en: string;
+    sn: string;
+    nd: string;
+    sw: string;
+    zh: string;
+  };
 }
 
 export const phrases: Phrase[] = [
@@ -2389,8 +2389,20 @@ export const phrases: Phrase[] = [
     ndebele: "Ngiqala umsebenzi ngehora lesitshiyagalombili",
     swahili: "Naanza kazi saa mbili asubuhi",
     chinese: "我八点开始工作",
-    pronunciation: { english: "eye start wurk at ate oh-klok", shona: "ndi-no-TA-nga BA-sa pa-A-wa ye-SE-re", ndebele: "ngi-QA-la u-mse-BE-nzi nge-HO-ra", swahili: "na-A-nza KA-zi sa-a MBI-li", chinese: "wǒ bā diǎn kāi shǐ gōng zuò" },
-    context: { en: "Telling someone your work schedule", sn: "Kutaura nguva yaunopinda basa", nd: "Ukukhuluma ngesikhathi sokusebenza", sw: "Kusema ratiba yako ya kazi", zh: "告诉别人你的工作时间" },
+    pronunciation: {
+      english: "eye start wurk at ate oh-klok",
+      shona: "ndi-no-TA-nga BA-sa pa-A-wa ye-SE-re",
+      ndebele: "ngi-QA-la u-mse-BE-nzi nge-HO-ra",
+      swahili: "na-A-nza KA-zi sa-a MBI-li",
+      chinese: "wǒ bā diǎn kāi shǐ gōng zuò",
+    },
+    context: {
+      en: "Telling someone your work schedule",
+      sn: "Kutaura nguva yaunopinda basa",
+      nd: "Ukukhuluma ngesikhathi sokusebenza",
+      sw: "Kusema ratiba yako ya kazi",
+      zh: "告诉别人你的工作时间",
+    },
   },
   {
     id: "work-4",
@@ -2400,8 +2412,20 @@ export const phrases: Phrase[] = [
     ndebele: "Ngidinga umsebenzi",
     swahili: "Ninatafuta kazi",
     chinese: "我在找工作",
-    pronunciation: { english: "eye am LOO-king for a job", shona: "ndi-ri ku-TSVA-ga BA-sa", ndebele: "ngi-DI-nga u-mse-BE-nzi", swahili: "ni-na-ta-FU-ta KA-zi", chinese: "wǒ zài zhǎo gōng zuò" },
-    context: { en: "Expressing that you need employment", sn: "Kutaura kuti uri kutsvaga basa", nd: "Ukukhuluma ukuthi ufuna umsebenzi", sw: "Kusema unahitaji kazi", zh: "表达你在找工作" },
+    pronunciation: {
+      english: "eye am LOO-king for a job",
+      shona: "ndi-ri ku-TSVA-ga BA-sa",
+      ndebele: "ngi-DI-nga u-mse-BE-nzi",
+      swahili: "ni-na-ta-FU-ta KA-zi",
+      chinese: "wǒ zài zhǎo gōng zuò",
+    },
+    context: {
+      en: "Expressing that you need employment",
+      sn: "Kutaura kuti uri kutsvaga basa",
+      nd: "Ukukhuluma ukuthi ufuna umsebenzi",
+      sw: "Kusema unahitaji kazi",
+      zh: "表达你在找工作",
+    },
   },
   {
     id: "work-5",
@@ -2411,8 +2435,20 @@ export const phrases: Phrase[] = [
     ndebele: "Ngilomhlangano lamuhla",
     swahili: "Nina mkutano leo",
     chinese: "我今天有个会议",
-    pronunciation: { english: "eye hav a MEE-ting too-DAY", shona: "ndi-ne mu-sa-NGA-no NHA-si", ndebele: "ngi-lo-mhla-NGA-no la-MU-hla", swahili: "ni-na mku-TA-no LE-o", chinese: "wǒ jīn tiān yǒu gè huì yì" },
-    context: { en: "Informing about a work meeting", sn: "Kutaura nezvemusangano webhizinesi", nd: "Ukukhuluma ngomhlangano womsebenzi", sw: "Kuarifu kuhusu mkutano wa kazi", zh: "告知有工作会议" },
+    pronunciation: {
+      english: "eye hav a MEE-ting too-DAY",
+      shona: "ndi-ne mu-sa-NGA-no NHA-si",
+      ndebele: "ngi-lo-mhla-NGA-no la-MU-hla",
+      swahili: "ni-na mku-TA-no LE-o",
+      chinese: "wǒ jīn tiān yǒu gè huì yì",
+    },
+    context: {
+      en: "Informing about a work meeting",
+      sn: "Kutaura nezvemusangano webhizinesi",
+      nd: "Ukukhuluma ngomhlangano womsebenzi",
+      sw: "Kuarifu kuhusu mkutano wa kazi",
+      zh: "告知有工作会议",
+    },
   },
   {
     id: "work-6",
@@ -2422,8 +2458,20 @@ export const phrases: Phrase[] = [
     ndebele: "Uqeda umsebenzi ngesikhathi bani?",
     swahili: "Unamaliza kazi saa ngapi?",
     chinese: "你几点下班？",
-    pronunciation: { english: "wot time doo yoo FI-nish wurk", shona: "u-no-PE-dza BA-sa ngu-VA-i", ndebele: "u-QE-da u-mse-BE-nzi nge-si-KHA-thi BA-ni", swahili: "u-na-ma-LI-za KA-zi sa-a NGA-pi", chinese: "nǐ jǐ diǎn xià bān" },
-    context: { en: "Asking about end of workday", sn: "Kubvunza nguva yekupedza basa", nd: "Ukubuza isikhathi sokuqeda umsebenzi", sw: "Kuuliza saa za kumaliza kazi", zh: "询问下班时间" },
+    pronunciation: {
+      english: "wot time doo yoo FI-nish wurk",
+      shona: "u-no-PE-dza BA-sa ngu-VA-i",
+      ndebele: "u-QE-da u-mse-BE-nzi nge-si-KHA-thi BA-ni",
+      swahili: "u-na-ma-LI-za KA-zi sa-a NGA-pi",
+      chinese: "nǐ jǐ diǎn xià bān",
+    },
+    context: {
+      en: "Asking about end of workday",
+      sn: "Kubvunza nguva yekupedza basa",
+      nd: "Ukubuza isikhathi sokuqeda umsebenzi",
+      sw: "Kuuliza saa za kumaliza kazi",
+      zh: "询问下班时间",
+    },
   },
   {
     id: "work-7",
@@ -2433,8 +2481,20 @@ export const phrases: Phrase[] = [
     ndebele: "Umphathi wami ulomusa",
     swahili: "Bosi wangu ni mkarimu sana",
     chinese: "我的老板很善良",
-    pronunciation: { english: "my boss iz VE-ree kind", shona: "mu-KU-ru WA-ngu a-ne MU-tsa", ndebele: "u-MPHA-thi WA-mi u-lo-MU-sa", swahili: "BO-si WA-ngu ni mka-RI-mu SA-na", chinese: "wǒ de lǎo bǎn hěn shàn liáng" },
-    context: { en: "Describing your supervisor positively", sn: "Kutsanangura mukuru wako zvakanaka", nd: "Ukuchaza umphathi wakho ngokuhle", sw: "Kumsifu bosi wako", zh: "积极描述你的上司" },
+    pronunciation: {
+      english: "my boss iz VE-ree kind",
+      shona: "mu-KU-ru WA-ngu a-ne MU-tsa",
+      ndebele: "u-MPHA-thi WA-mi u-lo-MU-sa",
+      swahili: "BO-si WA-ngu ni mka-RI-mu SA-na",
+      chinese: "wǒ de lǎo bǎn hěn shàn liáng",
+    },
+    context: {
+      en: "Describing your supervisor positively",
+      sn: "Kutsanangura mukuru wako zvakanaka",
+      nd: "Ukuchaza umphathi wakho ngokuhle",
+      sw: "Kumsifu bosi wako",
+      zh: "积极描述你的上司",
+    },
   },
   {
     id: "work-8",
@@ -2444,8 +2504,20 @@ export const phrases: Phrase[] = [
     ndebele: "Ngidinga ukutshayela ucingo",
     swahili: "Ninahitaji kupiga simu",
     chinese: "我需要打个电话",
-    pronunciation: { english: "eye need too make a fone kol", shona: "ndi-NO-da ku-FO-na", ndebele: "ngi-DI-nga u-ku-tsha-YE-la u-CI-ngo", swahili: "ni-na-hi-TA-ji ku-PI-ga SI-mu", chinese: "wǒ xū yào dǎ gè diàn huà" },
-    context: { en: "Requesting to make a call at work", sn: "Kukumbira kufona pabasa", nd: "Ukucela ukutshayela ucingo emsebenzini", sw: "Kuomba kupiga simu kazini", zh: "请求在工作中打电话" },
+    pronunciation: {
+      english: "eye need too make a fone kol",
+      shona: "ndi-NO-da ku-FO-na",
+      ndebele: "ngi-DI-nga u-ku-tsha-YE-la u-CI-ngo",
+      swahili: "ni-na-hi-TA-ji ku-PI-ga SI-mu",
+      chinese: "wǒ xū yào dǎ gè diàn huà",
+    },
+    context: {
+      en: "Requesting to make a call at work",
+      sn: "Kukumbira kufona pabasa",
+      nd: "Ukucela ukutshayela ucingo emsebenzini",
+      sw: "Kuomba kupiga simu kazini",
+      zh: "请求在工作中打电话",
+    },
   },
   {
     id: "work-9",
@@ -2455,8 +2527,20 @@ export const phrases: Phrase[] = [
     ndebele: "Ungangisiza ngalokhu?",
     swahili: "Unaweza kunisaidia na hii?",
     chinese: "你能帮我这个吗？",
-    pronunciation: { english: "kan yoo help me with this", shona: "u-nga-ndi-BA-tsi-ra NA-zvo HE-re", ndebele: "u-nga-ngi-SI-za nga-LO-khu", swahili: "u-na-WE-za ku-ni-sa-I-dia na HI-i", chinese: "nǐ néng bāng wǒ zhè gè ma" },
-    context: { en: "Asking a colleague for help", sn: "Kukumbira rubatsiro kubasa", nd: "Ukucela usizo emsebenzini", sw: "Kuomba msaada wa mwenzako", zh: "请同事帮忙" },
+    pronunciation: {
+      english: "kan yoo help me with this",
+      shona: "u-nga-ndi-BA-tsi-ra NA-zvo HE-re",
+      ndebele: "u-nga-ngi-SI-za nga-LO-khu",
+      swahili: "u-na-WE-za ku-ni-sa-I-dia na HI-i",
+      chinese: "nǐ néng bāng wǒ zhè gè ma",
+    },
+    context: {
+      en: "Asking a colleague for help",
+      sn: "Kukumbira rubatsiro kubasa",
+      nd: "Ukucela usizo emsebenzini",
+      sw: "Kuomba msaada wa mwenzako",
+      zh: "请同事帮忙",
+    },
   },
   {
     id: "work-10",
@@ -2466,8 +2550,20 @@ export const phrases: Phrase[] = [
     ndebele: "Umsebenzi uphelile",
     swahili: "Kazi imekwisha",
     chinese: "工作完成了",
-    pronunciation: { english: "the wurk iz FI-nisht", shona: "BA-sa ra-PE-ra", ndebele: "u-mse-BE-nzi u-PHE-li-le", swahili: "KA-zi i-me-KWI-sha", chinese: "gōng zuò wán chéng le" },
-    context: { en: "Announcing task completion", sn: "Kutaura kuti basa rapera", nd: "Ukukhuluma ukuthi umsebenzi uphelile", sw: "Kutangaza kazi imekwisha", zh: "宣布任务完成" },
+    pronunciation: {
+      english: "the wurk iz FI-nisht",
+      shona: "BA-sa ra-PE-ra",
+      ndebele: "u-mse-BE-nzi u-PHE-li-le",
+      swahili: "KA-zi i-me-KWI-sha",
+      chinese: "gōng zuò wán chéng le",
+    },
+    context: {
+      en: "Announcing task completion",
+      sn: "Kutaura kuti basa rapera",
+      nd: "Ukukhuluma ukuthi umsebenzi uphelile",
+      sw: "Kutangaza kazi imekwisha",
+      zh: "宣布任务完成",
+    },
   },
 
   // HOME - 10 phrases
@@ -2526,8 +2622,20 @@ export const phrases: Phrase[] = [
     ndebele: "Indlu inhle kakhulu",
     swahili: "Nyumba ni nzuri sana",
     chinese: "这房子非常漂亮",
-    pronunciation: { english: "the house iz VE-ree BYOO-ti-ful", shona: "I-mba ya-ka-NA-ka chai-ZVO", ndebele: "i-NDLU i-NHLE ka-KHU-lu", swahili: "nyu-MBA ni NZU-ri SA-na", chinese: "zhè fáng zi fēi cháng piào liàng" },
-    context: { en: "Complimenting someone's home", sn: "Kurumbidza imba yemumwe", nd: "Ukuncoma indlu yomuntu", sw: "Kusifu nyumba ya mtu", zh: "称赞别人的房子" },
+    pronunciation: {
+      english: "the house iz VE-ree BYOO-ti-ful",
+      shona: "I-mba ya-ka-NA-ka chai-ZVO",
+      ndebele: "i-NDLU i-NHLE ka-KHU-lu",
+      swahili: "nyu-MBA ni NZU-ri SA-na",
+      chinese: "zhè fáng zi fēi cháng piào liàng",
+    },
+    context: {
+      en: "Complimenting someone's home",
+      sn: "Kurumbidza imba yemumwe",
+      nd: "Ukuncoma indlu yomuntu",
+      sw: "Kusifu nyumba ya mtu",
+      zh: "称赞别人的房子",
+    },
   },
   {
     id: "home-4",
@@ -2537,8 +2645,20 @@ export const phrases: Phrase[] = [
     ndebele: "Ngicela uvale umnyango",
     swahili: "Tafadhali funga mlango",
     chinese: "请关门",
-    pronunciation: { english: "pleez klohz the dor", shona: "nda-PO-ta VHA-ra GO-nhi", ndebele: "ngi-CE-la u-VA-le u-MNYA-ngo", swahili: "ta-fa-DHA-li FU-nga MLA-ngo", chinese: "qǐng guān mén" },
-    context: { en: "Asking someone to close a door", sn: "Kukumbira kuvhara gonhi", nd: "Ukucela ukuvala umnyango", sw: "Kuomba kufunga mlango", zh: "请某人关门" },
+    pronunciation: {
+      english: "pleez klohz the dor",
+      shona: "nda-PO-ta VHA-ra GO-nhi",
+      ndebele: "ngi-CE-la u-VA-le u-MNYA-ngo",
+      swahili: "ta-fa-DHA-li FU-nga MLA-ngo",
+      chinese: "qǐng guān mén",
+    },
+    context: {
+      en: "Asking someone to close a door",
+      sn: "Kukumbira kuvhara gonhi",
+      nd: "Ukucela ukuvala umnyango",
+      sw: "Kuomba kufunga mlango",
+      zh: "请某人关门",
+    },
   },
   {
     id: "home-5",
@@ -2548,8 +2668,20 @@ export const phrases: Phrase[] = [
     ndebele: "Ngipheka isidlo sakusihlwa",
     swahili: "Ninapika chakula cha jioni",
     chinese: "我在做晚饭",
-    pronunciation: { english: "eye am KOO-king DI-ner", shona: "ndi-ri ku-BI-ka chi-KA-fu che-U-si-ku", ndebele: "ngi-PHE-ka i-si-DLO sa-ku-si-HLWA", swahili: "ni-na-PI-ka cha-KU-la cha ji-O-ni", chinese: "wǒ zài zuò wǎn fàn" },
-    context: { en: "Telling someone you are preparing dinner", sn: "Kutaura kuti uri kubika", nd: "Ukukhuluma ukuthi uyapheka", sw: "Kusema unapika chakula", zh: "告诉别人你在做晚饭" },
+    pronunciation: {
+      english: "eye am KOO-king DI-ner",
+      shona: "ndi-ri ku-BI-ka chi-KA-fu che-U-si-ku",
+      ndebele: "ngi-PHE-ka i-si-DLO sa-ku-si-HLWA",
+      swahili: "ni-na-PI-ka cha-KU-la cha ji-O-ni",
+      chinese: "wǒ zài zuò wǎn fàn",
+    },
+    context: {
+      en: "Telling someone you are preparing dinner",
+      sn: "Kutaura kuti uri kubika",
+      nd: "Ukukhuluma ukuthi uyapheka",
+      sw: "Kusema unapika chakula",
+      zh: "告诉别人你在做晚饭",
+    },
   },
   {
     id: "home-6",
@@ -2559,8 +2691,20 @@ export const phrases: Phrase[] = [
     ndebele: "Abantwana balele",
     swahili: "Watoto wamelala",
     chinese: "孩子们在睡觉",
-    pronunciation: { english: "the CHIL-dren ar SLEE-ping", shona: "VA-na va-RE-re", ndebele: "a-ba-NTWA-na ba-LE-le", swahili: "wa-TO-to wa-me-LA-la", chinese: "hái zi men zài shuì jiào" },
-    context: { en: "Informing that children are asleep", sn: "Kutaura kuti vana varere", nd: "Ukukhuluma ukuthi abantwana balele", sw: "Kusema watoto wamelala", zh: "告知孩子们在睡觉" },
+    pronunciation: {
+      english: "the CHIL-dren ar SLEE-ping",
+      shona: "VA-na va-RE-re",
+      ndebele: "a-ba-NTWA-na ba-LE-le",
+      swahili: "wa-TO-to wa-me-LA-la",
+      chinese: "hái zi men zài shuì jiào",
+    },
+    context: {
+      en: "Informing that children are asleep",
+      sn: "Kutaura kuti vana varere",
+      nd: "Ukukhuluma ukuthi abantwana balele",
+      sw: "Kusema watoto wamelala",
+      zh: "告知孩子们在睡觉",
+    },
   },
   {
     id: "home-7",
@@ -2570,8 +2714,20 @@ export const phrases: Phrase[] = [
     ndebele: "Akulamanzi lamuhla",
     swahili: "Hakuna maji leo",
     chinese: "今天没有水",
-    pronunciation: { english: "thair iz no WA-ter too-DAY", shona: "ha-KU-na MVU-ra NHA-si", ndebele: "a-ku-la-MA-nzi la-MU-hla", swahili: "ha-KU-na MA-ji LE-o", chinese: "jīn tiān méi yǒu shuǐ" },
-    context: { en: "Common challenge in many African homes", sn: "Dambudziko rinoitika kazhinji", nd: "Inkinga eyenzakala kanengi", sw: "Changamoto ya kawaida nyumbani", zh: "许多非洲家庭的常见问题" },
+    pronunciation: {
+      english: "thair iz no WA-ter too-DAY",
+      shona: "ha-KU-na MVU-ra NHA-si",
+      ndebele: "a-ku-la-MA-nzi la-MU-hla",
+      swahili: "ha-KU-na MA-ji LE-o",
+      chinese: "jīn tiān méi yǒu shuǐ",
+    },
+    context: {
+      en: "Common challenge in many African homes",
+      sn: "Dambudziko rinoitika kazhinji",
+      nd: "Inkinga eyenzakala kanengi",
+      sw: "Changamoto ya kawaida nyumbani",
+      zh: "许多非洲家庭的常见问题",
+    },
   },
   {
     id: "home-8",
@@ -2581,8 +2737,20 @@ export const phrases: Phrase[] = [
     ndebele: "Ngicela ucitshe isibane",
     swahili: "Tafadhali zima taa",
     chinese: "请关灯",
-    pronunciation: { english: "pleez turn off the lite", shona: "nda-PO-ta DZI-ma MWE-nje", ndebele: "ngi-CE-la u-CI-tshe i-si-BA-ne", swahili: "ta-fa-DHA-li ZI-ma TA-a", chinese: "qǐng guān dēng" },
-    context: { en: "Requesting lights be turned off", sn: "Kukumbira kudzima magetsi", nd: "Ukucela ukucitsha ugesi", sw: "Kuomba kuzima taa", zh: "请求关灯" },
+    pronunciation: {
+      english: "pleez turn off the lite",
+      shona: "nda-PO-ta DZI-ma MWE-nje",
+      ndebele: "ngi-CE-la u-CI-tshe i-si-BA-ne",
+      swahili: "ta-fa-DHA-li ZI-ma TA-a",
+      chinese: "qǐng guān dēng",
+    },
+    context: {
+      en: "Requesting lights be turned off",
+      sn: "Kukumbira kudzima magetsi",
+      nd: "Ukucela ukucitsha ugesi",
+      sw: "Kuomba kuzima taa",
+      zh: "请求关灯",
+    },
   },
 
   // SOCIAL - 10 phrases
@@ -2632,14 +2800,14 @@ export const phrases: Phrase[] = [
       zh: "计划见面",
     },
   },
-]
+];
 
 // Categories for organizing phrases
 export interface Category {
-  id: string
-  name: string
-  icon: string
-  description: string
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
 }
 
 export const categories: Category[] = [
@@ -2691,4 +2859,4 @@ export const categories: Category[] = [
     icon: "🤝",
     description: "Social interaction phrases",
   },
-]
+];

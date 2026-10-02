@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -9,123 +9,144 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
-} from 'react-native'
-import { useRouter } from 'expo-router'
-import { Plus, Pencil, Trash2, Search, X } from 'lucide-react-native'
+} from "react-native";
+import { useRouter } from "expo-router";
+import { Plus, Pencil, Trash2, Search, X } from "lucide-react-native";
 
-import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { phrasesApi, adminPhrasesApi } from '@/lib/services/api-client'
+import { useTheme } from "@/lib/hooks/useTheme";
+import { lightTheme, darkTheme, Colors } from "@/constants/Colors";
+import { phrasesApi, adminPhrasesApi } from "@/lib/services/api-client";
 
 const CATEGORIES = [
-  'all', 'greetings', 'family', 'shopping', 'food', 'directions',
-  'work', 'home', 'social', 'health', 'transport', 'emotions',
-  'school', 'money', 'weather',
-]
+  "all",
+  "greetings",
+  "family",
+  "shopping",
+  "food",
+  "directions",
+  "work",
+  "home",
+  "social",
+  "health",
+  "transport",
+  "emotions",
+  "school",
+  "money",
+  "weather",
+];
 
 interface PhraseItem {
-  id: string
-  category: string
-  english: string
-  shona: string
-  ndebele: string
-  chinese: string
-  difficulty: string
+  id: string;
+  category: string;
+  english: string;
+  shona: string;
+  ndebele: string;
+  chinese: string;
+  difficulty: string;
 }
 
 export default function AdminPhrasesListScreen() {
-  const { isDark } = useTheme()
-  const theme = isDark ? darkTheme : lightTheme
-  const router = useRouter()
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
+  const router = useRouter();
 
-  const [phrases, setPhrases] = useState<PhraseItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState('all')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [phrases, setPhrases] = useState<PhraseItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadPhrases = useCallback(async () => {
     try {
-      const params: Record<string, string> = {}
-      if (selectedCategory !== 'all') {
-        params.category = selectedCategory
+      const params: Record<string, string> = {};
+      if (selectedCategory !== "all") {
+        params.category = selectedCategory;
       }
-      const { data, error } = await phrasesApi.listPhrases(params)
+      const { data, error } = await phrasesApi.listPhrases(params);
       if (error) {
-        Alert.alert('Error', error)
-        return
+        Alert.alert("Error", error);
+        return;
       }
-      setPhrases(data || [])
+      setPhrases(data || []);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to load phrases')
+      Alert.alert("Error", err.message || "Failed to load phrases");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [selectedCategory])
+  }, [selectedCategory]);
 
   useEffect(() => {
-    setLoading(true)
-    loadPhrases()
-  }, [loadPhrases])
+    setLoading(true);
+    loadPhrases();
+  }, [loadPhrases]);
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true)
-    await loadPhrases()
-    setRefreshing(false)
-  }, [loadPhrases])
+    setRefreshing(true);
+    await loadPhrases();
+    setRefreshing(false);
+  }, [loadPhrases]);
 
   const handleDelete = (phrase: PhraseItem) => {
     Alert.alert(
-      'Delete Phrase',
+      "Delete Phrase",
       `Are you sure you want to delete "${phrase.english}"? This cannot be undone.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Delete',
-          style: 'destructive',
+          text: "Delete",
+          style: "destructive",
           onPress: async () => {
-            setDeletingId(phrase.id)
+            setDeletingId(phrase.id);
             try {
-              const { error } = await adminPhrasesApi.deletePhrase(phrase.id)
+              const { error } = await adminPhrasesApi.deletePhrase(phrase.id);
               if (error) {
-                Alert.alert('Error', error)
+                Alert.alert("Error", error);
               } else {
-                setPhrases(prev => prev.filter(p => p.id !== phrase.id))
+                setPhrases((prev) => prev.filter((p) => p.id !== phrase.id));
               }
             } catch (err: any) {
-              Alert.alert('Error', err.message || 'Failed to delete phrase')
+              Alert.alert("Error", err.message || "Failed to delete phrase");
             } finally {
-              setDeletingId(null)
+              setDeletingId(null);
             }
           },
         },
-      ]
-    )
-  }
+      ],
+    );
+  };
 
-  const filteredPhrases = phrases.filter(p => {
-    if (!searchQuery.trim()) return true
-    const q = searchQuery.toLowerCase()
+  const filteredPhrases = phrases.filter((p) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
     return (
       p.english.toLowerCase().includes(q) ||
       p.shona.toLowerCase().includes(q) ||
       p.ndebele.toLowerCase().includes(q) ||
       p.chinese.toLowerCase().includes(q)
-    )
-  })
+    );
+  });
 
-  const styles = createStyles(theme, isDark)
+  const styles = createStyles(theme, isDark);
 
   const renderItem = ({ item }: { item: PhraseItem }) => (
     <View style={styles.phraseCard}>
       <TouchableOpacity
         style={styles.phraseContent}
-        onPress={() => router.push({ pathname: '/admin/phrases/edit', params: { id: item.id } })}
+        onPress={() =>
+          router.push({
+            pathname: "/admin/phrases/edit",
+            params: { id: item.id },
+          })
+        }
         activeOpacity={0.7}
       >
-        <Text style={styles.phraseEnglish} numberOfLines={1}>{item.english}</Text>
-        <Text style={styles.phraseTranslation} numberOfLines={1}>{item.shona}</Text>
+        <Text style={styles.phraseEnglish} numberOfLines={1}>
+          {item.english}
+        </Text>
+        <Text style={styles.phraseTranslation} numberOfLines={1}>
+          {item.shona}
+        </Text>
         <View style={styles.phraseMeta}>
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryBadgeText}>{item.category}</Text>
@@ -136,7 +157,12 @@ export default function AdminPhrasesListScreen() {
       <View style={styles.phraseActions}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => router.push({ pathname: '/admin/phrases/edit', params: { id: item.id } })}
+          onPress={() =>
+            router.push({
+              pathname: "/admin/phrases/edit",
+              params: { id: item.id },
+            })
+          }
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Pencil size={18} color={theme.primary} />
@@ -155,7 +181,7 @@ export default function AdminPhrasesListScreen() {
         </TouchableOpacity>
       </View>
     </View>
-  )
+  );
 
   return (
     <View style={styles.container}>
@@ -171,7 +197,7 @@ export default function AdminPhrasesListScreen() {
             placeholderTextColor={theme.textMuted}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
               <X size={18} color={theme.textMuted} />
             </TouchableOpacity>
           )}
@@ -182,7 +208,7 @@ export default function AdminPhrasesListScreen() {
       <FlatList
         horizontal
         data={CATEGORIES}
-        keyExtractor={item => item}
+        keyExtractor={(item) => item}
         showsHorizontalScrollIndicator={false}
         style={styles.categoryScroll}
         contentContainerStyle={styles.categoryContent}
@@ -200,7 +226,9 @@ export default function AdminPhrasesListScreen() {
                 selectedCategory === item && styles.categoryPillTextActive,
               ]}
             >
-              {item === 'all' ? 'All' : item.charAt(0).toUpperCase() + item.slice(1)}
+              {item === "all"
+                ? "All"
+                : item.charAt(0).toUpperCase() + item.slice(1)}
             </Text>
           </TouchableOpacity>
         )}
@@ -209,7 +237,7 @@ export default function AdminPhrasesListScreen() {
       {/* Add Phrase Button */}
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => router.push('/admin/phrases/edit')}
+        onPress={() => router.push("/admin/phrases/edit")}
         activeOpacity={0.8}
       >
         <Plus size={20} color="#ffffff" />
@@ -225,28 +253,33 @@ export default function AdminPhrasesListScreen() {
       ) : (
         <FlatList
           data={filteredPhrases}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>
-                {searchQuery ? 'No phrases match your search' : 'No phrases found'}
+                {searchQuery
+                  ? "No phrases match your search"
+                  : "No phrases found"}
               </Text>
             </View>
           }
           ListFooterComponent={
             filteredPhrases.length > 0 ? (
               <Text style={styles.countText}>
-                {filteredPhrases.length} phrase{filteredPhrases.length !== 1 ? 's' : ''}
+                {filteredPhrases.length} phrase
+                {filteredPhrases.length !== 1 ? "s" : ""}
               </Text>
             ) : null
           }
         />
       )}
     </View>
-  )
+  );
 }
 
 const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
@@ -261,8 +294,8 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       paddingBottom: 8,
     },
     searchBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       backgroundColor: theme.card,
       borderRadius: 10,
       paddingHorizontal: 12,
@@ -299,16 +332,16 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     categoryPillText: {
       fontSize: 13,
-      fontWeight: '500',
+      fontWeight: "500",
       color: theme.text,
     },
     categoryPillTextActive: {
-      color: '#ffffff',
+      color: "#ffffff",
     },
     addButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: theme.primary,
       marginHorizontal: 16,
       marginVertical: 8,
@@ -317,14 +350,14 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       gap: 8,
     },
     addButtonText: {
-      color: '#ffffff',
+      color: "#ffffff",
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     loadingContainer: {
       flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
       gap: 12,
     },
     loadingText: {
@@ -337,7 +370,7 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       gap: 10,
     },
     phraseCard: {
-      flexDirection: 'row',
+      flexDirection: "row",
       backgroundColor: theme.card,
       borderRadius: 12,
       padding: 14,
@@ -351,30 +384,30 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
     },
     phraseEnglish: {
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
       marginBottom: 4,
     },
     phraseTranslation: {
       fontSize: 14,
       color: theme.primary,
-      fontStyle: 'italic',
+      fontStyle: "italic",
       marginBottom: 8,
     },
     phraseMeta: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 8,
     },
     categoryBadge: {
-      backgroundColor: theme.secondary + '20',
+      backgroundColor: theme.secondary + "20",
       paddingHorizontal: 8,
       paddingVertical: 2,
       borderRadius: 8,
     },
     categoryBadgeText: {
       fontSize: 11,
-      fontWeight: '500',
+      fontWeight: "500",
       color: isDark ? Colors.secondary[300] : Colors.secondary[600],
     },
     difficultyText: {
@@ -382,14 +415,14 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       color: theme.textMuted,
     },
     phraseActions: {
-      justifyContent: 'center',
+      justifyContent: "center",
       gap: 12,
     },
     actionButton: {
       padding: 6,
     },
     emptyState: {
-      alignItems: 'center',
+      alignItems: "center",
       paddingVertical: 60,
     },
     emptyText: {
@@ -397,9 +430,9 @@ const createStyles = (theme: typeof lightTheme, isDark: boolean) =>
       color: theme.textMuted,
     },
     countText: {
-      textAlign: 'center',
+      textAlign: "center",
       fontSize: 13,
       color: theme.textMuted,
       paddingVertical: 16,
     },
-  })
+  });

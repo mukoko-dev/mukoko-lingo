@@ -12,26 +12,29 @@
  */
 
 export interface SkillLookupCollection {
-  find: (filter: any) => { toArray: () => Promise<any[]> }
+  find: (filter: any) => { toArray: () => Promise<any[]> };
 }
 
 /** Map of the values asked for → `skills._id`. Unknown values are absent. */
 export async function resolveSkillIds(
   skillsCol: SkillLookupCollection,
-  values: string[]
+  values: string[],
 ): Promise<Map<string, string>> {
-  const wanted = Array.from(new Set(values.filter(Boolean)))
-  if (wanted.length === 0) return new Map()
+  const wanted = Array.from(new Set(values.filter(Boolean)));
+  if (wanted.length === 0) return new Map();
 
-  const docs = await skillsCol.find({ $or: [{ _id: { $in: wanted } }, { name: { $in: wanted } }] }).toArray()
+  const docs = await skillsCol
+    .find({ $or: [{ _id: { $in: wanted } }, { name: { $in: wanted } }] })
+    .toArray();
 
-  const byValue = new Map<string, string>()
+  const byValue = new Map<string, string>();
   for (const doc of docs) {
-    const id = String(doc._id)
-    if (wanted.includes(id)) byValue.set(id, id)
-    if (typeof doc.name === 'string' && wanted.includes(doc.name)) byValue.set(doc.name, id)
+    const id = String(doc._id);
+    if (wanted.includes(id)) byValue.set(id, id);
+    if (typeof doc.name === "string" && wanted.includes(doc.name))
+      byValue.set(doc.name, id);
   }
-  return byValue
+  return byValue;
 }
 
 /**
@@ -42,11 +45,13 @@ export async function resolveSkillIds(
  */
 export async function resolveSkillName(
   skillsCol: SkillLookupCollection,
-  value: string
+  value: string,
 ): Promise<string | null> {
-  if (!value) return null
-  const docs = await skillsCol.find({ $or: [{ _id: value }, { name: value }] }).toArray()
-  const doc = docs[0]
-  if (!doc || typeof doc.name !== 'string') return null
-  return doc.name
+  if (!value) return null;
+  const docs = await skillsCol
+    .find({ $or: [{ _id: value }, { name: value }] })
+    .toArray();
+  const doc = docs[0];
+  if (!doc || typeof doc.name !== "string") return null;
+  return doc.name;
 }

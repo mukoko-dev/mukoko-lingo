@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -13,9 +13,9 @@ import {
   ActionSheetIOS,
   Appearance,
   Image,
-} from 'react-native'
-import { useRouter } from 'expo-router'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+} from "react-native";
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   User,
   Globe,
@@ -31,255 +31,273 @@ import {
   X,
   Check,
   BookOpen,
-} from 'lucide-react-native'
+} from "lucide-react-native";
 
-import { useColorScheme } from '@/components/useColorScheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { getCurrentUser, signOut } from '@/lib/auth/workos-client'
-import { getStudyStreak, getStudySessions, getBookmarks, getProgress } from '@/lib/storage/database'
-import { getXPData, getLevelInfo, type LevelInfo } from '@/lib/services/xp'
-import { useLearningLanguage, LEARNING_LANGUAGES, LearningLanguage } from '@/lib/hooks/useLearningLanguage'
-import { LevelBadge } from '@/components/LevelBadge'
+import { useColorScheme } from "@/components/useColorScheme";
+import { lightTheme, darkTheme, Colors } from "@/constants/Colors";
+import { getCurrentUser, signOut } from "@/lib/auth/workos-client";
+import {
+  getStudyStreak,
+  getStudySessions,
+  getBookmarks,
+  getProgress,
+} from "@/lib/storage/database";
+import { getXPData, getLevelInfo, type LevelInfo } from "@/lib/services/xp";
+import {
+  useLearningLanguage,
+  LEARNING_LANGUAGES,
+  LearningLanguage,
+} from "@/lib/hooks/useLearningLanguage";
+import { LevelBadge } from "@/components/LevelBadge";
 import {
   isNotificationsEnabled,
   setNotificationsEnabled,
-} from '@/lib/services/notifications'
+} from "@/lib/services/notifications";
 import {
   isOfflineMode as getOfflineMode,
   setOfflineMode as persistOfflineMode,
-} from '@/lib/services/offline'
+} from "@/lib/services/offline";
 
-type UILanguage = 'en' | 'sn' | 'nd' | 'sw' | 'zh'
-type ThemePreference = 'light' | 'dark' | 'system'
+type UILanguage = "en" | "sn" | "nd" | "sw" | "zh";
+type ThemePreference = "light" | "dark" | "system";
 
 const LANGUAGES: { code: UILanguage; name: string; nativeName: string }[] = [
-  { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'sn', name: 'Shona', nativeName: 'chiShona' },
-  { code: 'nd', name: 'Ndebele', nativeName: 'isiNdebele' },
-  { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili' },
-  { code: 'zh', name: 'Chinese', nativeName: '中文' },
-]
+  { code: "en", name: "English", nativeName: "English" },
+  { code: "sn", name: "Shona", nativeName: "chiShona" },
+  { code: "nd", name: "Ndebele", nativeName: "isiNdebele" },
+  { code: "sw", name: "Swahili", nativeName: "Kiswahili" },
+  { code: "zh", name: "Chinese", nativeName: "中文" },
+];
 
 const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-  { value: 'system', label: 'System' },
-]
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "system", label: "System" },
+];
 
 // Storage keys
 const STORAGE_KEYS = {
-  UI_LANGUAGE: '@mukoko_ui_language',
-  THEME_PREFERENCE: '@mukoko_theme_preference',
-}
+  UI_LANGUAGE: "@mukoko_ui_language",
+  THEME_PREFERENCE: "@mukoko_theme_preference",
+};
 
 // URLs
 const URLS = {
-  HELP_CENTER: 'https://support.mukoko.com',
-  PRIVACY_POLICY: 'https://lingo.mukoko.com/privacy',
-  TERMS: 'https://lingo.mukoko.com/terms',
-  WEBSITE: 'https://lingo.mukoko.com',
-  ABOUT_PROJECT: 'https://mukoko.com/products/mukoko-lingo',
-}
+  HELP_CENTER: "https://support.mukoko.com",
+  PRIVACY_POLICY: "https://lingo.mukoko.com/privacy",
+  TERMS: "https://lingo.mukoko.com/terms",
+  WEBSITE: "https://lingo.mukoko.com",
+  ABOUT_PROJECT: "https://mukoko.com/products/mukoko-lingo",
+};
 
-export { RouteErrorBoundary as ErrorBoundary } from '@/components/RouteErrorBoundary'
+export { RouteErrorBoundary as ErrorBoundary } from "@/components/RouteErrorBoundary";
 
 export default function ProfileScreen() {
-  const colorScheme = useColorScheme()
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme
-  const router = useRouter()
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
+  const router = useRouter();
 
-  const [user, setUser] = useState<any>(null)
-  const [streak, setStreak] = useState(0)
-  const [sessionsCount, setSessions] = useState(0)
-  const [bookmarksCount, setBookmarksCount] = useState(0)
-  const [masteredCount, setMasteredCount] = useState(0)
-  const [levelInfo, setLevelInfo] = useState<LevelInfo | null>(null)
-  const [todayXP, setTodayXP] = useState(0)
-  const [dailyXPGoal, setDailyXPGoal] = useState(50)
-  const [uiLanguage, setUILanguage] = useState<UILanguage>('en')
-  const [themePreference, setThemePreference] = useState<ThemePreference>('system')
-  const [notifications, setNotifications] = useState(true)
-  const [offlineMode, setOfflineMode] = useState(false)
+  const [user, setUser] = useState<any>(null);
+  const [streak, setStreak] = useState(0);
+  const [sessionsCount, setSessions] = useState(0);
+  const [bookmarksCount, setBookmarksCount] = useState(0);
+  const [masteredCount, setMasteredCount] = useState(0);
+  const [levelInfo, setLevelInfo] = useState<LevelInfo | null>(null);
+  const [todayXP, setTodayXP] = useState(0);
+  const [dailyXPGoal, setDailyXPGoal] = useState(50);
+  const [uiLanguage, setUILanguage] = useState<UILanguage>("en");
+  const [themePreference, setThemePreference] =
+    useState<ThemePreference>("system");
+  const [notifications, setNotifications] = useState(true);
+  const [offlineMode, setOfflineMode] = useState(false);
 
-  const { learningLanguage, setLearningLanguage, learningLanguageOption } = useLearningLanguage()
+  const { learningLanguage, setLearningLanguage, learningLanguageOption } =
+    useLearningLanguage();
 
   // Modal states
-  const [languageModalVisible, setLanguageModalVisible] = useState(false)
-  const [learningLanguageModalVisible, setLearningLanguageModalVisible] = useState(false)
-  const [themeModalVisible, setThemeModalVisible] = useState(false)
-  const [aboutModalVisible, setAboutModalVisible] = useState(false)
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [learningLanguageModalVisible, setLearningLanguageModalVisible] =
+    useState(false);
+  const [themeModalVisible, setThemeModalVisible] = useState(false);
+  const [aboutModalVisible, setAboutModalVisible] = useState(false);
 
   useEffect(() => {
-    loadData()
-    loadPreferences()
-  }, [])
+    loadData();
+    loadPreferences();
+  }, []);
 
   const loadData = async () => {
-    const [currentUser, studyStreak, sessions, bookmarks, progress, xpData] = await Promise.all([
-      getCurrentUser(),
-      getStudyStreak(),
-      getStudySessions(),
-      getBookmarks(),
-      getProgress(),
-      getXPData(),
-    ])
-    setUser(currentUser)
-    setStreak(studyStreak)
-    setSessions(sessions.length)
-    setBookmarksCount(bookmarks.length)
-    setMasteredCount(Object.values(progress).filter(p => p.status === 'mastered').length)
-    setLevelInfo(getLevelInfo(xpData.totalXP))
-    setTodayXP(xpData.todayXP)
-    setDailyXPGoal(xpData.dailyGoal)
-  }
+    const [currentUser, studyStreak, sessions, bookmarks, progress, xpData] =
+      await Promise.all([
+        getCurrentUser(),
+        getStudyStreak(),
+        getStudySessions(),
+        getBookmarks(),
+        getProgress(),
+        getXPData(),
+      ]);
+    setUser(currentUser);
+    setStreak(studyStreak);
+    setSessions(sessions.length);
+    setBookmarksCount(bookmarks.length);
+    setMasteredCount(
+      Object.values(progress).filter((p) => p.status === "mastered").length,
+    );
+    setLevelInfo(getLevelInfo(xpData.totalXP));
+    setTodayXP(xpData.todayXP);
+    setDailyXPGoal(xpData.dailyGoal);
+  };
 
   const loadPreferences = async () => {
     try {
-      const [savedLanguage, savedTheme, notifEnabled, offlineEnabled] = await Promise.all([
-        AsyncStorage.getItem(STORAGE_KEYS.UI_LANGUAGE),
-        AsyncStorage.getItem(STORAGE_KEYS.THEME_PREFERENCE),
-        isNotificationsEnabled(),
-        getOfflineMode(),
-      ])
-      if (savedLanguage) setUILanguage(savedLanguage as UILanguage)
-      if (savedTheme) setThemePreference(savedTheme as ThemePreference)
-      setNotifications(notifEnabled)
-      setOfflineMode(offlineEnabled)
+      const [savedLanguage, savedTheme, notifEnabled, offlineEnabled] =
+        await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEYS.UI_LANGUAGE),
+          AsyncStorage.getItem(STORAGE_KEYS.THEME_PREFERENCE),
+          isNotificationsEnabled(),
+          getOfflineMode(),
+        ]);
+      if (savedLanguage) setUILanguage(savedLanguage as UILanguage);
+      if (savedTheme) setThemePreference(savedTheme as ThemePreference);
+      setNotifications(notifEnabled);
+      setOfflineMode(offlineEnabled);
     } catch (error) {
-      console.error('Error loading preferences:', error)
+      console.error("Error loading preferences:", error);
     }
-  }
+  };
 
   const handleLanguageChange = async (language: UILanguage) => {
-    setUILanguage(language)
-    setLanguageModalVisible(false)
+    setUILanguage(language);
+    setLanguageModalVisible(false);
     try {
-      await AsyncStorage.setItem(STORAGE_KEYS.UI_LANGUAGE, language)
+      await AsyncStorage.setItem(STORAGE_KEYS.UI_LANGUAGE, language);
     } catch (error) {
-      console.error('Error saving language preference:', error)
+      console.error("Error saving language preference:", error);
     }
-  }
+  };
 
   const handleThemeChange = async (preference: ThemePreference) => {
-    setThemePreference(preference)
-    setThemeModalVisible(false)
+    setThemePreference(preference);
+    setThemeModalVisible(false);
     try {
-      await AsyncStorage.setItem(STORAGE_KEYS.THEME_PREFERENCE, preference)
+      await AsyncStorage.setItem(STORAGE_KEYS.THEME_PREFERENCE, preference);
       // Apply theme change
-      if (preference === 'system') {
-        Appearance.setColorScheme('unspecified')
+      if (preference === "system") {
+        Appearance.setColorScheme("unspecified");
       } else {
-        Appearance.setColorScheme(preference)
+        Appearance.setColorScheme(preference);
       }
     } catch (error) {
-      console.error('Error saving theme preference:', error)
+      console.error("Error saving theme preference:", error);
     }
-  }
+  };
 
   const handleNotificationsToggle = async (enabled: boolean) => {
-    setNotifications(enabled)
+    setNotifications(enabled);
     try {
-      await setNotificationsEnabled(enabled, streak)
+      await setNotificationsEnabled(enabled, streak);
     } catch (error) {
-      console.error('Error toggling notifications:', error)
+      console.error("Error toggling notifications:", error);
       // Revert on failure
-      setNotifications(!enabled)
-      Alert.alert('Error', 'Failed to update notification settings. Please try again.')
+      setNotifications(!enabled);
+      Alert.alert(
+        "Error",
+        "Failed to update notification settings. Please try again.",
+      );
     }
-  }
+  };
 
   const handleOfflineModeToggle = async (enabled: boolean) => {
-    setOfflineMode(enabled)
+    setOfflineMode(enabled);
     try {
-      await persistOfflineMode(enabled)
+      await persistOfflineMode(enabled);
       if (enabled) {
         Alert.alert(
-          'Offline Mode Enabled',
-          'Your phrases and learning data have been cached for offline use.'
-        )
+          "Offline Mode Enabled",
+          "Your phrases and learning data have been cached for offline use.",
+        );
       }
     } catch (error) {
-      console.error('Error toggling offline mode:', error)
-      setOfflineMode(!enabled)
-      Alert.alert('Error', 'Failed to update offline mode. Please try again.')
+      console.error("Error toggling offline mode:", error);
+      setOfflineMode(!enabled);
+      Alert.alert("Error", "Failed to update offline mode. Please try again.");
     }
-  }
+  };
 
   const openLanguageSelector = () => {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: ['Cancel', ...LANGUAGES.map(l => `${l.name} (${l.nativeName})`)],
+          options: [
+            "Cancel",
+            ...LANGUAGES.map((l) => `${l.name} (${l.nativeName})`),
+          ],
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
           if (buttonIndex > 0) {
-            handleLanguageChange(LANGUAGES[buttonIndex - 1].code)
+            handleLanguageChange(LANGUAGES[buttonIndex - 1].code);
           }
-        }
-      )
+        },
+      );
     } else {
-      setLanguageModalVisible(true)
+      setLanguageModalVisible(true);
     }
-  }
+  };
 
   const openThemeSelector = () => {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: ['Cancel', ...THEME_OPTIONS.map(t => t.label)],
+          options: ["Cancel", ...THEME_OPTIONS.map((t) => t.label)],
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
           if (buttonIndex > 0) {
-            handleThemeChange(THEME_OPTIONS[buttonIndex - 1].value)
+            handleThemeChange(THEME_OPTIONS[buttonIndex - 1].value);
           }
-        }
-      )
+        },
+      );
     } else {
-      setThemeModalVisible(true)
+      setThemeModalVisible(true);
     }
-  }
+  };
 
   const openURL = async (url: string) => {
     try {
-      const supported = await Linking.canOpenURL(url)
+      const supported = await Linking.canOpenURL(url);
       if (supported) {
-        await Linking.openURL(url)
+        await Linking.openURL(url);
       } else {
-        Alert.alert('Error', `Cannot open URL: ${url}`)
+        Alert.alert("Error", `Cannot open URL: ${url}`);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to open link')
+      Alert.alert("Error", "Failed to open link");
     }
-  }
+  };
 
   const handleSignOut = async () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await signOut()
-            router.replace('/auth' as const)
-          },
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: async () => {
+          await signOut();
+          router.replace("/auth" as const);
         },
-      ]
-    )
-  }
+      },
+    ]);
+  };
 
   const getThemeDisplayValue = () => {
-    if (themePreference === 'system') {
-      return `System (${colorScheme === 'dark' ? 'Dark' : 'Light'})`
+    if (themePreference === "system") {
+      return `System (${colorScheme === "dark" ? "Dark" : "Light"})`;
     }
-    return themePreference === 'dark' ? 'Dark' : 'Light'
-  }
+    return themePreference === "dark" ? "Dark" : "Light";
+  };
 
-  const styles = createStyles(theme)
+  const styles = createStyles(theme);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -290,10 +308,10 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.headerInfo}>
           <Text style={styles.userName}>
-            {user?.email?.split('@')[0] || 'Language Learner'}
+            {user?.email?.split("@")[0] || "Language Learner"}
           </Text>
           <Text style={styles.userEmail}>
-            {user?.email || 'Sign in to sync progress'}
+            {user?.email || "Sign in to sync progress"}
           </Text>
         </View>
       </View>
@@ -313,35 +331,46 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Preferences</Text>
 
-        <TouchableOpacity style={styles.settingItem} onPress={openLanguageSelector}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={openLanguageSelector}
+        >
           <View style={styles.settingIcon}>
             <Globe size={20} color={theme.primary} />
           </View>
           <View style={styles.settingContent}>
             <Text style={styles.settingLabel}>UI Language</Text>
             <Text style={styles.settingValue}>
-              {LANGUAGES.find(l => l.code === uiLanguage)?.name} ({LANGUAGES.find(l => l.code === uiLanguage)?.nativeName})
+              {LANGUAGES.find((l) => l.code === uiLanguage)?.name} (
+              {LANGUAGES.find((l) => l.code === uiLanguage)?.nativeName})
             </Text>
           </View>
           <ChevronRight size={20} color={theme.textMuted} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem} onPress={() => setLearningLanguageModalVisible(true)}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => setLearningLanguageModalVisible(true)}
+        >
           <View style={styles.settingIcon}>
             <BookOpen size={20} color={theme.primary} />
           </View>
           <View style={styles.settingContent}>
             <Text style={styles.settingLabel}>Learning Language</Text>
             <Text style={styles.settingValue}>
-              {learningLanguageOption.flag} {learningLanguageOption.name} ({learningLanguageOption.nativeName})
+              {learningLanguageOption.flag} {learningLanguageOption.name} (
+              {learningLanguageOption.nativeName})
             </Text>
           </View>
           <ChevronRight size={20} color={theme.textMuted} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem} onPress={openThemeSelector}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={openThemeSelector}
+        >
           <View style={styles.settingIcon}>
-            {colorScheme === 'dark' ? (
+            {colorScheme === "dark" ? (
               <Moon size={20} color={theme.primary} />
             ) : (
               <Sun size={20} color={theme.primary} />
@@ -391,7 +420,10 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Support</Text>
 
-        <TouchableOpacity style={styles.settingItem} onPress={() => openURL(URLS.HELP_CENTER)}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => openURL(URLS.HELP_CENTER)}
+        >
           <View style={styles.settingIcon}>
             <HelpCircle size={20} color={theme.secondary} />
           </View>
@@ -401,7 +433,10 @@ export default function ProfileScreen() {
           <ChevronRight size={20} color={theme.textMuted} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem} onPress={() => openURL(URLS.PRIVACY_POLICY)}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => openURL(URLS.PRIVACY_POLICY)}
+        >
           <View style={styles.settingIcon}>
             <Shield size={20} color={theme.secondary} />
           </View>
@@ -411,7 +446,10 @@ export default function ProfileScreen() {
           <ChevronRight size={20} color={theme.textMuted} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem} onPress={() => openURL(URLS.TERMS)}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => openURL(URLS.TERMS)}
+        >
           <View style={styles.settingIcon}>
             <Shield size={20} color={theme.secondary} />
           </View>
@@ -421,7 +459,10 @@ export default function ProfileScreen() {
           <ChevronRight size={20} color={theme.textMuted} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.settingItem} onPress={() => setAboutModalVisible(true)}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => setAboutModalVisible(true)}
+        >
           <View style={styles.settingIcon}>
             <Heart size={20} color={theme.accent} />
           </View>
@@ -468,7 +509,9 @@ export default function ProfileScreen() {
               >
                 <View style={styles.modalOptionContent}>
                   <Text style={styles.modalOptionText}>{lang.name}</Text>
-                  <Text style={styles.modalOptionSubtext}>{lang.nativeName}</Text>
+                  <Text style={styles.modalOptionSubtext}>
+                    {lang.nativeName}
+                  </Text>
                 </View>
                 {uiLanguage === lang.code && (
                   <Check size={20} color={theme.primary} />
@@ -494,7 +537,9 @@ export default function ProfileScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Learning Language</Text>
-              <TouchableOpacity onPress={() => setLearningLanguageModalVisible(false)}>
+              <TouchableOpacity
+                onPress={() => setLearningLanguageModalVisible(false)}
+              >
                 <X size={24} color={theme.text} />
               </TouchableOpacity>
             </View>
@@ -503,13 +548,17 @@ export default function ProfileScreen() {
                 key={lang.key}
                 style={styles.modalOption}
                 onPress={() => {
-                  setLearningLanguage(lang.key)
-                  setLearningLanguageModalVisible(false)
+                  setLearningLanguage(lang.key);
+                  setLearningLanguageModalVisible(false);
                 }}
               >
                 <View style={styles.modalOptionContent}>
-                  <Text style={styles.modalOptionText}>{lang.flag} {lang.name}</Text>
-                  <Text style={styles.modalOptionSubtext}>{lang.nativeName}</Text>
+                  <Text style={styles.modalOptionText}>
+                    {lang.flag} {lang.name}
+                  </Text>
+                  <Text style={styles.modalOptionSubtext}>
+                    {lang.nativeName}
+                  </Text>
                 </View>
                 {learningLanguage === lang.key && (
                   <Check size={20} color={theme.primary} />
@@ -547,8 +596,10 @@ export default function ProfileScreen() {
               >
                 <View style={styles.modalOptionContent}>
                   <Text style={styles.modalOptionText}>{option.label}</Text>
-                  {option.value === 'system' && (
-                    <Text style={styles.modalOptionSubtext}>Follow device settings</Text>
+                  {option.value === "system" && (
+                    <Text style={styles.modalOptionSubtext}>
+                      Follow device settings
+                    </Text>
                   )}
                 </View>
                 {themePreference === option.value && (
@@ -582,7 +633,7 @@ export default function ProfileScreen() {
 
             <View style={styles.aboutLogo}>
               <Image
-                source={require('@/assets/images/icon.png')}
+                source={require("@/assets/images/icon.png")}
                 style={styles.aboutLogoImage}
                 resizeMode="contain"
               />
@@ -592,21 +643,23 @@ export default function ProfileScreen() {
             <Text style={styles.aboutVersion}>Version 1.0.0</Text>
 
             <Text style={styles.aboutDescription}>
-              Mukoko Lingo is an AI-powered language learning platform designed to help you
-              master African languages through native phrase learning and personalized AI tutoring.
+              Mukoko Lingo is an AI-powered language learning platform designed
+              to help you master African languages through native phrase
+              learning and personalized AI tutoring.
             </Text>
 
             <Text style={styles.aboutDescription}>
-              Learn Shona, Ndebele, Swahili, Chinese, and English with our friendly AI mascot,
-              Shamwari, who adapts to your learning style and pace.
+              Learn Shona, Ndebele, Swahili, Chinese, and English with our
+              friendly AI mascot, Shamwari, who adapts to your learning style
+              and pace.
             </Text>
 
             <View style={styles.aboutLinks}>
               <TouchableOpacity
                 style={styles.aboutLink}
                 onPress={() => {
-                  setAboutModalVisible(false)
-                  openURL(URLS.WEBSITE)
+                  setAboutModalVisible(false);
+                  openURL(URLS.WEBSITE);
                 }}
               >
                 <Globe size={16} color={theme.primary} />
@@ -616,8 +669,8 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 style={styles.aboutLink}
                 onPress={() => {
-                  setAboutModalVisible(false)
-                  openURL(URLS.ABOUT_PROJECT)
+                  setAboutModalVisible(false);
+                  openURL(URLS.ABOUT_PROJECT);
                 }}
               >
                 <Heart size={16} color={theme.accent} />
@@ -632,7 +685,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </Modal>
     </ScrollView>
-  )
+  );
 }
 
 const createStyles = (theme: typeof lightTheme) =>
@@ -645,8 +698,8 @@ const createStyles = (theme: typeof lightTheme) =>
       padding: 16,
     },
     header: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       backgroundColor: theme.card,
       borderRadius: 16,
       padding: 16,
@@ -656,9 +709,9 @@ const createStyles = (theme: typeof lightTheme) =>
       width: 64,
       height: 64,
       borderRadius: 32,
-      backgroundColor: theme.primary + '20',
-      alignItems: 'center',
-      justifyContent: 'center',
+      backgroundColor: theme.primary + "20",
+      alignItems: "center",
+      justifyContent: "center",
       marginRight: 16,
     },
     headerInfo: {
@@ -666,7 +719,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     userName: {
       fontSize: 18,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
       marginBottom: 4,
     },
@@ -675,7 +728,7 @@ const createStyles = (theme: typeof lightTheme) =>
       color: theme.textSecondary,
     },
     statsContainer: {
-      flexDirection: 'row',
+      flexDirection: "row",
       backgroundColor: theme.card,
       borderRadius: 16,
       padding: 16,
@@ -683,7 +736,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     statItem: {
       flex: 1,
-      alignItems: 'center',
+      alignItems: "center",
     },
     statDivider: {
       width: 1,
@@ -691,7 +744,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     statValue: {
       fontSize: 24,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
     },
     statLabel: {
@@ -707,16 +760,16 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     sectionTitle: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.textMuted,
       marginBottom: 8,
       marginLeft: 4,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
       letterSpacing: 0.5,
     },
     settingItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       backgroundColor: theme.card,
       paddingVertical: 14,
       paddingHorizontal: 16,
@@ -728,8 +781,8 @@ const createStyles = (theme: typeof lightTheme) =>
       height: 36,
       borderRadius: 8,
       backgroundColor: theme.background,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       marginRight: 12,
     },
     settingContent: {
@@ -754,9 +807,9 @@ const createStyles = (theme: typeof lightTheme) =>
       color: theme.textMuted,
     },
     signOutButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: theme.card,
       borderRadius: 12,
       padding: 16,
@@ -765,11 +818,11 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     signOutText: {
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
       color: Colors.semanticError,
     },
     version: {
-      textAlign: 'center',
+      textAlign: "center",
       fontSize: 12,
       color: theme.textMuted,
       marginBottom: 32,
@@ -777,34 +830,34 @@ const createStyles = (theme: typeof lightTheme) =>
     // Modal styles
     modalOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      justifyContent: 'center',
-      alignItems: 'center',
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      justifyContent: "center",
+      alignItems: "center",
       padding: 20,
     },
     modalContent: {
       backgroundColor: theme.card,
       borderRadius: 16,
-      width: '100%',
+      width: "100%",
       maxWidth: 400,
-      overflow: 'hidden',
+      overflow: "hidden",
     },
     modalHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
       padding: 16,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
     },
     modalTitle: {
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.text,
     },
     modalOption: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       padding: 16,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
@@ -827,7 +880,7 @@ const createStyles = (theme: typeof lightTheme) =>
       paddingTop: 0,
     },
     aboutLogo: {
-      alignItems: 'center',
+      alignItems: "center",
       marginVertical: 20,
     },
     aboutLogoImage: {
@@ -837,44 +890,44 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     aboutName: {
       fontSize: 24,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
-      textAlign: 'center',
+      textAlign: "center",
     },
     aboutVersion: {
       fontSize: 14,
       color: theme.textMuted,
-      textAlign: 'center',
+      textAlign: "center",
       marginTop: 4,
       marginBottom: 20,
     },
     aboutDescription: {
       fontSize: 14,
       color: theme.textSecondary,
-      textAlign: 'center',
+      textAlign: "center",
       lineHeight: 22,
       marginBottom: 16,
     },
     aboutLinks: {
-      flexDirection: 'row',
-      justifyContent: 'center',
+      flexDirection: "row",
+      justifyContent: "center",
       gap: 24,
       marginTop: 8,
       marginBottom: 20,
     },
     aboutLink: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 6,
     },
     aboutLinkText: {
       fontSize: 14,
       color: theme.primary,
-      fontWeight: '500',
+      fontWeight: "500",
     },
     aboutCopyright: {
       fontSize: 12,
       color: theme.textMuted,
-      textAlign: 'center',
+      textAlign: "center",
     },
-  })
+  });

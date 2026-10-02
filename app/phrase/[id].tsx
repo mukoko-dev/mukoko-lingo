@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-} from 'react-native'
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
+} from "react-native";
+import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import {
   Volume2,
   Bookmark,
@@ -14,11 +14,11 @@ import {
   ChevronLeft,
   Check,
   X,
-} from 'lucide-react-native'
+} from "lucide-react-native";
 
-import { useColorScheme } from '@/components/useColorScheme'
-import { lightTheme, darkTheme, Colors } from '@/constants/Colors'
-import { phrases, categories, Phrase } from '@/lib/data/phrases-data'
+import { useColorScheme } from "@/components/useColorScheme";
+import { lightTheme, darkTheme, Colors } from "@/constants/Colors";
+import { phrases, categories, Phrase } from "@/lib/data/phrases-data";
 import {
   isBookmarked as checkBookmarked,
   addBookmark,
@@ -26,112 +26,122 @@ import {
   updateProgress,
   updateUserSkill,
   getUserSkills,
-} from '@/lib/storage/database'
-import { useLearningLanguage } from '@/lib/hooks/useLearningLanguage'
-import { getSkillForCategory } from '@/lib/services/daily-lesson'
+} from "@/lib/storage/database";
+import { useLearningLanguage } from "@/lib/hooks/useLearningLanguage";
+import { getSkillForCategory } from "@/lib/services/daily-lesson";
 
-type Language = 'english' | 'shona' | 'ndebele' | 'swahili' | 'chinese'
+type Language = "english" | "shona" | "ndebele" | "swahili" | "chinese";
 
 const LANGUAGES: { key: Language; name: string; flag: string }[] = [
-  { key: 'english', name: 'English', flag: '🇬🇧' },
-  { key: 'shona', name: 'Shona', flag: '🇿🇼' },
-  { key: 'ndebele', name: 'Ndebele', flag: '🇿🇼' },
-  { key: 'swahili', name: 'Swahili', flag: '🇰🇪' },
-  { key: 'chinese', name: 'Chinese', flag: '🇨🇳' },
-]
+  { key: "english", name: "English", flag: "🇬🇧" },
+  { key: "shona", name: "Shona", flag: "🇿🇼" },
+  { key: "ndebele", name: "Ndebele", flag: "🇿🇼" },
+  { key: "swahili", name: "Swahili", flag: "🇰🇪" },
+  { key: "chinese", name: "Chinese", flag: "🇨🇳" },
+];
 
 export default function PhraseDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>()
-  const router = useRouter()
-  const colorScheme = useColorScheme()
-  const theme = colorScheme === 'dark' ? darkTheme : lightTheme
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? darkTheme : lightTheme;
 
-  const { learningLanguage } = useLearningLanguage()
-  const [phrase, setPhrase] = useState<Phrase | null>(null)
-  const [isBookmarked, setIsBookmarked] = useState(false)
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>(learningLanguage)
+  const { learningLanguage } = useLearningLanguage();
+  const [phrase, setPhrase] = useState<Phrase | null>(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] =
+    useState<Language>(learningLanguage);
 
   useEffect(() => {
     if (id) {
-      const foundPhrase = phrases.find(p => p.id === id)
-      setPhrase(foundPhrase || null)
-      checkBookmarked(id).then(setIsBookmarked)
+      const foundPhrase = phrases.find((p) => p.id === id);
+      setPhrase(foundPhrase || null);
+      checkBookmarked(id).then(setIsBookmarked);
     }
-  }, [id])
+  }, [id]);
 
   const toggleBookmark = async () => {
-    if (!id) return
+    if (!id) return;
     if (isBookmarked) {
-      await removeBookmark(id)
+      await removeBookmark(id);
     } else {
-      await addBookmark(id)
+      await addBookmark(id);
     }
-    setIsBookmarked(!isBookmarked)
-  }
+    setIsBookmarked(!isBookmarked);
+  };
 
   const updateSkillScore = async (increment: number) => {
-    if (!phrase) return
-    const skill = getSkillForCategory(phrase.category)
-    const skills = await getUserSkills()
-    const currentScore = skills[skill]?.score || 0
-    await updateUserSkill(skill, Math.min(currentScore + increment, 100))
-  }
+    if (!phrase) return;
+    const skill = getSkillForCategory(phrase.category);
+    const skills = await getUserSkills();
+    const currentScore = skills[skill]?.score || 0;
+    await updateUserSkill(skill, Math.min(currentScore + increment, 100));
+  };
 
   const markAsPracticed = async () => {
-    if (!id) return
-    await updateProgress(id, 'practiced')
-    await updateSkillScore(2)
-    router.back()
-  }
+    if (!id) return;
+    await updateProgress(id, "practiced");
+    await updateSkillScore(2);
+    router.back();
+  };
 
   const markAsMastered = async () => {
-    if (!id) return
-    await updateProgress(id, 'mastered')
-    await updateSkillScore(5)
-    router.back()
-  }
+    if (!id) return;
+    await updateProgress(id, "mastered");
+    await updateSkillScore(5);
+    router.back();
+  };
 
   const practiceWithShamwari = () => {
-    if (!phrase) return
+    if (!phrase) return;
     router.push({
-      pathname: '/(tabs)/ai-practice',
+      pathname: "/(tabs)/ai-practice",
       params: { phraseContext: phrase.english },
-    })
-  }
+    });
+  };
 
-  const styles = createStyles(theme)
+  const styles = createStyles(theme);
 
   if (!phrase) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>Phrase not found</Text>
       </View>
-    )
+    );
   }
 
-  const category = categories.find(c => c.id === phrase.category)
-  const contextKey = selectedLanguage === 'english' ? 'en' :
-    selectedLanguage === 'shona' ? 'sn' :
-    selectedLanguage === 'ndebele' ? 'nd' :
-    selectedLanguage === 'swahili' ? 'sw' : 'zh'
+  const category = categories.find((c) => c.id === phrase.category);
+  const contextKey =
+    selectedLanguage === "english"
+      ? "en"
+      : selectedLanguage === "shona"
+        ? "sn"
+        : selectedLanguage === "ndebele"
+          ? "nd"
+          : selectedLanguage === "swahili"
+            ? "sw"
+            : "zh";
 
   return (
     <>
       <Stack.Screen
         options={{
-          headerTitle: category?.name || 'Phrase',
+          headerTitle: category?.name || "Phrase",
           headerRight: () => (
             <TouchableOpacity onPress={toggleBookmark}>
               <Bookmark
                 size={24}
                 color={isBookmarked ? theme.accent : theme.textMuted}
-                fill={isBookmarked ? theme.accent : 'transparent'}
+                fill={isBookmarked ? theme.accent : "transparent"}
               />
             </TouchableOpacity>
           ),
         }}
       />
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         {/* Main Phrase Card */}
         <View style={styles.mainCard}>
           <View style={styles.categoryBadge}>
@@ -145,8 +155,8 @@ export default function PhraseDetailScreen() {
 
           <View style={styles.translationSection}>
             <Text style={styles.translationLabel}>
-              {LANGUAGES.find(l => l.key === selectedLanguage)?.flag}{' '}
-              {LANGUAGES.find(l => l.key === selectedLanguage)?.name}
+              {LANGUAGES.find((l) => l.key === selectedLanguage)?.flag}{" "}
+              {LANGUAGES.find((l) => l.key === selectedLanguage)?.name}
             </Text>
             <Text style={styles.translationPhrase}>
               {phrase[selectedLanguage]}
@@ -166,7 +176,7 @@ export default function PhraseDetailScreen() {
           style={styles.languageScroll}
           contentContainerStyle={styles.languageContent}
         >
-          {LANGUAGES.filter(l => l.key !== 'english').map(lang => (
+          {LANGUAGES.filter((l) => l.key !== "english").map((lang) => (
             <TouchableOpacity
               key={lang.key}
               style={[
@@ -199,15 +209,13 @@ export default function PhraseDetailScreen() {
         {/* Context */}
         <Text style={styles.sectionTitle}>Context</Text>
         <View style={styles.contextCard}>
-          <Text style={styles.contextText}>
-            {phrase.context[contextKey]}
-          </Text>
+          <Text style={styles.contextText}>{phrase.context[contextKey]}</Text>
         </View>
 
         {/* All Translations */}
         <Text style={styles.sectionTitle}>All Languages</Text>
         <View style={styles.allTranslationsCard}>
-          {LANGUAGES.map(lang => (
+          {LANGUAGES.map((lang) => (
             <View key={lang.key} style={styles.translationRow}>
               <Text style={styles.langFlag}>{lang.flag}</Text>
               <View style={styles.translationContent}>
@@ -247,7 +255,7 @@ export default function PhraseDetailScreen() {
         </TouchableOpacity>
       </ScrollView>
     </>
-  )
+  );
 }
 
 const createStyles = (theme: typeof lightTheme) =>
@@ -261,7 +269,7 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     errorText: {
       color: theme.text,
-      textAlign: 'center',
+      textAlign: "center",
       marginTop: 40,
     },
     mainCard: {
@@ -271,8 +279,8 @@ const createStyles = (theme: typeof lightTheme) =>
       marginBottom: 20,
     },
     categoryBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 6,
       marginBottom: 12,
     },
@@ -282,11 +290,11 @@ const createStyles = (theme: typeof lightTheme) =>
     categoryName: {
       fontSize: 13,
       color: Colors.secondary[600],
-      fontWeight: '600',
+      fontWeight: "600",
     },
     englishPhrase: {
       fontSize: 24,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
       lineHeight: 32,
     },
@@ -296,7 +304,7 @@ const createStyles = (theme: typeof lightTheme) =>
       marginVertical: 16,
     },
     translationSection: {
-      alignItems: 'center',
+      alignItems: "center",
     },
     translationLabel: {
       fontSize: 13,
@@ -305,14 +313,14 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     translationPhrase: {
       fontSize: 22,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.primary,
-      textAlign: 'center',
+      textAlign: "center",
       marginBottom: 16,
     },
     playButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       backgroundColor: theme.primary,
       paddingHorizontal: 20,
       paddingVertical: 10,
@@ -320,13 +328,13 @@ const createStyles = (theme: typeof lightTheme) =>
       gap: 8,
     },
     playButtonText: {
-      color: '#ffffff',
+      color: "#ffffff",
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     sectionTitle: {
       fontSize: 16,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
       marginBottom: 12,
     },
@@ -337,8 +345,8 @@ const createStyles = (theme: typeof lightTheme) =>
       gap: 8,
     },
     languagePill: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       paddingHorizontal: 14,
       paddingVertical: 8,
       borderRadius: 20,
@@ -356,11 +364,11 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     languageText: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: "500",
       color: theme.text,
     },
     languageTextActive: {
-      color: '#ffffff',
+      color: "#ffffff",
     },
     pronunciationCard: {
       backgroundColor: theme.card,
@@ -371,7 +379,7 @@ const createStyles = (theme: typeof lightTheme) =>
     pronunciationText: {
       fontSize: 16,
       color: theme.text,
-      fontStyle: 'italic',
+      fontStyle: "italic",
       lineHeight: 24,
     },
     contextCard: {
@@ -392,8 +400,8 @@ const createStyles = (theme: typeof lightTheme) =>
       marginBottom: 24,
     },
     translationRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       paddingVertical: 10,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
@@ -415,15 +423,15 @@ const createStyles = (theme: typeof lightTheme) =>
       color: theme.text,
     },
     actionButtons: {
-      flexDirection: 'row',
+      flexDirection: "row",
       gap: 12,
       marginBottom: 16,
     },
     actionButton: {
       flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       paddingVertical: 14,
       borderRadius: 12,
       gap: 8,
@@ -435,14 +443,14 @@ const createStyles = (theme: typeof lightTheme) =>
       backgroundColor: theme.accent,
     },
     actionButtonText: {
-      color: '#ffffff',
+      color: "#ffffff",
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     aiButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: theme.card,
       paddingVertical: 14,
       borderRadius: 12,
@@ -454,6 +462,6 @@ const createStyles = (theme: typeof lightTheme) =>
     aiButtonText: {
       color: theme.primary,
       fontSize: 15,
-      fontWeight: '600',
+      fontWeight: "600",
     },
-  })
+  });

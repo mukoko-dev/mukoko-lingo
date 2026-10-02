@@ -9,8 +9,8 @@
  * conversation type and a language, both from fixed sets.
  */
 
-import { userSkills, skills as skillsCollection } from './mongo'
-import { createLogger } from './logger'
+import { userSkills, skills as skillsCollection } from "./mongo";
+import { createLogger } from "./logger";
 import {
   buildTutorPrompt,
   defaultProficiencyMap,
@@ -18,9 +18,9 @@ import {
   normalizeLanguage,
   normalizeConversationType,
   ALL_SKILL_NAMES,
-} from '../../lib/ai/prompt-builder'
+} from "../../lib/ai/prompt-builder";
 
-const log = createLogger('ai')
+const log = createLogger("ai");
 
 /**
  * Read the user's per-skill scores from `lingo.user_skills`.
@@ -30,29 +30,33 @@ const log = createLogger('ai')
  * skills are used — domain skills describe what a learner is working on, not
  * an ability the tutor adjusts its language for.
  */
-export async function loadProficiencyScores(personId: string): Promise<Record<string, number>> {
-  const scores: Record<string, number> = {}
+export async function loadProficiencyScores(
+  personId: string,
+): Promise<Record<string, number>> {
+  const scores: Record<string, number> = {};
 
-  const userSkillsCol = await userSkills()
-  const rows = await userSkillsCol.find({ user_id: personId }).toArray()
-  if (rows.length === 0) return scores
+  const userSkillsCol = await userSkills();
+  const rows = await userSkillsCol.find({ user_id: personId }).toArray();
+  if (rows.length === 0) return scores;
 
-  const skillIds = rows.map((r: any) => r.skill_id).filter(Boolean)
-  if (skillIds.length === 0) return scores
+  const skillIds = rows.map((r: any) => r.skill_id).filter(Boolean);
+  if (skillIds.length === 0) return scores;
 
-  const skillsCol = await skillsCollection()
-  const skillDocs = await skillsCol.find({ _id: { $in: skillIds } as any }).toArray()
-  const nameById = new Map(skillDocs.map((s: any) => [String(s._id), s.name]))
+  const skillsCol = await skillsCollection();
+  const skillDocs = await skillsCol
+    .find({ _id: { $in: skillIds } as any })
+    .toArray();
+  const nameById = new Map(skillDocs.map((s: any) => [String(s._id), s.name]));
 
   for (const row of rows as any[]) {
-    const name = nameById.get(String(row.skill_id))
+    const name = nameById.get(String(row.skill_id));
     // Ignore anything that isn't one of the five linguistic skills the prompt
     // knows how to scaffold against.
-    if (!name || !ALL_SKILL_NAMES.includes(name)) continue
-    if (typeof row.current_score === 'number') scores[name] = row.current_score
+    if (!name || !ALL_SKILL_NAMES.includes(name)) continue;
+    if (typeof row.current_score === "number") scores[name] = row.current_score;
   }
 
-  return scores
+  return scores;
 }
 
 /**
@@ -64,9 +68,9 @@ export async function loadProficiencyScores(personId: string): Promise<Record<st
  * prompt — a request must never reach the model unframed.
  */
 export async function buildSystemPromptForUser(params: {
-  personId: string
-  language: unknown
-  conversationType: unknown
+  personId: string;
+  language: unknown;
+  conversationType: unknown;
   /**
    * Proficiency the client holds locally. Practice, mini-quizzes and
    * assessments all record scores through `updateUserSkill` into device
@@ -79,34 +83,36 @@ export async function buildSystemPromptForUser(params: {
    * the prompt, which is what the caller-supplied `system_prompt` used to do.
    * Server-held scores win when they exist.
    */
-  clientScores?: unknown
+  clientScores?: unknown;
 }): Promise<string> {
-  const language = normalizeLanguage(params.language)
-  const conversationType = normalizeConversationType(params.conversationType)
+  const language = normalizeLanguage(params.language);
+  const conversationType = normalizeConversationType(params.conversationType);
 
-  let proficiencyMap = defaultProficiencyMap()
-  let source: 'db' | 'client' | 'default' = 'default'
+  let proficiencyMap = defaultProficiencyMap();
+  let source: "db" | "client" | "default" = "default";
 
   try {
-    const scores = await loadProficiencyScores(params.personId)
+    const scores = await loadProficiencyScores(params.personId);
     if (Object.keys(scores).length > 0) {
-      proficiencyMap = toProficiencyMap(scores)
-      source = 'db'
+      proficiencyMap = toProficiencyMap(scores);
+      source = "db";
     }
   } catch (error: any) {
-    log.error(`Failed to load proficiency, falling back: ${error?.message || error}`)
+    log.error(
+      `Failed to load proficiency, falling back: ${error?.message || error}`,
+    );
   }
 
-  if (source === 'default') {
-    const fromClient = sanitizeClientScores(params.clientScores)
+  if (source === "default") {
+    const fromClient = sanitizeClientScores(params.clientScores);
     if (Object.keys(fromClient).length > 0) {
-      proficiencyMap = toProficiencyMap(fromClient)
-      source = 'client'
+      proficiencyMap = toProficiencyMap(fromClient);
+      source = "client";
     }
   }
 
-  log.debug(`Tutor prompt proficiency source: ${source}`)
-  return buildTutorPrompt({ proficiencyMap, conversationType, language })
+  log.debug(`Tutor prompt proficiency source: ${source}`);
+  return buildTutorPrompt({ proficiencyMap, conversationType, language });
 }
 
 /**
@@ -114,11 +120,11 @@ export async function buildSystemPromptForUser(params: {
  * `toProficiencyMap` clamps to 0-100 afterwards.
  */
 export function sanitizeClientScores(raw: unknown): Record<string, number> {
-  const out: Record<string, number> = {}
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out
+  const out: Record<string, number> = {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
   for (const name of ALL_SKILL_NAMES) {
-    const value = (raw as Record<string, unknown>)[name]
-    if (typeof value === 'number' && Number.isFinite(value)) out[name] = value
+    const value = (raw as Record<string, unknown>)[name];
+    if (typeof value === "number" && Number.isFinite(value)) out[name] = value;
   }
-  return out
+  return out;
 }
