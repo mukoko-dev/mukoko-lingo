@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -8,8 +8,8 @@ import {
   SafeAreaView,
   useWindowDimensions,
   Platform,
-} from 'react-native'
-import { useRouter } from 'expo-router'
+} from "react-native";
+import { useRouter } from "expo-router";
 import {
   ArrowRight,
   Moon,
@@ -34,139 +34,170 @@ import {
   Bell,
   Globe,
   ChevronDown,
-} from 'lucide-react-native'
+} from "lucide-react-native";
 
-import { MukokoIcon } from '@/components/MukokoIcon'
-import { useTheme } from '@/lib/hooks/useTheme'
-import { useUILanguage, UI_LANGUAGES } from '@/lib/hooks/useUILanguage'
-import { Colors, lightTheme, darkTheme } from '@/constants/Colors'
-import { getCurrentUser } from '@/lib/auth/workos-client'
-import { profilesApi } from '@/lib/services/api-client'
-import type { UILanguage } from '@/lib/data/translations'
+import { MukokoIcon } from "@/components/MukokoIcon";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { useUILanguage, UI_LANGUAGES } from "@/lib/hooks/useUILanguage";
+import { Colors, lightTheme, darkTheme } from "@/constants/Colors";
+import { getCurrentUser } from "@/lib/auth/workos-client";
+import { profilesApi } from "@/lib/services/api-client";
+import type { UILanguage } from "@/lib/data/translations";
 
 const PUBLIC_NAV_LINKS = [
-  { label: 'Features', labelKey: 'exploreFeatures' as const, route: '/features', icon: Sparkles },
-  { label: 'Why Mukoko', labelKey: 'navWhy' as const, route: '/why', icon: HelpCircle },
-  { label: 'About', labelKey: 'about' as const, route: '/about', icon: Info },
-]
+  {
+    label: "Features",
+    labelKey: "exploreFeatures" as const,
+    route: "/features",
+    icon: Sparkles,
+  },
+  {
+    label: "Why Mukoko",
+    labelKey: "navWhy" as const,
+    route: "/why",
+    icon: HelpCircle,
+  },
+  { label: "About", labelKey: "about" as const, route: "/about", icon: Info },
+];
 
 const AUTH_NAV_LINKS = [
-  { label: 'Learn', labelKey: 'navHome' as const, route: '/(tabs)', icon: BookOpen },
-  { label: 'Shamwari', labelKey: 'aiPractice' as const, route: '/(tabs)/ai-practice', icon: MessageCircle },
-  { label: 'Progress', labelKey: 'navProgress' as const, route: '/(tabs)/insights', icon: Target },
-]
+  {
+    label: "Learn",
+    labelKey: "navHome" as const,
+    route: "/(tabs)",
+    icon: BookOpen,
+  },
+  {
+    label: "Shamwari",
+    labelKey: "aiPractice" as const,
+    route: "/(tabs)/ai-practice",
+    icon: MessageCircle,
+  },
+  {
+    label: "Progress",
+    labelKey: "navProgress" as const,
+    route: "/(tabs)/insights",
+    icon: Target,
+  },
+];
 
 interface AppHeaderProps {
-  isAuthenticated?: boolean
-  onLogout?: () => void
+  isAuthenticated?: boolean;
+  onLogout?: () => void;
 }
 
-export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps) {
-  const router = useRouter()
-  const { isDark, toggleTheme, themeMode } = useTheme()
-  const { uiLanguage, setUILanguage, uiLanguageOption, t } = useUILanguage()
-  const theme = isDark ? darkTheme : lightTheme
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [langDropdownOpen, setLangDropdownOpen] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const { width } = useWindowDimensions()
+export function AppHeader({
+  isAuthenticated = false,
+  onLogout,
+}: AppHeaderProps) {
+  const router = useRouter();
+  const { isDark, toggleTheme, themeMode } = useTheme();
+  const { uiLanguage, setUILanguage, uiLanguageOption, t } = useUILanguage();
+  const theme = isDark ? darkTheme : lightTheme;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { width } = useWindowDimensions();
 
   // Landscape tablet and above for center nav
-  const isLandscapeTablet = width >= 1024
+  const isLandscapeTablet = width >= 1024;
   // Basic tablet for some layout adjustments
-  const isTablet = width >= 768
+  const isTablet = width >= 768;
 
   // Check if user is admin
   useEffect(() => {
     if (isAuthenticated) {
-      checkAdminStatus()
+      checkAdminStatus();
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated]);
 
   const checkAdminStatus = async () => {
     try {
-      const { user } = await getCurrentUser()
+      const { user } = await getCurrentUser();
       if (user) {
-        const { data: profile } = await profilesApi.getMyProfile()
-        setIsAdmin(profile?.role === 'admin')
+        const { data: profile } = await profilesApi.getMyProfile();
+        setIsAdmin(profile?.role === "admin");
       }
     } catch (error) {
-      console.error('Error checking admin status:', error)
+      console.error("Error checking admin status:", error);
     }
-  }
+  };
 
-  const navLinks = isAuthenticated ? AUTH_NAV_LINKS : PUBLIC_NAV_LINKS
+  const navLinks = isAuthenticated ? AUTH_NAV_LINKS : PUBLIC_NAV_LINKS;
 
   const getThemeIcon = () => {
-    if (themeMode === 'light') return <Sun size={20} color={theme.text} />
-    if (themeMode === 'dark') return <Moon size={20} color={theme.text} />
-    return <Monitor size={20} color={theme.text} />
-  }
+    if (themeMode === "light") return <Sun size={20} color={theme.text} />;
+    if (themeMode === "dark") return <Moon size={20} color={theme.text} />;
+    return <Monitor size={20} color={theme.text} />;
+  };
 
   const getThemeModeText = () => {
-    if (themeMode === 'light') return 'Light Mode'
-    if (themeMode === 'dark') return 'Dark Mode'
-    return 'System Theme'
-  }
+    if (themeMode === "light") return "Light Mode";
+    if (themeMode === "dark") return "Dark Mode";
+    return "System Theme";
+  };
 
   const handleNavLink = (route: string) => {
-    setMenuOpen(false)
-    router.push(route as any)
-  }
+    setMenuOpen(false);
+    router.push(route as any);
+  };
 
   const handleSignIn = () => {
-    setMenuOpen(false)
-    router.push('/auth')
-  }
+    setMenuOpen(false);
+    router.push("/auth");
+  };
 
   const handleGetStarted = () => {
-    setMenuOpen(false)
-    router.push('/auth')
-  }
+    setMenuOpen(false);
+    router.push("/auth");
+  };
 
   const handleLogoPress = () => {
     if (isAuthenticated) {
-      router.push('/(tabs)')
+      router.push("/(tabs)");
     } else {
-      router.push('/welcome')
+      router.push("/welcome");
     }
-  }
+  };
 
   const handleProfile = () => {
-    setMenuOpen(false)
-    router.push('/(tabs)/profile')
-  }
+    setMenuOpen(false);
+    router.push("/(tabs)/profile");
+  };
 
   const handleAdmin = () => {
-    setMenuOpen(false)
-    router.push('/admin/phrases')
-  }
+    setMenuOpen(false);
+    router.push("/admin/phrases");
+  };
 
   const handleLogout = () => {
-    setMenuOpen(false)
+    setMenuOpen(false);
     if (onLogout) {
-      onLogout()
+      onLogout();
     }
-    router.replace('/welcome')
-  }
+    router.replace("/welcome");
+  };
 
   const handleLanguageSelect = (lang: UILanguage) => {
-    setUILanguage(lang)
-    setLangDropdownOpen(false)
-  }
+    setUILanguage(lang);
+    setLangDropdownOpen(false);
+  };
 
   // Icon pill colors - use PRIMARY (Cobalt) instead of secondary (Tanzanite)
-  const pillBg = isDark ? Colors.primary[800] + 'CC' : Colors.primary[600]
-  const pillIconColor = '#FFFFFF'
+  const pillBg = isDark ? Colors.primary[800] + "CC" : Colors.primary[600];
+  const pillIconColor = "#FFFFFF";
 
-  const styles = createStyles(theme, isDark, isTablet, isLandscapeTablet)
+  const styles = createStyles(theme, isDark, isTablet, isLandscapeTablet);
 
   return (
     <>
       {/* Navigation Header */}
       <View style={styles.navbar}>
         {/* LEFT: Icon + Wordmark */}
-        <TouchableOpacity style={styles.logoContainer} onPress={handleLogoPress}>
+        <TouchableOpacity
+          style={styles.logoContainer}
+          onPress={handleLogoPress}
+        >
           <View style={styles.iconWrapper}>
             <MukokoIcon size={26} color={theme.primary} />
           </View>
@@ -208,7 +239,9 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
               onPress={() => setLangDropdownOpen(!langDropdownOpen)}
             >
               <Globe size={16} color={theme.primary} />
-              <Text style={styles.langSelectorText}>{uiLanguageOption.flag} {uiLanguageOption.key.toUpperCase()}</Text>
+              <Text style={styles.langSelectorText}>
+                {uiLanguageOption.flag} {uiLanguageOption.key.toUpperCase()}
+              </Text>
               <ChevronDown size={12} color={theme.textSecondary} />
             </TouchableOpacity>
 
@@ -227,17 +260,25 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
                       key={lang.key}
                       style={[
                         styles.langDropdownItem,
-                        uiLanguage === lang.key && styles.langDropdownItemActive,
+                        uiLanguage === lang.key &&
+                          styles.langDropdownItemActive,
                       ]}
                       onPress={() => handleLanguageSelect(lang.key)}
                     >
                       <Text style={styles.langDropdownFlag}>{lang.flag}</Text>
                       <View style={styles.langDropdownTextContainer}>
-                        <Text style={[
-                          styles.langDropdownName,
-                          uiLanguage === lang.key && styles.langDropdownNameActive,
-                        ]}>{lang.name}</Text>
-                        <Text style={styles.langDropdownNative}>{lang.nativeName}</Text>
+                        <Text
+                          style={[
+                            styles.langDropdownName,
+                            uiLanguage === lang.key &&
+                              styles.langDropdownNameActive,
+                          ]}
+                        >
+                          {lang.name}
+                        </Text>
+                        <Text style={styles.langDropdownNative}>
+                          {lang.nativeName}
+                        </Text>
                       </View>
                       {uiLanguage === lang.key && (
                         <View style={styles.langDropdownCheck}>
@@ -254,9 +295,11 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
           {/* Icon pill */}
           <View style={[styles.iconPill, { backgroundColor: pillBg }]}>
             <TouchableOpacity style={styles.pillIcon} onPress={toggleTheme}>
-              {themeMode === 'light' && <Sun size={18} color={pillIconColor} />}
-              {themeMode === 'dark' && <Moon size={18} color={pillIconColor} />}
-              {themeMode === 'system' && <Monitor size={18} color={pillIconColor} />}
+              {themeMode === "light" && <Sun size={18} color={pillIconColor} />}
+              {themeMode === "dark" && <Moon size={18} color={pillIconColor} />}
+              {themeMode === "system" && (
+                <Monitor size={18} color={pillIconColor} />
+              )}
             </TouchableOpacity>
 
             <View style={styles.pillDivider} />
@@ -265,26 +308,35 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
               <>
                 <TouchableOpacity
                   style={styles.pillIcon}
-                  onPress={() => router.push('/(tabs)/insights' as any)}
+                  onPress={() => router.push("/(tabs)/insights" as any)}
                 >
                   <Bell size={18} color={pillIconColor} />
                 </TouchableOpacity>
 
                 <View style={styles.pillDivider} />
 
-                <TouchableOpacity style={styles.pillIcon} onPress={handleProfile}>
+                <TouchableOpacity
+                  style={styles.pillIcon}
+                  onPress={handleProfile}
+                >
                   <User size={18} color={pillIconColor} />
                 </TouchableOpacity>
               </>
             ) : (
               <>
-                <TouchableOpacity style={styles.pillIcon} onPress={handleSignIn}>
+                <TouchableOpacity
+                  style={styles.pillIcon}
+                  onPress={handleSignIn}
+                >
                   <LogIn size={18} color={pillIconColor} />
                 </TouchableOpacity>
 
                 <View style={styles.pillDivider} />
 
-                <TouchableOpacity style={styles.pillIcon} onPress={handleGetStarted}>
+                <TouchableOpacity
+                  style={styles.pillIcon}
+                  onPress={handleGetStarted}
+                >
                   <UserPlus size={18} color={pillIconColor} />
                 </TouchableOpacity>
               </>
@@ -293,7 +345,10 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
 
           {/* Hamburger menu (below landscape tablet) */}
           {!isLandscapeTablet && (
-            <TouchableOpacity style={styles.menuButton} onPress={() => setMenuOpen(true)}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => setMenuOpen(true)}
+            >
               <Menu size={22} color={theme.text} />
             </TouchableOpacity>
           )}
@@ -318,14 +373,19 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
                 <Text style={styles.wordmarkSub}>lingo</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setMenuOpen(false)}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setMenuOpen(false)}
+            >
               <X size={24} color={theme.text} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.menuContent}>
             {/* Language selector in mobile menu */}
-            <Text style={styles.menuSectionTitle}>{t.languages || 'Language'}</Text>
+            <Text style={styles.menuSectionTitle}>
+              {t.languages || "Language"}
+            </Text>
             <View style={styles.menuLangRow}>
               {UI_LANGUAGES.map((lang) => (
                 <TouchableOpacity
@@ -337,10 +397,14 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
                   onPress={() => setUILanguage(lang.key)}
                 >
                   <Text style={styles.menuLangChipFlag}>{lang.flag}</Text>
-                  <Text style={[
-                    styles.menuLangChipText,
-                    uiLanguage === lang.key && styles.menuLangChipTextActive,
-                  ]}>{lang.name}</Text>
+                  <Text
+                    style={[
+                      styles.menuLangChipText,
+                      uiLanguage === lang.key && styles.menuLangChipTextActive,
+                    ]}
+                  >
+                    {lang.name}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -349,7 +413,7 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
 
             {/* Main navigation links */}
             {navLinks.map((link, index) => {
-              const Icon = link.icon
+              const Icon = link.icon;
               return (
                 <TouchableOpacity
                   key={index}
@@ -359,7 +423,7 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
                   <Icon size={22} color={theme.primary} />
                   <Text style={styles.menuItemText}>{link.label}</Text>
                 </TouchableOpacity>
-              )
+              );
             })}
 
             {/* Marketing links for authenticated users */}
@@ -368,7 +432,7 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
                 <View style={styles.menuDivider} />
                 <Text style={styles.menuSectionTitle}>Explore</Text>
                 {PUBLIC_NAV_LINKS.map((link, index) => {
-                  const Icon = link.icon
+                  const Icon = link.icon;
                   return (
                     <TouchableOpacity
                       key={`public-${index}`}
@@ -376,9 +440,11 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
                       onPress={() => handleNavLink(link.route)}
                     >
                       <Icon size={22} color={theme.textSecondary} />
-                      <Text style={styles.menuItemTextSecondary}>{link.label}</Text>
+                      <Text style={styles.menuItemTextSecondary}>
+                        {link.label}
+                      </Text>
                     </TouchableOpacity>
-                  )
+                  );
                 })}
               </>
             )}
@@ -387,33 +453,58 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
 
             {!isAuthenticated ? (
               <>
-                <TouchableOpacity style={styles.menuItem} onPress={handleSignIn}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleSignIn}
+                >
                   <LogIn size={22} color={theme.text} />
-                  <Text style={styles.menuItemText}>{t.logIn || 'Log in'}</Text>
+                  <Text style={styles.menuItemText}>{t.logIn || "Log in"}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={handleGetStarted}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleGetStarted}
+                >
                   <UserPlus size={22} color={theme.text} />
-                  <Text style={styles.menuItemText}>{t.signUp || 'Sign up'}</Text>
+                  <Text style={styles.menuItemText}>
+                    {t.signUp || "Sign up"}
+                  </Text>
                 </TouchableOpacity>
               </>
             ) : (
               <>
-                <TouchableOpacity style={styles.menuItem} onPress={handleProfile}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleProfile}
+                >
                   <User size={22} color={theme.text} />
-                  <Text style={styles.menuItemText}>{t.profile || 'Profile'}</Text>
+                  <Text style={styles.menuItemText}>
+                    {t.profile || "Profile"}
+                  </Text>
                 </TouchableOpacity>
 
                 {isAdmin && (
-                  <TouchableOpacity style={styles.menuItem} onPress={handleAdmin}>
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={handleAdmin}
+                  >
                     <Shield size={22} color={theme.accent} />
-                    <Text style={[styles.menuItemText, { color: theme.accent }]}>{t.adminDashboard || 'Admin Dashboard'}</Text>
+                    <Text
+                      style={[styles.menuItemText, { color: theme.accent }]}
+                    >
+                      {t.adminDashboard || "Admin Dashboard"}
+                    </Text>
                   </TouchableOpacity>
                 )}
 
-                <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleLogout}
+                >
                   <LogOut size={22} color={theme.primary} />
-                  <Text style={[styles.menuItemText, { color: theme.primary }]}>{t.logOut || 'Log out'}</Text>
+                  <Text style={[styles.menuItemText, { color: theme.primary }]}>
+                    {t.logOut || "Log out"}
+                  </Text>
                 </TouchableOpacity>
               </>
             )}
@@ -428,13 +519,23 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
 
           <View style={styles.menuFooter}>
             {!isAuthenticated ? (
-              <TouchableOpacity style={styles.menuCta} onPress={handleGetStarted}>
-                <Text style={styles.menuCtaText}>{t.getStartedFree || 'Get Started Free'}</Text>
+              <TouchableOpacity
+                style={styles.menuCta}
+                onPress={handleGetStarted}
+              >
+                <Text style={styles.menuCtaText}>
+                  {t.getStartedFree || "Get Started Free"}
+                </Text>
                 <ArrowRight size={20} color="#ffffff" />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={styles.menuCta} onPress={() => handleNavLink('/(tabs)')}>
-                <Text style={styles.menuCtaText}>{t.backToLearning || 'Back to Learning'}</Text>
+              <TouchableOpacity
+                style={styles.menuCta}
+                onPress={() => handleNavLink("/(tabs)")}
+              >
+                <Text style={styles.menuCtaText}>
+                  {t.backToLearning || "Back to Learning"}
+                </Text>
                 <ArrowRight size={20} color="#ffffff" />
               </TouchableOpacity>
             )}
@@ -442,7 +543,7 @@ export function AppHeader({ isAuthenticated = false, onLogout }: AppHeaderProps)
         </SafeAreaView>
       </Modal>
     </>
-  )
+  );
 }
 
 const createStyles = (
@@ -454,9 +555,9 @@ const createStyles = (
   StyleSheet.create({
     // ── Navbar ────────────────────────────────
     navbar: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
       paddingHorizontal: isTablet ? 32 : 16,
       paddingVertical: 10,
       backgroundColor: theme.card,
@@ -466,41 +567,43 @@ const createStyles = (
 
     // ── LEFT: Logo + Wordmark ────────────────
     logoContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 8,
     },
     iconWrapper: {
       width: 36,
       height: 36,
       borderRadius: 10,
-      backgroundColor: isDark ? Colors.primary[400] + '15' : Colors.primary[600] + '10',
-      alignItems: 'center',
-      justifyContent: 'center',
+      backgroundColor: isDark
+        ? Colors.primary[400] + "15"
+        : Colors.primary[600] + "10",
+      alignItems: "center",
+      justifyContent: "center",
     },
     wordmark: {
       fontSize: 16,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
       lineHeight: 18,
       letterSpacing: 0.5,
     },
     wordmarkSub: {
       fontSize: 11,
-      fontWeight: '500',
+      fontWeight: "500",
       color: theme.primary,
       lineHeight: 13,
       letterSpacing: 2,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
     },
 
     // ── CENTER: Nav links ────────────────────
     centerNav: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 8,
-      position: 'absolute',
-      left: '50%',
+      position: "absolute",
+      left: "50%",
       transform: [{ translateX: -120 }],
     },
     centerNavLink: {
@@ -510,20 +613,22 @@ const createStyles = (
     },
     centerNavLinkText: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: "500",
       color: theme.textSecondary,
     },
 
     // ── RIGHT: Icon pill + extras ────────────
     rightGroup: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 10,
     },
     adminButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: isDark ? Colors.accent[300] + '15' : Colors.accent[800] + '10',
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: isDark
+        ? Colors.accent[300] + "15"
+        : Colors.accent[800] + "10",
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 8,
@@ -531,33 +636,37 @@ const createStyles = (
     },
     adminButtonText: {
       fontSize: 13,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.accent,
     },
 
     // ── Language Selector ────────────────────
     langSelectorContainer: {
-      position: 'relative',
+      position: "relative",
       zIndex: 1000,
     },
     langSelector: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: isDark ? Colors.primary[400] + '15' : Colors.primary[600] + '08',
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: isDark
+        ? Colors.primary[400] + "15"
+        : Colors.primary[600] + "08",
       paddingHorizontal: 10,
       paddingVertical: 6,
       borderRadius: 20,
       gap: 4,
       borderWidth: 1,
-      borderColor: isDark ? Colors.primary[400] + '30' : Colors.primary[600] + '20',
+      borderColor: isDark
+        ? Colors.primary[400] + "30"
+        : Colors.primary[600] + "20",
     },
     langSelectorText: {
       fontSize: 12,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.primary,
     },
     langDropdownBackdrop: {
-      position: 'fixed' as any,
+      position: "fixed" as any,
       top: 0,
       left: 0,
       right: 0,
@@ -565,7 +674,7 @@ const createStyles = (
       zIndex: 999,
     },
     langDropdown: {
-      position: 'absolute',
+      position: "absolute",
       top: 40,
       right: 0,
       backgroundColor: theme.card,
@@ -575,23 +684,27 @@ const createStyles = (
       paddingVertical: 4,
       minWidth: 200,
       zIndex: 1000,
-      ...(Platform.OS === 'web' ? {
-        boxShadow: isDark
-          ? '0px 8px 24px rgba(0,0,0,0.5)'
-          : '0px 8px 24px rgba(0,0,0,0.12)',
-      } : {
-        elevation: 8,
-      }),
+      ...(Platform.OS === "web"
+        ? {
+            boxShadow: isDark
+              ? "0px 8px 24px rgba(0,0,0,0.5)"
+              : "0px 8px 24px rgba(0,0,0,0.12)",
+          }
+        : {
+            elevation: 8,
+          }),
     },
     langDropdownItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       paddingHorizontal: 14,
       paddingVertical: 10,
       gap: 10,
     },
     langDropdownItemActive: {
-      backgroundColor: isDark ? Colors.primary[400] + '15' : Colors.primary[600] + '08',
+      backgroundColor: isDark
+        ? Colors.primary[400] + "15"
+        : Colors.primary[600] + "08",
     },
     langDropdownFlag: {
       fontSize: 18,
@@ -601,12 +714,12 @@ const createStyles = (
     },
     langDropdownName: {
       fontSize: 14,
-      fontWeight: '500',
+      fontWeight: "500",
       color: theme.text,
     },
     langDropdownNameActive: {
       color: theme.primary,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     langDropdownNative: {
       fontSize: 12,
@@ -617,19 +730,19 @@ const createStyles = (
       height: 20,
       borderRadius: 10,
       backgroundColor: theme.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     langDropdownCheckText: {
-      color: '#FFFFFF',
+      color: "#FFFFFF",
       fontSize: 12,
-      fontWeight: '700',
+      fontWeight: "700",
     },
 
     // ── Icon Pill ────────────────────────────
     iconPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       borderRadius: 24,
       paddingHorizontal: 4,
       paddingVertical: 4,
@@ -638,20 +751,20 @@ const createStyles = (
       width: 34,
       height: 34,
       borderRadius: 17,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     pillDivider: {
       width: 1,
       height: 16,
-      backgroundColor: 'rgba(255,255,255,0.25)',
+      backgroundColor: "rgba(255,255,255,0.25)",
     },
     menuButton: {
       width: 38,
       height: 38,
       borderRadius: 19,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: isDark ? Colors.neutral[800] : Colors.neutral[100],
     },
 
@@ -661,9 +774,9 @@ const createStyles = (
       backgroundColor: theme.background,
     },
     menuHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
       paddingHorizontal: 20,
       paddingVertical: 16,
       borderBottomWidth: 1,
@@ -673,8 +786,8 @@ const createStyles = (
       width: 44,
       height: 44,
       borderRadius: 22,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
     menuContent: {
       flex: 1,
@@ -683,33 +796,35 @@ const createStyles = (
     },
     menuSectionTitle: {
       fontSize: 12,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.textMuted,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
       letterSpacing: 1,
       marginBottom: 8,
       marginTop: 4,
     },
     // ── Mobile Menu Language Chips ────────────
     menuLangRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
+      flexDirection: "row",
+      flexWrap: "wrap",
       gap: 8,
       marginBottom: 4,
     },
     menuLangChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       paddingHorizontal: 12,
       paddingVertical: 8,
       borderRadius: 20,
       backgroundColor: isDark ? Colors.neutral[800] : Colors.neutral[100],
       gap: 6,
       borderWidth: 1.5,
-      borderColor: 'transparent',
+      borderColor: "transparent",
     },
     menuLangChipActive: {
-      backgroundColor: isDark ? Colors.primary[400] + '20' : Colors.primary[600] + '10',
+      backgroundColor: isDark
+        ? Colors.primary[400] + "20"
+        : Colors.primary[600] + "10",
       borderColor: theme.primary,
     },
     menuLangChipFlag: {
@@ -717,27 +832,27 @@ const createStyles = (
     },
     menuLangChipText: {
       fontSize: 13,
-      fontWeight: '500',
+      fontWeight: "500",
       color: theme.textSecondary,
     },
     menuLangChipTextActive: {
       color: theme.primary,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     menuItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       paddingVertical: 16,
       gap: 16,
     },
     menuItemText: {
       fontSize: 18,
-      fontWeight: '500',
+      fontWeight: "500",
       color: theme.text,
     },
     menuItemTextSecondary: {
       fontSize: 16,
-      fontWeight: '400',
+      fontWeight: "400",
       color: theme.textSecondary,
     },
     menuDivider: {
@@ -750,9 +865,9 @@ const createStyles = (
       paddingBottom: 20,
     },
     menuCta: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: theme.primary,
       paddingVertical: 16,
       borderRadius: 12,
@@ -760,7 +875,7 @@ const createStyles = (
     },
     menuCtaText: {
       fontSize: 17,
-      fontWeight: '600',
-      color: '#ffffff',
+      fontWeight: "600",
+      color: "#ffffff",
     },
-  })
+  });

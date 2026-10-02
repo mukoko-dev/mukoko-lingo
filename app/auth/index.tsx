@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from "react";
 import {
   StyleSheet,
   View,
@@ -7,73 +7,93 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
-} from 'react-native'
-import { useRouter, Stack } from 'expo-router'
-import { ArrowLeft, ArrowRight, Cloud, Bot, BarChart3 } from 'lucide-react-native'
+} from "react-native";
+import { useRouter, Stack } from "expo-router";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Cloud,
+  Bot,
+  BarChart3,
+} from "lucide-react-native";
 
-import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme } from '@/constants/Colors'
-import { signInWithAuthKit } from '@/lib/auth/workos-client'
+import { useTheme } from "@/lib/hooks/useTheme";
+import { lightTheme, darkTheme } from "@/constants/Colors";
+import { signInWithAuthKit } from "@/lib/auth/workos-client";
 
 export default function AuthScreen() {
-  const router = useRouter()
-  const { isDark } = useTheme()
-  const theme = isDark ? darkTheme : lightTheme
+  const router = useRouter();
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
 
-  const [loading, setLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const styles = createStyles(theme)
+  const styles = createStyles(theme);
 
   const handleBack = () => {
     if (router.canGoBack()) {
-      router.back()
+      router.back();
     } else {
-      router.replace('/')
+      router.replace("/");
     }
-  }
+  };
 
   const handleSkip = () => {
-    router.replace('/(tabs)')
-  }
+    router.replace("/(tabs)");
+  };
 
   const handleContinue = async () => {
-    setErrorMessage('')
-    setLoading(true)
+    setErrorMessage("");
+    setLoading(true);
     try {
-      const { data, error } = await signInWithAuthKit()
-      if (error) throw error
+      const { data, error } = await signInWithAuthKit();
+      if (error) throw error;
       if (data?.session) {
-        router.replace('/(tabs)')
+        router.replace("/(tabs)");
       }
       // A null `data` with no error means the user cancelled the hosted
       // sign-in — stay on this screen, nothing to report.
     } catch (error: any) {
-      setErrorMessage(error.message || 'Sign-in failed. Please try again.')
+      setErrorMessage(error.message || "Sign-in failed. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
 
         <View style={styles.contentWrapper}>
           <View style={styles.header}>
-            <Image source={require('@/assets/images/icon.png')} style={styles.logo} resizeMode="contain" />
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>Mukoko Lingo</Text>
-            <Text style={styles.subtitle}>Sign in to sync your progress across devices</Text>
+            <Text style={styles.subtitle}>
+              Sign in to sync your progress across devices
+            </Text>
           </View>
 
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+          {errorMessage ? (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          ) : null}
 
           <TouchableOpacity
-            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+            style={[
+              styles.submitButton,
+              loading && styles.submitButtonDisabled,
+            ]}
             onPress={handleContinue}
             disabled={loading}
           >
@@ -94,28 +114,47 @@ export default function AuthScreen() {
           <View style={styles.features}>
             <Text style={styles.featuresTitle}>Why create an account?</Text>
             <View style={styles.featureItem}>
-              <View style={[styles.featureIconContainer, { backgroundColor: theme.accent + '20' }]}>
+              <View
+                style={[
+                  styles.featureIconContainer,
+                  { backgroundColor: theme.accent + "20" },
+                ]}
+              >
                 <Cloud size={18} color={theme.accent} />
               </View>
-              <Text style={styles.featureText}>Sync progress across devices</Text>
+              <Text style={styles.featureText}>
+                Sync progress across devices
+              </Text>
             </View>
             <View style={styles.featureItem}>
-              <View style={[styles.featureIconContainer, { backgroundColor: theme.primary + '20' }]}>
+              <View
+                style={[
+                  styles.featureIconContainer,
+                  { backgroundColor: theme.primary + "20" },
+                ]}
+              >
                 <Bot size={18} color={theme.primary} />
               </View>
               <Text style={styles.featureText}>Personalized AI tutoring</Text>
             </View>
             <View style={styles.featureItem}>
-              <View style={[styles.featureIconContainer, { backgroundColor: theme.secondary + '20' }]}>
+              <View
+                style={[
+                  styles.featureIconContainer,
+                  { backgroundColor: theme.secondary + "20" },
+                ]}
+              >
                 <BarChart3 size={18} color={theme.secondary} />
               </View>
-              <Text style={styles.featureText}>Track your learning journey</Text>
+              <Text style={styles.featureText}>
+                Track your learning journey
+              </Text>
             </View>
           </View>
         </View>
       </ScrollView>
     </>
-  )
+  );
 }
 
 const createStyles = (theme: typeof lightTheme) =>
@@ -128,17 +167,17 @@ const createStyles = (theme: typeof lightTheme) =>
     backButton: {
       width: 40,
       height: 40,
-      justifyContent: 'center',
+      justifyContent: "center",
     },
     contentWrapper: {
       flex: 1,
       maxWidth: 420,
-      width: '100%',
-      alignSelf: 'center',
-      justifyContent: 'center',
+      width: "100%",
+      alignSelf: "center",
+      justifyContent: "center",
     },
     header: {
-      alignItems: 'center',
+      alignItems: "center",
       marginBottom: 32,
     },
     logo: {
@@ -149,25 +188,25 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     title: {
       fontSize: 24,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
       marginBottom: 8,
     },
     subtitle: {
       fontSize: 15,
       color: theme.textSecondary,
-      textAlign: 'center',
+      textAlign: "center",
     },
     errorText: {
       fontSize: 14,
-      color: '#B3261E',
-      textAlign: 'center',
+      color: "#B3261E",
+      textAlign: "center",
       marginBottom: 16,
     },
     submitButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       gap: 8,
       backgroundColor: theme.primary,
       borderRadius: 12,
@@ -178,12 +217,12 @@ const createStyles = (theme: typeof lightTheme) =>
       opacity: 0.6,
     },
     submitButtonText: {
-      color: '#ffffff',
+      color: "#ffffff",
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     skipButton: {
-      alignItems: 'center',
+      alignItems: "center",
       paddingVertical: 12,
       marginBottom: 32,
     },
@@ -196,24 +235,24 @@ const createStyles = (theme: typeof lightTheme) =>
     },
     featuresTitle: {
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: "600",
       color: theme.textSecondary,
       marginBottom: 4,
     },
     featureItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       gap: 12,
     },
     featureIconContainer: {
       width: 36,
       height: 36,
       borderRadius: 10,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
     },
     featureText: {
       fontSize: 14,
       color: theme.text,
     },
-  })
+  });

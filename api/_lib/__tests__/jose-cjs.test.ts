@@ -13,22 +13,22 @@
  * to an ESM-only major.
  */
 
-describe('jose CommonJS interop', () => {
-  it('publishes a require entry point', () => {
-    const pkg = require('jose/package.json')
-    expect(pkg.exports['.'].require).toBeTruthy()
-    expect(pkg.type).not.toBe('module')
-  })
+describe("jose CommonJS interop", () => {
+  it("publishes a require entry point", () => {
+    const pkg = require("jose/package.json");
+    expect(pkg.exports["."].require).toBeTruthy();
+    expect(pkg.type).not.toBe("module");
+  });
 
-  it('loads through require() the way the built serverless function does', () => {
-    expect(() => require('jose')).not.toThrow()
-  })
+  it("loads through require() the way the built serverless function does", () => {
+    expect(() => require("jose")).not.toThrow();
+  });
 
-  it('exposes every jose export the auth routes import', () => {
+  it("exposes every jose export the auth routes import", () => {
     // api/_lib/auth-middleware.ts and api/auth/logout.ts
-    const jose = require('jose')
-    expect(typeof jose.createRemoteJWKSet).toBe('function')
-    expect(typeof jose.jwtVerify).toBe('function')
-    expect(typeof jose.decodeJwt).toBe('function')
-  })
-})
+    const jose = require("jose");
+    expect(typeof jose.createRemoteJWKSet).toBe("function");
+    expect(typeof jose.jwtVerify).toBe("function");
+    expect(typeof jose.decodeJwt).toBe("function");
+  });
+});

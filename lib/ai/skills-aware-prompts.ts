@@ -14,7 +14,7 @@
  * with the server so the two cannot drift apart.
  */
 
-import { getUserSkills } from '../storage/database'
+import { getUserSkills } from "../storage/database";
 import {
   ALL_SKILL_NAMES,
   buildTutorPrompt,
@@ -24,65 +24,65 @@ import {
   normalizeLanguage,
   scoreToLevel,
   type ConversationType,
-} from './prompt-builder'
+} from "./prompt-builder";
 import type {
   AITutorContext,
   SkillName,
   ProficiencyLevel,
   SkillProficiencyMap,
-} from '../types/skills'
+} from "../types/skills";
 
-export { scoreToLevel } from './prompt-builder'
+export { scoreToLevel } from "./prompt-builder";
 
 /**
  * Get user's skills proficiency map from local storage
  */
 export async function getUserSkillsProficiencyMap(): Promise<SkillProficiencyMap> {
-  const skills = await getUserSkills()
+  const skills = await getUserSkills();
 
   if (Object.keys(skills).length === 0) {
     // Return beginner defaults for new users
-    return defaultProficiencyMap()
+    return defaultProficiencyMap();
   }
 
-  const proficiencyMap: SkillProficiencyMap = {}
+  const proficiencyMap: SkillProficiencyMap = {};
 
   Object.entries(skills).forEach(([skillName, data]) => {
     proficiencyMap[skillName as SkillName] = {
       level: scoreToLevel(data.score),
       score: data.score,
-    }
-  })
+    };
+  });
 
   // Fill in missing skills
   for (const skill of ALL_SKILL_NAMES) {
     if (!proficiencyMap[skill]) {
-      proficiencyMap[skill] = { level: 'beginner', score: 0 }
+      proficiencyMap[skill] = { level: "beginner", score: 0 };
     }
   }
 
-  return proficiencyMap
+  return proficiencyMap;
 }
 
 /**
  * Get AI tutor context
  */
 export async function getAITutorContext(): Promise<AITutorContext> {
-  const proficiencyMap = await getUserSkillsProficiencyMap()
+  const proficiencyMap = await getUserSkillsProficiencyMap();
 
   const skills = Object.entries(proficiencyMap).map(([skillName, data]) => ({
     skill_name: skillName as SkillName,
-    current_level: data?.level || 'beginner',
+    current_level: data?.level || "beginner",
     current_score: data?.score || 0,
     needs_improvement: (data?.score || 0) < 65,
-  }))
+  }));
 
   return {
-    user_id: 'local',
+    user_id: "local",
     overall_proficiency: calculateOverallProficiency(proficiencyMap),
     skills,
     recent_assessments: [],
-  }
+  };
 }
 
 /**
@@ -90,21 +90,21 @@ export async function getAITutorContext(): Promise<AITutorContext> {
  */
 export async function buildSkillsAwarePrompt(
   conversationType: ConversationType,
-  language: string
+  language: string,
 ): Promise<string> {
-  const proficiencyMap = await getUserSkillsProficiencyMap()
+  const proficiencyMap = await getUserSkillsProficiencyMap();
 
   return buildTutorPrompt({
     proficiencyMap,
     conversationType: normalizeConversationType(conversationType),
     language: normalizeLanguage(language),
-  })
+  });
 }
 
 /**
  * Get overall proficiency level
  */
 export async function getUserOverallProficiency(): Promise<ProficiencyLevel> {
-  const proficiencyMap = await getUserSkillsProficiencyMap()
-  return calculateOverallProficiency(proficiencyMap)
+  const proficiencyMap = await getUserSkillsProficiencyMap();
+  return calculateOverallProficiency(proficiencyMap);
 }

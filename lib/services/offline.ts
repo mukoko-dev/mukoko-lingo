@@ -12,26 +12,26 @@
  * statically — no network required.
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { getApiBaseUrl } from '@/lib/config/api-base'
-import { phrases as staticPhrases } from '@/lib/data/phrases-data'
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getApiBaseUrl } from "@/lib/config/api-base";
+import { phrases as staticPhrases } from "@/lib/data/phrases-data";
 import {
   savePhrases,
   getBookmarks,
   getProgress,
   getUserSkills,
   getStudySessions,
-} from '@/lib/storage/database'
+} from "@/lib/storage/database";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const STORAGE_KEYS = {
-  OFFLINE_MODE: '@mukoko_offline_mode',
-  OFFLINE_CACHED_AT: '@mukoko_offline_cached_at',
-  SYNC_QUEUE: '@mukoko_sync_queue',
-} as const
+  OFFLINE_MODE: "@mukoko_offline_mode",
+  OFFLINE_CACHED_AT: "@mukoko_offline_cached_at",
+  SYNC_QUEUE: "@mukoko_sync_queue",
+} as const;
 
 // ---------------------------------------------------------------------------
 // Offline mode toggle (AsyncStorage-backed)
@@ -41,8 +41,8 @@ const STORAGE_KEYS = {
  * Whether the user has opted in to offline mode.
  */
 export async function isOfflineMode(): Promise<boolean> {
-  const value = await AsyncStorage.getItem(STORAGE_KEYS.OFFLINE_MODE)
-  return value === 'true'
+  const value = await AsyncStorage.getItem(STORAGE_KEYS.OFFLINE_MODE);
+  return value === "true";
 }
 
 /**
@@ -57,15 +57,15 @@ export async function isOfflineMode(): Promise<boolean> {
 export async function setOfflineMode(enabled: boolean): Promise<void> {
   await AsyncStorage.setItem(
     STORAGE_KEYS.OFFLINE_MODE,
-    enabled ? 'true' : 'false'
-  )
+    enabled ? "true" : "false",
+  );
 
   if (enabled) {
-    await cachePhrasesForOffline()
-    await cacheUserDataForOffline()
+    await cachePhrasesForOffline();
+    await cacheUserDataForOffline();
   } else {
     // When going back online, attempt to flush any queued operations
-    await flushSyncQueue()
+    await flushSyncQueue();
   }
 }
 
@@ -79,14 +79,17 @@ export async function setOfflineMode(enabled: boolean): Promise<void> {
  */
 export async function cachePhrasesForOffline(): Promise<void> {
   try {
-    await savePhrases(staticPhrases)
+    await savePhrases(staticPhrases);
     await AsyncStorage.setItem(
       STORAGE_KEYS.OFFLINE_CACHED_AT,
-      new Date().toISOString()
-    )
-    if (__DEV__) console.log(`[offline] Cached ${staticPhrases.length} phrases for offline use`)
+      new Date().toISOString(),
+    );
+    if (__DEV__)
+      console.log(
+        `[offline] Cached ${staticPhrases.length} phrases for offline use`,
+      );
   } catch (error) {
-    console.error('[offline] Failed to cache phrases:', error)
+    console.error("[offline] Failed to cache phrases:", error);
   }
 }
 
@@ -104,7 +107,7 @@ export async function cacheUserDataForOffline(): Promise<void> {
       getProgress(),
       getUserSkills(),
       getStudySessions(),
-    ])
+    ]);
 
     // Write a compact snapshot — the individual keys are already stored
     // by the storage module, so this is mainly for "last cached" tracking.
@@ -114,16 +117,16 @@ export async function cacheUserDataForOffline(): Promise<void> {
       skillCount: Object.keys(skills).length,
       sessionCount: sessions.length,
       cachedAt: new Date().toISOString(),
-    }
+    };
 
     await AsyncStorage.setItem(
-      '@mukoko_offline_snapshot',
-      JSON.stringify(snapshot)
-    )
+      "@mukoko_offline_snapshot",
+      JSON.stringify(snapshot),
+    );
 
-    if (__DEV__) console.log('[offline] User data snapshot created:', snapshot)
+    if (__DEV__) console.log("[offline] User data snapshot created:", snapshot);
   } catch (error) {
-    console.error('[offline] Failed to cache user data:', error)
+    console.error("[offline] Failed to cache user data:", error);
   }
 }
 
@@ -132,7 +135,7 @@ export async function cacheUserDataForOffline(): Promise<void> {
  * the cache has never been populated.
  */
 export async function getLastCachedAt(): Promise<string | null> {
-  return AsyncStorage.getItem(STORAGE_KEYS.OFFLINE_CACHED_AT)
+  return AsyncStorage.getItem(STORAGE_KEYS.OFFLINE_CACHED_AT);
 }
 
 // ---------------------------------------------------------------------------
@@ -140,11 +143,11 @@ export async function getLastCachedAt(): Promise<string | null> {
 // ---------------------------------------------------------------------------
 
 interface SyncQueueItem {
-  id: string
-  method: 'POST' | 'PUT' | 'DELETE'
-  path: string
-  body?: Record<string, any>
-  createdAt: string
+  id: string;
+  method: "POST" | "PUT" | "DELETE";
+  path: string;
+  body?: Record<string, any>;
+  createdAt: string;
 }
 
 /**
@@ -152,23 +155,23 @@ interface SyncQueueItem {
  * online. The queue is persisted in AsyncStorage.
  */
 export async function enqueueSyncOperation(
-  method: 'POST' | 'PUT' | 'DELETE',
+  method: "POST" | "PUT" | "DELETE",
   path: string,
-  body?: Record<string, any>
+  body?: Record<string, any>,
 ): Promise<void> {
   try {
-    const queue = await getSyncQueue()
+    const queue = await getSyncQueue();
     const item: SyncQueueItem = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       method,
       path,
       body,
       createdAt: new Date().toISOString(),
-    }
-    queue.push(item)
-    await AsyncStorage.setItem(STORAGE_KEYS.SYNC_QUEUE, JSON.stringify(queue))
+    };
+    queue.push(item);
+    await AsyncStorage.setItem(STORAGE_KEYS.SYNC_QUEUE, JSON.stringify(queue));
   } catch (error) {
-    console.error('[offline] Failed to enqueue sync operation:', error)
+    console.error("[offline] Failed to enqueue sync operation:", error);
   }
 }
 
@@ -177,10 +180,10 @@ export async function enqueueSyncOperation(
  */
 export async function getSyncQueue(): Promise<SyncQueueItem[]> {
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEYS.SYNC_QUEUE)
-    return raw ? JSON.parse(raw) : []
+    const raw = await AsyncStorage.getItem(STORAGE_KEYS.SYNC_QUEUE);
+    return raw ? JSON.parse(raw) : [];
   } catch {
-    return []
+    return [];
   }
 }
 
@@ -192,35 +195,41 @@ export async function getSyncQueue(): Promise<SyncQueueItem[]> {
  * the item in the queue for the next flush cycle.
  */
 export async function flushSyncQueue(): Promise<void> {
-  const queue = await getSyncQueue()
-  if (queue.length === 0) return
+  const queue = await getSyncQueue();
+  if (queue.length === 0) return;
 
-  const remaining: SyncQueueItem[] = []
-  const apiBaseUrl = getApiBaseUrl()
+  const remaining: SyncQueueItem[] = [];
+  const apiBaseUrl = getApiBaseUrl();
 
   for (const item of queue) {
     try {
       const response = await fetch(`${apiBaseUrl}/api${item.path}`, {
         method: item.method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: item.body ? JSON.stringify(item.body) : undefined,
-      })
+      });
 
       if (!response.ok && response.status >= 500) {
         // Server error — keep in queue for retry
-        remaining.push(item)
+        remaining.push(item);
       }
       // 2xx or 4xx (client error) — remove from queue
     } catch {
       // Network error — keep in queue
-      remaining.push(item)
+      remaining.push(item);
     }
   }
 
-  await AsyncStorage.setItem(STORAGE_KEYS.SYNC_QUEUE, JSON.stringify(remaining))
+  await AsyncStorage.setItem(
+    STORAGE_KEYS.SYNC_QUEUE,
+    JSON.stringify(remaining),
+  );
 
-  const flushed = queue.length - remaining.length
+  const flushed = queue.length - remaining.length;
   if (flushed > 0) {
-    if (__DEV__) console.log(`[offline] Flushed ${flushed}/${queue.length} queued operations`)
+    if (__DEV__)
+      console.log(
+        `[offline] Flushed ${flushed}/${queue.length} queued operations`,
+      );
   }
 }

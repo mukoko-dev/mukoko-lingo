@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -11,91 +11,104 @@ import {
   useWindowDimensions,
   SafeAreaView,
   StatusBar,
-} from 'react-native'
-import { useRouter, Stack } from 'expo-router'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { ArrowRight, ChevronRight } from 'lucide-react-native'
+} from "react-native";
+import { useRouter, Stack } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ArrowRight, ChevronRight } from "lucide-react-native";
 
-import { useTheme } from '@/lib/hooks/useTheme'
-import { lightTheme, darkTheme } from '@/constants/Colors'
+import { useTheme } from "@/lib/hooks/useTheme";
+import { lightTheme, darkTheme } from "@/constants/Colors";
 
 interface OnboardingSlide {
-  id: string
-  title: string
-  subtitle: string
-  description: string
-  emoji?: string
-  useMascot?: boolean
-  color: string
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  emoji?: string;
+  useMascot?: boolean;
+  color: string;
 }
 
-const STORAGE_KEY = '@mukoko_onboarding_complete'
+const STORAGE_KEY = "@mukoko_onboarding_complete";
 
 export default function OnboardingScreen() {
-  const router = useRouter()
-  const { isDark } = useTheme()
-  const theme = isDark ? darkTheme : lightTheme
-  const { width: SCREEN_WIDTH } = useWindowDimensions()
+  const router = useRouter();
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
 
   const ONBOARDING_SLIDES: OnboardingSlide[] = [
     {
-      id: '1',
-      title: 'Daily Lessons, Real Phrases',
-      subtitle: '5 phrases a day builds fluency',
-      description: 'Learn Shona, Ndebele, and Chinese through daily flash cards, quizzes, and spaced repetition.',
-      emoji: '📚',
+      id: "1",
+      title: "Daily Lessons, Real Phrases",
+      subtitle: "5 phrases a day builds fluency",
+      description:
+        "Learn Shona, Ndebele, and Chinese through daily flash cards, quizzes, and spaced repetition.",
+      emoji: "📚",
       color: theme.primary,
     },
     {
-      id: '2',
-      title: 'Meet Shamwari',
-      subtitle: 'Your AI language friend',
-      description: 'Practice conversations with Shamwari, who adapts to your level and helps you master what you learn.',
+      id: "2",
+      title: "Meet Shamwari",
+      subtitle: "Your AI language friend",
+      description:
+        "Practice conversations with Shamwari, who adapts to your level and helps you master what you learn.",
       useMascot: true,
       color: theme.accent,
     },
-  ]
+  ];
 
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const flatListRef = useRef<FlatList>(null)
-  const scrollX = useRef(new Animated.Value(0)).current
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
 
   // Responsive breakpoints
-  const isTablet = SCREEN_WIDTH >= 768
+  const isTablet = SCREEN_WIDTH >= 768;
 
-  const styles = createStyles(theme, isTablet, SCREEN_WIDTH)
+  const styles = createStyles(theme, isTablet, SCREEN_WIDTH);
 
   const handleNext = () => {
     if (currentIndex < ONBOARDING_SLIDES.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex + 1 })
-      setCurrentIndex(currentIndex + 1)
+      flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
+      setCurrentIndex(currentIndex + 1);
     } else {
-      finishTour()
+      finishTour();
     }
-  }
+  };
 
   const handleSkip = () => {
     // Go back to welcome without marking as complete
-    router.back()
-  }
+    router.back();
+  };
 
   const finishTour = async () => {
     // Mark onboarding as complete and go to main app
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, 'true')
+      await AsyncStorage.setItem(STORAGE_KEY, "true");
     } catch (error) {
-      console.error('Error saving onboarding status:', error)
+      console.error("Error saving onboarding status:", error);
     }
-    router.replace('/(tabs)')
-  }
+    router.replace("/(tabs)");
+  };
 
-  const renderSlide = ({ item, index }: { item: OnboardingSlide; index: number }) => (
+  const renderSlide = ({
+    item,
+    index,
+  }: {
+    item: OnboardingSlide;
+    index: number;
+  }) => (
     <View style={[styles.slide, { width: SCREEN_WIDTH }]}>
       <View style={styles.slideContent}>
-        <View style={[styles.emojiContainer, { backgroundColor: item.color + '20' }]}>
+        <View
+          style={[
+            styles.emojiContainer,
+            { backgroundColor: item.color + "20" },
+          ]}
+        >
           {item.useMascot ? (
             <Image
-              source={require('@/assets/images/mascot-icon.png')}
+              source={require("@/assets/images/mascot-icon.png")}
               style={styles.mascotImage}
               resizeMode="contain"
             />
@@ -104,11 +117,13 @@ export default function OnboardingScreen() {
           )}
         </View>
         <Text style={styles.title}>{item.title}</Text>
-        <Text style={[styles.subtitle, { color: item.color }]}>{item.subtitle}</Text>
+        <Text style={[styles.subtitle, { color: item.color }]}>
+          {item.subtitle}
+        </Text>
         <Text style={styles.description}>{item.description}</Text>
       </View>
     </View>
-  )
+  );
 
   const renderPagination = () => (
     <View style={styles.pagination}>
@@ -117,19 +132,19 @@ export default function OnboardingScreen() {
           (index - 1) * SCREEN_WIDTH,
           index * SCREEN_WIDTH,
           (index + 1) * SCREEN_WIDTH,
-        ]
+        ];
 
         const dotWidth = scrollX.interpolate({
           inputRange,
           outputRange: [8, 24, 8],
-          extrapolate: 'clamp',
-        })
+          extrapolate: "clamp",
+        });
 
         const opacity = scrollX.interpolate({
           inputRange,
           outputRange: [0.3, 1, 0.3],
-          extrapolate: 'clamp',
-        })
+          extrapolate: "clamp",
+        });
 
         return (
           <Animated.View
@@ -143,18 +158,18 @@ export default function OnboardingScreen() {
               },
             ]}
           />
-        )
+        );
       })}
     </View>
-  )
+  );
 
-  const isLastSlide = currentIndex === ONBOARDING_SLIDES.length - 1
+  const isLastSlide = currentIndex === ONBOARDING_SLIDES.length - 1;
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
         <View style={styles.container}>
           {/* Skip button */}
@@ -165,7 +180,7 @@ export default function OnboardingScreen() {
           {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={require('@/assets/images/icon.png')}
+              source={require("@/assets/images/icon.png")}
               style={styles.logoIcon}
               resizeMode="contain"
             />
@@ -183,11 +198,13 @@ export default function OnboardingScreen() {
             showsHorizontalScrollIndicator={false}
             onScroll={Animated.event(
               [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-              { useNativeDriver: false }
+              { useNativeDriver: false },
             )}
             onMomentumScrollEnd={(e) => {
-              const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH)
-              setCurrentIndex(index)
+              const index = Math.round(
+                e.nativeEvent.contentOffset.x / SCREEN_WIDTH,
+              );
+              setCurrentIndex(index);
             }}
             scrollEventThrottle={16}
           />
@@ -198,11 +215,14 @@ export default function OnboardingScreen() {
           {/* Next/Get Started button */}
           <View style={styles.bottomSection}>
             <TouchableOpacity
-              style={[styles.nextButton, isLastSlide && styles.getStartedButton]}
+              style={[
+                styles.nextButton,
+                isLastSlide && styles.getStartedButton,
+              ]}
               onPress={handleNext}
             >
               <Text style={styles.nextButtonText}>
-                {isLastSlide ? 'Get Started' : 'Next'}
+                {isLastSlide ? "Get Started" : "Next"}
               </Text>
               {isLastSlide ? (
                 <ArrowRight size={20} color="#ffffff" />
@@ -213,16 +233,21 @@ export default function OnboardingScreen() {
 
             {/* Footer */}
             <Text style={styles.footer}>
-              By continuing, you agree to our Terms of Service and Privacy Policy
+              By continuing, you agree to our Terms of Service and Privacy
+              Policy
             </Text>
           </View>
         </View>
       </SafeAreaView>
     </>
-  )
+  );
 }
 
-const createStyles = (theme: typeof lightTheme, isTablet: boolean, SCREEN_WIDTH: number) =>
+const createStyles = (
+  theme: typeof lightTheme,
+  isTablet: boolean,
+  SCREEN_WIDTH: number,
+) =>
   StyleSheet.create({
     safeArea: {
       flex: 1,
@@ -235,7 +260,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean, SCREEN_WIDTH:
       paddingBottom: 40,
     },
     skipButton: {
-      position: 'absolute',
+      position: "absolute",
       top: 20,
       right: 20,
       zIndex: 10,
@@ -246,8 +271,8 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean, SCREEN_WIDTH:
       color: theme.textMuted,
     },
     logoContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       paddingHorizontal: 20,
       marginBottom: 20,
       gap: 10,
@@ -258,7 +283,7 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean, SCREEN_WIDTH:
     },
     logoTitle: {
       fontSize: 20,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
     },
     mascotImage: {
@@ -267,20 +292,20 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean, SCREEN_WIDTH:
     },
     slide: {
       flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       paddingHorizontal: 40,
     },
     slideContent: {
-      alignItems: 'center',
+      alignItems: "center",
       maxWidth: isTablet ? 500 : SCREEN_WIDTH - 80,
     },
     emojiContainer: {
       width: isTablet ? 140 : 120,
       height: isTablet ? 140 : 120,
       borderRadius: isTablet ? 70 : 60,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       marginBottom: 32,
     },
     emoji: {
@@ -288,27 +313,27 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean, SCREEN_WIDTH:
     },
     title: {
       fontSize: isTablet ? 32 : 28,
-      fontWeight: '700',
+      fontWeight: "700",
       color: theme.text,
-      textAlign: 'center',
+      textAlign: "center",
       marginBottom: 8,
     },
     subtitle: {
       fontSize: isTablet ? 20 : 18,
-      fontWeight: '600',
-      textAlign: 'center',
+      fontWeight: "600",
+      textAlign: "center",
       marginBottom: 16,
     },
     description: {
       fontSize: isTablet ? 17 : 16,
       color: theme.textSecondary,
-      textAlign: 'center',
+      textAlign: "center",
       lineHeight: isTablet ? 26 : 24,
     },
     pagination: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
       marginVertical: 24,
     },
     paginationDot: {
@@ -318,33 +343,33 @@ const createStyles = (theme: typeof lightTheme, isTablet: boolean, SCREEN_WIDTH:
     },
     bottomSection: {
       paddingHorizontal: isTablet ? 80 : 40,
-      alignItems: 'center',
+      alignItems: "center",
     },
     nextButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: theme.primary,
       paddingVertical: 16,
       paddingHorizontal: 32,
       borderRadius: 12,
       gap: 8,
-      width: '100%',
+      width: "100%",
       maxWidth: isTablet ? 400 : undefined,
     },
     getStartedButton: {
       backgroundColor: theme.secondary,
     },
     nextButtonText: {
-      color: '#ffffff',
+      color: "#ffffff",
       fontSize: 17,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     footer: {
       fontSize: 12,
       color: theme.textMuted,
-      textAlign: 'center',
+      textAlign: "center",
       marginTop: 20,
       paddingHorizontal: isTablet ? 40 : 0,
     },
-  })
+  });

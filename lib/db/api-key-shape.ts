@@ -6,21 +6,21 @@
  * collection.
  */
 
-import { randomUUID } from 'crypto'
-import * as crypto from 'crypto'
-import type { PlatformApiKey } from './types'
-import { LINGO_SURFACE_CONTEXT } from './types'
+import { randomUUID } from "crypto";
+import * as crypto from "crypto";
+import type { PlatformApiKey } from "./types";
+import { LINGO_SURFACE_CONTEXT } from "./types";
 
 export interface ApiKeySummary {
-  id: string
-  name: string
-  organization_id: string
-  key_prefix: string
-  scopes: string[]
-  last_used_at: string | null
-  created_at: string | null
-  expires_at: string | null
-  is_active: boolean
+  id: string;
+  name: string;
+  organization_id: string;
+  key_prefix: string;
+  scopes: string[];
+  last_used_at: string | null;
+  created_at: string | null;
+  expires_at: string | null;
+  is_active: boolean;
 }
 
 export function toApiKeySummary(doc: PlatformApiKey): ApiKeySummary {
@@ -30,21 +30,23 @@ export function toApiKeySummary(doc: PlatformApiKey): ApiKeySummary {
     organization_id: doc.ownerEntityId,
     key_prefix: doc.keyPrefix,
     scopes: doc.scopes ?? [],
-    last_used_at: doc.lastUsedAt ? new Date(doc.lastUsedAt).toISOString() : null,
+    last_used_at: doc.lastUsedAt
+      ? new Date(doc.lastUsedAt).toISOString()
+      : null,
     created_at: doc.createdAt ? new Date(doc.createdAt).toISOString() : null,
     expires_at: doc.expiresAt ? new Date(doc.expiresAt).toISOString() : null,
     is_active: doc.isActive,
-  }
+  };
 }
 
 export function toApiKeySummaries(docs: PlatformApiKey[]): ApiKeySummary[] {
-  return docs.map(toApiKeySummary)
+  return docs.map(toApiKeySummary);
 }
 
 export function generateApiKey(): string {
-  const prefix = 'mk_live_'
-  const secret = crypto.randomBytes(32).toString('hex')
-  return `${prefix}${secret}`
+  const prefix = "mk_live_";
+  const secret = crypto.randomBytes(32).toString("hex");
+  return `${prefix}${secret}`;
 }
 
 /**
@@ -57,11 +59,11 @@ export function generateApiKey(): string {
  * is used as the scrypt salt and is never stored alongside `keyHashedSecret`.
  */
 export function hashApiKey(key: string): string {
-  const pepper = process.env.API_KEY_HASH_SECRET
+  const pepper = process.env.API_KEY_HASH_SECRET;
   if (!pepper) {
-    throw new Error('API_KEY_HASH_SECRET must be set to hash API keys')
+    throw new Error("API_KEY_HASH_SECRET must be set to hash API keys");
   }
-  return crypto.scryptSync(key, pepper, 32).toString('hex')
+  return crypto.scryptSync(key, pepper, 32).toString("hex");
 }
 
 /**
@@ -71,31 +73,32 @@ export function hashApiKey(key: string): string {
  * `lingo` surfaceContext.
  */
 export function buildApiKeyDoc(params: {
-  name: string
-  ownerEntityId: string
-  createdByPersonId: string
-  scopes?: string[]
-  expiresInDays?: number | null
+  name: string;
+  ownerEntityId: string;
+  createdByPersonId: string;
+  scopes?: string[];
+  expiresInDays?: number | null;
 }): { doc: PlatformApiKey; plainKey: string } {
-  const now = new Date()
-  const plainKey = generateApiKey()
-  const keyHashedSecret = hashApiKey(plainKey)
-  const keyPrefix = plainKey.substring(0, 12) + '...'
+  const now = new Date();
+  const plainKey = generateApiKey();
+  const keyHashedSecret = hashApiKey(plainKey);
+  const keyPrefix = plainKey.substring(0, 12) + "...";
   const expiresAt = params.expiresInDays
     ? new Date(now.getTime() + params.expiresInDays * 24 * 60 * 60 * 1000)
-    : null
+    : null;
 
   const doc: PlatformApiKey = {
     _id: randomUUID(),
-    _schemaVersion: 'v3.1',
-    keyType: 'external',
+    _schemaVersion: "v3.1",
+    keyType: "external",
     ownerEntityId: params.ownerEntityId,
     ownerPersonId: null,
     createdByPersonId: params.createdByPersonId,
     name: params.name,
     keyPrefix,
     keyHashedSecret,
-    scopes: params.scopes && params.scopes.length > 0 ? params.scopes : ['read'],
+    scopes:
+      params.scopes && params.scopes.length > 0 ? params.scopes : ["read"],
     surfaceContext: LINGO_SURFACE_CONTEXT,
     isActive: true,
     billingReferenceId: null,
@@ -109,7 +112,7 @@ export function buildApiKeyDoc(params: {
     rotationSchedule: null,
     createdAt: now,
     updatedAt: now,
-  }
+  };
 
-  return { doc, plainKey }
+  return { doc, plainKey };
 }
