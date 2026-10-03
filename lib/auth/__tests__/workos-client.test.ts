@@ -357,9 +357,9 @@ describe("workos-client", () => {
       });
 
       await expect(getSessionToken()).resolves.toBeNull();
-      expect(
-        mockAsyncStorageMemory.has("@mukoko_workos_refresh_token"),
-      ).toBe(false);
+      expect(mockAsyncStorageMemory.has("@mukoko_workos_refresh_token")).toBe(
+        false,
+      );
     });
   });
 
