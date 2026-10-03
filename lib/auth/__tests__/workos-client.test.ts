@@ -14,6 +14,8 @@ import {
   getCurrentUser,
   getSessionToken,
   isAuthConfigured,
+  refreshAccessToken,
+  accessTokenExpiry,
 } from "../workos-client";
 
 process.env.EXPO_PUBLIC_API_BASE_URL = "https://test-api.mukoko.com";
@@ -265,9 +267,99 @@ describe("workos-client", () => {
   });
 
   describe("getSessionToken", () => {
+    const b64 = (o: object) =>
+      Buffer.from(JSON.stringify(o)).toString("base64url");
+    const jwt = (exp: number) => `${b64({ alg: "none" })}.${b64({ exp })}.sig`;
+    const nowSec = () => Math.floor(Date.now() / 1000);
+    const seed = (accessToken: string) => {
+      mockAsyncStorageMemory.set("@mukoko_workos_access_token", accessToken);
+      mockAsyncStorageMemory.set("@mukoko_workos_refresh_token", "rt-old");
+      mockAsyncStorageMemory.set(
+        "@mukoko_workos_user",
+        JSON.stringify({ user_id: "user_1", email: "a@b.c" }),
+      );
+    };
+
     it("returns null when no session exists", async () => {
       const token = await getSessionToken();
       expect(token).toBeNull();
+    });
+
+    it("reads the exp claim of an access token", () => {
+      expect(accessTokenExpiry(jwt(1234))).toBe(1234);
+      expect(accessTokenExpiry("not-a-jwt")).toBeNull();
+    });
+
+    it("returns a fresh access token without refreshing", async () => {
+      const fresh = jwt(nowSec() + 600);
+      seed(fresh);
+      await expect(getSessionToken()).resolves.toBe(fresh);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("refreshes an expired access token and stores the rotated refresh token", async () => {
+      seed(jwt(nowSec() - 10));
+      const next = jwt(nowSec() + 300);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({ access_token: next, refresh_token: "rt-new" }),
+      });
+
+      await expect(getSessionToken()).resolves.toBe(next);
+      expect(mockFetch.mock.calls[0][0]).toMatch(/\/api\/auth\/refresh$/);
+      expect(mockAsyncStorageMemory.get("@mukoko_workos_refresh_token")).toBe(
+        "rt-new",
+      );
+    });
+
+    it("shares one refresh between concurrent callers", async () => {
+      seed(jwt(nowSec() - 10));
+      const next = jwt(nowSec() + 300);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({ access_token: next, refresh_token: "rt-new" }),
+      });
+
+      const [a, b] = await Promise.all([getSessionToken(), getSessionToken()]);
+      expect(a).toBe(next);
+      expect(b).toBe(next);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps the session when the refresh fails transiently", async () => {
+      const expired = jwt(nowSec() - 10);
+      seed(expired);
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        json: () => Promise.resolve({ error: "retry" }),
+      });
+
+      await expect(refreshAccessToken()).resolves.toBeNull();
+      expect(mockAsyncStorageMemory.get("@mukoko_workos_refresh_token")).toBe(
+        "rt-old",
+      );
+      expect(mockAsyncStorageMemory.get("@mukoko_workos_access_token")).toBe(
+        expired,
+      );
+    });
+
+    it("clears the session when WorkOS has ended it", async () => {
+      seed(jwt(nowSec() - 10));
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: () => Promise.resolve({ error: "Session expired or invalid" }),
+      });
+
+      await expect(getSessionToken()).resolves.toBeNull();
+      expect(
+        mockAsyncStorageMemory.has("@mukoko_workos_refresh_token"),
+      ).toBe(false);
     });
   });
 
