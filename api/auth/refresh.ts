@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { handleCors } from "../_lib/cors";
 import { workos, WORKOS_CLIENT_ID } from "../_lib/auth-middleware";
+import { isTerminalRefreshError } from "../_lib/refresh-errors";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (handleCors(req, res)) return;
@@ -34,6 +35,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .status(500)
         .json({ error: "Authentication service is temporarily unavailable." });
     }
-    return res.status(401).json({ error: "Session expired or invalid" });
+    if (isTerminalRefreshError(error)) {
+      // WorkOS ended the session (expired, revoked, or the refresh token was
+      // already used) — the client must sign in again.
+      return res.status(401).json({ error: "Session expired or invalid" });
+    }
+    // Timeouts, 429 and 5xx are transient: the session is still valid, so
+    // tell the client to keep it and retry rather than signing the user out.
+    return res
+      .status(503)
+      .json({ error: "Could not refresh the session, please retry." });
   }
 }
+

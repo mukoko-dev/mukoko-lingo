@@ -16,6 +16,7 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 // Mock auth module
 jest.mock("@/lib/auth/workos-client", () => ({
   getSessionToken: jest.fn(),
+  refreshAccessToken: jest.fn(),
 }));
 
 // Mock fetch globally
@@ -31,6 +32,7 @@ let aiApi: any;
 let classesApi: any;
 let assignmentsApi: any;
 let mockedGetSessionToken: jest.Mock;
+let mockedRefreshAccessToken: jest.Mock;
 
 beforeAll(async () => {
   jest.resetModules();
@@ -39,6 +41,7 @@ beforeAll(async () => {
 
   const authModule = require("@/lib/auth/workos-client");
   mockedGetSessionToken = authModule.getSessionToken;
+  mockedRefreshAccessToken = authModule.refreshAccessToken;
 
   const apiClient = require("../api-client");
   profilesApi = apiClient.profilesApi;
@@ -96,6 +99,51 @@ describe("api-client", () => {
           }),
         }),
       );
+    });
+  });
+
+  describe("expired access token", () => {
+    const unauthorized = {
+      ok: false,
+      status: 401,
+      json: () => Promise.resolve({ error: "Unauthorized" }),
+    };
+
+    beforeEach(() => {
+      mockedRefreshAccessToken.mockReset();
+    });
+
+    it("refreshes and retries once when the API answers 401", async () => {
+      mockedRefreshAccessToken.mockResolvedValue("new-token");
+      mockFetch.mockResolvedValueOnce(unauthorized);
+
+      const result = await profilesApi.getMyProfile();
+
+      expect(mockedRefreshAccessToken).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch.mock.calls[1][1].headers.Authorization).toBe(
+        "Bearer new-token",
+      );
+      expect(result.data).toEqual({ id: "1" });
+    });
+
+    it("returns the 401 when no refresh was possible", async () => {
+      mockedRefreshAccessToken.mockResolvedValue(null);
+      mockFetch.mockResolvedValueOnce(unauthorized);
+
+      const result = await profilesApi.getMyProfile();
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(result.data).toBeNull();
+    });
+
+    it("does not refresh for anonymous requests", async () => {
+      mockedGetSessionToken.mockResolvedValue(null);
+      mockFetch.mockResolvedValueOnce(unauthorized);
+
+      await profilesApi.getMyProfile();
+
+      expect(mockedRefreshAccessToken).not.toHaveBeenCalled();
     });
   });
 
