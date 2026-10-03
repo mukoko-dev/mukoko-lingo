@@ -47,4 +47,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .json({ error: "Could not refresh the session, please retry." });
   }
 }
-
