@@ -17,13 +17,69 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   // Web app uses cookie-based or localStorage session tokens
   const token =
     typeof window !== "undefined"
-      ? localStorage.getItem("workos_access_token")
+      ? localStorage.getItem(ACCESS_TOKEN_KEY)
       : null;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   return headers;
+}
+
+const ACCESS_TOKEN_KEY = "workos_access_token";
+const REFRESH_TOKEN_KEY = "workos_refresh_token";
+
+let refreshInFlight: Promise<string | null> | null = null;
+
+/**
+ * Swap the stored WorkOS refresh token for a new access/refresh pair. WorkOS
+ * decides how long the sign-in lasts; the access token itself lives only
+ * minutes, so without this every call after it expires fails with 401.
+ * The tokens are cleared only when the refresh endpoint says the WorkOS
+ * session is over (401) — never on a network error or a 5xx.
+ */
+function refreshAccessToken(): Promise<string | null> {
+  if (typeof window === "undefined") return Promise.resolve(null);
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    if (!refreshToken) return null;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      if (response.status === 401) {
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
+        return null;
+      }
+      if (!response.ok) return null;
+      const data = await response.json();
+      localStorage.setItem(ACCESS_TOKEN_KEY, data.access_token);
+      localStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token);
+      return data.access_token as string;
+    } catch {
+      return null;
+    }
+  })().finally(() => {
+    refreshInFlight = null;
+  });
+  return refreshInFlight;
+}
+
+/** fetch, plus one refresh-and-retry when an authenticated call gets 401. */
+async function authedFetch(url: string, init: RequestInit): Promise<Response> {
+  const response = await fetch(url, init);
+  const headers = (init.headers ?? {}) as Record<string, string>;
+  if (response.status !== 401 || !headers["Authorization"]) return response;
+  const token = await refreshAccessToken();
+  if (!token) return response;
+  return fetch(url, {
+    ...init,
+    headers: { ...headers, Authorization: `Bearer ${token}` },
+  });
 }
 
 async function apiGet<T>(
@@ -35,7 +91,7 @@ async function apiGet<T>(
     const url = new URL(`${API_BASE_URL}/api${path}`);
     if (params)
       Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-    const response = await fetch(url.toString(), { method: "GET", headers });
+    const response = await authedFetch(url.toString(), { method: "GET", headers });
     const data = await response.json();
     if (!response.ok)
       return {
@@ -54,7 +110,7 @@ async function apiPost<T>(
 ): Promise<ApiResponse<T>> {
   try {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/api${path}`, {
+    const response = await authedFetch(`${API_BASE_URL}/api${path}`, {
       method: "POST",
       headers,
       body: JSON.stringify(body),
@@ -77,7 +133,7 @@ async function apiPut<T>(
 ): Promise<ApiResponse<T>> {
   try {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/api${path}`, {
+    const response = await authedFetch(`${API_BASE_URL}/api${path}`, {
       method: "PUT",
       headers,
       body: JSON.stringify(body),
@@ -97,7 +153,7 @@ async function apiPut<T>(
 async function apiDelete<T>(path: string): Promise<ApiResponse<T>> {
   try {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/api${path}`, {
+    const response = await authedFetch(`${API_BASE_URL}/api${path}`, {
       method: "DELETE",
       headers,
     });
