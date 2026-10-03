@@ -1,12 +1,12 @@
 /**
- * WorkOS answers an unusable refresh token with a 4xx (OAuth `invalid_grant`).
- * Anything else — no status (network), 408, 429, 5xx — is transient.
+ * WorkOS answers an unusable refresh token (expired, revoked, signed out or
+ * already used) with 400 `invalid_grant`: terminal. Anything else — no status
+ * (network), 408, 429, 5xx — is transient, and so is 401/403, which means our
+ * own API key is wrong rather than the user's session being over.
  * See https://workos.com/docs/authkit/session-resilience
  */
 export function isTerminalRefreshError(error: any): boolean {
   if (error?.error === "invalid_grant" || error?.code === "invalid_grant")
     return true;
-  const status = typeof error?.status === "number" ? error.status : undefined;
-  if (status === undefined) return false;
-  return status >= 400 && status < 500 && status !== 408 && status !== 429;
+  return error?.status === 400;
 }
