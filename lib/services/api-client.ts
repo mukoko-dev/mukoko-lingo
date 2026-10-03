@@ -6,7 +6,10 @@
  * All requests include the WorkOS access token for authentication.
  */
 
-import { getSessionToken } from "@/lib/auth/workos-client";
+import {
+  getSessionToken,
+  refreshAccessToken,
+} from "@/lib/auth/workos-client";
 import { getApiBaseUrl } from "@/lib/config/api-base";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type {
@@ -83,7 +86,29 @@ async function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * fetch with retries, plus one refresh-and-retry when the API answers 401 to
+ * an authenticated request: the WorkOS access token is short-lived, so a 401
+ * usually just means it ran out while the WorkOS session is still valid.
+ */
 async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries: number = MAX_RETRIES,
+): Promise<Response> {
+  const response = await fetchWithBackoff(url, options, retries);
+  const headers = (options.headers ?? {}) as Record<string, string>;
+  if (response.status !== 401 || !headers["Authorization"]) return response;
+  const token = await refreshAccessToken();
+  if (!token) return response;
+  return fetchWithBackoff(
+    url,
+    { ...options, headers: { ...headers, Authorization: `Bearer ${token}` } },
+    retries,
+  );
+}
+
+async function fetchWithBackoff(
   url: string,
   options: RequestInit,
   retries: number = MAX_RETRIES,

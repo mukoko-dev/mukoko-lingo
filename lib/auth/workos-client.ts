@@ -364,24 +364,26 @@ export async function getSession(): Promise<{
       }
 
       if (response.status === 401) {
-        // Access token expired — try to refresh it
-        try {
-          const refreshed = await apiCall("/refresh", {
-            refresh_token: refreshToken,
-          });
-          const newSession: WorkOSSession = {
-            access_token: refreshed.access_token,
-            refresh_token: refreshed.refresh_token,
-            user,
+        // Access token expired — swap the refresh token for a new pair.
+        // refreshAccessToken() clears the session only when WorkOS says it
+        // is over; on a transient failure the stored session is kept.
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          const newRefreshToken =
+            (await SecureStorageAdapter.getItem(REFRESH_TOKEN_KEY)) ??
+            refreshToken;
+          return {
+            session: {
+              access_token: refreshed,
+              refresh_token: newRefreshToken,
+              user,
+            },
+            error: null,
           };
-          await persistSession(newSession);
-          return { session: newSession, error: null };
-        } catch {
-          // Refresh token is also invalid — genuinely signed out
-          await clearPersistedSession();
-          notifyAuthStateChange("TOKEN_REFRESHED", null);
-          return { session: null, error: null };
         }
+        const stillSignedIn =
+          await SecureStorageAdapter.getItem(REFRESH_TOKEN_KEY);
+        return { session: stillSignedIn ? session : null, error: null };
       }
 
       // Server error (5xx) — keep the local session, don't log out
@@ -419,10 +421,106 @@ export function onAuthStateChange(callback: AuthStateCallback) {
   };
 }
 
+// =============================================================================
+// Access-token refresh
+// =============================================================================
+//
+// WorkOS decides how long a sign-in lasts (the application's session length
+// and inactivity timeout). The access token itself is short-lived (minutes),
+// so the app must swap the refresh token for a new pair whenever the access
+// token runs out — not only once at app start — or every API call made after
+// the first few minutes fails with 401 until the app is restarted.
+
+/** Refresh this many seconds before the access token's `exp`. */
+const ACCESS_TOKEN_EXPIRY_SKEW_SECONDS = 60;
+
+function base64UrlDecode(segment: string): string {
+  const base64 = segment.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+  if (typeof atob === "function") return atob(padded);
+  return Buffer.from(padded, "base64").toString("binary");
+}
+
 /**
- * Get the current access token for API calls
+ * Seconds-since-epoch `exp` claim of a JWT, or null when it can't be read.
+ * Not a verification — the API verifies tokens; this only decides when to
+ * refresh.
+ */
+export function accessTokenExpiry(token: string): number | null {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const claims = JSON.parse(base64UrlDecode(payload));
+    return typeof claims.exp === "number" ? claims.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+function isAccessTokenExpiring(token: string, nowMs = Date.now()): boolean {
+  const exp = accessTokenExpiry(token);
+  if (exp === null) return false;
+  return exp - ACCESS_TOKEN_EXPIRY_SKEW_SECONDS <= nowMs / 1000;
+}
+
+let _refreshInFlight: Promise<string | null> | null = null;
+
+/**
+ * Swap the stored refresh token for a new access/refresh pair (WorkOS
+ * rotates the refresh token on every use, so the new one is persisted).
+ *
+ * Concurrent callers share one request. The session is cleared only when
+ * WorkOS says it is over (the refresh endpoint answers 401); a network error
+ * or a 5xx keeps the session so a blip never signs the user out.
+ *
+ * Resolves to the new access token, or null when no refresh happened.
+ */
+export function refreshAccessToken(): Promise<string | null> {
+  if (_refreshInFlight) return _refreshInFlight;
+  _refreshInFlight = (async () => {
+    const refreshToken = await SecureStorageAdapter.getItem(REFRESH_TOKEN_KEY);
+    const userJson = await SecureStorageAdapter.getItem(USER_KEY);
+    if (!refreshToken || !userJson) return null;
+    try {
+      const refreshed = await apiCall("/refresh", {
+        refresh_token: refreshToken,
+      });
+      const newSession: WorkOSSession = {
+        access_token: refreshed.access_token,
+        refresh_token: refreshed.refresh_token,
+        user: JSON.parse(userJson) as WorkOSUser,
+      };
+      await persistSession(newSession);
+      notifyAuthStateChange("TOKEN_REFRESHED", newSession);
+      return newSession.access_token;
+    } catch (error: any) {
+      if (error?.statusCode === 401) {
+        // WorkOS ended the session (expired, revoked or signed out).
+        await clearPersistedSession();
+        notifyAuthStateChange("TOKEN_REFRESHED", null);
+      } else {
+        console.warn(
+          "[mukoko][auth] Token refresh failed transiently, keeping session",
+        );
+      }
+      return null;
+    }
+  })().finally(() => {
+    _refreshInFlight = null;
+  });
+  return _refreshInFlight;
+}
+
+/**
+ * Get a current access token for API calls, refreshing it first when it has
+ * expired (or is about to). If a refresh fails transiently the stored token
+ * is returned unchanged rather than signing the user out.
  */
 export async function getSessionToken(): Promise<string | null> {
+  const token = await SecureStorageAdapter.getItem(ACCESS_TOKEN_KEY);
+  if (!token || !isAccessTokenExpiring(token)) return token;
+  const refreshed = await refreshAccessToken();
+  if (refreshed) return refreshed;
   return SecureStorageAdapter.getItem(ACCESS_TOKEN_KEY);
 }
 
