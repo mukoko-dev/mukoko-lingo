@@ -6,10 +6,7 @@
  * All requests include the WorkOS access token for authentication.
  */
 
-import {
-  getSessionToken,
-  refreshAccessToken,
-} from "@/lib/auth/workos-client";
+import { getSessionToken, refreshAccessToken } from "@/lib/auth/workos-client";
 import { getApiBaseUrl } from "@/lib/config/api-base";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type {

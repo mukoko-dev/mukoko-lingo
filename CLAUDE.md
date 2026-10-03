@@ -756,7 +756,7 @@ built server-side (see AI Integration above).
   `components/**` — `api/**` and `scripts/**` tests run but do **not** count
   toward the thresholds, so the backend has no coverage floor
 
-**Test Suites** (49 suites, 580 tests). Run `npx jest --listTests` for the
+**Test Suites** (50 suites, 593 tests). Run `npx jest --listTests` for the
 current set; the security-relevant ones are worth knowing by name:
 
 _Backend (`api/**`)_ — note these are **not** included in
