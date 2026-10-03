@@ -6,9 +6,13 @@ describe("isTerminalRefreshError", () => {
     expect(isTerminalRefreshError({ error: "invalid_grant" })).toBe(true);
   });
 
-  it("treats other 4xx answers as terminal", () => {
+  it("treats a 400 as terminal", () => {
     expect(isTerminalRefreshError({ status: 400 })).toBe(true);
-    expect(isTerminalRefreshError({ status: 401 })).toBe(true);
+  });
+
+  it("does not end the session when our own API key is rejected", () => {
+    expect(isTerminalRefreshError({ status: 401 })).toBe(false);
+    expect(isTerminalRefreshError({ status: 403 })).toBe(false);
   });
 
   it("treats timeouts, rate limits and server errors as transient", () => {
