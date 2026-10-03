@@ -91,7 +91,10 @@ async function apiGet<T>(
     const url = new URL(`${API_BASE_URL}/api${path}`);
     if (params)
       Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-    const response = await authedFetch(url.toString(), { method: "GET", headers });
+    const response = await authedFetch(url.toString(), {
+      method: "GET",
+      headers,
+    });
     const data = await response.json();
     if (!response.ok)
       return {

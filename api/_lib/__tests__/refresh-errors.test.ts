@@ -2,7 +2,9 @@ import { isTerminalRefreshError } from "../refresh-errors";
 
 describe("isTerminalRefreshError", () => {
   it("treats invalid_grant as terminal", () => {
-    expect(isTerminalRefreshError({ status: 400, error: "invalid_grant" })).toBe(true);
+    expect(
+      isTerminalRefreshError({ status: 400, error: "invalid_grant" }),
+    ).toBe(true);
     expect(isTerminalRefreshError({ error: "invalid_grant" })).toBe(true);
   });
 
