@@ -52,10 +52,18 @@ class TestGetAllowedOrigin:
     def test_allowlisted_origin_is_echoed(self):
         assert _helpers._get_allowed_origin({"Origin": "https://lingo.mukoko.com"}) == "https://lingo.mukoko.com"
 
-    def test_vercel_preview_domain_is_allowed(self):
-        assert _helpers._get_allowed_origin({"Origin": "https://mukoko-lingo-git-foo.vercel.app"}) == (
-            "https://mukoko-lingo-git-foo.vercel.app"
+    def test_production_vercel_domain_is_allowed(self):
+        assert _helpers._get_allowed_origin({"Origin": "https://mukoko-lingo.vercel.app"}) == (
+            "https://mukoko-lingo.vercel.app"
         )
+
+    def test_arbitrary_vercel_app_origin_is_rejected(self):
+        # Anyone can deploy to *.vercel.app, so a suffix match is not trusted.
+        assert _helpers._get_allowed_origin({"Origin": "https://evil.vercel.app"}) == ""
+        assert _helpers._get_allowed_origin({"Origin": "https://mukoko-lingo-git-foo.vercel.app"}) == ""
+
+    def test_header_injection_is_rejected(self):
+        assert _helpers._get_allowed_origin({"Origin": "https://lingo.mukoko.com\r\nSet-Cookie: x=1"}) == ""
 
     def test_unknown_origin_is_rejected(self):
         assert _helpers._get_allowed_origin({"Origin": "https://evil.example.com"}) == ""
