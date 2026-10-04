@@ -756,7 +756,7 @@ built server-side (see AI Integration above).
   `components/**` — `api/**` and `scripts/**` tests run but do **not** count
   toward the thresholds, so the backend has no coverage floor
 
-**Test Suites** (50 suites, 593 tests). Run `npx jest --listTests` for the
+**Test Suites** (51 suites, 629 tests). Run `npx jest --listTests` for the
 current set; the security-relevant ones are worth knowing by name:
 
 _Backend (`api/**`)_ — note these are **not** included in
@@ -764,6 +764,8 @@ _Backend (`api/**`)_ — note these are **not** included in
 
 - `api/_lib/__tests__/auth-middleware.test.ts` - Token verification; that
   `allowExpired` widens expiry **only** and never rescues a bad signature
+- `api/_lib/__tests__/outbound-url.test.ts` - SSRF guard for the OneRoster
+  URLs: https only, no credentials, public addresses only
 - `api/_lib/__tests__/chat-input.test.ts` - Rejects a client `system` role,
   unknown roles, non-string content; leading-turn rule
 - `api/_lib/__tests__/tutor-prompt.test.ts` - Prompt built from stored

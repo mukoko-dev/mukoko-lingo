@@ -40,11 +40,15 @@ def get_phrase_text(phrase, language_tag="en"):
 
 
 def _get_allowed_origin(headers):
-    """Return the origin if it's in the allowlist, otherwise empty string."""
+    """Return the allow-listed origin matching the request, otherwise "".
+
+    Exact match only, as in api/_lib/cors.ts. The value returned is the
+    allow-list entry, never the raw header, so request input can't reach a
+    response header (no CR/LF injection). A `*.vercel.app` suffix match is
+    not used: anyone can host a site on vercel.app.
+    """
     origin = headers.get("Origin", "")
-    if origin in ALLOWED_ORIGINS or origin.endswith(".vercel.app"):
-        return origin
-    return ""
+    return next((allowed for allowed in ALLOWED_ORIGINS if allowed == origin), "")
 
 
 def get_db(name="lingo"):

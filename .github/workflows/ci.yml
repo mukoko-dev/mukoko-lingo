@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege: every job only reads the repository.
+permissions:
+  contents: read
+
 jobs:
   # ── Mobile App (Expo / React Native) ────────────────────────────────────
   lint:
