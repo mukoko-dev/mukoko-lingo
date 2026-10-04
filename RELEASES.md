@@ -1,74 +1,57 @@
 # Release Management
 
-Releases are **automatic**. A merge to `main` whose CI run goes green is tagged
-and published by `.github/workflows/release.yml` — nobody bumps a version by
-hand, and nobody runs `gh release create`.
+Releases follow the org versioning policy (nyuchi/.github#80). Nobody pushes a
+tag by hand, and nobody runs `gh release create`.
 
-This document explains what that job does, what makes it fire (and what makes
-it stay quiet), and the few things still done by a person.
+| Event                           | Version                       | Workflow                                 |
+| ------------------------------- | ----------------------------- | ---------------------------------------- |
+| A PR merges into `staging`      | next PATCH, `x.y.z → x.y.z+1` | `.github/workflows/staging-version.yml`  |
+| `staging` is released to `main` | next MINOR, `x.y.z → x.y+1.0` | `.github/workflows/release.yml`          |
+| A MAJOR                         | by hand only                  | Actions → Release → Run workflow (major) |
+
+Each segment holds 0..999: patch 999 rolls into the next minor, and minor 999
+is refused and asks for a manual major.
 
 ## How a release happens
 
 ```
-PR merged to main  →  CI workflow runs on the merge commit
+feature PR → staging   →  staging-version.yml tags the next patch (beta)
+                           Vercel deploys the beta (see Release channels)
+                        ↓
+release PR staging → main, carrying the version bump + CHANGELOG
+                        ↓
+              CI workflow runs on the push to main
                         ↓ (success)
-                   Release workflow (workflow_run)
+                 Release workflow (workflow_run)
                         ↓
-      derive next version from Conventional Commits since the last tag
+  package.json version = next minor above the highest tag?  (else: fail)
                         ↓
-   bump version files + move CHANGELOG [Unreleased] under the new heading
-                        ↓
-        commit "chore(release): vX.Y.Z [skip ci]" → push to main
-                        ↓
-              annotated tag vX.Y.Z → GitHub Release
+              annotated tag vX.Y.0 → GitHub Release
 ```
 
-The gate is the **CI workflow's conclusion**, not the push itself: a merge whose
-tests fail is never tagged. The release commit carries `[skip ci]`, so it cannot
-start a CI run that would re-trigger the release job.
+The gate is the **CI workflow's conclusion**: a merge whose tests fail is never
+tagged. The logic is the org's pinned `reusable-auto-tag.yml` (`channel: main`,
+reading `package.json`), and the tag is pushed with `RELEASE_BUMP_TOKEN`. A merge
+that does not change the version finds its tag already there and does nothing.
 
-**The bump commit is pushed with `RELEASE_BUMP_TOKEN`**, the org-wide PAT that
-can push through branch protection. The job checks out with
-`secrets.RELEASE_BUMP_TOKEN || secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN`,
-so a per-repo `RELEASE_TOKEN` overrides it if one is ever needed, and neither
-being present is not fatal.
+Staging tags (`v0.4.1`, `v0.4.2`, …) are pushed with `GITHUB_TOKEN`, so they
+start no workflow and publish nothing.
 
-**When the bump commit cannot be pushed** — the org secret not granted to this
-repository, its owner unable to push to `main`, or `main` having moved on while
-CI ran — the job still tags the merge commit and publishes the Release, and
-logs a warning naming the likely cause. The version files and `CHANGELOG.md`
-then sit behind the tag until someone lands them by hand. The next release is
-not confused by that: the version is counted from the newer of the last tag and
-`package.json`, so a published `v0.1.0` with files still reading `0.0.1` still
-yields `0.1.1`, never `0.0.2`.
+### Preparing the release PR
 
-### What decides the version
+The release PR from `staging` into `main` carries the version bump. Work out the
+next minor above the highest tag (`git tag -l 'v*' --sort=-v:refname | head -1`;
+`v0.4.3` → `0.5.0`), then:
 
-`scripts/release/version.js` reads the Conventional Commit subjects between the
-last `v*` tag and the merge commit, and takes the largest bump any of them asks
-for:
+```bash
+npm run release:prepare -- --version 0.5.0
+```
 
-| Commit type                                           | Bump     | Changelog group |
-| ----------------------------------------------------- | -------- | --------------- |
-| `feat:`                                               | minor    | Added           |
-| `fix:`                                                | patch    | Fixed           |
-| `perf:`, `refactor:`, `revert:`                       | patch    | Changed         |
-| any `(security)` scope                                | patch    | Security        |
-| `docs:`, `chore:`, `ci:`, `test:`, `style:`, `build:` | **none** | —               |
-| `type!:` or a `BREAKING CHANGE:` footer               | major    | —               |
-| anything not matching `type(scope): subject`          | **none** | —               |
+This bumps every version file and moves `CHANGELOG.md`'s `[Unreleased]` section
+under the new heading. Commit the result to the release PR. If the version is not
+the one the policy allows, the Release run fails and names the right one.
 
-Two consequences worth knowing:
-
-- **A docs-only or CI-only merge releases nothing.** The job runs, reports "No
-  release" in its summary, and exits 0. That is the designed outcome, not a
-  failure to investigate.
-- **Below 1.0.0 a breaking change lands as a minor** (`0.3.7` → `0.4.0`).
-  Semver already allows anything to break in `0.x`, and declaring 1.0 is a
-  product decision — not something an automated job should make because a
-  commit subject had a `!` in it.
-
-### What the job writes
+### What the script writes
 
 | File                                         | Field                                                       |
 | -------------------------------------------- | ----------------------------------------------------------- |
@@ -82,37 +65,26 @@ Two consequences worth knowing:
 | `CLAUDE.md`                                  | Project Status → Current Version                            |
 
 The first five are **required**: if one of them stops matching its marker (a
-reformat, a rename), the job fails loudly rather than shipping a half-bumped
+reformat, a rename), the script fails loudly rather than leaving a half-bumped
 tree. `scripts/release/__tests__/version-files.test.js` runs each transform
-against the real files in CI, so that breakage surfaces in a PR instead of in a
-release.
+against the real files in CI.
 
 ### Release notes
 
-The notes published on the GitHub Release are the `[Unreleased]` section of
-`CHANGELOG.md`, verbatim. Keep that section current as work lands — it is the
-release notes, written by the people who did the work.
-
-If `[Unreleased]` is empty, the job falls back to generating entries from the
-commit subjects in the range. That fallback exists so a release is never
-blocked, not because a list of subjects is a good changelog. If nothing at all
-qualifies, no release is cut.
+Keep `CHANGELOG.md`'s `[Unreleased]` section current as work lands; it becomes
+the version's section when the release PR is prepared. The GitHub Release itself
+carries generated notes.
 
 ## Running it yourself
 
 ```bash
-# Exactly what a merge to main would produce, writing nothing
+# What the script would write, writing nothing
 npm run release:dry
 
 # Manual release from the Actions tab:
 #   Actions → Release → Run workflow
-#     version:  blank to derive, or an explicit 0.2.0
-#     dry_run:  true to see the plan without tagging
+#     bump: minor (default), patch, or major (a major is only made here)
 ```
-
-`workflow_dispatch` is the escape hatch for the cases automation should not
-decide: cutting `1.0.0`, releasing after a revert, or re-running a job that
-failed partway.
 
 ## Versioning
 
@@ -135,6 +107,14 @@ Mukoko Lingo follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PA
 - **Auth**: WorkOS AuthKit (Production environment)
 - **AI**: Cloudflare Workers AI via Cloudflare AI Gateway
 
+### Beta
+
+- **Branch**: `staging`
+- **Environment**: Vercel Preview (behind Vercel Authentication)
+- **URL**: <https://mukoko-lingo-staging.vercel.app> (Expo web),
+  <https://mukoko-lingo-console-staging.vercel.app> (Next.js web app)
+- **Database**: the same MongoDB database — treat writes with care
+
 ### Preview
 
 - **Branch**: any PR branch
@@ -153,30 +133,29 @@ marker of what shipped, not the thing that ships it.
   npx eas update --branch production   # OTA JS-only update
   ```
 
-- **Cutting 1.0.0** — `workflow_dispatch` with an explicit version.
+- **Cutting 1.0.0** — `workflow_dispatch` with `bump: major`.
 - **Environment variables** — a release does not carry config. New variables
   (see `.env.example`) must exist in Vercel before the code that reads them
   merges.
 
 ## Hotfixes
 
-Nothing special: branch, fix, PR, merge. A `fix:` commit on `main` with green CI
-cuts a patch release on its own.
+Branch from `staging`, fix, PR into `staging`, then release `staging` to `main`
+as above. A release to `main` is always the next minor.
 
 ```bash
-git checkout main && git pull
+git checkout staging && git pull
 git checkout -b hotfix/short-description
 # fix, commit as `fix(scope): ...`, push, PR, merge
 ```
 
 ## If a release does not appear
 
-| Symptom                                            | Cause                                                                          | Fix                                                                                                                                                                                                                                     |
-| -------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Job ran, summary says "No release"                 | Only housekeeping commits since the last tag                                   | Nothing to do, or dispatch manually with a version                                                                                                                                                                                      |
-| Job did not run at all                             | CI failed, or the merge commit carried `[skip ci]`                             | Fix CI; re-run the CI workflow on that commit                                                                                                                                                                                           |
-| Warning: "Could not push the version bump to main" | `RELEASE_BUMP_TOKEN` did not reach the job, or its owner cannot push to `main` | The tag and Release are still published against the merge commit; the version files need landing by hand. Check the org secret's repository access list includes `mukoko-lingo`, and that the token can push through the `main` ruleset |
-| "Tag vX.Y.Z already exists"                        | A previous run got as far as tagging                                           | Delete the tag if the release is incomplete, then re-dispatch                                                                                                                                                                           |
+| Symptom                                  | Cause                                               | Fix                                                                     |
+| ---------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------- |
+| Release run fails naming another version | `package.json` is not the next minor above the tags | Re-run `npm run release:prepare -- --version <named>` in a PR to `main` |
+| Job did not run at all                   | CI failed, or the merge commit carried `[skip ci]`  | Fix CI; re-run the CI workflow on that commit                           |
+| Job ran and did nothing                  | The version's tag already exists                    | Nothing to do: the merge did not change the version                     |
 
 ## Version history
 
