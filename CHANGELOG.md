@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+**Versioning policy (from 2026-10-04):** a merge into `staging` is a patch, a
+release to `main` is a minor, and a major is only ever made by hand
+([nyuchi/.github#80](https://github.com/nyuchi/.github/issues/80)). Versions
+released before then are not renumbered.
+
 ---
 
 ## [Unreleased]
@@ -30,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bank moved to `api/_lib/`, which is outside `collectCoverageFrom`; covering
   `identity.ts` recovered it, and raising the floor keeps the gain instead of
   leaving it to be spent by the next uncovered module.
+- **Releases follow the org versioning policy**
+  ([nyuchi/.github#80](https://github.com/nyuchi/.github/issues/80)). Commit
+  types still decide whether a merge releases; the number is now the next
+  minor on `main` (patch on `staging`), computed by the shared `next-version`
+  action, and a major is only ever made by hand (`bump: major`).
 
 _Nothing yet._
 
