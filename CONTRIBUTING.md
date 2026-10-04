@@ -62,17 +62,31 @@ docs: update API route documentation
 refactor: extract PhraseCard to L2 component
 ```
 
-**Your commit type picks the next version.** Releases are cut automatically
-from these subjects after a merge to `main` (see [RELEASES.md](RELEASES.md)):
+**Your commit type decides whether a merge releases.** Releases are cut
+automatically from these subjects after a merge to `main` (see
+[RELEASES.md](RELEASES.md)):
 
-| Type                                                  | Effect on the next release                   |
-| ----------------------------------------------------- | -------------------------------------------- |
-| `feat:`                                               | minor bump — listed under **Added**          |
-| `fix:`                                                | patch bump — listed under **Fixed**          |
-| `perf:`, `refactor:`, `revert:`                       | patch bump — listed under **Changed**        |
-| `type(security):`                                     | patch bump — listed under **Security**       |
-| `docs:`, `chore:`, `ci:`, `test:`, `style:`, `build:` | no release                                   |
-| `type!:` or a `BREAKING CHANGE:` footer               | major (minor while the version is below 1.0) |
+| Type                                                  | Effect                               |
+| ----------------------------------------------------- | ------------------------------------ |
+| `feat:`                                               | releases — listed under **Added**    |
+| `fix:`                                                | releases — listed under **Fixed**    |
+| `perf:`, `refactor:`, `revert:`                       | releases — listed under **Changed**  |
+| `type(security):`                                     | releases — listed under **Security** |
+| `docs:`, `chore:`, `ci:`, `test:`, `style:`, `build:` | no release                           |
+
+### Versioning
+
+The version number follows the org policy ([nyuchi/.github#80](https://github.com/nyuchi/.github/issues/80)), whatever the commit type:
+
+- A merge into `staging` (the live beta) is a **patch**.
+- A release to `main` is a **minor**.
+- A **major** is only ever made by hand: run _Release_ from the Actions tab
+  with `bump: major`. A `type!:` subject or `BREAKING CHANGE:` footer does not
+  make one.
+- Each segment holds 0–999. Patch 999 rolls into the next minor; minor 999
+  stops and asks for that manual major.
+
+Versions released before 2026-10-04 are not renumbered.
 
 A subject that does not match `type(scope): description` — a bare
 "updated some files", a merge commit — releases nothing, so squash-merge with a

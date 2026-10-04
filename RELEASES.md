@@ -14,7 +14,8 @@ PR merged to main  →  CI workflow runs on the merge commit
                         ↓ (success)
                    Release workflow (workflow_run)
                         ↓
-      derive next version from Conventional Commits since the last tag
+   Conventional Commits since the last tag decide whether to release;
+     the org policy (next-version action) sets the number: next MINOR
                         ↓
    bump version files + move CHANGELOG [Unreleased] under the new heading
                         ↓
@@ -44,29 +45,40 @@ yields `0.1.1`, never `0.0.2`.
 
 ### What decides the version
 
-`scripts/release/version.js` reads the Conventional Commit subjects between the
-last `v*` tag and the merge commit, and takes the largest bump any of them asks
-for:
+**Whether** a merge releases: `scripts/release/version.js` reads the
+Conventional Commit subjects between the last `v*` tag and the merge commit:
 
-| Commit type                                           | Bump     | Changelog group |
-| ----------------------------------------------------- | -------- | --------------- |
-| `feat:`                                               | minor    | Added           |
-| `fix:`                                                | patch    | Fixed           |
-| `perf:`, `refactor:`, `revert:`                       | patch    | Changed         |
-| any `(security)` scope                                | patch    | Security        |
-| `docs:`, `chore:`, `ci:`, `test:`, `style:`, `build:` | **none** | —               |
-| `type!:` or a `BREAKING CHANGE:` footer               | major    | —               |
-| anything not matching `type(scope): subject`          | **none** | —               |
+| Commit type                                           | Releases? | Changelog group |
+| ----------------------------------------------------- | --------- | --------------- |
+| `feat:`                                               | yes       | Added           |
+| `fix:`                                                | yes       | Fixed           |
+| `perf:`, `refactor:`, `revert:`                       | yes       | Changed         |
+| any `(security)` scope                                | yes       | Security        |
+| `docs:`, `chore:`, `ci:`, `test:`, `style:`, `build:` | **no**    | —               |
+| anything not matching `type(scope): subject`          | **no**    | —               |
+
+**The number**: the org versioning policy ([nyuchi/.github#80](https://github.com/nyuchi/.github/issues/80)), computed by the shared
+`next-version` action and passed to `prepare-release.js` as
+`--policy-version`:
+
+| Event                                      | Bump  | Example       |
+| ------------------------------------------ | ----- | ------------- |
+| A merge into `staging` (the live beta)     | PATCH | 0.4.0 → 0.4.1 |
+| A release to `main`                        | MINOR | 0.4.1 → 0.5.0 |
+| A person runs _Release_ with `bump: major` | MAJOR | 0.5.0 → 1.0.0 |
+
+Each segment holds 0–999: patch 999 rolls into the next minor, and minor 999
+stops and asks for a manual major. Versions released before 2026-10-04 are not
+renumbered.
 
 Two consequences worth knowing:
 
 - **A docs-only or CI-only merge releases nothing.** The job runs, reports "No
   release" in its summary, and exits 0. That is the designed outcome, not a
   failure to investigate.
-- **Below 1.0.0 a breaking change lands as a minor** (`0.3.7` → `0.4.0`).
-  Semver already allows anything to break in `0.x`, and declaring 1.0 is a
-  product decision — not something an automated job should make because a
-  commit subject had a `!` in it.
+- **No commit subject makes a major.** A `type!:` subject or a
+  `BREAKING CHANGE:` footer still releases, as the next minor. A major is a
+  product decision, made by hand.
 
 ### What the job writes
 
@@ -106,7 +118,7 @@ npm run release:dry
 
 # Manual release from the Actions tab:
 #   Actions → Release → Run workflow
-#     version:  blank to derive, or an explicit 0.2.0
+#     bump:     minor (default), patch, or major (only ever by hand)
 #     dry_run:  true to see the plan without tagging
 ```
 
@@ -118,9 +130,9 @@ failed partway.
 
 Mukoko Lingo follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
-- **MAJOR** — breaking changes (manual below 1.0, see above)
-- **MINOR** — new features, backwards-compatible
-- **PATCH** — bug fixes, security patches, small improvements
+- **MAJOR** — only ever by hand (`workflow_dispatch`, `bump: major`)
+- **MINOR** — a release to `main`
+- **PATCH** — a merge into `staging` (the live beta)
 
 ### Current Version: 0.4.0
 
@@ -153,7 +165,7 @@ marker of what shipped, not the thing that ships it.
   npx eas update --branch production   # OTA JS-only update
   ```
 
-- **Cutting 1.0.0** — `workflow_dispatch` with an explicit version.
+- **Cutting 1.0.0** (or any major) — `workflow_dispatch` with `bump: major`.
 - **Environment variables** — a release does not carry config. New variables
   (see `.env.example`) must exist in Vercel before the code that reads them
   merges.
@@ -161,7 +173,7 @@ marker of what shipped, not the thing that ships it.
 ## Hotfixes
 
 Nothing special: branch, fix, PR, merge. A `fix:` commit on `main` with green CI
-cuts a patch release on its own.
+cuts a release on its own (the next minor, under the policy).
 
 ```bash
 git checkout main && git pull
@@ -173,7 +185,7 @@ git checkout -b hotfix/short-description
 
 | Symptom                                            | Cause                                                                          | Fix                                                                                                                                                                                                                                     |
 | -------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Job ran, summary says "No release"                 | Only housekeeping commits since the last tag                                   | Nothing to do, or dispatch manually with a version                                                                                                                                                                                      |
+| Job ran, summary says "No release"                 | Only housekeeping commits since the last tag                                   | Nothing to do, or dispatch manually                                                                                                                                                                                                     |
 | Job did not run at all                             | CI failed, or the merge commit carried `[skip ci]`                             | Fix CI; re-run the CI workflow on that commit                                                                                                                                                                                           |
 | Warning: "Could not push the version bump to main" | `RELEASE_BUMP_TOKEN` did not reach the job, or its owner cannot push to `main` | The tag and Release are still published against the merge commit; the version files need landing by hand. Check the org secret's repository access list includes `mukoko-lingo`, and that the token can push through the `main` ruleset |
 | "Tag vX.Y.Z already exists"                        | A previous run got as far as tagging                                           | Delete the tag if the release is incomplete, then re-dispatch                                                                                                                                                                           |

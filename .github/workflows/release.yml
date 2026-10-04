@@ -1,9 +1,15 @@
 name: Release
 
 # Tag and publish after a merge to main, once CI has gone green on that exact
-# commit. The version is derived from Conventional Commit subjects since the
-# last tag (see scripts/release/version.js), so a merge that only carries
-# docs/chore/ci work releases nothing and the job ends quietly.
+# commit. Conventional Commit subjects since the last tag decide WHETHER a merge
+# releases (scripts/release/version.js): one that only carries docs/chore/ci
+# work releases nothing and the job ends quietly.
+#
+# The NUMBER follows the org versioning policy (nyuchi/.github#80): a release
+# to main is the next MINOR, a merge into staging the next PATCH
+# (staging-version.yml), and a MAJOR is only ever made by hand: run this
+# workflow with bump: major. Each segment holds 0..999; minor 999 stops and
+# asks for that manual major. The shared next-version action computes it.
 #
 # `workflow_run` is what makes this "after a merge is successful" rather than
 # "on every push": it fires only when the CI workflow itself finishes, and the
@@ -16,10 +22,11 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Explicit version, e.g. 0.2.0 (blank = derive from commits)'
-        required: false
-        type: string
+      bump:
+        description: 'Bump for this release (a manual run always releases). major is only ever made by hand, here.'
+        type: choice
+        options: [minor, patch, major]
+        default: minor
       dry_run:
         description: 'Prepare only — do not commit, tag or publish'
         required: false
@@ -46,7 +53,7 @@ jobs:
 
     steps:
       - name: Checkout the commit CI validated
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           # For workflow_run, github.sha points at the default branch tip, which
           # may already be ahead of what CI actually checked. Use the run's own
@@ -62,16 +69,30 @@ jobs:
           token: ${{ secrets.RELEASE_BUMP_TOKEN || secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
         with:
           node-version: '20'
 
+      - name: Compute the version (org versioning policy)
+        id: policy
+        uses: nyuchi/.github/.github/actions/next-version@de909ab7468d998ba2cf87416ac2042616eba75d  # main, 2026-10-04
+        with:
+          channel: main
+          bump: ${{ inputs.bump || '' }}
+          manual: ${{ github.event_name == 'workflow_dispatch' }}
+
       - name: Prepare release
         id: prepare
+        env:
+          VERSION: ${{ steps.policy.outputs.version }}
+          # A manual run releases at that version; an automatic one only when
+          # a commit since the last tag qualifies.
+          VERSION_FLAG: ${{ github.event_name == 'workflow_dispatch' && '--version' || '--policy-version' }}
+          DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
         run: |
+          # shellcheck disable=SC2086 # DRY_RUN is empty or one flag
           node scripts/release/prepare-release.js \
-            ${{ inputs.version && format('--version {0}', inputs.version) || '' }} \
-            ${{ inputs.dry_run && '--dry-run' || '' }} \
+            "$VERSION_FLAG" "$VERSION" $DRY_RUN \
             --notes-out "$RUNNER_TEMP/release-notes.md"
 
       - name: Summarise
