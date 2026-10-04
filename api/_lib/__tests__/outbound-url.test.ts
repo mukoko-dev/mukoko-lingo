@@ -68,7 +68,11 @@ describe("assertPublicHttpsUrl", () => {
     ["IPv6 loopback literal", "https://[::1]/"],
   ])("rejects %s", async (_label, raw) => {
     await expect(
-      assertPublicHttpsUrl(raw, "oneroster_base_url", resolvesTo("203.0.113.10")),
+      assertPublicHttpsUrl(
+        raw,
+        "oneroster_base_url",
+        resolvesTo("203.0.113.10"),
+      ),
     ).rejects.toBeInstanceOf(UnsafeUrlError);
   });
 
@@ -84,9 +88,13 @@ describe("assertPublicHttpsUrl", () => {
 
   it("rejects a hostname that does not resolve", async () => {
     await expect(
-      assertPublicHttpsUrl("https://nowhere.example", "oneroster_base_url", async () => {
-        throw new Error("ENOTFOUND");
-      }),
+      assertPublicHttpsUrl(
+        "https://nowhere.example",
+        "oneroster_base_url",
+        async () => {
+          throw new Error("ENOTFOUND");
+        },
+      ),
     ).rejects.toThrow("could not be resolved");
   });
 });

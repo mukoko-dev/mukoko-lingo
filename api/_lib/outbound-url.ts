@@ -20,12 +20,17 @@ export class UnsafeUrlError extends Error {
   }
 }
 
-const BLOCKED_HOST_SUFFIXES = [".localhost", ".local", ".internal", ".home.arpa"];
+const BLOCKED_HOST_SUFFIXES = [
+  ".localhost",
+  ".local",
+  ".internal",
+  ".home.arpa",
+];
 
 function ipv4ToInt(ip: string): number {
-  return ip
-    .split(".")
-    .reduce((acc, octet) => (acc << 8) + Number(octet), 0) >>> 0;
+  return (
+    ip.split(".").reduce((acc, octet) => (acc << 8) + Number(octet), 0) >>> 0
+  );
 }
 
 function inV4Range(ip: string, base: string, bits: number): boolean {
