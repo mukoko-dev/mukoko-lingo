@@ -20,6 +20,7 @@ import { createLogger } from "../_lib/logger";
 import { requireAdmin } from "../_lib/auth-middleware";
 import { classes, classMemberships } from "../_lib/mongo";
 import { findOrCreatePersonByEmail } from "../../lib/db/identity";
+import { assertPublicHttpsUrl, UnsafeUrlError } from "../_lib/outbound-url";
 
 const log = createLogger("oneroster");
 
@@ -49,7 +50,9 @@ async function fetchWithRetry(
   let lastError: any;
   for (let i = 0; i <= retries; i++) {
     try {
-      const response = await fetch(url, options);
+      // Never follow redirects: a public roster host must not be able to
+      // bounce this server-side request to an internal address.
+      const response = await fetch(url, { ...options, redirect: "error" });
       if (response.ok || response.status < 500 || i === retries)
         return response;
       await new Promise((r) => setTimeout(r, RETRY_DELAYS[i] || 4000));
@@ -154,8 +157,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const baseUrl = oneroster_base_url.replace(/\/$/, "");
-    const tokenUrl = oneroster_token_url || `${baseUrl}/token`;
+    // Both URLs are caller-supplied and fetched server-side, so they must be
+    // https and resolve only to public addresses (SSRF guard).
+    const base = await assertPublicHttpsUrl(
+      oneroster_base_url,
+      "oneroster_base_url",
+    );
+    base.search = "";
+    base.hash = "";
+    const baseUrl = base.href.replace(/\/$/, "");
+    const tokenUrl = (
+      await assertPublicHttpsUrl(
+        oneroster_token_url || `${baseUrl}/token`,
+        "oneroster_token_url",
+      )
+    ).href;
 
     // Step 1: Authenticate with the roster server
     const tokenData = await getOneRosterToken(
@@ -263,6 +279,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
   } catch (error: any) {
+    if (error instanceof UnsafeUrlError)
+      return res.status(400).json({ error: error.message });
     if (error.message === "Unauthorized")
       return res.status(401).json({ error: "Unauthorized" });
     if (error.message === "Forbidden")
