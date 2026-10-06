@@ -1,170 +1,229 @@
 # Mukoko Lingo
 
-**AI-first, skills-based multilingual language learning platform** — for individuals, schools, and businesses across Africa.
+> AI-assisted, skills-based language learning for individuals, schools and
+> businesses across Africa.
 
-Learn Shona, Ndebele, Chinese, and English with AI-powered tutoring by Shamwari.
+[![CI](https://github.com/mukoko-dev/mukoko-lingo/actions/workflows/ci.yml/badge.svg)](https://github.com/mukoko-dev/mukoko-lingo/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Expo](https://img.shields.io/badge/Expo-SDK_57-000020?style=flat-square&logo=expo&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-8-47A248?style=flat-square&logo=mongodb&logoColor=white)
+![WorkOS](https://img.shields.io/badge/Auth-WorkOS-6363F1?style=flat-square&logo=workos&logoColor=white)
 
-Built with Expo SDK 57 / React Native, Next.js, MongoDB, WorkOS AuthKit, Vercel Serverless, and Cloudflare Workers AI.
+**Version:** 0.5.0 | **Live:** [lingo.mukoko.com](https://lingo.mukoko.com) |
+**Console:** [lingo.nyuchi.com/console](https://lingo.nyuchi.com/console) |
+**Parent company:** [Nyuchi Africa](https://nyuchi.com)
 
-**Parent Company**: [Nyuchi Africa](https://nyuchi.com) | **Registry**: [registry.mukoko.com](https://registry.mukoko.com)
+---
 
-## Quick Start
+## What it is
 
-```bash
-# Install dependencies
-npm install
+Mukoko Lingo teaches Shona, Ndebele, Chinese and English. A learner gets five
+phrases a day, drilled with flash cards and a short quiz, with spaced repetition
+scheduling what comes back and when. Shamwari, the AI tutor, answers questions
+in chat and adapts to the learner's measured proficiency rather than to a level
+they picked for themselves.
 
-# Copy environment variables
-cp .env.example .env.local
+The other half of the product is institutional. Teachers create classes, set
+assignments against specific phrases and skills, and watch progress per student.
+Assessments are diagnostic, formative and summative, and they are graded on the
+server — the client is not trusted with a score. School rosters sync in over
+OneRoster from Clever, ClassLink and PowerSchool. Organisation admins get users,
+content, moderation, guardrails, analytics and API keys.
 
-# Start mobile dev server
-npx expo start
+Content moderation runs in three layers: local rule-based guardrails, an
+AI-based pass, and prompt-injection detection on anything a learner types at
+the tutor.
 
-# Start web app (separate terminal)
-cd web && npm install && npm run dev
-```
+### Languages
 
-## Environment Setup
+This is more subtle than a single list, so here it is precisely:
 
-Copy `.env.example` to `.env.local` and fill in:
+| Language       | UI strings | Local phrase seed | Shared `lingo.languages` |
+| -------------- | :--------: | :---------------: | :----------------------: |
+| English (`en`) |     ✅     |        ✅         |            ✅            |
+| Shona (`sn`)   |     ✅     |        ✅         |            ✅            |
+| Ndebele (`nd`) |     ✅     |        ✅         |            ✅            |
+| Chinese (`zh`) |     ✅     |        ✅         |            ✅            |
+| Swahili (`sw`) |     ✅     |        ✅         |            ❌            |
 
-- `MONGODB_URI` — MongoDB connection string
-- `WORKOS_API_KEY` / `WORKOS_CLIENT_ID` — WorkOS AuthKit credentials
-- `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` — Workers AI credentials (server-side only)
-- `CLOUDFLARE_AI_GATEWAY_ID` — Cloudflare AI Gateway to route inference through
-- `EXPO_PUBLIC_API_BASE_URL` — Vercel API base URL
+Four languages are canonical. Swahili is offered in the app's language picker
+(`lib/hooks/useUILanguage.tsx`) and carried in the local seed data
+(`lib/data/phrases-data.ts`), but `lib/db/phrase-shape.ts` maps only `en`, `sn`,
+`nd` and `zh` into the shared database, so Swahili content does not round-trip.
+Treat it as unfinished, not as a supported language.
 
-See `.env.example` for the complete list.
+The seed file holds **130 phrases**. Live phrase content is curated in the
+shared `lingo.phrases` collection and is not bounded by what is in this repo.
 
-## Two Apps, One Backend
+---
 
-| Platform            | Technology         | For                                             |
-| ------------------- | ------------------ | ----------------------------------------------- |
-| **Mobile** (`/app`) | Expo/React Native  | Individuals learning on the go (iOS + Android)  |
-| **Web** (`/web`)    | Next.js + Tailwind | Individuals, schools, businesses on any browser |
-| **API** (`/api`)    | Vercel Serverless  | Shared backend (52 endpoints)                   |
+## Two apps, one backend
 
-Both apps call the same API routes. The web app includes all learner features plus admin/org management.
+| Surface | Path   | Stack                                    | For                                     |
+| ------- | ------ | ---------------------------------------- | --------------------------------------- |
+| Mobile  | `app/` | Expo SDK 57, React Native 0.86, React 19 | Individuals learning on iOS and Android |
+| Console | `web/` | Next.js 16, Tailwind CSS 4               | Schools, businesses, admins             |
+| API     | `api/` | Vercel serverless functions              | Both                                    |
 
-## Key Features
+`api/` holds 58 TypeScript functions and four Python analytics functions, with
+shared helpers in `api/_lib`. `web/` is an independent npm project with its own
+lockfile — it is not a workspace of the root package — and it is served under
+`basePath: '/console'` so it can share a custom domain root with the mobile web
+export.
 
-- **Daily Lessons** — Smart phrase selection (5 phrases/day) with flash cards and mini-quizzes
-- **230+ Phrases** — 4 languages with pronunciation guides and cultural context
-- **Shamwari AI Tutor** — Qwen-powered tutor that adapts to learner proficiency
-- **Skills & Assessments** — 5 core skills with diagnostic, formative, and summative tests
-- **Classes & Assignments** — Teachers create classes, assign phrases, track student progress
-- **OneRoster Integration** — Sync school rosters from Clever, ClassLink, PowerSchool
-- **Content Moderation** — Local guardrails + AI-based + prompt injection detection
-- **Admin Dashboard** — Users, phrases, moderation, guardrails, analytics, API keys (web only)
+### Mobile navigation
 
-## Mobile App Navigation
+| Tab          | Purpose                                                    |
+| ------------ | ---------------------------------------------------------- |
+| **Learn**    | Daily lesson — flash cards and quiz — plus phrase browsing |
+| **Shamwari** | AI tutor chat                                              |
+| **Progress** | Dashboard, bookmarks, skill proficiency, mastery           |
+| **Profile**  | Settings, preferences, theme, sign out                     |
 
-| Tab          | Purpose                                                   |
-| ------------ | --------------------------------------------------------- |
-| **Learn**    | Daily lessons (flash cards + quiz) and phrase browsing    |
-| **Shamwari** | AI tutor chat powered by Cloudflare Workers AI            |
-| **Progress** | Dashboard, bookmarks, skill proficiency, mastery tracking |
-| **Profile**  | Settings, preferences, theme, sign out                    |
+---
 
 ## Architecture
 
-| Layer           | Technology                                                                                    |
-| --------------- | --------------------------------------------------------------------------------------------- |
-| Mobile Frontend | Expo SDK 54 / React Native 0.81 / React 19                                                    |
-| Web Frontend    | Next.js 15 / Tailwind CSS / Five African Minerals                                             |
-| Routing         | Expo Router 6 (mobile) / Next.js App Router (web)                                             |
-| Backend         | Vercel Serverless Functions (TypeScript + Python)                                             |
-| Database        | MongoDB (database `lingo` — shared with the Nyuchi ecosystem, see below)                      |
-| Auth            | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow)                                 |
-| AI              | Cloudflare Workers AI — Qwen3 30B A3B via AI Gateway (server-side proxy with circuit breaker) |
-| Testing         | Jest 29 + jest-expo (24 suites, 298 tests)                                                    |
-| CI/CD           | GitHub Actions (typecheck → test → build-web)                                                 |
+| Layer            | Technology                                                            |
+| ---------------- | --------------------------------------------------------------------- |
+| Mobile front end | Expo SDK 57 / React Native 0.86.2 / React 19.2 / Expo Router 57       |
+| Console          | Next.js 16.2 / Tailwind CSS 4                                         |
+| Backend          | Vercel serverless functions (TypeScript and Python)                   |
+| Database         | MongoDB — the `lingo` database on the shared Nyuchi ecosystem cluster |
+| Auth             | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow)         |
+| AI               | Cloudflare Workers AI — Qwen3 30B A3B through an AI Gateway proxy     |
+| Testing          | Jest 29 + jest-expo — 44 test files                                   |
+| CI/CD            | GitHub Actions, with automated releases                               |
 
-## Development Commands
+There is no Cloudflare Worker in this repository. Workers AI is called over
+HTTP from the Vercel functions, behind a server-side proxy with a circuit
+breaker; the Cloudflare credentials never reach a client.
 
-```bash
-# Mobile development
-npx expo start              # Dev server (mobile + web)
-npx expo start --ios        # iOS simulator
-npx expo start --android    # Android emulator
+### Database
 
-# Web development
-cd web && npm run dev        # Next.js dev server
-
-# Build & Deploy
-npm run build:web           # Export Expo web build for Vercel
-cd web && npm run build     # Build Next.js web app
-
-# Testing & Quality
-npm test                    # Run all tests (24 suites, 298 tests)
-npm run test:coverage       # Tests with coverage report
-npx tsc --noEmit            # TypeScript type check
-```
-
-## Database Schema
-
-MongoDB cluster shared across the Nyuchi ecosystem — `lingo` is Lingo's own database, but several collections read/write sibling databases owned by other domains/apps (see `docs/ECOSYSTEM_DATA_MIGRATION.md` for the full migration history).
+The MongoDB cluster is shared across the Nyuchi ecosystem. `lingo` is Lingo's
+own database, but several collections read and write sibling databases owned by
+other domains. `docs/ECOSYSTEM_DATA_MIGRATION.md` has the full history.
 
 **Shared, not Lingo-owned:**
 
-| Collection                                                                       | Purpose                                                                                                  |
-| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `identity.persons`                                                               | Real ecosystem user record (UUID `_id`, OIDC claims, `workosUserId`)                                     |
-| `lingo.phrases`, `lingo.languages`, `lingo.scenarios`, `lingo.learningStandards` | Real, ecosystem-curated multilingual content (`translations[]` per phrase, not flat per-language fields) |
-| `shamwari.guardrails`                                                            | Content moderation rules                                                                                 |
-| `shamwari.conversations`, `shamwari.messages`                                    | Shamwari AI chat (messages are their own collection, not embedded)                                       |
-| `ubuntu.contributions`                                                           | Trust/gamification ledger — Lingo mirrors XP events into it (`sourceDomain: "lingo"`)                    |
-| `platform.apiKeys`                                                               | Org-issued developer API keys (`ownerEntityId`, `keyType: internal/external`)                            |
+| Collection                                                        | Purpose                                                   |
+| ----------------------------------------------------------------- | --------------------------------------------------------- |
+| `identity.persons`                                                | The ecosystem user record — UUID `_id`, OIDC claims       |
+| `lingo.phrases`, `.languages`, `.scenarios`, `.learningStandards` | Curated multilingual content, `translations[]` per phrase |
+| `shamwari.guardrails`                                             | Moderation rules                                          |
+| `shamwari.conversations`, `.messages`                             | Tutor chat                                                |
+| `ubuntu.contributions`                                            | Trust ledger — Lingo mirrors XP events into it            |
+| `platform.apiKeys`                                                | Org-issued developer API keys                             |
 
-**Lingo-local** (`lingo` database, no ecosystem equivalent exists):
+**Lingo-local:**
 
-| Collection                                                                                          | Purpose                                                                                                  |
-| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `learner_profiles`                                                                                  | Lingo-specific extension of `identity.persons` (role, learning prefs, push tokens), keyed on `person_id` |
-| `phrase_progress`, `bookmarks`, `phrase_views`                                                      | Per-user learning activity                                                                               |
-| `phraseEngagementLive`                                                                              | Read-only aggregation view over `bookmarks`/`phrase_views`, not a stored counter                         |
-| `skills`, `user_skills`, `assessments`, `user_assessments`                                          | Skills-based progression                                                                                 |
-| `classes`, `class_memberships`, `assignments`, `assignment_submissions`, `organization_enrollments` | Schools/orgs                                                                                             |
-| `srs_cards`, `user_xp`, `xp_events`, `study_sessions`                                               | Spaced repetition + XP/streaks                                                                           |
-| `moderation_alerts`                                                                                 | Flagged content pending review                                                                           |
+| Collection                                                                                          | Purpose                                 |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `learner_profiles`                                                                                  | Lingo's extension of `identity.persons` |
+| `phrase_progress`, `bookmarks`, `phrase_views`, `phraseEngagementLive`                              | Learning activity                       |
+| `skills`, `user_skills`, `assessments`, `user_assessments`                                          | Skills-based progression                |
+| `classes`, `class_memberships`, `assignments`, `assignment_submissions`, `organization_enrollments` | Schools and orgs                        |
+| `srs_cards`, `user_xp`, `xp_events`, `study_sessions`                                               | Spaced repetition, XP, streaks          |
+| `moderation_alerts`                                                                                 | Flagged content awaiting review         |
 
-## CI/CD Pipeline
+---
 
-GitHub Actions runs on push to `main`/`feature/*` and PRs to `main`:
+## Getting started
 
-1. **Lint** — `npm run lint` (mobile and web)
-2. **TypeScript Check** — `npx tsc --noEmit` (mobile and web)
-3. **Jest Tests** — `npm test -- --ci --coverage`
-4. **Docs Drift Check** — `node scripts/docs/check-docs.js`
-5. **Python** — `ruff check .` + `pytest` for the analytics functions
-6. **Builds** — `npx expo export --platform web` and `next build`
+```bash
+npm install
+cp .env.example .env.local   # fill in the values below
+npx expo start               # mobile dev server
 
-**Releases are automatic.** When CI goes green on `main`, the release workflow
-derives the next version from the Conventional Commit subjects since the last
-tag, bumps every version file, cuts `CHANGELOG.md`'s `[Unreleased]` section
-into a version heading, tags, and publishes a GitHub Release. A docs- or
-chore-only merge releases nothing. See **[RELEASES.md](RELEASES.md)**.
+cd web && npm install && npm run dev   # console, separate terminal
+```
+
+Required environment variables:
+
+- `MONGODB_URI`
+- `WORKOS_API_KEY`, `WORKOS_CLIENT_ID`
+- `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_AI_GATEWAY_ID`
+- `EXPO_PUBLIC_API_BASE_URL`
+
+`.env.example` has the complete list.
+
+## Commands
+
+| Command                   | Description                                 |
+| ------------------------- | ------------------------------------------- |
+| `npx expo start`          | Mobile dev server (add `--ios`/`--android`) |
+| `npm run build:web`       | Export the Expo web build for Vercel        |
+| `npm test`                | Jest                                        |
+| `npm run test:coverage`   | Jest with coverage                          |
+| `npm run lint`            | ESLint                                      |
+| `npx tsc --noEmit`        | Type check                                  |
+| `npm run build:ios`       | EAS build                                   |
+| `cd web && npm run dev`   | Console dev server                          |
+| `cd web && npm run build` | Console production build                    |
+
+## CI and releases
+
+`ci.yml` runs on pushes to `main`, `staging` and `feature/*` and on pull
+requests to `main` and `staging`: lint and typecheck for mobile and for web,
+Jest, a docs drift check (`scripts/docs/check-docs.js`), `ruff` and `pytest`
+for the Python analytics functions, and both builds. The EAS iOS and Android
+build jobs are present but commented out.
+
+Versions follow the org policy
+([nyuchi/.github#80](https://github.com/nyuchi/.github/issues/80)): a merge
+into `staging` is tagged as the next patch, a release to `main` as the next
+minor, and a major is only ever made by hand. The staging → main release PR
+carries the version bump (`npm run release:prepare -- --version X.Y.0`); when
+CI goes green on `main`, `release.yml` tags it and publishes a GitHub Release.
+See [RELEASES.md](RELEASES.md).
+
+---
+
+## Brand
+
+The Bundu brand system has seven minerals — cobalt, tanzanite, malachite, gold,
+terracotta, sodalite and copper — inside a palette of 21 colour families. Mukoko
+Lingo uses a subset of them, and the mobile app and the console currently use
+different subsets:
+
+| Surface | Colours defined                                                              | Source                   |
+| ------- | ---------------------------------------------------------------------------- | ------------------------ |
+| Mobile  | Cobalt (primary), Tanzanite (secondary), Gold (accent), Army Green (success) | `constants/Colors.ts`    |
+| Console | Cobalt, Tanzanite, Malachite, Gold, Terracotta, plus Army Green              | `web/tailwind.config.ts` |
+
+Army Green (`#729B63` / `#8FB47F`) is not a mineral. It is a Lingo-specific
+success colour. [BRANDING.md](BRANDING.md) is the design authority and specifies
+the four-colour mobile set; the console config is ahead of it. Reconcile them
+before adding anything new.
+
+The dark theme is charcoal (`#0A0A0A`), never slate.
+
+---
 
 ## Documentation
 
-- **[CLAUDE.md](CLAUDE.md)** — Developer guide & full architecture reference
-- **[BRANDING.md](BRANDING.md)** — Brand guidelines & Five African Minerals design system
-- **[SECURITY.md](SECURITY.md)** — Security architecture
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — Contribution guidelines, commit conventions
-- **[RELEASES.md](RELEASES.md)** — Release automation and channels
-- **[CHANGELOG.md](CHANGELOG.md)** — Version history
-- **[docs/TEST_COVERAGE_ANALYSIS.md](docs/TEST_COVERAGE_ANALYSIS.md)** — What the test suite covers
+| Document                                                             | Purpose                                         |
+| -------------------------------------------------------------------- | ----------------------------------------------- |
+| [CLAUDE.md](CLAUDE.md)                                               | Developer guide and full architecture reference |
+| [BRANDING.md](BRANDING.md)                                           | Brand guidelines, palette, voice, typography    |
+| [SECURITY.md](SECURITY.md)                                           | Security architecture                           |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                                   | Contribution guidelines and commit conventions  |
+| [RELEASES.md](RELEASES.md)                                           | Release automation and channels                 |
+| [CHANGELOG.md](CHANGELOG.md)                                         | Version history                                 |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)                             | Community expectations                          |
+| [docs/ECOSYSTEM_DATA_MIGRATION.md](docs/ECOSYSTEM_DATA_MIGRATION.md) | How Lingo's data joined the shared cluster      |
+| [docs/TEST_COVERAGE_ANALYSIS.md](docs/TEST_COVERAGE_ANALYSIS.md)     | What the test suite covers                      |
 
-## Brand — Five African Minerals
+## Ecosystem
 
-| Mineral    | Light     | Dark      | Role                          |
-| ---------- | --------- | --------- | ----------------------------- |
-| Cobalt     | `#0047AB` | `#00B0FF` | Primary (trust, clarity)      |
-| Tanzanite  | `#4B0082` | `#B388FF` | Secondary (depth, creativity) |
-| Malachite  | `#004D40` | `#64FFDA` | Success (positive actions)    |
-| Gold       | `#5D4037` | `#FFD740` | Accent (achievement, warmth)  |
-| Terracotta | `#8c5f38` | `#D4A574` | Community (warmth)            |
+| Repository                                                            | What it is                        |
+| --------------------------------------------------------------------- | --------------------------------- |
+| [`mukoko-dev/mukoko`](https://github.com/mukoko-dev/mukoko)           | The super app monorepo            |
+| [`mukoko-dev/mukoko-auth`](https://github.com/mukoko-dev/mukoko-auth) | Mukoko ID — identity and SSO      |
+| [`mukoko-dev/kweli-mcp`](https://github.com/mukoko-dev/kweli-mcp)     | Business, places and verification |
 
-## License
+## Licence
 
-[MIT](LICENSE)
+Licensed under the [MIT Licence](LICENSE). © 2025 Nyuchi Learning.
