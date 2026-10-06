@@ -9,15 +9,6 @@
  *
  *   node scripts/release/prepare-release.js --dry-run
  *   node scripts/release/prepare-release.js --version 0.2.0 --notes-out notes.md
- *   node scripts/release/prepare-release.js --policy-version 0.5.0
- *
- * The NUMBER comes from the org versioning policy (nyuchi/.github#80): a
- * release to main is the next MINOR, a merge into staging the next PATCH, and
- * a MAJOR only ever by hand. The release workflow computes it with the shared
- * next-version action and passes it as `--policy-version`. The commits still
- * decide WHETHER a merge releases: one that carries only housekeeping
- * (docs/chore/ci/...) releases nothing. `--version` forces a release at that
- * version (a manual run).
  *
  * Exits 0 with `release=false` when the commits since the last tag are all
  * housekeeping. That is a normal outcome, not a failure: not every merge is a
@@ -33,7 +24,6 @@ const {
   nextVersion,
   classifyCommit,
   baseVersion,
-  parseVersion,
 } = require("./version");
 const { cutRelease } = require("./changelog");
 const {
@@ -58,17 +48,11 @@ function git(args, options = {}) {
 }
 
 function parseArgs(argv) {
-  const args = {
-    dryRun: false,
-    version: null,
-    policyVersion: null,
-    notesOut: null,
-  };
+  const args = { dryRun: false, version: null, notesOut: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--dry-run") args.dryRun = true;
     else if (arg === "--version") args.version = argv[++i];
-    else if (arg === "--policy-version") args.policyVersion = argv[++i];
     else if (arg === "--notes-out") args.notesOut = argv[++i];
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -146,13 +130,7 @@ function main() {
     return noRelease("no commits since the last tag");
 
   const bump = aggregateBump(commits.map((c) => c.message));
-  // Commits decide whether to release; the policy decides the number. With
-  // no policy version (a local dry run) the commit-derived bump stands in.
-  const version =
-    args.version ||
-    (bump === "none"
-      ? null
-      : args.policyVersion || nextVersion(currentVersion, bump));
+  const version = args.version || nextVersion(currentVersion, bump);
   if (!version) return noRelease(`nothing to release (largest bump: ${bump})`);
 
   const tag = `v${version}`;
@@ -197,19 +175,7 @@ function main() {
     writes.push([file, after]);
   }
 
-  // The bump the version actually took (the policy may differ from what the
-  // commits asked for).
-  const from = parseVersion(currentVersion);
-  const to = parseVersion(version);
-  const taken =
-    to.major !== from.major
-      ? "major"
-      : to.minor !== from.minor
-        ? "minor"
-        : "patch";
-  console.log(
-    `\nRelease ${tag} (${taken} from ${currentVersion}; commits asked for ${bump})`,
-  );
+  console.log(`\nRelease ${tag} (${bump} bump from ${currentVersion})`);
   console.log(`Files: ${writes.map(([file]) => file).join(", ")}`);
   console.log(`\n--- release notes ---\n${notes}\n---------------------`);
 
@@ -226,7 +192,7 @@ function main() {
   setOutput("release", "true");
   setOutput("version", version);
   setOutput("tag", tag);
-  setOutput("bump", taken);
+  setOutput("bump", bump);
   setOutput("previous_tag", previousTag || "");
 }
 
