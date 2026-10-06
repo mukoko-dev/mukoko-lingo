@@ -88,12 +88,12 @@ export.
 | Layer            | Technology                                                            |
 | ---------------- | --------------------------------------------------------------------- |
 | Mobile front end | Expo SDK 57 / React Native 0.86.2 / React 19.2 / Expo Router 57       |
-| Console          | Next.js 16.2 / Tailwind CSS 4                                         |
+| Console          | Next.js 16.3 / Tailwind CSS 4                                         |
 | Backend          | Vercel serverless functions (TypeScript and Python)                   |
 | Database         | MongoDB — the `lingo` database on the shared Nyuchi ecosystem cluster |
 | Auth             | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow)         |
 | AI               | Cloudflare Workers AI — Qwen3 30B A3B through an AI Gateway proxy     |
-| Testing          | Jest 29 + jest-expo — 44 test files                                   |
+| Testing          | Jest 29 + jest-expo — 50 test files                                   |
 | CI/CD            | GitHub Actions, with automated releases                               |
 
 There is no Cloudflare Worker in this repository. Workers AI is called over
@@ -157,7 +157,8 @@ Required environment variables:
 | `npm run build:web`       | Export the Expo web build for Vercel        |
 | `npm test`                | Jest                                        |
 | `npm run test:coverage`   | Jest with coverage                          |
-| `npm run lint`            | ESLint                                      |
+| `npm run lint`            | Vite+ lint (`vp lint`)                      |
+| `npm run lint:eslint`     | ESLint                                      |
 | `npx tsc --noEmit`        | Type check                                  |
 | `npm run build:ios`       | EAS build                                   |
 | `cd web && npm run dev`   | Console dev server                          |
