@@ -90,9 +90,9 @@ npm run release:dry
 
 Mukoko Lingo follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
-- **MAJOR** — breaking changes (manual below 1.0, see above)
-- **MINOR** — new features, backwards-compatible
-- **PATCH** — bug fixes, security patches, small improvements
+- **MAJOR** — only ever by hand (`workflow_dispatch`, `bump: major`)
+- **MINOR** — a release to `main`
+- **PATCH** — a merge into `staging` (the live beta)
 
 ### Current Version: 0.5.0
 

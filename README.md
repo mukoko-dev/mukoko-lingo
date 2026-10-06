@@ -11,7 +11,7 @@
 ![WorkOS](https://img.shields.io/badge/Auth-WorkOS-6363F1?style=flat-square&logo=workos&logoColor=white)
 
 **Version:** 0.5.0 | **Live:** [lingo.mukoko.com](https://lingo.mukoko.com) |
-**Console:** [lingo.nyuchi.com/console](https://lingo.nyuchi.com/console) |
+**Console:** [lingo.mukoko.com/console](https://lingo.mukoko.com/console) |
 **Parent company:** [Nyuchi Africa](https://nyuchi.com)
 
 ---
