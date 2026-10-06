@@ -5,9 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+**Versioning policy (from 2026-10-04):** a merge into `staging` is a patch, a
+release to `main` is a minor, and a major is only ever made by hand
+([nyuchi/.github#80](https://github.com/nyuchi/.github/issues/80)). Versions
+released before then are not renumbered.
+
 ---
 
 ## [Unreleased]
+
+_Nothing yet._
+
+---
+
+## [0.5.0] — 2026-10-06
 
 ### Added
 
@@ -30,8 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bank moved to `api/_lib/`, which is outside `collectCoverageFrom`; covering
   `identity.ts` recovered it, and raising the floor keeps the gain instead of
   leaving it to be spent by the next uncovered module.
-
-_Nothing yet._
+- **Releases follow the org versioning policy**
+  ([nyuchi/.github#80](https://github.com/nyuchi/.github/issues/80)). A merge
+  into `staging` is tagged as the next patch; a release to `main` is the next
+  minor, carried by the release PR's version bump and tagged by the org's
+  `reusable-auto-tag.yml`; a major is only ever made by hand (`bump: major`).
+- **README corrected**: the Expo, React Native and Next.js versions, the test and
+  endpoint counts, which layer has which language (Swahili is unfinished), and
+  the palette now match the code.
 
 ---
 

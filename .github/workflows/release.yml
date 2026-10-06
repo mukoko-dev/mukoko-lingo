@@ -37,8 +37,11 @@ permissions:
 
 jobs:
   tag:
+    # A manual run releases only from main: run on staging, it would tag
+    # beta code as a production release.
     if: >-
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' &&
+       github.ref == 'refs/heads/main') ||
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push')
     uses: nyuchi/.github/.github/workflows/reusable-auto-tag.yml@924e5b4d0983d31379aedbec02b990793f29c792 # main, 2026-10-04
