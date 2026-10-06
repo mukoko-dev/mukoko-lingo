@@ -62,14 +62,16 @@ docs: update API route documentation
 refactor: extract PhraseCard to L2 component
 ```
 
-**The branch, not the commit type, decides the version**
+**The branch, not the commit type, decides the version** (the release PR sets it
+with `npm run release:prepare -- --version X.Y.Z`)
 ([nyuchi/.github#80](https://github.com/nyuchi/.github/issues/80), see
 [RELEASES.md](RELEASES.md)):
 
 - A merge into `staging` (the live beta) is tagged as the next **patch**.
 - A release to `main` is the next **minor**; the release PR carries the bump.
-- A **major** is only ever made by hand: run _Release_ from the Actions tab
-  with `bump: major`. A `type!:` subject or `BREAKING CHANGE:` footer does not
+- A **major** is only ever made by hand: the release PR is prepared with
+  `npm run release:prepare -- --version X.0.0`, and after it merges a person
+  runs _Release_ on `main` with `bump: major` (see [RELEASES.md](RELEASES.md)). A `type!:` subject or `BREAKING CHANGE:` footer does not
   make one.
 - Each segment holds 0–999. Patch 999 rolls into the next minor; minor 999
   stops and asks for that manual major.

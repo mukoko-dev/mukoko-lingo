@@ -3,11 +3,11 @@
 Releases follow the org versioning policy (nyuchi/.github#80). Nobody pushes a
 tag by hand, and nobody runs `gh release create`.
 
-| Event                           | Version                       | Workflow                                 |
-| ------------------------------- | ----------------------------- | ---------------------------------------- |
-| A PR merges into `staging`      | next PATCH, `x.y.z → x.y.z+1` | `.github/workflows/staging-version.yml`  |
-| `staging` is released to `main` | next MINOR, `x.y.z → x.y+1.0` | `.github/workflows/release.yml`          |
-| A MAJOR                         | by hand only                  | Actions → Release → Run workflow (major) |
+| Event                           | Version                       | Workflow                                |
+| ------------------------------- | ----------------------------- | --------------------------------------- |
+| A PR merges into `staging`      | next PATCH, `x.y.z → x.y.z+1` | `.github/workflows/staging-version.yml` |
+| `staging` is released to `main` | next MINOR, `x.y.z → x.y+1.0` | `.github/workflows/release.yml`         |
+| A MAJOR                         | by hand only                  | prepare `X.0.0`, then Release `major`   |
 
 Each segment holds 0..999: patch 999 rolls into the next minor, and minor 999
 is refused and asks for a manual major.
@@ -81,19 +81,21 @@ carries generated notes.
 ## Running it yourself
 
 ```bash
-# What the script would write, writing nothing
-npm run release:dry
+# What the script would write for a version, writing nothing. Without
+# --version it falls back to the old commit-type bump, which is not the policy.
+npm run release:dry -- --version 0.6.0
 
 # Manual release from the Actions tab:
 #   Actions → Release → Run workflow
-#     bump: minor (default), patch, or major (a major is only made here)
+#     on main only; it tags the version package.json already carries
+#     (bump: major is how a prepared X.0.0 is accepted)
 ```
 
 ## Versioning
 
 Mukoko Lingo follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
 
-- **MAJOR** — only ever by hand (`workflow_dispatch`, `bump: major`)
+- **MAJOR** — only ever by hand (prepare `X.0.0`, then Release with `bump: major`)
 - **MINOR** — a release to `main`
 - **PATCH** — a merge into `staging` (the live beta)
 
@@ -136,7 +138,9 @@ marker of what shipped, not the thing that ships it.
   npx eas update --branch production   # OTA JS-only update
   ```
 
-- **Cutting 1.0.0** — `workflow_dispatch` with `bump: major`.
+- **Cutting 1.0.0** — `npm run release:prepare -- --version 1.0.0` in the
+  release PR. The automatic run after the merge refuses a major; run
+  _Release_ on `main` with `bump: major` to tag it.
 - **Environment variables** — a release does not carry config. New variables
   (see `.env.example`) must exist in Vercel before the code that reads them
   merges.
