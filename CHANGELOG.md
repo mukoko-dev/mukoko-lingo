@@ -14,6 +14,12 @@ released before then are not renumbered.
 
 ## [Unreleased]
 
+_Nothing yet._
+
+---
+
+## [0.5.0] — 2026-10-06
+
 ### Added
 
 - **`lib/db/identity.ts` is covered** (26 tests) — the merge between the shared
@@ -36,12 +42,13 @@ released before then are not renumbered.
   `identity.ts` recovered it, and raising the floor keeps the gain instead of
   leaving it to be spent by the next uncovered module.
 - **Releases follow the org versioning policy**
-  ([nyuchi/.github#80](https://github.com/nyuchi/.github/issues/80)). Commit
-  types still decide whether a merge releases; the number is now the next
-  minor on `main` (patch on `staging`), computed by the shared `next-version`
-  action, and a major is only ever made by hand (`bump: major`).
-
-_Nothing yet._
+  ([nyuchi/.github#80](https://github.com/nyuchi/.github/issues/80)). A merge
+  into `staging` is tagged as the next patch; a release to `main` is the next
+  minor, carried by the release PR's version bump and tagged by the org's
+  `reusable-auto-tag.yml`; a major is only ever made by hand (`bump: major`).
+- **README corrected**: the Expo, React Native and Next.js versions, the test and
+  endpoint counts, which layer has which language (Swahili is unfinished), and
+  the palette now match the code.
 
 ---
 

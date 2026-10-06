@@ -1,19 +1,21 @@
 name: Release
 
-# Tag and publish after a merge to main, once CI has gone green on that exact
-# commit. Conventional Commit subjects since the last tag decide WHETHER a merge
-# releases (scripts/release/version.js): one that only carries docs/chore/ci
-# work releases nothing and the job ends quietly.
+# Releasing is a merge to main; nobody pushes a tag by hand. When CI passes
+# on a push to main, this reads the version from package.json and, if
+# `v<version>` is not tagged yet, tags the CI-validated commit and publishes
+# a GitHub release, using the RELEASE_BUMP_TOKEN org secret. A merge that
+# does not change the version finds its tag already there and does nothing.
 #
-# The NUMBER follows the org versioning policy (nyuchi/.github#80): a release
-# to main is the next MINOR, a merge into staging the next PATCH
-# (staging-version.yml), and a MAJOR is only ever made by hand: run this
-# workflow with bump: major. Each segment holds 0..999; minor 999 stops and
-# asks for that manual major. The shared next-version action computes it.
+# Versioning policy (nyuchi/.github#80): a release to main is the next
+# MINOR above the highest tag, and package.json must say so (the run fails
+# and names the right version otherwise); merges into staging are tagged as
+# patches by staging-version.yml; a MAJOR only by hand, from the Actions tab
+# with bump: major. Each segment holds 0..999.
 #
-# `workflow_run` is what makes this "after a merge is successful" rather than
-# "on every push": it fires only when the CI workflow itself finishes, and the
-# job below refuses to run unless that conclusion was success.
+# The version files and CHANGELOG.md are bumped in the staging -> main
+# release PR with `npm run release:prepare -- --version X.Y.0`.
+#
+# The logic is nyuchi/.github's reusable-auto-tag.yml.
 
 on:
   workflow_run:
@@ -23,130 +25,31 @@ on:
   workflow_dispatch:
     inputs:
       bump:
-        description: 'Bump for this release (a manual run always releases). major is only ever made by hand, here.'
+        description: >-
+          Versioning policy override. main releases the next minor; a major
+          is only ever made by hand, here.
         type: choice
         options: [minor, patch, major]
         default: minor
-      dry_run:
-        description: 'Prepare only — do not commit, tag or publish'
-        required: false
-        default: false
-        type: boolean
 
 permissions:
-  contents: write
-
-# One release at a time: two jobs racing would both compute the same next
-# version and one would lose the tag push.
-concurrency:
-  group: release
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  release:
-    name: Tag and publish
-    runs-on: ubuntu-latest
+  tag:
+    # A manual run releases only from main: run on staging, it would tag
+    # beta code as a production release.
     if: >-
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' &&
+       github.ref == 'refs/heads/main') ||
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push')
-
-    steps:
-      - name: Checkout the commit CI validated
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          # For workflow_run, github.sha points at the default branch tip, which
-          # may already be ahead of what CI actually checked. Use the run's own
-          # head_sha so the tag lands on the tested commit.
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
-          fetch-depth: 0
-          fetch-tags: true
-          # RELEASE_BUMP_TOKEN is the org-wide PAT that can push through branch
-          # protection; RELEASE_TOKEN is a per-repo override if one is ever
-          # needed. With neither — or with an org secret not granted to this
-          # repository — the expression resolves to GITHUB_TOKEN and the job
-          # still releases, via the fallback in "Commit, tag and push" below.
-          token: ${{ secrets.RELEASE_BUMP_TOKEN || secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
-        with:
-          node-version: '20'
-
-      - name: Compute the version (org versioning policy)
-        id: policy
-        uses: nyuchi/.github/.github/actions/next-version@de909ab7468d998ba2cf87416ac2042616eba75d  # main, 2026-10-04
-        with:
-          channel: main
-          bump: ${{ inputs.bump || '' }}
-          manual: ${{ github.event_name == 'workflow_dispatch' }}
-
-      - name: Prepare release
-        id: prepare
-        env:
-          VERSION: ${{ steps.policy.outputs.version }}
-          # A manual run releases at that version; an automatic one only when
-          # a commit since the last tag qualifies.
-          VERSION_FLAG: ${{ github.event_name == 'workflow_dispatch' && '--version' || '--policy-version' }}
-          DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
-        run: |
-          # shellcheck disable=SC2086 # DRY_RUN is empty or one flag
-          node scripts/release/prepare-release.js \
-            "$VERSION_FLAG" "$VERSION" $DRY_RUN \
-            --notes-out "$RUNNER_TEMP/release-notes.md"
-
-      - name: Summarise
-        run: |
-          {
-            if [ "${{ steps.prepare.outputs.release }}" != "true" ]; then
-              echo "### No release"
-              echo
-              echo "${{ steps.prepare.outputs.reason || 'dry run' }}"
-            else
-              echo "### ${{ steps.prepare.outputs.tag }} (${{ steps.prepare.outputs.bump }})"
-              echo
-              cat "$RUNNER_TEMP/release-notes.md"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Commit, tag and push
-        id: publish
-        if: steps.prepare.outputs.release == 'true' && !inputs.dry_run
-        env:
-          TAG: ${{ steps.prepare.outputs.tag }}
-          VALIDATED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          # [skip ci] keeps this commit from starting a CI run, which would
-          # otherwise finish green and re-trigger this workflow.
-          git commit -m "chore(release): $TAG [skip ci]"
-
-          if git push origin HEAD:main; then
-            target="$(git rev-parse HEAD)"
-          else
-            # Protected branch, or main moved on while CI ran. The release
-            # itself still happens — it just points at the merged commit and
-            # the version files stay to be bumped by hand.
-            echo "::warning::Could not push the version bump to main; tagging $VALIDATED_SHA instead." \
-              "Check that the org secret RELEASE_BUMP_TOKEN is granted to this repo and its owner can push to main."
-            target="$VALIDATED_SHA"
-          fi
-
-          git tag -a "$TAG" -m "Release $TAG" "$target"
-          git push origin "$TAG"
-          echo "target=$target" >> "$GITHUB_OUTPUT"
-
-      - name: Publish GitHub Release
-        if: steps.prepare.outputs.release == 'true' && !inputs.dry_run
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.prepare.outputs.tag }}
-          TARGET: ${{ steps.publish.outputs.target }}
-        run: |
-          gh release create "$TAG" \
-            --title "$TAG" \
-            --target "$TARGET" \
-            --notes-file "$RUNNER_TEMP/release-notes.md"
+    uses: nyuchi/.github/.github/workflows/reusable-auto-tag.yml@924e5b4d0983d31379aedbec02b990793f29c792 # main, 2026-10-04
+    with:
+      version-command: "node -p \"require('./package.json').version\""
+      channel: main
+      bump: ${{ inputs.bump || '' }}
+      ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      create-release: true
+    secrets:
+      token: ${{ secrets.RELEASE_BUMP_TOKEN }}

@@ -75,8 +75,8 @@ npx tsc --noEmit         # TypeScript type checking
 npm run lint             # ESLint
 node scripts/docs/check-docs.js   # Documentation drift check (also runs in CI)
 
-# Release (automated — see RELEASES.md)
-npm run release:dry      # What a merge to main would tag, writing nothing
+# Release (see RELEASES.md)
+npm run release:dry      # What release:prepare would write, writing nothing
 ```
 
 ## Environment Setup
@@ -870,24 +870,20 @@ database) reappears outside the history that legitimately mentions it; or
 CLAUDE.md's test-suite count no longer matches the suites on disk. Add a
 retired name to `RETIRED_TERMS` whenever you remove one.
 
-### Release (`.github/workflows/release.yml`)
+### Release (`.github/workflows/release.yml`, `staging-version.yml`)
 
-Releases are **automatic**. The workflow fires on the CI workflow _completing
-successfully_ on `main` (`workflow_run`), so a merge whose tests fail is never
-tagged. It derives the next version from Conventional Commit subjects since the
-last tag, bumps every version file, moves `CHANGELOG.md`'s `[Unreleased]`
-section under the new heading, commits `chore(release): vX.Y.Z [skip ci]`, tags,
-and publishes a GitHub Release whose notes are that changelog section.
+Versioning follows the org policy (nyuchi/.github#80):
 
-- `feat:` → minor, `fix:`/`perf:`/`refactor:` → patch, `docs:`/`chore:`/`ci:`/
-  `test:` → **no release** (the job reports "No release" and exits 0)
-- Below 1.0.0 a breaking change lands as a minor; cutting 1.0 is a manual
-  `workflow_dispatch`
-- The version-bump commit is pushed with the org-wide `RELEASE_BUMP_TOKEN`
-  (per-repo `RELEASE_TOKEN` overrides it). If that push is rejected, the tag and
-  Release still go out against the merge commit and the job logs a warning
+- A merge into `staging` is tagged as the next **patch** by `staging-version.yml`
+  (beta: <https://mukoko-lingo-staging.vercel.app>, behind Vercel Authentication)
+- A release to `main` is the next **minor** above the highest tag. The release
+  PR from `staging` carries the bump, made with
+  `npm run release:prepare -- --version X.Y.0`; when CI passes on `main`,
+  `release.yml` (the org's pinned `reusable-auto-tag.yml`) checks that
+  `package.json` holds that version, tags it and publishes a GitHub Release
+- A **major** only by hand: Actions → Release → Run workflow, `bump: major`
 
-Preview with `npm run release:dry`. Full details, including the failure table:
+Preview what the script would write with `npm run release:dry`. Full details:
 [RELEASES.md](RELEASES.md).
 
 ## Common Workflows
@@ -1028,7 +1024,7 @@ When creating new completion summaries, migration docs, or work records:
 
 ## Project Status
 
-**Current Version**: 0.4.0 (2026-09-10)
+**Current Version**: 0.5.0 (2026-10-06)
 **Framework**: Expo SDK 57 / React Native 0.86 / React 19
 **Backend**: MongoDB + WorkOS AuthKit + Vercel Serverless
 **AI**: Cloudflare Workers AI (`@cf/qwen/qwen3-30b-a3b-fp8`) via Cloudflare AI Gateway
