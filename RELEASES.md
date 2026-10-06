@@ -39,7 +39,10 @@ start no workflow and publish nothing.
 
 ### Preparing the release PR
 
-The release PR from `staging` into `main` carries the version bump. Work out the
+The release PR from `staging` into `main` carries the version bump. When the
+release branch is built from `staging`'s tree, make the bump as the last PR into
+`staging` just before the release, so nothing lands under `[Unreleased]` between
+the bump and the release. Work out the
 next minor above the highest tag (`git tag -l 'v*' --sort=-v:refname | head -1`;
 `v0.4.3` → `0.5.0`), then:
 

@@ -82,10 +82,11 @@ history and the generated release notes read cleanly.
 ## Changelog
 
 Add your entry to the `## [Unreleased]` section of
-[CHANGELOG.md](CHANGELOG.md) in the same PR as the change. That section is
-published verbatim as the GitHub Release notes, so write it for someone reading
-the release later: what changed, and why it mattered. The release job only moves
-it under a version heading — it does not write it for you.
+[CHANGELOG.md](CHANGELOG.md) in the same PR as the change. Write it for someone
+reading the release later: what changed, and why it mattered. When a release is
+prepared, `npm run release:prepare` moves the section under the new version
+heading. The GitHub Release itself carries generated notes, not this section
+(see [RELEASES.md](RELEASES.md)).
 
 ## Pull Requests
 
