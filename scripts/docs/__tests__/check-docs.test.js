@@ -9,7 +9,6 @@
 const {
   collectEnvReads,
   collectDocumentedEnv,
-  claimedSuiteCount,
   checkDocLinks,
   docFiles,
   RETIRED_TERMS,
@@ -70,18 +69,6 @@ describe("collectDocumentedEnv", () => {
     expect([
       ...collectDocumentedEnv("Set MONGODB_URI to your cluster"),
     ]).toEqual([]);
-  });
-});
-
-describe("claimedSuiteCount", () => {
-  it("reads the count out of the CLAUDE.md sentence", () => {
-    expect(
-      claimedSuiteCount("**Test Suites** (42 suites, 460 tests). Run ..."),
-    ).toBe(42);
-  });
-
-  it("returns null when the claim is gone, so the check can say so", () => {
-    expect(claimedSuiteCount("# CLAUDE.md\n\nNo claim here.")).toBeNull();
   });
 });
 

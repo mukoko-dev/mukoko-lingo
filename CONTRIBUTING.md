@@ -22,9 +22,6 @@ This is a monorepo with two apps sharing a single API layer:
 | `lib/`        | Shared business logic                        |
 | `components/` | Mobile React Native components               |
 
-See [CLAUDE.md](CLAUDE.md) for the architecture reference, including the
-5-layer component hierarchy used in the web app.
-
 ## Development
 
 ```bash

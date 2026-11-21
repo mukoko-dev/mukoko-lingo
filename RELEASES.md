@@ -65,7 +65,6 @@ the one the policy allows, the Release run fails and names the right one.
 | `constants/Version.ts`                       | `APP_VERSION`                                               |
 | `CHANGELOG.md`                               | `[Unreleased]` → `[X.Y.Z] — date`, new empty `[Unreleased]` |
 | `RELEASES.md`                                | Current Version + a Version History row                     |
-| `CLAUDE.md`                                  | Project Status → Current Version                            |
 
 The first five are **required**: if one of them stops matching its marker (a
 reformat, a rename), the script fails loudly rather than leaving a half-bumped
