@@ -95,17 +95,6 @@ describe("applyVersion", () => {
     expect(rows[2]).toHaveLength(rows[0].length);
   });
 
-  it("updates the project status line in CLAUDE.md", () => {
-    const out = applyVersion(
-      "CLAUDE.md",
-      read("CLAUDE.md"),
-      "9.9.9",
-      "2026-09-01",
-    );
-
-    expect(out).toContain("**Current Version**: 9.9.9 (2026-09-01)");
-  });
-
   it("actually changes every file the release touches", () => {
     // The transforms are string replacements; a file that quietly stops
     // matching would otherwise release a stale version number.

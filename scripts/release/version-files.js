@@ -20,7 +20,6 @@ const OPTIONAL_FILES = [
   "package-lock.json",
   "web/package-lock.json",
   "RELEASES.md",
-  "CLAUDE.md",
 ];
 
 function bumpPackageJson(content, version) {
@@ -83,13 +82,6 @@ function bumpReleasesMd(content, version, date) {
   return next;
 }
 
-function bumpClaudeMd(content, version, date) {
-  return content.replace(
-    /(\*\*Current Version\*\*: )v?[\d.]+.*/,
-    `$1${version} (${date})`,
-  );
-}
-
 const TRANSFORMS = {
   "package.json": bumpPackageJson,
   "web/package.json": bumpPackageJson,
@@ -98,7 +90,6 @@ const TRANSFORMS = {
   "app.json": bumpAppJson,
   "constants/Version.ts": bumpVersionTs,
   "RELEASES.md": bumpReleasesMd,
-  "CLAUDE.md": bumpClaudeMd,
 };
 
 /**
