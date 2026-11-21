@@ -2,9 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main, staging, feature/*]
+    branches: [main, feature/*]
   pull_request:
-    branches: [main, staging]
+    branches: [main]
+  # The merge queue builds gh-readonly-queue/* branches; without this trigger
+  # the required jobs below never report there and the queue waits forever.
+  merge_group:
 
 # Least privilege: every job only reads the repository.
 permissions:
