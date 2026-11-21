@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, feature/*]
+    branches: [main, staging, feature/*]
   pull_request:
-    branches: [main]
+    branches: [main, staging]
 
 # Least privilege: every job only reads the repository.
 permissions:
