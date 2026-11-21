@@ -12,8 +12,6 @@
 
 **Version:** 0.5.0 | **Live:** [lingo.mukoko.com](https://lingo.mukoko.com) |
 **Console:** [lingo.mukoko.com/console](https://lingo.mukoko.com/console) |
-**Version:** 0.4.0 | **Live:** [lingo.mukoko.com](https://lingo.mukoko.com) |
-**Console:** [lingo.nyuchi.com/console](https://lingo.nyuchi.com/console) |
 **Parent company:** [Nyuchi Africa](https://nyuchi.com)
 
 ---
@@ -91,13 +89,11 @@ export.
 | ---------------- | --------------------------------------------------------------------- |
 | Mobile front end | Expo SDK 57 / React Native 0.86.2 / React 19.2 / Expo Router 57       |
 | Console          | Next.js 16.3 / Tailwind CSS 4                                         |
-| Console          | Next.js 16.2 / Tailwind CSS 4                                         |
 | Backend          | Vercel serverless functions (TypeScript and Python)                   |
 | Database         | MongoDB — the `lingo` database on the shared Nyuchi ecosystem cluster |
 | Auth             | WorkOS AuthKit (hosted sign-in, PKCE authorization-code flow)         |
 | AI               | Cloudflare Workers AI — Qwen3 30B A3B through an AI Gateway proxy     |
 | Testing          | Jest 29 + jest-expo — 50 test files                                   |
-| Testing          | Jest 29 + jest-expo — 44 test files                                   |
 | CI/CD            | GitHub Actions, with automated releases                               |
 
 There is no Cloudflare Worker in this repository. Workers AI is called over
@@ -163,7 +159,6 @@ Required environment variables:
 | `npm run test:coverage`   | Jest with coverage                          |
 | `npm run lint`            | Vite+ lint (`vp lint`)                      |
 | `npm run lint:eslint`     | ESLint                                      |
-| `npm run lint`            | ESLint                                      |
 | `npx tsc --noEmit`        | Type check                                  |
 | `npm run build:ios`       | EAS build                                   |
 | `cd web && npm run dev`   | Console dev server                          |
@@ -184,17 +179,6 @@ minor, and a major is only ever made by hand. The staging → main release PR
 carries the version bump (`npm run release:prepare -- --version X.Y.0`); when
 CI goes green on `main`, `release.yml` tags it and publishes a GitHub Release.
 See [RELEASES.md](RELEASES.md).
-`ci.yml` runs on pushes to `main` and `feature/*` and on pull requests to
-`main`: lint and typecheck for mobile and for web, Jest, a docs drift check
-(`scripts/docs/check-docs.js`), `ruff` and `pytest` for the Python analytics
-functions, and both builds. The EAS iOS and Android build jobs are present but
-commented out.
-
-Releases are automatic. When CI goes green on `main`, `release.yml` derives the
-next version from the Conventional Commit subjects since the last tag, bumps
-every version file, cuts `CHANGELOG.md`'s `[Unreleased]` section into a version
-heading, tags, and publishes a GitHub Release. A docs- or chore-only merge
-releases nothing. See [RELEASES.md](RELEASES.md).
 
 ---
 

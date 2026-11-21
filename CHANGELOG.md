@@ -49,12 +49,6 @@ _Nothing yet._
 - **README corrected**: the Expo, React Native and Next.js versions, the test and
   endpoint counts, which layer has which language (Swahili is unfinished), and
   the palette now match the code.
-  ([nyuchi/.github#80](https://github.com/nyuchi/.github/issues/80)). Commit
-  types still decide whether a merge releases; the number is now the next
-  minor on `main` (patch on `staging`), computed by the shared `next-version`
-  action, and a major is only ever made by hand (`bump: major`).
-
-_Nothing yet._
 
 ---
 
