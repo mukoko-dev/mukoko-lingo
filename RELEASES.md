@@ -99,7 +99,7 @@ Mukoko Lingo follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PA
 - **MINOR** — a release to `main`
 - **PATCH** — a merge into `staging` (the live beta)
 
-### Current Version: 0.5.0
+### Current Version: 0.5.2
 
 ## Release channels
 
@@ -168,6 +168,7 @@ git checkout -b hotfix/short-description
 
 | Version | Date       | Highlights                                                                                        |
 | ------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| 0.5.2   | 2026-11-21 | See [CHANGELOG](CHANGELOG.md)                                                                     |
 | 0.5.0   | 2026-10-06 | See [CHANGELOG](CHANGELOG.md)                                                                     |
 | 0.4.0   | 2026-09-10 | See [CHANGELOG](CHANGELOG.md)                                                                     |
 | 0.3.0   | 2026-09-09 | See [CHANGELOG](CHANGELOG.md)                                                                     |
