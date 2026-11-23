@@ -65,7 +65,6 @@ the one the policy allows, the Release run fails and names the right one.
 | `constants/Version.ts`                       | `APP_VERSION`                                               |
 | `CHANGELOG.md`                               | `[Unreleased]` → `[X.Y.Z] — date`, new empty `[Unreleased]` |
 | `RELEASES.md`                                | Current Version + a Version History row                     |
-| `CLAUDE.md`                                  | Project Status → Current Version                            |
 
 The first five are **required**: if one of them stops matching its marker (a
 reformat, a rename), the script fails loudly rather than leaving a half-bumped
@@ -99,7 +98,7 @@ Mukoko Lingo follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PA
 - **MINOR** — a release to `main`
 - **PATCH** — a merge into `staging` (the live beta)
 
-### Current Version: 0.5.0
+### Current Version: 0.5.2
 
 ## Release channels
 
@@ -168,6 +167,7 @@ git checkout -b hotfix/short-description
 
 | Version | Date       | Highlights                                                                                        |
 | ------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| 0.5.2   | 2026-11-21 | See [CHANGELOG](CHANGELOG.md)                                                                     |
 | 0.5.0   | 2026-10-06 | See [CHANGELOG](CHANGELOG.md)                                                                     |
 | 0.4.0   | 2026-09-10 | See [CHANGELOG](CHANGELOG.md)                                                                     |
 | 0.3.0   | 2026-09-09 | See [CHANGELOG](CHANGELOG.md)                                                                     |

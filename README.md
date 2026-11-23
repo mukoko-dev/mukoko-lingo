@@ -205,17 +205,16 @@ The dark theme is charcoal (`#0A0A0A`), never slate.
 
 ## Documentation
 
-| Document                                                             | Purpose                                         |
-| -------------------------------------------------------------------- | ----------------------------------------------- |
-| [CLAUDE.md](CLAUDE.md)                                               | Developer guide and full architecture reference |
-| [BRANDING.md](BRANDING.md)                                           | Brand guidelines, palette, voice, typography    |
-| [SECURITY.md](SECURITY.md)                                           | Security architecture                           |
-| [CONTRIBUTING.md](CONTRIBUTING.md)                                   | Contribution guidelines and commit conventions  |
-| [RELEASES.md](RELEASES.md)                                           | Release automation and channels                 |
-| [CHANGELOG.md](CHANGELOG.md)                                         | Version history                                 |
-| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)                             | Community expectations                          |
-| [docs/ECOSYSTEM_DATA_MIGRATION.md](docs/ECOSYSTEM_DATA_MIGRATION.md) | How Lingo's data joined the shared cluster      |
-| [docs/TEST_COVERAGE_ANALYSIS.md](docs/TEST_COVERAGE_ANALYSIS.md)     | What the test suite covers                      |
+| Document                                                             | Purpose                                        |
+| -------------------------------------------------------------------- | ---------------------------------------------- |
+| [BRANDING.md](BRANDING.md)                                           | Brand guidelines, palette, voice, typography   |
+| [SECURITY.md](SECURITY.md)                                           | Security architecture                          |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                                   | Contribution guidelines and commit conventions |
+| [RELEASES.md](RELEASES.md)                                           | Release automation and channels                |
+| [CHANGELOG.md](CHANGELOG.md)                                         | Version history                                |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)                             | Community expectations                         |
+| [docs/ECOSYSTEM_DATA_MIGRATION.md](docs/ECOSYSTEM_DATA_MIGRATION.md) | How Lingo's data joined the shared cluster     |
+| [docs/TEST_COVERAGE_ANALYSIS.md](docs/TEST_COVERAGE_ANALYSIS.md)     | What the test suite covers                     |
 
 ## Ecosystem
 

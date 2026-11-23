@@ -11,7 +11,6 @@
  *   2. Retired names (dead credentials, the invented `mukoko-lingo` database)
  *      do not reappear outside the history that legitimately mentions them.
  *   3. Relative markdown links resolve to a file that exists.
- *   4. The suite count CLAUDE.md claims matches the suites on disk.
  *
  *   node scripts/docs/check-docs.js
  *
@@ -38,12 +37,12 @@ const RETIRED_TERMS = [
   {
     term: "ANTHROPIC_API_KEY",
     reason: "inference moved to Cloudflare Workers AI (CLOUDFLARE_API_TOKEN)",
-    allow: ["CHANGELOG.md", ".env.local.instructions", "CLAUDE.md"],
+    allow: ["CHANGELOG.md", ".env.local.instructions"],
   },
   {
     term: "AI_GATEWAY_API_KEY",
     reason: "the Vercel AI Gateway transport was removed",
-    allow: ["CHANGELOG.md", ".env.local.instructions", "CLAUDE.md"],
+    allow: ["CHANGELOG.md", ".env.local.instructions"],
   },
   {
     term: "ai-gateway.vercel.sh",
@@ -61,7 +60,7 @@ const RETIRED_TERMS = [
     term: /(?:DB_NAME\s*=\s*|database\s+)['"`]?mukoko-lingo/i,
     reason:
       "the database is `lingo`; `mukoko-lingo` was an invented, never-populated one",
-    allow: ["CHANGELOG.md", "CLAUDE.md", "docs/ECOSYSTEM_DATA_MIGRATION.md"],
+    allow: ["CHANGELOG.md", "docs/ECOSYSTEM_DATA_MIGRATION.md"],
   },
 ];
 
@@ -78,7 +77,6 @@ const CODE_DIRS = [
 ];
 const DOC_FILES = [
   "README.md",
-  "CLAUDE.md",
   "SECURITY.md",
   "RELEASES.md",
   "CONTRIBUTING.md",
@@ -137,12 +135,6 @@ function collectDocumentedEnv(envExample) {
   for (const match of envExample.matchAll(/^\s*#?\s*([A-Z][A-Z0-9_]*)=/gm))
     found.add(match[1]);
   return found;
-}
-
-/** The suite count CLAUDE.md claims, or null when it makes no claim. */
-function claimedSuiteCount(claudeMd) {
-  const match = claudeMd.match(/\*\*Test Suites\*\*\s*\((\d+)\s+suites/);
-  return match ? Number(match[1]) : null;
 }
 
 function checkEnv(codeFiles) {
@@ -219,18 +211,6 @@ function checkDocLinks(documents) {
   return problems;
 }
 
-function checkSuiteCount(testFiles) {
-  const claimed = claimedSuiteCount(read("CLAUDE.md"));
-  if (claimed === null)
-    return ["CLAUDE.md no longer states a test suite count"];
-  if (claimed !== testFiles.length) {
-    return [
-      `CLAUDE.md claims ${claimed} test suites; ${testFiles.length} exist on disk`,
-    ];
-  }
-  return [];
-}
-
 /** Every markdown document under docs/ and scripts/, plus the root set. */
 function docFiles() {
   const extra = [];
@@ -250,14 +230,6 @@ function docFiles() {
 
 function main() {
   const codeFiles = CODE_DIRS.flatMap((dir) => walk(dir));
-  // Match jest's default testMatch: any JS/TS file under a __tests__ directory
-  // (StyledText-test.js is one of those), plus *.test.* / *.spec.* anywhere.
-  const testFiles = codeFiles
-    .filter(
-      (file) =>
-        /(^|\/)__tests__\//.test(file) || /\.(test|spec)\.[jt]sx?$/.test(file),
-    )
-    .filter((file) => path.extname(file) !== ".py");
   const documents = docFiles();
 
   const checks = [
@@ -267,7 +239,6 @@ function main() {
       checkRetiredTerms([...documents, ...codeFiles]),
     ],
     ["Broken documentation links", checkDocLinks(documents)],
-    ["Test suite count", checkSuiteCount(testFiles)],
   ];
 
   let failed = false;
@@ -302,7 +273,6 @@ module.exports = {
   checkDocLinks,
   collectEnvReads,
   collectDocumentedEnv,
-  claimedSuiteCount,
   RETIRED_TERMS,
   RUNTIME_PROVIDED,
 };

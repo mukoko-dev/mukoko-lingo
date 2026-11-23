@@ -46,7 +46,7 @@ else runs in CI but counts for nothing:
   app has: `auth-middleware.ts`, `chat-input.ts`, `tutor-prompt.ts`,
   `moderation.ts`, `ai-provider.ts`, `assessment-grading.ts`,
   `assessment-session.ts`, and the `question-bank.ts` answer key itself. These
-  _are_ tested (14 suites, listed in CLAUDE.md), and those tests are the reason
+  _are_ tested (14 suites), and those tests are the reason
   the prompt-injection, moderation and grading work can be trusted — but
   nothing stops the next route from shipping with no test at all, because the
   thresholds cannot see it.
@@ -62,7 +62,7 @@ alongside a feature.
 
 ## What the suite actually protects
 
-The listing in CLAUDE.md is the current index. The ones worth knowing by name:
+The ones worth knowing by name:
 
 | Suite                                                | Property it pins                                                                                                                                                                     |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
