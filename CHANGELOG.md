@@ -18,7 +18,9 @@ released before then are not renumbered.
 
 The release workflow comments, AGENTS.md and CONTRIBUTING.md no longer describe a `staging` branch; the repo is trunk-based. No behaviour changes.
 
-_Nothing yet._
+### Security — the OneRoster sync's connection re-checks the address it connects to (2026-11-28)
+
+- **`api/_lib/outbound-url.ts`, `api/oneroster/sync.ts`:** `assertPublicHttpsUrl` resolves the roster host once, before the request; a DNS server could answer that lookup with a public address and the connection's own lookup with an internal one (DNS rebinding). The sync now fetches through an undici dispatcher whose connect-time lookup (`guardedLookup`) refuses any non-public address, on top of the existing https-only, no-credentials, no-redirect checks. Tests cover public, rebound, mixed and failing answers. Refs CodeQL alert 23 (`js/request-forgery`).
 
 ---
 

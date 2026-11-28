@@ -10,8 +10,10 @@
  * can't bounce the request to an internal one.
  */
 
+import { lookup as dnsLookupCb } from "node:dns";
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
+import { Agent } from "undici";
 
 export class UnsafeUrlError extends Error {
   constructor(message: string) {
@@ -124,3 +126,58 @@ export async function assertPublicHttpsUrl(
   }
   return url;
 }
+
+type LookupCallback = (
+  err: Error | null,
+  address: string | { address: string; family: number }[],
+  family?: number,
+) => void;
+
+/**
+ * A DNS lookup for the connection itself that refuses non-public addresses.
+ *
+ * `assertPublicHttpsUrl` resolves the host once, before the request. A hostile
+ * DNS server can answer that lookup with a public address and the connection's
+ * own lookup with 169.254.169.254 (DNS rebinding). Checking the addresses the
+ * socket actually connects to closes that gap, and it also applies to every
+ * redirect-free hop of the request.
+ */
+export function guardedLookup(
+  hostname: string,
+  options: { all?: boolean; family?: number; hints?: number },
+  callback: LookupCallback,
+  resolve: (
+    host: string,
+    opts: object,
+    cb: (
+      err: Error | null,
+      addresses: { address: string; family: number }[],
+    ) => void,
+  ) => void = dnsLookupCb as never,
+): void {
+  resolve(
+    hostname,
+    { ...options, all: true, verbatim: true },
+    (err, addresses) => {
+      if (err) return callback(err, []);
+      if (
+        !addresses ||
+        addresses.length === 0 ||
+        addresses.some((a) => isNonPublicAddress(a.address))
+      ) {
+        return callback(
+          new UnsafeUrlError("host resolves to a non-public address"),
+          [],
+        );
+      }
+      if (options.all) return callback(null, addresses);
+      const first = addresses[0]!;
+      return callback(null, first.address, first.family);
+    },
+  );
+}
+
+/** An undici dispatcher whose connections only ever reach public addresses. */
+export const publicOnlyDispatcher = new Agent({
+  connect: { lookup: guardedLookup as never },
+});
