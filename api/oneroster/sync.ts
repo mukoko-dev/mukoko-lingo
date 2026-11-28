@@ -20,7 +20,12 @@ import { createLogger } from "../_lib/logger";
 import { requireAdmin } from "../_lib/auth-middleware";
 import { classes, classMemberships } from "../_lib/mongo";
 import { findOrCreatePersonByEmail } from "../../lib/db/identity";
-import { assertPublicHttpsUrl, UnsafeUrlError } from "../_lib/outbound-url";
+import { fetch as undiciFetch } from "undici";
+import {
+  assertPublicHttpsUrl,
+  publicOnlyDispatcher,
+  UnsafeUrlError,
+} from "../_lib/outbound-url";
 
 const log = createLogger("oneroster");
 
@@ -52,7 +57,14 @@ async function fetchWithRetry(
     try {
       // Never follow redirects: a public roster host must not be able to
       // bounce this server-side request to an internal address.
-      const response = await fetch(url, { ...options, redirect: "error" });
+      // The dispatcher re-checks the address the socket connects to, so a host
+      // that resolved to a public address at validation time cannot be
+      // re-pointed at an internal one before the connection (DNS rebinding).
+      const response = (await undiciFetch(url, {
+        ...(options as object),
+        redirect: "error",
+        dispatcher: publicOnlyDispatcher,
+      } as never)) as unknown as Response;
       if (response.ok || response.status < 500 || i === retries)
         return response;
       await new Promise((r) => setTimeout(r, RETRY_DELAYS[i] || 4000));
