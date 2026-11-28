@@ -149,18 +149,32 @@ export function guardedLookup(
   resolve: (
     host: string,
     opts: object,
-    cb: (err: Error | null, addresses: { address: string; family: number }[]) => void,
+    cb: (
+      err: Error | null,
+      addresses: { address: string; family: number }[],
+    ) => void,
   ) => void = dnsLookupCb as never,
 ): void {
-  resolve(hostname, { ...options, all: true, verbatim: true }, (err, addresses) => {
-    if (err) return callback(err, []);
-    if (!addresses || addresses.length === 0 || addresses.some((a) => isNonPublicAddress(a.address))) {
-      return callback(new UnsafeUrlError("host resolves to a non-public address"), []);
-    }
-    if (options.all) return callback(null, addresses);
-    const first = addresses[0]!;
-    return callback(null, first.address, first.family);
-  });
+  resolve(
+    hostname,
+    { ...options, all: true, verbatim: true },
+    (err, addresses) => {
+      if (err) return callback(err, []);
+      if (
+        !addresses ||
+        addresses.length === 0 ||
+        addresses.some((a) => isNonPublicAddress(a.address))
+      ) {
+        return callback(
+          new UnsafeUrlError("host resolves to a non-public address"),
+          [],
+        );
+      }
+      if (options.all) return callback(null, addresses);
+      const first = addresses[0]!;
+      return callback(null, first.address, first.family);
+    },
+  );
 }
 
 /** An undici dispatcher whose connections only ever reach public addresses. */

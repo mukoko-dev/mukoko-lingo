@@ -103,38 +103,70 @@ describe("assertPublicHttpsUrl", () => {
 describe("guardedLookup (the connection's own DNS lookup)", () => {
   const answering =
     (...addresses: string[]) =>
-    (_host: string, _opts: object, cb: (e: Error | null, a: { address: string; family: number }[]) => void) =>
+    (
+      _host: string,
+      _opts: object,
+      cb: (e: Error | null, a: { address: string; family: number }[]) => void,
+    ) =>
       cb(
         null,
-        addresses.map((address) => ({ address, family: address.includes(":") ? 6 : 4 })),
+        addresses.map((address) => ({
+          address,
+          family: address.includes(":") ? 6 : 4,
+        })),
       );
 
   it("passes a public answer through, in both callback shapes", () => {
     const all = jest.fn();
-    guardedLookup("roster.example", { all: true }, all, answering("203.0.113.10") as never);
-    expect(all).toHaveBeenCalledWith(null, [{ address: "203.0.113.10", family: 4 }]);
+    guardedLookup(
+      "roster.example",
+      { all: true },
+      all,
+      answering("203.0.113.10") as never,
+    );
+    expect(all).toHaveBeenCalledWith(null, [
+      { address: "203.0.113.10", family: 4 },
+    ]);
 
     const one = jest.fn();
-    guardedLookup("roster.example", {}, one, answering("203.0.113.10") as never);
+    guardedLookup(
+      "roster.example",
+      {},
+      one,
+      answering("203.0.113.10") as never,
+    );
     expect(one).toHaveBeenCalledWith(null, "203.0.113.10", 4);
   });
 
   it("refuses a rebound answer that points at the metadata service", () => {
     const cb = jest.fn();
-    guardedLookup("rebind.example", { all: true }, cb, answering("169.254.169.254") as never);
+    guardedLookup(
+      "rebind.example",
+      { all: true },
+      cb,
+      answering("169.254.169.254") as never,
+    );
     expect(cb.mock.calls[0][0]).toBeInstanceOf(UnsafeUrlError);
   });
 
   it("refuses an answer that mixes public and private addresses", () => {
     const cb = jest.fn();
-    guardedLookup("mixed.example", {}, cb, answering("203.0.113.10", "10.0.0.5") as never);
+    guardedLookup(
+      "mixed.example",
+      {},
+      cb,
+      answering("203.0.113.10", "10.0.0.5") as never,
+    );
     expect(cb.mock.calls[0][0]).toBeInstanceOf(UnsafeUrlError);
   });
 
   it("passes a resolver error through", () => {
     const cb = jest.fn();
-    const failing = (_h: string, _o: object, c: (e: Error | null, a: never[]) => void) =>
-      c(new Error("ENOTFOUND"), []);
+    const failing = (
+      _h: string,
+      _o: object,
+      c: (e: Error | null, a: never[]) => void,
+    ) => c(new Error("ENOTFOUND"), []);
     guardedLookup("nope.example", {}, cb, failing as never);
     expect(cb.mock.calls[0][0]).toBeInstanceOf(Error);
   });
