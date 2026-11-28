@@ -14,6 +14,10 @@ released before then are not renumbered.
 
 ## [Unreleased]
 
+### Changed — staging wording removed (2026-11-28)
+
+The release workflow comments, AGENTS.md and CONTRIBUTING.md no longer describe a `staging` branch; the repo is trunk-based. No behaviour changes.
+
 _Nothing yet._
 
 ---
