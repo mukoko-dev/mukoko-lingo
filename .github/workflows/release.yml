@@ -6,8 +6,7 @@ name: Release
 # work releases nothing and the job ends quietly.
 #
 # The NUMBER follows the org versioning policy (nyuchi/.github#80): a release
-# to main is the next MINOR, a merge into staging the next PATCH
-# (staging-version.yml), and a MAJOR is only ever made by hand: run this
+# to main is the next MINOR, and a MAJOR is only ever made by hand: run this
 # workflow with bump: major. Each segment holds 0..999; minor 999 stops and
 # asks for that manual major. The shared next-version action computes it.
 #
